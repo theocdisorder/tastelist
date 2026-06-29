@@ -1,0 +1,2826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sreya's Taste List</title>
+<meta name="description" content="The music that shaped me — Sreya's favorite artists, albums, and songs.">
+<meta property="og:title" content="Sreya's Taste List">
+<meta property="og:description" content="The music that shaped me — favorite artists, albums, and songs.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tastelist.ai">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Sreya's Taste List">
+<meta name="twitter:description" content="The music that shaped me — favorite artists, albums, and songs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #161618;
+    --surface2: #1e1e21;
+    --surface3: #26262a;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #eeecea;
+    --muted: #7a7876;
+    --faint: #45444a;
+    --apple: #fc3c44;
+    --spotify: #1DB954;
+    --accent: #a78bfa;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    padding: 2.5rem 2rem 0;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .site-title {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+  .site-heading {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+  }
+  .site-sub {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* ── TOP 5 GRID ── */
+  .top5-section {
+    padding: 2.5rem 2rem 0;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .artist-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+
+  .artist-tile {
+    position: relative;
+    border-radius: 10px;
+    overflow: visible;
+    cursor: pointer;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+  }
+  .artist-tile:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+  }
+  .artist-tile:hover .tile-overlay { opacity: 1; }
+  .artist-tile:hover .tile-rank { opacity: 0; }
+
+  .tile-img-wrap {
+    position: relative;
+    aspect-ratio: 4/3;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .tile-label {
+    padding: 8px 10px 9px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+    border-radius: 0 0 10px 10px;
+    line-height: 1.3;
+  }
+
+  /* Artist hero name overlay */
+  .artist-hero-wrap {
+    position: relative;
+    overflow: hidden;
+  }
+  .artist-hero-name-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
+    padding: 40px 1.5rem 1.25rem;
+    pointer-events: none;
+  }
+  .artist-hero-name {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+  .artist-hero-genre {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 3px;
+  }
+
+  /* Artist bio */
+  .artist-bio {
+    padding: 1rem 1.5rem 0.75rem;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tile-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+  .artist-tile:hover .tile-img { transform: scale(1.04); }
+
+  .tile-rank {
+    position: absolute;
+    top: 10px; left: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    transition: opacity 0.2s;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tile-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 14px 12px;
+  }
+  .artist-tile:hover .tile-overlay { opacity: 1; }
+
+  .tile-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.3;
+  }
+  .tile-genre {
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 2px;
+  }
+  .tile-arrow {
+    font-size: 11px;
+    color: var(--accent);
+    margin-top: 5px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .artist-tile:hover .tile-arrow {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .tile-placeholder {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px; color: var(--faint);
+    font-size: 12px; cursor: pointer;
+  }
+  .tile-placeholder svg { opacity: 0.4; }
+
+  /* ── ARTIST DETAIL SECTIONS ── */
+  .artists-section {
+    padding: 3rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .artist-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    scroll-margin-top: 2rem;
+  }
+
+  .artist-hero {
+    width: 100%; height: 320px;
+    object-fit: cover;
+    object-position: center 20%;
+    display: block;
+  }
+  .artist-hero-placeholder {
+    width: 100%; height: 320px;
+    background: var(--surface2);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px; color: var(--faint); font-size: 13px; cursor: pointer;
+  }
+  .artist-hero-placeholder:hover { background: #28282a; color: var(--muted); }
+
+  .artist-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 1.125rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .artist-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 14px; color: #fff; flex-shrink: 0;
+  }
+  .artist-name { font-size: 18px; font-weight: 600; }
+  .artist-genre { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .artist-header-actions { margin-left: auto; display: flex; gap: 8px; }
+
+  .edit-btn {
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 6px 12px; cursor: pointer;
+    font-size: 13px; color: var(--muted); font-family: inherit;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .edit-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+
+  .song-list { padding: 0.5rem 0; }
+  .song-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 11px 1.5rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+  .song-row:last-child { border-bottom: none; }
+  .song-row:hover { background: rgba(255,255,255,0.025); }
+
+  .song-num { font-size: 13px; color: var(--faint); width: 18px; text-align: center; flex-shrink: 0; }
+
+  .album-art {
+    width: 52px; height: 52px; border-radius: 7px;
+    background: var(--surface2); border: 1px solid var(--border);
+    flex-shrink: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--faint); font-size: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .album-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .song-info { flex: 1; min-width: 0; }
+  .song-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song-album { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .stream-links { display: flex; gap: 6px; flex-shrink: 0; }
+  .stream-link {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 500; padding: 5px 9px;
+    border-radius: 7px; text-decoration: none; border: 1px solid;
+    transition: opacity 0.15s;
+  }
+  .stream-link:hover { opacity: 0.75; }
+  .stream-link.apple { color: var(--apple); border-color: rgba(252,60,68,0.3); background: rgba(252,60,68,0.08); }
+  .stream-link.spotify { color: var(--spotify); border-color: rgba(29,185,84,0.3); background: rgba(29,185,84,0.08); }
+  .stream-link svg { width: 13px; height: 13px; fill: currentColor; }
+
+  /* add button */
+  .add-artist-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 1rem;
+    background: none; border: 1.5px dashed rgba(255,255,255,0.1);
+    border-radius: 16px; cursor: pointer; font-size: 14px;
+    color: var(--muted); font-family: inherit; transition: all 0.15s;
+  }
+  .add-artist-btn:hover { border-color: rgba(255,255,255,0.22); color: var(--text); }
+
+  /* ── MODAL ── */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; z-index: 100; padding: 1rem;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 18px; padding: 1.5rem; width: 100%;
+    max-width: 580px; max-height: 90vh; overflow-y: auto;
+  }
+  .modal h2 { font-size: 18px; font-weight: 600; margin-bottom: 1.25rem; }
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 9px 12px; font-size: 14px;
+    color: var(--text); font-family: inherit; transition: border-color 0.15s;
+  }
+  .field input:focus { outline: none; border-color: var(--accent); }
+  .field input::placeholder { color: var(--faint); }
+  .song-fields {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px; margin-bottom: 10px; background: rgba(255,255,255,0.02);
+  }
+  .song-label { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 1.25rem; justify-content: flex-end; align-items: center; }
+  .btn-save {
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; padding: 9px 18px; font-size: 14px;
+    font-weight: 500; cursor: pointer; font-family: inherit;
+  }
+  .btn-save:hover { opacity: 0.85; }
+  .btn-cancel {
+    background: none; border: 1px solid var(--border2); border-radius: 8px;
+    padding: 9px 18px; font-size: 14px; cursor: pointer;
+    color: var(--muted); font-family: inherit;
+  }
+  .btn-cancel:hover { color: var(--text); }
+  .btn-delete { background: none; border: none; color: var(--apple); font-size: 13px; cursor: pointer; font-family: inherit; margin-right: auto; padding: 0; }
+
+  /* ── SEARCH DROPDOWN ── */
+  .search-result-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .search-result-item:last-child { border-bottom: none; }
+  .search-result-item:hover { background: var(--surface3); }
+  .search-result-img { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--surface3); }
+  .search-result-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .search-result-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .search-loading { padding: 12px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  /* ── SONG SEARCH ROW ── */
+  .song-search-wrap { position: relative; margin-bottom: 8px; }
+  .song-search-wrap input { width: 100%; }
+  .song-dropdown {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; z-index: 300; max-height: 180px; overflow-y: auto;
+    margin-top: 3px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .song-fields { background: var(--surface2); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+
+  /* ── OTHER FAVORITES ── */
+  .other-favorites-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem 3rem;
+  }
+  .other-favorites-header {
+    padding: 2.5rem 0 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .other-favorites-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 4px;
+  }
+  .other-favorites-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .other-fav-item {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: var(--surface2);
+    transition: border-color 0.15s;
+  }
+  .other-fav-item:hover { border-color: var(--border2); }
+  .other-fav-trigger {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    font-family: inherit;
+  }
+  .other-fav-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; color: #fff; flex-shrink: 0;
+  }
+  .other-fav-img {
+    width: 44px; height: 44px; border-radius: 50%;
+    object-fit: cover; flex-shrink: 0;
+  }
+  .other-fav-info { flex: 1; min-width: 0; }
+  .other-fav-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .other-fav-genre { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .other-fav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .other-fav-edit {
+    background: none; border: 1px solid var(--border2); color: var(--muted);
+    font-size: 11px; font-weight: 600; font-family: inherit;
+    padding: 4px 10px; border-radius: 20px; cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .other-fav-edit:hover { color: var(--accent); border-color: var(--accent); }
+  .other-fav-chevron {
+    color: var(--muted); font-size: 16px; transition: transform 0.2s; flex-shrink: 0;
+  }
+  .other-fav-item.open .other-fav-chevron { transform: rotate(180deg); }
+  .other-fav-body {
+    display: none;
+    border-top: 1px solid var(--border);
+  }
+  .other-fav-item.open .other-fav-body { display: block; }
+  .repeat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem 3rem;
+  }
+  .repeat-slot {
+    background: var(--surface2);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+  .repeat-slot:hover { border-color: var(--border2); }
+  .repeat-video-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 */
+    background: var(--surface3);
+  }
+  .repeat-video-wrap iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  .repeat-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .repeat-empty:hover { background: rgba(255,255,255,0.03); }
+  .repeat-empty svg { opacity: 0.3; }
+  .repeat-empty span { font-size: 13px; color: var(--muted); }
+  .repeat-slot-footer {
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .repeat-slot-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+  .repeat-slot-title.empty { color: var(--muted); font-style: italic; }
+  .repeat-change-btn {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .repeat-change-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* YouTube search panel */
+  .yt-search-panel {
+    display: none;
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--surface3);
+  }
+  .yt-search-panel.open { display: block; }
+  .yt-search-inner {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .yt-search-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 7px 12px; font-size: 13px;
+    color: var(--text); font-family: inherit; outline: none;
+  }
+  .yt-search-input:focus { border-color: var(--accent); }
+  .yt-search-close {
+    background: none; border: none; color: var(--muted); font-size: 18px;
+    cursor: pointer; line-height: 1; flex-shrink: 0;
+  }
+  .yt-search-close:hover { color: var(--text); }
+  .yt-paste-hint {
+    font-size: 11px; color: var(--muted); margin-bottom: 8px;
+  }
+  .yt-results { display: flex; flex-direction: column; gap: 4px; }
+  .yt-result-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 8px; border-radius: 8px; cursor: pointer;
+    transition: background 0.1s;
+  }
+  .yt-result-item:hover { background: var(--surface2); }
+  .yt-result-thumb {
+    width: 80px; height: 45px; border-radius: 4px; object-fit: cover;
+    flex-shrink: 0; background: var(--surface2);
+  }
+  .yt-result-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+  .yt-result-channel { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .song-search-panel {
+    display: none;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 8px 0 4px;
+  }
+  .song-search-panel.open { display: block; }
+  .song-search-inner {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .song-search-label {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .song-search-input {
+    flex: 1; background: var(--surface3); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 7px 12px; font-size: 13px;
+    color: var(--text); font-family: inherit; outline: none;
+  }
+  .song-search-input:focus { border-color: var(--accent); }
+  .song-search-close {
+    background: none; border: none; color: var(--muted); font-size: 18px;
+    cursor: pointer; padding: 0 2px; line-height: 1; flex-shrink: 0;
+  }
+  .song-search-close:hover { color: var(--text); }
+  .song-search-results { display: flex; flex-direction: column; gap: 4px; }
+  .song-result-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px; cursor: pointer;
+    transition: background 0.1s;
+  }
+  .song-result-item:hover { background: var(--surface3); }
+  .song-result-img {
+    width: 38px; height: 38px; border-radius: 5px; object-fit: cover;
+    flex-shrink: 0; background: var(--surface3);
+  }
+  .song-result-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .song-result-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  /* Song row clickable indicator */
+  .song-row { cursor: pointer; position: relative; }
+  .song-row:hover .song-title { color: var(--accent); }
+  .song-row.active { background: rgba(255,255,255,0.04); border-radius: 8px; }
+  .song-edit-hint {
+    font-size: 10px; color: var(--faint); opacity: 0;
+    transition: opacity 0.15s; white-space: nowrap;
+  }
+  .song-row:hover .song-edit-hint { opacity: 1; }
+  .tile-search-panel {
+    display: none;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 0 auto 20px;
+    max-width: 1100px;
+  }
+  .tile-search-panel.open { display: block; }
+  .tile-search-inner {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .tile-search-label {
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .tile-search-input {
+    flex: 1; background: var(--surface3); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 9px 14px; font-size: 14px;
+    color: var(--text); font-family: inherit; outline: none;
+  }
+  .tile-search-input:focus { border-color: var(--accent); }
+  .tile-search-close {
+    background: none; border: none; color: var(--muted); font-size: 20px;
+    cursor: pointer; padding: 0 4px; line-height: 1; flex-shrink: 0;
+  }
+  .tile-search-close:hover { color: var(--text); }
+  .tile-search-results {
+    display: flex; flex-wrap: wrap; gap: 10px; min-height: 64px;
+  }
+  .tile-search-hint {
+    color: var(--muted); font-size: 13px; padding: 8px 0;
+  }
+  .tile-result-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 12px; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s; flex: 0 0 auto;
+    max-width: 220px;
+  }
+  .tile-result-item:hover { border-color: var(--accent); background: var(--surface2); }
+  .tile-result-img {
+    width: 40px; height: 40px; border-radius: 6px; object-fit: cover;
+    flex-shrink: 0; background: var(--surface2);
+  }
+  .tile-result-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile-result-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .tile-loading { color: var(--muted); font-size: 13px; padding: 8px 0; }
+
+  .tile-change-btn {
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    margin-top: 6px;
+    transition: background 0.15s, border-color 0.15s;
+    backdrop-filter: blur(4px);
+  }
+  .tile-change-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .tab-nav {
+    display: flex;
+    gap: 0;
+    padding: 0 2rem;
+    max-width: 1100px;
+    margin: 2rem auto 0;
+    border-bottom: 1px solid var(--border);
+    justify-content: center;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.25rem;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    cursor: pointer;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  @media (max-width: 700px) {
+    .artist-grid { grid-template-columns: repeat(3, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+    .stream-links { flex-direction: column; gap: 4px; }
+    .stream-link { font-size: 11px; padding: 4px 7px; }
+    .site-header, .top5-section, .artists-section { padding-left: 1rem; padding-right: 1rem; }
+    .tab-nav { padding-left: 1rem; padding-right: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <p class="site-title">My music</p>
+  <h1 class="site-heading">The music that shaped me</h1>
+  <p class="site-sub">In no particular order — click to explore my favorite tracks</p>
+  <button onclick="saveProfileToURL()" style="margin-top:16px;background:none;border:1px solid var(--border2);color:var(--muted);font-size:12px;font-weight:600;font-family:inherit;padding:7px 18px;border-radius:20px;cursor:pointer;letter-spacing:0.04em;transition:color 0.15s,border-color 0.15s;" onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--text)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border2)'">
+    ↗ Share my profile
+  </button>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" id="tab-btn-artists" onclick="handleTabClick('artists', this)">Favorite Artists</button>
+  <button class="tab-btn" id="tab-btn-albums" onclick="handleTabClick('albums', this)">Favorite Albums</button>
+  <button class="tab-btn" id="tab-btn-repeat" onclick="handleTabClick('repeat', this)">On Repeat</button>
+</nav>
+
+<!-- Tab rename popover - fixed position, won't affect layout -->
+<div id="tab-rename-pop" style="display:none;position:fixed;z-index:9999;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:6px;box-shadow:0 8px 32px rgba(0,0,0,0.6);min-width:260px;" onclick="event.stopPropagation()">
+  <div id="tab-rename-options"></div>
+  <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+  <div style="display:flex;gap:6px;padding:4px 4px 2px;">
+    <input id="tab-rename-input" placeholder="Type your own…"
+      style="flex:1;background:var(--surface3);border:1px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;"
+      onkeydown="if(event.key==='Enter')commitTabRename(this.value)" />
+    <button onclick="commitTabRename(document.getElementById('tab-rename-input').value)"
+      style="background:var(--accent);border:none;color:#fff;font-size:12px;font-weight:600;font-family:inherit;padding:7px 12px;border-radius:8px;cursor:pointer;">Save</button>
+  </div>
+</div>
+
+<!-- TAB: Favorite Artists -->
+<div class="tab-panel active" id="tab-artists">
+  <section class="top5-section">
+    <p class="section-label">Top 5 Most Influential</p>
+    <div class="artist-grid" id="artist-grid"></div>
+    <!-- Tile search panel -->
+    <div class="tile-search-panel" id="tile-search-panel">
+      <div class="tile-search-inner">
+        <span class="tile-search-label" id="tile-search-label">Slot 1</span>
+        <input class="tile-search-input" id="tile-search-input" placeholder="Search for an artist…" autocomplete="off" oninput="onTileSearchInput(this.value)" />
+        <button class="tile-search-close" onclick="closeTileSearch()">✕</button>
+      </div>
+      <div class="tile-search-results" id="tile-search-results">
+        <span class="tile-search-hint">Start typing to search…</span>
+      </div>
+    </div>
+  </section>
+  <section class="artists-section" id="artists-section">
+    <div id="artist-list"></div>
+  </section>
+
+  <!-- Other Favorites -->
+  <section class="other-favorites-section">
+    <div class="other-favorites-header">
+      <h2 class="other-favorites-title">Other Favorites</h2>
+      <p class="other-favorites-sub">Click an artist to expand their top songs</p>
+    </div>
+    <div id="other-favorites-list"></div>
+    <button class="add-artist-btn" onclick="openAddArtist()" style="margin:1.5rem 2rem">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add artist
+    </button>
+  </section>
+</div>
+
+<!-- TAB: Favorite Albums -->
+<div class="tab-panel" id="tab-albums">
+  <section class="top5-section">
+    <p class="section-label">Top 5 Favorite Albums</p>
+    <div class="artist-grid" id="album-grid"></div>
+    <!-- Album tile search panel -->
+    <div class="tile-search-panel" id="album-tile-search-panel">
+      <div class="tile-search-inner">
+        <span class="tile-search-label" id="album-tile-search-label">Slot 1</span>
+        <input class="tile-search-input" id="album-tile-search-input" placeholder="Search for an album…" autocomplete="off" oninput="onAlbumTileSearchInput(this.value)" />
+        <button class="tile-search-close" onclick="closeAlbumTileSearch()">✕</button>
+      </div>
+      <div class="tile-search-results" id="album-tile-search-results">
+        <span class="tile-search-hint">Start typing to search…</span>
+      </div>
+    </div>
+  </section>
+  <section class="artists-section" id="albums-section">
+    <div id="album-list"></div>
+  </section>
+
+  <!-- Other Favorite Albums -->
+  <section class="other-favorites-section">
+    <div class="other-favorites-header">
+      <h2 class="other-favorites-title">More Albums</h2>
+      <p class="other-favorites-sub">Click an album to expand its tracklist</p>
+    </div>
+    <div id="other-albums-list"></div>
+    <button class="add-artist-btn" onclick="openAddAlbum()" style="margin:1.5rem 2rem">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add album
+    </button>
+  </section>
+</div>
+
+<!-- TAB: On Repeat -->
+<div class="tab-panel" id="tab-repeat">
+  <section class="top5-section">
+    <p class="section-label">On Repeat</p>
+    <p class="site-sub" style="margin-top:-8px;margin-bottom:24px;">Videos I keep coming back to</p>
+    <div class="repeat-grid" id="repeat-grid"></div>
+  </section>
+</div>
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modal-title">Edit artist</h2>
+
+    <!-- Artist/Album search -->
+    <div class="field" style="margin-bottom:12px;position:relative">
+      <label id="f-name-label">Artist name</label>
+      <input id="f-name" placeholder="Search for an artist..." autocomplete="off" oninput="debounceSearch(this.value)" />
+      <div id="search-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;z-index:200;max-height:220px;overflow-y:auto;margin-top:4px;box-shadow:0 8px 32px rgba(0,0,0,0.5)"></div>
+    </div>
+    <div class="two-col" id="photo-fields">
+      <div class="field"><label>Hero photo URL</label><input id="f-photo" placeholder="https://..." /></div>
+      <div class="field"><label>Tile photo URL</label><input id="f-tile" placeholder="https://..." /></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;" id="songs-label">Top 5 songs</div>
+      <button onclick="autoFillSongs()" id="autofill-btn" style="font-size:11px;background:var(--surface3);border:1px solid var(--border2);color:var(--accent);padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit">↻ Auto-fill from iTunes</button>
+    </div>
+    <div id="song-fields"></div>
+    <div class="modal-actions">
+      <button class="btn-delete" id="delete-btn" onclick="deleteItem()" style="display:none">Remove</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveItem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#7c3aed','#0891b2','#059669','#d97706','#dc2626','#db2777','#4f46e5'];
+
+const HERO_POS = {
+  1: 'center 20%',   // The Strokes - wide landscape
+  2: 'center 15%',   // ABBA - faces near top
+  3: 'center 25%',   // Pink Floyd - wide group
+  4: 'center 15%',   // Nirvana - faces near top
+  5: 'center 20%',   // Weezer
+  6: 'center 20%',   // Cake
+  7: 'center 20%',   // BTS - wide shoot
+  8: 'center 15%',   // Radiohead - faces near top
+  9: 'center 25%',   // Yeah Yeah Yeahs
+  10: 'center 20%',  // Queen
+};
+
+const ARTIST_BIOS = {
+  1:  "The Strokes almost single-handedly revived rock and roll in the early 2000s with their debut <em>Is This It</em>. Their effortlessly cool, lo-fi sound defined a generation of indie kids.",
+  2:  "ABBA turned Scandinavian pop into a global phenomenon, crafting melodies so precise and irresistible they've never really gone out of style. Few groups have ever matched their songwriting craft.",
+  3:  "Pink Floyd built cathedrals out of sound — epic, philosophical rock that rewired what an album could be. <em>The Dark Side of the Moon</em> is one of the most fully realized records ever made.",
+  4:  "Nirvana channeled teenage alienation into three-minute explosions that brought alternative rock to the mainstream and changed music overnight. Kurt Cobain's songwriting remains genuinely peerless.",
+  5:  "Weezer fused nerdy sincerity with crunchy power-pop hooks in a way nobody else has pulled off. Their blue album is a perfect record — every single song earns its place.",
+  6:  "Cake built a sound unlike anyone else: dry, sardonic vocals over spare funk-inflected grooves. Their best songs feel like short films — deadpan, cinematic, and oddly moving.",
+  7:  "BTS transcended the K-pop genre entirely, building a global fanbase through music that's genuinely emotionally intelligent. They write about identity, mental health, and belonging with real sincerity.",
+  8:  "Radiohead are one of the few bands who kept reinventing themselves without losing what made them great. From britpop to avant-garde electronics, Thom Yorke's voice ties it all together.",
+  9:  "Yeah Yeah Yeahs made art-punk feel dangerous and glamorous at the same time. Karen O is one of the great rock frontpeople of her generation — raw, theatrical, and completely magnetic.",
+  10: "Queen packed more ideas into a single song than most bands manage in a career. Freddie Mercury's voice and showmanship were one-of-a-kind, and their catalog still sounds enormous.",
+};
+
+let artists = [
+  {
+    id: 1, name: "The Strokes", genre: "Indie Rock",
+    bandPhoto: "https://lh3.googleusercontent.com/QdxnTbXnfk-f0uP-7x9q2uYEkwNDLvDsEd7ViMBxB1jEIudgCUkxI7YGnZlL_IPdVRlgbOa1Mc4r6w=w2880-h1200-p-l90-rj",
+    tilePhoto: "https://cdn-p.smehost.net/sites/005297e5d91d4996984e966fac4389ea/wp-content/uploads/2020/02/The-Strokes-2020.jpg",
+    songs: [
+      { title: "Machu Picchu", album: "Angles", art: "https://i.scdn.co/image/ab67616d0000b273397d02cfe1aab2923f9d1697", apple: "https://music.apple.com/us/album/machu-picchu/425824204?i=425824211", spotify: "https://open.spotify.com/track/6QNnvkgk4DmRzosGBODltZ" },
+      { title: "Vision of Division", album: "First Impressions of Earth", art: "https://i.scdn.co/image/ab67616d0000b2736898a982ff3c6049ba52586c", apple: "https://music.apple.com/us/album/vision-of-division/716092891?i=716093044", spotify: "https://open.spotify.com/track/4RvWPyBa6LPDXL0jtR4RBZ" },
+      { title: "You Only Live Once", album: "First Impressions of Earth", art: "https://i.scdn.co/image/ab67616d0000b2736898a982ff3c6049ba52586c", apple: "https://music.apple.com/us/album/you-only-live-once/716092891?i=716092900", spotify: "https://open.spotify.com/track/6mVD1SfTvlFAPVi7txFL5H" },
+      { title: "Meet Me in the Bathroom", album: "Room on Fire", art: "https://i.scdn.co/image/ab67616d0000b2730f35726025e0f025da4c688f", apple: "https://music.apple.com/us/album/meet-me-in-the-bathroom/302987557?i=302987576", spotify: "https://open.spotify.com/track/5KeC6M4tJBFLXhJRKwMYd2" },
+      { title: "You Talk Way Too Much", album: "Room on Fire", art: "https://i.scdn.co/image/ab67616d0000b2730f35726025e0f025da4c688f", apple: "https://music.apple.com/us/album/you-talk-way-too-much/251098462?i=251098567", spotify: "https://open.spotify.com/track/1CWAS3EgFov4R3sNQ7UXmL" }
+    ]
+  },
+  {
+    id: 2, name: "ABBA", genre: "Pop",
+    bandPhoto: "https://cdn.britannica.com/40/249540-050-8F2CA84B/1974-in-Stockholm-shows-the-Swedish-pop-group-Abba-Eurovision-Song-Contest.jpg",
+    tilePhoto: "https://m.media-amazon.com/images/M/MV5BYzQ3MDg0OTctN2MxZS00N2U5LTkzMDAtNTkwZjJkNTYxMTRkXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+    songs: [
+      { title: "Chiquitita", album: "Voulez-Vous", art: "https://i.scdn.co/image/ab67616d0000b2734864124e98f306c2d18ec280", apple: "https://music.apple.com/us/album/chiquitita/1422648980?i=1422649010", spotify: "https://open.spotify.com/track/0ByMNEPAPpOR5H69DVrTNy" },
+      { title: "Gimme! Gimme! Gimme!", album: "Greatest Hits Vol. 2", art: "https://i.scdn.co/image/ab67616d0000b2734864124e98f306c2d18ec280", apple: "https://music.apple.com/us/album/gimme-gimme-gimme-a-man-after-midnight/1422648980?i=1422649115", spotify: "https://open.spotify.com/track/3FWvqO6v6n0bMwAGjGWOiJ" },
+      { title: "The Name of the Game", album: "The Album", art: "https://i.scdn.co/image/ab67616d0000b2734864124e98f306c2d18ec280", apple: "https://music.apple.com/us/album/the-name-of-the-game/1422648980?i=1422649060", spotify: "https://open.spotify.com/track/6ZZQmh6xCBnHKMGeFetSsp" },
+      { title: "One of Us", album: "The Visitors", art: "https://i.scdn.co/image/ab67616d0000b2734864124e98f306c2d18ec280", apple: "https://music.apple.com/us/album/one-of-us/1422648980?i=1422649150", spotify: "https://open.spotify.com/track/0k5GFKBJWlcuS1CWDM3P1K" },
+      { title: "Andante, Andante", album: "Super Trouper", art: "https://i.scdn.co/image/ab67616d0000b2734864124e98f306c2d18ec280", apple: "https://music.apple.com/us/album/andante-andante/1422649789?i=1422649806", spotify: "https://open.spotify.com/track/2YTsMUHiEBnMnmuHIqHKIS" }
+    ]
+  },
+  {
+    id: 3, name: "Pink Floyd", genre: "Progressive Rock",
+    bandPhoto: "https://upload.wikimedia.org/wikipedia/commons/1/1d/Pink_Floyd%2C_1971_%28HQ%29.jpg",
+    tilePhoto: "https://cdn.artphotolimited.com/images/652574abbd40b862c676a918/300x300/pink-floyd-legende-du-rock.jpg",
+    songs: [
+      { title: "Comfortably Numb", album: "The Wall", art: "https://i.scdn.co/image/ab67616d0000b273f34e8811de255b34c56301d8", apple: "https://music.apple.com/us/album/comfortably-numb/1065973699?i=1065975888", spotify: "https://open.spotify.com/track/7q3kkfAVpmcZ8g6JUThi3o" },
+      { title: "Any Colour You Like", album: "The Dark Side of the Moon", art: "https://i.scdn.co/image/ab67616d0000b273f6b665715065cbfb3b95ca9d", apple: "https://music.apple.com/us/album/any-colour-you-like/1065973699?i=1065974960", spotify: "https://open.spotify.com/track/2ctvdKmETyYzPpViAx8Nco" },
+      { title: "Time", album: "The Dark Side of the Moon", art: "https://i.scdn.co/image/ab67616d0000b273f6b665715065cbfb3b95ca9d", apple: "https://music.apple.com/us/album/time/1065973699?i=1065973972", spotify: "https://open.spotify.com/track/3TO8CGPpbJADLfZ4T5CQ8k" },
+      { title: "Young Lust", album: "The Wall", art: "https://i.scdn.co/image/ab67616d0000b273f34e8811de255b34c56301d8", apple: "https://music.apple.com/us/album/young-lust/1065973699?i=1065975876", spotify: "https://open.spotify.com/track/5YxiCbJI0RBpWIFqlJEzqW" },
+      { title: "Hey You", album: "The Wall", art: "https://i.scdn.co/image/ab67616d0000b273f34e8811de255b34c56301d8", apple: "https://music.apple.com/us/album/hey-you/1065973699?i=1065975880", spotify: "https://open.spotify.com/track/1Zypzp4T58SVvNBuGWPwNr" }
+    ]
+  },
+  {
+    id: 4, name: "Nirvana", genre: "Grunge",
+    bandPhoto: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQp5vIPVCXcwYwSn3hcqbbW0SvVwYSq4R50Zg&s",
+    tilePhoto: "https://www.hollywoodreporter.com/wp-content/uploads/2011/09/nirvana-publicity-michael-lavine-2-a-l.jpg?w=1440&h=810&crop=1",
+    songs: [
+      { title: "About a Girl", album: "Bleach", art: "https://i.scdn.co/image/ab67616d0000b273c4f52ef8782f0e8ede4c1aaf", apple: "https://music.apple.com/us/album/about-a-girl/1440783617?i=1440783619", spotify: "https://open.spotify.com/track/3YCKuqpv9nCsIKoKTzBtYi" },
+      { title: "All Apologies", album: "In Utero", art: "https://i.scdn.co/image/ab67616d0000b273c4f52ef8782f0e8ede4c1aaf", apple: "https://music.apple.com/us/album/all-apologies/1440939963?i=1440940150", spotify: "https://open.spotify.com/track/55SKi5T4S5DjPIEXaW2bRw" },
+      { title: "Polly", album: "Nevermind", art: "https://i.scdn.co/image/ab67616d0000b273fbc71c99f9c1296c56dd51b6", apple: "https://music.apple.com/us/album/polly/1440783617?i=1440783630", spotify: "https://open.spotify.com/track/5YCxOYMaGYzpFPFDNiWIFR" },
+      { title: "Something in the Way", album: "Nevermind", art: "https://i.scdn.co/image/ab67616d0000b273fbc71c99f9c1296c56dd51b6", apple: "https://music.apple.com/us/album/something-in-the-way/1440783617?i=1440783641", spotify: "https://open.spotify.com/track/3RIgHHNqpWFgjSgmLFvEXg" },
+      { title: "Where Did You Sleep Last Night", album: "MTV Unplugged in New York", art: "https://i.scdn.co/image/ab67616d0000b273c4f52ef8782f0e8ede4c1aaf", apple: "https://music.apple.com/us/album/where-did-you-sleep-last-night/1440939963?i=1440940160", spotify: "https://open.spotify.com/track/1yjpYCGGDFiMJrMDMFEVH3" }
+    ]
+  },
+  {
+    id: 5, name: "Weezer", genre: "Alternative Rock",
+    bandPhoto: "https://static.wikia.nocookie.net/weezer/images/2/2b/Weezer.jpg/revision/latest/scale-to-width-down/1200?cb=20220814145933",
+    tilePhoto: "https://www.popmatters.com/wp-content/uploads/2021/01/img-41971.jpg",
+    songs: [
+      { title: "Undone – The Sweater Song", album: "Weezer (Blue Album)", art: "https://i.scdn.co/image/ab67616d0000b273345536847e60f622ee0eae96", apple: "https://music.apple.com/us/album/undone-the-sweater-song/1440919281?i=1440919488", spotify: "https://open.spotify.com/track/6vEA8MslyLBJbJPnzX0xvV" },
+      { title: "Holiday", album: "Weezer (Blue Album)", art: "https://i.scdn.co/image/ab67616d0000b273345536847e60f622ee0eae96", apple: "https://music.apple.com/us/album/holiday/1440919281?i=1440919496", spotify: "https://open.spotify.com/track/6wXHFNGXxGMvJNw3pKMxKo" },
+      { title: "Say It Ain't So", album: "Weezer (Blue Album)", art: "https://i.scdn.co/image/ab67616d0000b273345536847e60f622ee0eae96", apple: "https://music.apple.com/us/album/say-it-aint-so/1440919281?i=1440919500", spotify: "https://open.spotify.com/track/1JhJuPHGRNZqmxTqDiONcb" },
+      { title: "Island in the Sun", album: "Weezer (Green Album)", art: "https://i.scdn.co/image/ab67616d0000b27349052c8767d68e177fb704a0", apple: "https://music.apple.com/us/album/island-in-the-sun/1440937217?i=1440937453", spotify: "https://open.spotify.com/track/2ALqatx3bGMIYiVL3KFQVY" },
+      { title: "Perfect Situation", album: "Make Believe", art: "https://i.scdn.co/image/ab67616d0000b273345536847e60f622ee0eae96", apple: "https://music.apple.com/us/album/perfect-situation/1440937217?i=1440937460", spotify: "https://open.spotify.com/track/5bCkHRmcIfMrDcFEJp37p8" }
+    ]
+  },
+  {
+    id: 6, name: "Cake", genre: "Alternative Rock",
+    bandPhoto: "https://thebluegrasssituation.com/wp-content/uploads/2021/06/Lead-10-scaled.jpg",
+    tilePhoto: "https://i0.wp.com/roughdraftatlanta.com/wp-content/uploads/2024/05/CAKE.jpg?fit=640%2C407&ssl=1",
+    songs: [
+      { title: "Love You Madly", album: "Comfort Eagle", art: "https://i.scdn.co/image/ab67616d0000b27383c0582dcebae5e16553bd2d", apple: "https://music.apple.com/us/album/love-you-madly/1440820181?i=1440820510", spotify: "https://open.spotify.com/track/6P7pHfhbUKlGKxb7dZGZwK" },
+      { title: "Frank Sinatra", album: "Fashion Nugget", art: "https://i.scdn.co/image/ab67616d0000b2737abcd966d8f84b2d031a7739", apple: "https://music.apple.com/us/album/frank-sinatra/1440820181?i=1440820196", spotify: "https://open.spotify.com/track/5oRcPlkjPGFAkHSHqtbCkX" },
+      { title: "Wheels", album: "Pressure Chief", art: "https://i.scdn.co/image/ab67616d0000b27383c0582dcebae5e16553bd2d", apple: "https://music.apple.com/us/album/wheels/1440820181?i=1440820520", spotify: "https://open.spotify.com/track/3EIBBfDeGIFBBMWIpkbOFj" },
+      { title: "War Pigs", album: "Fashion Nugget", art: "https://i.scdn.co/image/ab67616d0000b2737abcd966d8f84b2d031a7739", apple: "https://music.apple.com/us/album/war-pigs-f-c-k-the-pain-away/1440820181?i=1440820208", spotify: "https://open.spotify.com/track/3B7Md3vCRiEQHBGBMiFVdU" },
+      { title: "The Distance", album: "Fashion Nugget", art: "https://i.scdn.co/image/ab67616d0000b2737abcd966d8f84b2d031a7739", apple: "https://music.apple.com/us/album/the-distance/1440820181?i=1440820185", spotify: "https://open.spotify.com/track/1E4MFJfN1HdZiEcOKLF5jU" }
+    ]
+  },
+  {
+    id: 7, name: "BTS", genre: "K-Pop",
+    bandPhoto: "https://variety.com/wp-content/uploads/2020/09/bts-variety-cover-shoot-full-band-1-16x9-1.jpg",
+    tilePhoto: "https://i.pinimg.com/736x/7e/c4/bd/7ec4bdfa68c42e6e28705d898c556ec6.jpg",
+    songs: [
+      { title: "MIC Drop (Korean Version)", album: "You Never Walk Alone", art: "https://i.scdn.co/image/ab67616d0000b2731fd0a8fc28b2a0a5d9cdc6c6", apple: "https://music.apple.com/us/album/mic-drop/1217278298?i=1217278541", spotify: "https://open.spotify.com/track/4rOoJ6Egrf8K2IrywzwOMk" },
+      { title: "Anpanman", album: "Love Yourself: Tear", art: "https://i.scdn.co/image/ab67616d0000b273829305487c8f3b96a1d955b3", apple: "https://music.apple.com/us/album/anpanman/1374481534?i=1374481549", spotify: "https://open.spotify.com/track/3yGMNEDHkTiGAGYLkCsJkG" },
+      { title: "Home", album: "Map of the Soul: Persona", art: "https://i.scdn.co/image/ab67616d0000b27318d0ed4f969b376893f9a38f", apple: "https://music.apple.com/us/album/home/1459083545?i=1459083557", spotify: "https://open.spotify.com/track/3BiRZLbU2TNb9VaP9BSWB7" },
+      { title: "Baepsae", album: "The Most Beautiful Moment in Life Pt. 2", art: "https://i.scdn.co/image/ab67616d0000b273c07d5d2fdc02ae252fcd07e5", apple: "https://music.apple.com/us/album/baepsae/1065912545?i=1065912557", spotify: "https://open.spotify.com/track/5O6jAMPEkpf7gOJQDLPdCt" },
+      { title: "Black Swan", album: "Map of the Soul: 7", art: "https://i.scdn.co/image/ab67616d0000b27318d0ed4f969b376893f9a38f", apple: "https://music.apple.com/us/album/black-swan/1494318298?i=1494318302", spotify: "https://open.spotify.com/track/1RPCCSxkIpCfDvBNkBmSIJ" }
+    ]
+  },
+  {
+    id: 8, name: "Radiohead", genre: "Alternative Rock",
+    bandPhoto: "https://cdn.britannica.com/98/162198-050-6452139D/Radiohead-business-models-British-performers-innovator-Internet-2012.jpg",
+    tilePhoto: "https://m.media-amazon.com/images/M/MV5BZmU1OGNmZjMtY2ZlZi00YTI3LTk2ODctYjg1YjYyMDNmZTc0XkEyXkFqcGc@._V1_.jpg",
+    songs: [
+      { title: "My Iron Lung", album: "The Bends", art: "https://i.scdn.co/image/ab67616d0000b273934de03df2cfb4cb0cddedf5", apple: "https://music.apple.com/us/album/my-iron-lung/1097862870?i=1097862951", spotify: "https://open.spotify.com/track/1nGHkFCDL8eTkWsSFqCkP1" },
+      { title: "Paranoid Android", album: "OK Computer", art: "https://i.scdn.co/image/ab67616d0000b273c8b444df094279e70d0ed856", apple: "https://music.apple.com/us/album/paranoid-android/1097862870?i=1097863055", spotify: "https://open.spotify.com/track/6LgJvl0Xdtc73RJ1mmpgpM" },
+      { title: "Just", album: "The Bends", art: "https://i.scdn.co/image/ab67616d0000b273934de03df2cfb4cb0cddedf5", apple: "https://music.apple.com/us/album/just/1097862870?i=1097862979", spotify: "https://open.spotify.com/track/1HKv4am3GEML8Q9sbzYFSJ" },
+      { title: "Creep", album: "Pablo Honey", art: "https://i.scdn.co/image/ab67616d0000b273ec548c00d3ac2f10be73366d", apple: "https://music.apple.com/us/album/creep/1097862870?i=1097863238", spotify: "https://open.spotify.com/track/70LcF31zb1H0PyJoS1Sx1r" },
+      { title: "No Surprises", album: "OK Computer", art: "https://i.scdn.co/image/ab67616d0000b273c8b444df094279e70d0ed856", apple: "https://music.apple.com/us/album/no-surprises/1097862870?i=1097863101", spotify: "https://open.spotify.com/track/10nyNJ6zNy2YVYLrcwLccB" }
+    ]
+  },
+  {
+    id: 9, name: "Yeah Yeah Yeahs", genre: "Indie Rock",
+    bandPhoto: "https://media.pitchfork.com/photos/592c610c0c2bba1b7de0501e/2:1/w_2560%2Cc_limit/62bfa99b.jpg",
+    tilePhoto: "https://res.cloudinary.com/thefader/image/upload/w_1440,c_limit,f_auto,q_auto:eco/ehtqjkvjqze0zmlj8ch8.jpg?_a=BACAGSEv/yeah-yeah-yeahs-interview-2003.jpg",
+    songs: [
+      { title: "Down Boy", album: "Fever to Tell", art: "https://i.scdn.co/image/ab67616d0000b27368a3c69afbca8014ed4a80cd", apple: "https://music.apple.com/us/album/down-boy/1440916724?i=1440916991", spotify: "https://open.spotify.com/track/0bLmvA8kVQbCqVIHRhiYnH" },
+      { title: "Heads Will Roll", album: "It's Blitz!", art: "https://i.scdn.co/image/ab67616d0000b27354cea3f43f17b2ee901c7c7f", apple: "https://music.apple.com/us/album/heads-will-roll/1440916724?i=1440917149", spotify: "https://open.spotify.com/track/6Qyc6fS4DsZjB2mRW9DsQs" },
+      { title: "Gold Lion", album: "Show Your Bones", art: "https://i.scdn.co/image/ab67616d0000b27354cea3f43f17b2ee901c7c7f", apple: "https://music.apple.com/us/album/gold-lion/1440916724?i=1440917060", spotify: "https://open.spotify.com/track/3i4bYBPGIpDiHkmVm1GBIV" },
+      { title: "Zero", album: "It's Blitz!", art: "https://i.scdn.co/image/ab67616d0000b27354cea3f43f17b2ee901c7c7f", apple: "https://music.apple.com/us/album/zero/1440916724?i=1440917133", spotify: "https://open.spotify.com/track/1HsxcJbTwAhfXZxY0tFWxN" },
+      { title: "Date with the Night", album: "Fever to Tell", art: "https://i.scdn.co/image/ab67616d0000b27368a3c69afbca8014ed4a80cd", apple: "https://music.apple.com/us/album/date-with-the-night/1440916724?i=1440916984", spotify: "https://open.spotify.com/track/2WLpUlGFgHm0PuSbD1LzxS" }
+    ]
+  },
+  {
+    id: 10, name: "Queen", genre: "Rock",
+    bandPhoto: "https://www.udiscovermusic.com/wp-content/uploads/2019/07/Queen-mid-70s-approved-photo-03-web-optimised-1000-1000x600.jpg",
+    tilePhoto: "https://coronadoexplorer.com/wp-content/uploads/2019/01/3474558151_220d8ed0e2.jpg",
+    songs: [
+      { title: "Bohemian Rhapsody", album: "A Night at the Opera", art: "https://i.scdn.co/image/ab67616d0000b273a461aa96bd9a8fcd0a492aee", apple: "https://music.apple.com/us/album/bohemian-rhapsody/1440806025?i=1440806041", spotify: "https://open.spotify.com/track/7tFiyTwD0nx5a1eklYtX2J" },
+      { title: "Don't Stop Me Now", album: "Jazz", art: "https://i.scdn.co/image/ab67616d0000b27361b719cc3813cccb3ad4d90b", apple: "https://music.apple.com/us/album/dont-stop-me-now/1440806025?i=1440806055", spotify: "https://open.spotify.com/track/5T8EDUDqKcs6OSOwEsfqG7" },
+      { title: "Killer Queen", album: "Sheer Heart Attack", art: "https://i.scdn.co/image/ab67616d0000b273a461aa96bd9a8fcd0a492aee", apple: "https://music.apple.com/us/album/killer-queen/1440806025?i=1440806033", spotify: "https://open.spotify.com/track/3M2DI5mr6KLBQzZjJLDZMJ" },
+      { title: "Play the Game", album: "The Game", art: "https://i.scdn.co/image/ab67616d0000b273a461aa96bd9a8fcd0a492aee", apple: "https://music.apple.com/us/album/play-the-game/1440806025?i=1440806061", spotify: "https://open.spotify.com/track/4GlmSMEZmkGZo8CgZDpTFO" },
+      { title: "Good Old-Fashioned Lover Boy", album: "A Day at the Races", art: "https://i.scdn.co/image/ab67616d0000b27369c47467a7964a67d6dbcf14", apple: "https://music.apple.com/us/album/good-old-fashioned-lover-boy/1440806025?i=1440806047", spotify: "https://open.spotify.com/track/5c4UpBPBCIKOoMVZ5XHJZE" }
+    ]
+  },
+];
+
+let editingId = null;
+let nextId = 11;
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function scrollToArtist(id) {
+  const el = document.getElementById('artist-' + id);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+const ART_PALETTES = {
+  // The Strokes
+  'Angles':                    ['#1c0a2e','#c084fc','AN'],
+  'First Impressions of Earth':['#0a1628','#60a5fa','FI'],
+  'Room on Fire':              ['#1c0808','#f87171','RO'],
+  // ABBA
+  'Voulez-Vous':               ['#1a1000','#fbbf24','VV'],
+  'Greatest Hits Vol. 2':      ['#001a0a','#34d399','GH'],
+  'The Album':                 ['#0a0a1c','#a78bfa','TA'],
+  'The Visitors':              ['#1a0010','#f472b6','TV'],
+  'Super Trouper':             ['#001a14','#2dd4bf','ST'],
+  // Pink Floyd
+  'The Wall':                  ['#0a0a0a','#e2e8f0','TW'],
+  'Wish You Were Here':        ['#0d0d0d','#fb923c','WY'],
+  'The Dark Side of the Moon': ['#000000','#818cf8','DS'],
+  // Nirvana
+  'Nevermind':                 ['#001020','#38bdf8','NV'],
+  'In Utero':                  ['#100020','#e879f9','IU'],
+  // Weezer
+  'Weezer (Blue Album)':       ['#0a1428','#3b82f6','WB'],
+  'Weezer (Green Album)':      ['#0a1e0a','#22c55e','WG'],
+  // Radiohead
+  'Pablo Honey':               ['#1a0a00','#f97316','PH'],
+  'OK Computer':               ['#0f0f0f','#94a3b8','OK'],
+  'The Bends':                 ['#001018','#06b6d4','TB'],
+  // Yeah Yeah Yeahs
+  "Fever to Tell":             ['#1a0a00','#ef4444','FT'],
+  "It's Blitz!":               ['#0a001a','#8b5cf6','IB'],
+  // Cake
+  'Comfort Eagle':             ['#1a1000','#eab308','CE'],
+  'Fashion Nugget':            ['#000f1a','#0ea5e9','FN'],
+  'Prolonging the Magic':      ['#0a1a00','#84cc16','PM'],
+  // BTS
+  'BE':                        ['#0a0014','#a855f7','BE'],
+  'Map of the Soul: Persona':  ['#140010','#ec4899','MS'],
+  'Butter':                    ['#1a1200','#f59e0b','BU'],
+  'You Never Walk Alone':      ['#00101a','#06b6d4','YN'],
+  'Love Yourself: Her':        ['#1a0008','#f43f5e','LY'],
+  // Queen
+  'A Night at the Opera':      ['#1a0a00','#f97316','NO'],
+  'Jazz':                      ['#0a001a','#a78bfa','JZ'],
+  'News of the World':         ['#1a0000','#dc2626','NW'],
+  'A Day at the Races':        ['#001a00','#16a34a','DR'],
+};
+
+function renderAlbumArt(album, idx) {
+  const fallbackColors = [
+    ['#1a1a2e','#e94560'], ['#16213e','#4fc3f7'], ['#1b1b2f','#f72585'],
+    ['#2d1b69','#a78bfa'], ['#1a3a1a','#4ade80'], ['#3d1a00','#fb923c'],
+  ];
+  const palette = ART_PALETTES[album];
+  const bg = palette ? palette[0] : fallbackColors[idx % fallbackColors.length][0];
+  const accent = palette ? palette[1] : fallbackColors[idx % fallbackColors.length][1];
+  const label = palette ? palette[2] : (album||'').replace(/[^a-zA-Z0-9 ]/g,'').trim().split(/\s+/).slice(0,2).map(w=>w[0]?w[0].toUpperCase():'').join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52" style="display:block;border-radius:6px"><rect width="52" height="52" fill="${bg}"/><rect x="4" y="4" width="44" height="44" rx="3" fill="none" stroke="${accent}" stroke-width="0.75" stroke-opacity="0.4"/><text x="26" y="30" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="${accent}" text-anchor="middle" letter-spacing="1">${label}</text><rect y="46" width="52" height="6" fill="${accent}" opacity="0.8"/></svg>`;
+}
+
+function setAlbumArt(id, album, idx) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = renderAlbumArt(album, idx);
+}
+
+function renderGrid() {
+  const grid = document.getElementById('artist-grid');
+  grid.innerHTML = artists.slice(0, 5).map((a, i) => {
+    return `<div class="artist-tile" id="tile-${a.id}" onclick="scrollToArtist(${a.id})">
+      <div class="tile-img-wrap">
+        ${a.tilePhoto
+          ? `<img class="tile-img" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="this.style.display='none'">`
+          : `<div class="tile-placeholder" style="aspect-ratio:4/3;height:auto">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            </div>`}
+        <span class="tile-rank">${i + 1}</span>
+        <div class="tile-overlay">
+          <button class="tile-change-btn" onclick="event.stopPropagation(); openTileSearch(${a.id}, ${i})">✎ Change</button>
+        </div>
+      </div>
+      <div class="tile-label">${esc(a.name) || `Artist ${i + 1}`}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderList() {
+  document.getElementById('artist-list').innerHTML = artists.slice(0, 5).map((a, i) => {
+    const color = COLORS[i % COLORS.length];
+    const songs = a.songs.filter(s => s.title).slice(0, 5);
+    const bio = a.bio !== undefined ? a.bio : (ARTIST_BIOS[a.id] || '');
+    return `<div class="artist-card" id="artist-${a.id}">
+      <div class="artist-hero-wrap">
+        ${a.bandPhoto
+          ? `<img class="artist-hero" src="${esc(a.bandPhoto)}" alt="${esc(a.name)}" style="object-position:${HERO_POS[a.id]||'center 20%'}" onerror="this.style.display='none'">`
+          : `<div class="artist-hero-placeholder" onclick="openEdit(${a.id})">
+              <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>Click Edit to add a band photo URL</span>
+             </div>`}
+        <div class="artist-hero-name-overlay">
+          <div class="artist-hero-name">${esc(a.name)}</div>
+          ${a.genre ? `<div class="artist-hero-genre">${esc(a.genre)}</div>` : ''}
+        </div>
+      </div>
+      <div class="artist-header">
+        <div class="artist-avatar" style="background:linear-gradient(135deg,${color}cc,${color})">${initials(a.name)}</div>
+        <div>
+          <div class="artist-name">${esc(a.name)}</div>
+          ${a.genre ? `<div class="artist-genre">${esc(a.genre)}</div>` : ''}
+        </div>
+        <div class="artist-header-actions">
+          <button class="edit-btn" onclick="openEdit(${a.id})">✎ Edit</button>
+        </div>
+      </div>
+      ${bio ? `<div class="artist-bio">${bio}</div>` : ''}
+      ${songs.length ? `<div class="song-list">
+        ${songs.map((s, si) => `
+        <div class="song-row" id="song-row-${a.id}-${si}" onclick="openSongSearch(${a.id}, ${si})">
+          <span class="song-num">${si + 1}</span>
+          <div class="album-art" id="art-${a.id}-${si}"><svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52" style="display:block;border-radius:6px;opacity:0.3"><rect width="52" height="52" fill="#222"/><text x="26" y="32" font-family="sans-serif" font-size="18" fill="#666" text-anchor="middle">♪</text></svg></div>
+          <div class="song-info">
+            <div class="song-title">${esc(s.title)}<span class="song-edit-hint"> ✎</span></div>
+            ${s.album ? `<div class="song-album">${esc(s.album)}</div>` : ''}
+          </div>
+          <div class="stream-links">
+            ${s.apple ? `<a href="${esc(s.apple)}" id="apple-${a.id}-${si}" class="stream-link apple" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+              <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              Apple</a>` : ''}
+            ${s.spotify ? `<a href="${esc(s.spotify)}" id="spotify-${a.id}-${si}" class="stream-link spotify" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+              <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+              Spotify</a>` : ''}
+          </div>
+        </div>`).join('')}
+        <!-- Song search panel for this artist -->
+        <div class="song-search-panel" id="song-search-panel-${a.id}">
+          <div class="song-search-inner">
+            <span class="song-search-label" id="song-search-label-${a.id}">Song 1</span>
+            <input class="song-search-input" id="song-search-input-${a.id}"
+              placeholder="Search for a song…" autocomplete="off"
+              oninput="onSongSearchInput(${a.id}, this.value)" />
+            <button class="song-search-close" onclick="closeSongSearch(${a.id})">✕</button>
+          </div>
+          <div class="song-search-results" id="song-search-results-${a.id}">
+            <span class="tile-search-hint">Start typing to search…</span>
+          </div>
+        </div>
+      </div>` : `<div style="padding:2rem 1.5rem;color:var(--faint);font-size:13px;">No songs yet — click Edit to add your top 5.</div>`}
+    </div>`;
+  }).join('');
+}
+
+// ── SONG SEARCH (inline per artist) ──
+let activeSongArtistId = null;
+let activeSongSlot = null;
+let songSearchTimer = null;
+
+function openSongSearch(artistId, slotIdx) {
+  // Close any open song search first
+  if (activeSongArtistId !== null) closeSongSearch(activeSongArtistId);
+
+  activeSongArtistId = artistId;
+  activeSongSlot = slotIdx;
+
+  // Highlight active row
+  document.querySelectorAll('.song-row').forEach(r => r.classList.remove('active'));
+  const row = document.getElementById(`song-row-${artistId}-${slotIdx}`);
+  if (row) row.classList.add('active');
+
+  const panel = document.getElementById(`song-search-panel-${artistId}`);
+  if (!panel) return;
+  panel.classList.add('open');
+
+  const label = document.getElementById(`song-search-label-${artistId}`);
+  if (label) label.textContent = `Song ${slotIdx + 1}`;
+
+  const input = document.getElementById(`song-search-input-${artistId}`);
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+
+  document.getElementById(`song-search-results-${artistId}`).innerHTML =
+    '<span class="tile-search-hint">Start typing to search for a song…</span>';
+
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeSongSearch(artistId) {
+  const panel = document.getElementById(`song-search-panel-${artistId}`);
+  if (panel) panel.classList.remove('open');
+  document.querySelectorAll('.song-row').forEach(r => r.classList.remove('active'));
+  if (activeSongArtistId === artistId) {
+    activeSongArtistId = null;
+    activeSongSlot = null;
+  }
+}
+
+function onSongSearchInput(artistId, val) {
+  clearTimeout(songSearchTimer);
+  const results = document.getElementById(`song-search-results-${artistId}`);
+  if (!val || val.length < 2) {
+    results.innerHTML = '<span class="tile-search-hint">Start typing to search for a song…</span>';
+    return;
+  }
+  results.innerHTML = '<span class="tile-loading">Searching…</span>';
+  songSearchTimer = setTimeout(() => runSongSearchInline(artistId, val), 300);
+}
+
+async function runSongSearchInline(artistId, val) {
+  const results = document.getElementById(`song-search-results-${artistId}`);
+  const artist = artists.find(a => a.id === artistId);
+  try {
+    // Search scoped to artist name for better results
+    const q = encodeURIComponent(artist ? `${val} ${artist.name}` : val);
+    const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=8`);
+    const data = await res.json();
+    if (!data.results || !data.results.length) {
+      results.innerHTML = '<span class="tile-search-hint">No songs found — try a different search</span>';
+      return;
+    }
+    results.innerHTML = data.results.map((r, idx) => {
+      const img = (r.artworkUrl100 || '').replace('100x100bb', '60x60bb');
+      return `<div class="song-result-item" onclick="selectSongResult(${artistId}, ${idx})">
+        ${img ? `<img class="song-result-img" src="${img}" onerror="this.style.display='none'">` : ''}
+        <div>
+          <div class="song-result-title">${esc(r.trackName || '')}</div>
+          <div class="song-result-sub">${esc(r.artistName || '')} · ${esc(r.collectionName || '')}</div>
+        </div>
+      </div>`;
+    }).join('');
+    results._data = data.results;
+  } catch(e) {
+    results.innerHTML = '<span class="tile-search-hint">Error — check connection</span>';
+  }
+}
+
+async function selectSongResult(artistId, idx) {
+  const results = document.getElementById(`song-search-results-${artistId}`);
+  const r = results._data && results._data[idx];
+  if (!r) return;
+
+  const artistIdx = artists.findIndex(a => a.id === artistId);
+  if (artistIdx === -1) return;
+
+  const slotIdx = activeSongSlot !== null ? activeSongSlot : 0;
+  const newSong = {
+    title: r.trackName || '',
+    album: r.collectionName || '',
+    art: (r.artworkUrl100 || '').replace('100x100bb', '300x300bb'),
+    apple: r.trackViewUrl || '',
+    spotify: artists[artistIdx].songs[slotIdx]?.spotify || ''
+  };
+
+  // Update the song in place
+  const songs = [...(artists[artistIdx].songs || [])];
+  while (songs.length <= slotIdx) songs.push({ title: '', album: '', art: '', apple: '', spotify: '' });
+  songs[slotIdx] = newSong;
+  artists[artistIdx] = { ...artists[artistIdx], songs };
+
+  closeSongSearch(artistId);
+
+  // Update just this song row without re-rendering everything
+  const titleEl = document.querySelector(`#song-row-${artistId}-${slotIdx} .song-title`);
+  const albumEl = document.querySelector(`#song-row-${artistId}-${slotIdx} .song-album`);
+  const appleEl = document.getElementById(`apple-${artistId}-${slotIdx}`);
+  if (titleEl) titleEl.innerHTML = esc(newSong.title) + '<span class="song-edit-hint"> ✎</span>';
+  if (albumEl) albumEl.textContent = newSong.album;
+  if (appleEl) appleEl.href = newSong.apple;
+
+  // Update album art for this slot
+  const artEl = document.getElementById(`art-${artistId}-${slotIdx}`);
+  if (artEl && newSong.art) {
+    artEl.innerHTML = `<img src="${newSong.art}" alt="${esc(newSong.album)}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
+  }
+}
+
+// ── ALBUM ART LOADING ──
+async function loadAlbumArt() {
+  for (const a of artists) {
+    for (let si = 0; si < a.songs.length; si++) {
+      const s = a.songs[si];
+      const artEl = document.getElementById(`art-${a.id}-${si}`);
+      if (!artEl) continue;
+      try {
+        // Extract track ID from Apple Music URL if available (most reliable)
+        let trackId = null;
+        if (s.apple) {
+          const m = s.apple.match(/\?i=(\d+)/);
+          if (m) trackId = m[1];
+        }
+
+        let art = null;
+        let trackViewUrl = null;
+
+        if (trackId) {
+          // Use exact iTunes lookup — guaranteed correct result
+          const res = await fetch(`https://itunes.apple.com/lookup?id=${trackId}`);
+          const data = await res.json();
+          if (data.results && data.results.length > 0) {
+            const r = data.results[0];
+            art = (r.artworkUrl100 || '').replace('100x100bb', '300x300bb');
+            trackViewUrl = r.trackViewUrl;
+          }
+        }
+
+        // Fallback to fuzzy search only if no track ID
+        if (!art) {
+          const q = encodeURIComponent(`${s.title} ${a.name}`);
+          const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=1`);
+          const data = await res.json();
+          if (data.results && data.results.length > 0) {
+            const r = data.results[0];
+            art = r.artworkUrl100.replace('100x100bb', '300x300bb');
+            trackViewUrl = r.trackViewUrl;
+          }
+        }
+
+        if (art) {
+          artEl.innerHTML = `<img src="${art}" alt="${esc(s.album)}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
+        }
+        if (trackViewUrl && !s.apple) {
+          const appleEl = document.getElementById(`apple-${a.id}-${si}`);
+          if (appleEl) appleEl.href = trackViewUrl;
+        }
+      } catch(e) {}
+    }
+  }
+}
+
+
+// ── TAB RENAME ──
+const TAB_PRESETS = {
+  artists: ['Favorite Artists','Artists On Repeat Right Now','Artists HS Me Would Have On My Wall','Artists I\'d See Live Any Time','Artists Who Changed How I Listen','My Comfort Artists','Artists I Grew Up On'],
+  albums:  ['Favorite Albums','Albums That Defined Me','Desert Island Discs','Albums I\'d Put On A Burned CD For You','Albums HS Me Would Have On My Wall','My Comfort Albums','Records I Know Front To Back','Albums I\'d Play On A Road Trip'],
+  repeat:  ['On Repeat','Songs I\'d Put On A Burned CD For You','Songs for a Road Trip','Songs I Know Every Word To','My Midnight Playlist','Songs That Hit Different'],
+};
+let activeRenameTab = null;
+
+function handleTabClick(tab, btn) {
+  const pop = document.getElementById('tab-rename-pop');
+  if (btn.classList.contains('active')) {
+    // Already on this tab — open rename popover
+    const isOpen = pop.style.display !== 'none' && activeRenameTab === tab;
+    closeTabPop();
+    if (!isOpen) openTabPop(tab, btn);
+  } else {
+    closeTabPop();
+    switchTab(tab, btn);
+  }
+}
+
+function openTabPop(tab, btn) {
+  activeRenameTab = tab;
+  const pop = document.getElementById('tab-rename-pop');
+  const opts = document.getElementById('tab-rename-options');
+  // Build preset list
+  opts.innerHTML = TAB_PRESETS[tab].map(p =>
+    `<button onclick="commitTabRename('${p.replace(/'/g,"\\'")}');event.stopPropagation()"
+      style="display:block;width:100%;background:none;border:none;padding:8px 12px;text-align:left;font-size:13px;font-family:inherit;color:var(--muted);cursor:pointer;border-radius:8px;transition:background 0.1s,color 0.1s;"
+      onmouseover="this.style.background='var(--surface3)';this.style.color='var(--text)'"
+      onmouseout="this.style.background='none';this.style.color='var(--muted)'">${p}</button>`
+  ).join('');
+  document.getElementById('tab-rename-input').value = '';
+  // Position below the clicked tab button
+  const rect = btn.getBoundingClientRect();
+  pop.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+  pop.style.left = Math.min(rect.left + window.scrollX, window.innerWidth - 280) + 'px';
+  pop.style.display = 'block';
+}
+
+function commitTabRename(name) {
+  if (!name || !name.trim() || !activeRenameTab) return;
+  const btn = document.getElementById(`tab-btn-${activeRenameTab}`);
+  if (btn) btn.textContent = name.trim();
+  closeTabPop();
+}
+
+function closeTabPop() {
+  document.getElementById('tab-rename-pop').style.display = 'none';
+  activeRenameTab = null;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#tab-rename-pop') && !e.target.closest('.tab-btn')) closeTabPop();
+});
+
+function renderAll() { renderGrid(); renderList(); renderOtherFavorites(); }
+
+function renderOtherFavorites() {
+  const el = document.getElementById('other-favorites-list');
+  if (!el) return;
+  const others = artists.slice(5);
+  el.innerHTML = others.map((a, i) => {
+    const color = COLORS[(i + 5) % COLORS.length];
+    const songs = a.songs.filter(s => s.title).slice(0, 5);
+    const bio = a.bio !== undefined ? a.bio : (ARTIST_BIOS[a.id] || '');
+    return `<div class="other-fav-item" id="other-fav-${a.id}">
+      <div class="other-fav-trigger" onclick="toggleOtherFav(${a.id})">
+        ${a.tilePhoto
+          ? `<img class="other-fav-img" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="this.style.display='none;'">
+             <div class="other-fav-avatar" id="other-fav-avatar-${a.id}" style="display:none;background:linear-gradient(135deg,${color}cc,${color})">${initials(a.name)}</div>`
+          : `<div class="other-fav-avatar" style="background:linear-gradient(135deg,${color}cc,${color})">${initials(a.name)}</div>`}
+        <div class="other-fav-info">
+          <div class="other-fav-name">${esc(a.name)}</div>
+          ${a.genre ? `<div class="other-fav-genre">${esc(a.genre)}</div>` : ''}
+        </div>
+        <div class="other-fav-right">
+          <button class="other-fav-edit" onclick="event.stopPropagation(); openEdit(${a.id})">✎ Edit</button>
+          <span class="other-fav-chevron">⌄</span>
+        </div>
+      </div>
+      <div class="other-fav-body" id="other-fav-body-${a.id}">
+        ${bio ? `<div class="artist-bio">${bio}</div>` : ''}
+        ${songs.length ? `<div class="song-list">
+          ${songs.map((s, si) => `
+          <div class="song-row" id="song-row-${a.id}-${si}" onclick="openSongSearch(${a.id}, ${si})">
+            <span class="song-num">${si + 1}</span>
+            <div class="album-art" id="art-${a.id}-${si}"><svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52" style="display:block;border-radius:6px;opacity:0.3"><rect width="52" height="52" fill="#222"/><text x="26" y="32" font-family="sans-serif" font-size="18" fill="#666" text-anchor="middle">♪</text></svg></div>
+            <div class="song-info">
+              <div class="song-title">${esc(s.title)}<span class="song-edit-hint"> ✎</span></div>
+              ${s.album ? `<div class="song-album">${esc(s.album)}</div>` : ''}
+            </div>
+            <div class="stream-links">
+              ${s.apple ? `<a href="${esc(s.apple)}" id="apple-${a.id}-${si}" class="stream-link apple" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                Apple</a>` : ''}
+              ${s.spotify ? `<a href="${esc(s.spotify)}" id="spotify-${a.id}-${si}" class="stream-link spotify" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                Spotify</a>` : ''}
+            </div>
+          </div>`).join('')}
+          <div class="song-search-panel" id="song-search-panel-${a.id}">
+            <div class="song-search-inner">
+              <span class="song-search-label" id="song-search-label-${a.id}">Song 1</span>
+              <input class="song-search-input" id="song-search-input-${a.id}"
+                placeholder="Search for a song…" autocomplete="off"
+                oninput="onSongSearchInput(${a.id}, this.value)" />
+              <button class="song-search-close" onclick="closeSongSearch(${a.id})">✕</button>
+            </div>
+            <div class="song-search-results" id="song-search-results-${a.id}">
+              <span class="tile-search-hint">Start typing to search…</span>
+            </div>
+          </div>
+        </div>` : `<div style="padding:1.5rem;color:var(--faint);font-size:13px;">No songs yet — click Edit to add some.</div>`}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Load artwork for the other favorites
+  loadOtherFavArt();
+}
+
+function toggleOtherFav(artistId) {
+  const item = document.getElementById(`other-fav-${artistId}`);
+  if (!item) return;
+  const wasOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  // Load art when first opened
+  if (!wasOpen) {
+    const artist = artists.find(a => a.id === artistId);
+    if (artist) {
+      artist.songs.forEach((s, si) => {
+        if (!s.apple) return;
+        const m = s.apple.match(/\?i=(\d+)/);
+        if (!m) return;
+        fetch(`https://itunes.apple.com/lookup?id=${m[1]}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.results && data.results[0]) {
+              const art = data.results[0].artworkUrl100?.replace('100x100bb','300x300bb');
+              if (art) {
+                const el = document.getElementById(`art-${artistId}-${si}`);
+                if (el) el.innerHTML = `<img src="${art}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
+              }
+            }
+          }).catch(() => {});
+      });
+    }
+  }
+}
+
+async function loadOtherFavArt() {
+  // Preload art for all other favorites (not just on open)
+  for (const a of artists.slice(5)) {
+    for (let si = 0; si < a.songs.length; si++) {
+      const s = a.songs[si];
+      if (!s.art) continue;
+      const el = document.getElementById(`art-${a.id}-${si}`);
+      if (el) el.innerHTML = `<img src="${s.art}" alt="${esc(s.album)}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
+    }
+  }
+}
+
+// ── ON REPEAT DATA ──
+let repeatVideos = [
+  { id: 'r1', videoId: 'nZoHuoFQyrI', title: 'Creep — Radiohead cover' },
+  { id: 'r2', videoId: 'FnDmg-cBVsA', title: 'Amaey Bhashaili Rey' },
+  { id: 'r3', videoId: '_gyultVTesk', title: 'BTS 2.0' },
+  { id: 'r4', videoId: 'DBV_bQiSpck', title: '' },
+  { id: 'r5', videoId: '2dTMIH5gCHg', title: '' },
+];
+
+function extractYouTubeId(input) {
+  input = input.trim();
+  // Full URL patterns
+  const patterns = [
+    /(?:youtube\.com\/watch\?.*v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/  // bare video ID
+  ];
+  for (const p of patterns) {
+    const m = input.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function renderRepeatGrid() {
+  const grid = document.getElementById('repeat-grid');
+  if (!grid) return;
+  grid.innerHTML = repeatVideos.map((v, i) => `
+    <div class="repeat-slot" id="repeat-slot-${v.id}">
+      <div class="repeat-video-wrap">
+        ${v.videoId
+          ? `<a href="https://www.youtube.com/watch?v=${v.videoId}" target="_blank" rel="noopener" style="display:block;position:absolute;inset:0;">
+              <img src="https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg"
+                onerror="this.src='https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg'"
+                style="width:100%;height:100%;object-fit:cover;display:block;">
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25);transition:background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.45)'" onmouseout="this.style.background='rgba(0,0,0,0.25)'">
+                <div style="width:64px;height:64px;background:rgba(255,0,0,0.9);border-radius:14px;display:flex;align-items:center;justify-content:center;">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+              </div>
+            </a>`
+          : `<div class="repeat-empty" onclick="openYTSearch('${v.id}')">
+              <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
+              <span>Add a video</span>
+            </div>`}
+      </div>
+      <div class="repeat-slot-footer">
+        <span class="repeat-slot-title ${v.title ? '' : 'empty'}">${v.title || `Slot ${i + 1}`}</span>
+        <button class="repeat-change-btn" onclick="openYTSearch('${v.id}')">
+          ${v.videoId ? '✎ Change' : '+ Add'}
+        </button>
+      </div>
+      <!-- YouTube search panel -->
+      <div class="yt-search-panel" id="yt-panel-${v.id}">
+        <div class="yt-search-inner">
+          <input class="yt-search-input" id="yt-input-${v.id}"
+            placeholder="Paste a YouTube URL or search…"
+            autocomplete="off"
+            oninput="onYTInput('${v.id}', this.value)"
+            onkeydown="if(event.key==='Enter') tryYTPaste('${v.id}')" />
+          <button class="yt-search-close" onclick="closeYTSearch('${v.id}')">✕</button>
+        </div>
+        <p class="yt-paste-hint">Paste a YouTube link to add instantly, or type to search</p>
+        <div class="yt-results" id="yt-results-${v.id}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── YOUTUBE SEARCH ──
+let ytSearchTimers = {};
+
+function openYTSearch(slotId) {
+  // Close any other open panels
+  repeatVideos.forEach(v => {
+    if (v.id !== slotId) {
+      const p = document.getElementById(`yt-panel-${v.id}`);
+      if (p) p.classList.remove('open');
+    }
+  });
+  const panel = document.getElementById(`yt-panel-${slotId}`);
+  if (!panel) return;
+  panel.classList.add('open');
+  const input = document.getElementById(`yt-input-${slotId}`);
+  if (input) { input.value = ''; input.focus(); }
+  document.getElementById(`yt-results-${slotId}`).innerHTML = '';
+}
+
+function closeYTSearch(slotId) {
+  const panel = document.getElementById(`yt-panel-${slotId}`);
+  if (panel) panel.classList.remove('open');
+}
+
+function onYTInput(slotId, val) {
+  clearTimeout(ytSearchTimers[slotId]);
+  const results = document.getElementById(`yt-results-${slotId}`);
+  if (!val) { results.innerHTML = ''; return; }
+
+  // Try to detect a YouTube URL/ID immediately
+  const ytId = extractYouTubeId(val);
+  if (ytId) {
+    // Direct paste — load it immediately
+    results.innerHTML = `<div class="yt-result-item" onclick="selectYTVideo('${slotId}', '${ytId}', '')">
+      <img class="yt-result-thumb" src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg">
+      <div>
+        <div class="yt-result-title">YouTube video detected</div>
+        <div class="yt-result-channel">Click to add this video</div>
+      </div>
+    </div>`;
+    return;
+  }
+
+  // Otherwise search after a debounce
+  if (val.length < 3) { results.innerHTML = ''; return; }
+  results.innerHTML = '<div style="padding:6px 0;font-size:12px;color:var(--muted)">Searching…</div>';
+  ytSearchTimers[slotId] = setTimeout(() => runYTSearch(slotId, val), 400);
+}
+
+async function tryYTPaste(slotId) {
+  const val = document.getElementById(`yt-input-${slotId}`)?.value || '';
+  const ytId = extractYouTubeId(val);
+  if (ytId) selectYTVideo(slotId, ytId, '');
+}
+
+async function runYTSearch(slotId, query) {
+  const results = document.getElementById(`yt-results-${slotId}`);
+  // Use YouTube's suggest / no-key search via oEmbed + page scrape isn't possible without a key.
+  // Best open approach: use Invidious (open YouTube frontend) search API — no key needed.
+  try {
+    const q = encodeURIComponent(query);
+    const res = await fetch(`https://inv.nadeko.net/api/v1/search?q=${q}&type=video&fields=videoId,title,author&page=1`);
+    if (!res.ok) throw new Error('Search failed');
+    const data = await res.json();
+    if (!data || !data.length) {
+      results.innerHTML = '<div style="padding:6px 0;font-size:12px;color:var(--muted)">No results — try pasting a YouTube URL directly</div>';
+      return;
+    }
+    results._data = data;
+    results.innerHTML = data.slice(0, 6).map((v, idx) => `
+      <div class="yt-result-item" onclick="selectYTVideo('${slotId}', '${v.videoId}', ${JSON.stringify(esc(v.title || ''))})">
+        <img class="yt-result-thumb" src="https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg" onerror="this.style.opacity=0.3">
+        <div>
+          <div class="yt-result-title">${esc(v.title || '')}</div>
+          <div class="yt-result-channel">${esc(v.author || '')}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    results.innerHTML = '<div style="padding:6px 0;font-size:12px;color:var(--muted)">Search unavailable — paste a YouTube URL instead</div>';
+  }
+}
+
+function selectYTVideo(slotId, videoId, title) {
+  const idx = repeatVideos.findIndex(v => v.id === slotId);
+  if (idx === -1) return;
+
+  // If title is empty, try to get it from the thumbnail context
+  repeatVideos[idx] = { ...repeatVideos[idx], videoId, title: title || '' };
+  closeYTSearch(slotId);
+
+  // Update just this slot without full re-render
+  const slot = document.getElementById(`repeat-slot-${slotId}`);
+  if (slot) {
+    const wrap = slot.querySelector('.repeat-video-wrap');
+    wrap.innerHTML = `<a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" rel="noopener" style="display:block;position:absolute;inset:0;">
+      <img src="https://img.youtube.com/vi/${videoId}/maxresdefault.jpg"
+        onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'"
+        style="width:100%;height:100%;object-fit:cover;display:block;">
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25);transition:background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.45)'" onmouseout="this.style.background='rgba(0,0,0,0.25)'">
+        <div style="width:64px;height:64px;background:rgba(255,0,0,0.9);border-radius:14px;display:flex;align-items:center;justify-content:center;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+      </div>
+    </a>`;
+    const titleEl = slot.querySelector('.repeat-slot-title');
+    if (titleEl) {
+      titleEl.textContent = title || 'YouTube video';
+      titleEl.classList.remove('empty');
+    }
+    const btn = slot.querySelector('.repeat-change-btn');
+    if (btn) btn.textContent = '✎ Change';
+    // Re-open panel (already closed above, just re-init)
+    const panel = document.getElementById(`yt-panel-${slotId}`);
+    if (panel) {
+      const input = document.getElementById(`yt-input-${slotId}`);
+      if (input) input.value = '';
+      document.getElementById(`yt-results-${slotId}`).innerHTML = '';
+    }
+  }
+}
+
+
+
+// ── TILE SEARCH (ARTIST) ──
+let activeTileId = null;
+let tileSearchTimer = null;
+
+function openTileSearch(artistId, slotIndex) {
+  activeTileId = artistId;
+  document.querySelectorAll('#artist-grid .artist-tile').forEach(t => t.classList.remove('selected'));
+  const tile = document.getElementById(`tile-${artistId}`);
+  if (tile) tile.classList.add('selected');
+  const panel = document.getElementById('tile-search-panel');
+  panel.classList.add('open');
+  document.getElementById('tile-search-label').textContent = `Slot ${slotIndex + 1}`;
+  const input = document.getElementById('tile-search-input');
+  input.value = '';
+  document.getElementById('tile-search-results').innerHTML = '<span class="tile-search-hint">Start typing to search for an artist…</span>';
+  input.focus();
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeTileSearch() {
+  document.getElementById('tile-search-panel').classList.remove('open');
+  document.querySelectorAll('#artist-grid .artist-tile').forEach(t => t.classList.remove('selected'));
+  activeTileId = null;
+}
+
+function onTileSearchInput(val) {
+  clearTimeout(tileSearchTimer);
+  const results = document.getElementById('tile-search-results');
+  if (!val || val.length < 2) {
+    results.innerHTML = '<span class="tile-search-hint">Start typing to search for an artist…</span>';
+    return;
+  }
+  results.innerHTML = '<span class="tile-loading">Searching…</span>';
+  tileSearchTimer = setTimeout(() => runTileSearch(val), 300);
+}
+
+async function runTileSearch(val) {
+  const results = document.getElementById('tile-search-results');
+  try {
+    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(val)}&media=music&entity=musicArtist&limit=12`);
+    const data = await res.json();
+    if (!data.results || !data.results.length) {
+      results.innerHTML = '<span class="tile-search-hint">No artists found</span>'; return;
+    }
+    results.innerHTML = data.results.map((r, idx) => {
+      const img = (r.artworkUrl100 || '').replace('100x100bb', '80x80bb');
+      return `<div class="tile-result-item" onclick="selectTileArtist(${idx})">
+        ${img ? `<img class="tile-result-img" src="${img}" onerror="this.style.display='none'">` : ''}
+        <div style="min-width:0">
+          <div class="tile-result-name">${esc(r.artistName || '')}</div>
+          <div class="tile-result-sub">${esc(r.primaryGenreName || '')}</div>
+        </div>
+      </div>`;
+    }).join('');
+    results._data = data.results;
+  } catch(e) { results.innerHTML = '<span class="tile-search-hint">Error — check connection</span>'; }
+}
+
+async function fetchArtistPhotoAndBio(artistName) {
+  const base = artistName.replace(/ /g, '_');
+  const slugs = [
+    base,
+    base + '_band',
+    base + '_(musician)',
+    base + '_(rapper)',
+    base + '_(singer)',
+    base + '_(entertainer)',
+  ];
+  for (const slug of slugs) {
+    try {
+      const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.type === 'disambiguation') continue;
+      const img = data.originalimage?.source || data.thumbnail?.source;
+      // Get a clean 1-2 sentence bio from the extract
+      const extract = data.extract || '';
+      const sentences = extract.match(/[^.!?]+[.!?]+/g) || [];
+      const bio = sentences.slice(0, 2).join(' ').trim();
+      if (img || bio) return { photo: img || null, bio: bio || '' };
+    } catch(e) {}
+  }
+  return { photo: null, bio: '' };
+}
+
+async function selectTileArtist(idx) {
+  const results = document.getElementById('tile-search-results');
+  const r = results._data && results._data[idx];
+  if (!r || activeTileId === null) return;
+  const tile = document.getElementById(`tile-${activeTileId}`);
+  if (tile) tile.style.opacity = '0.5';
+
+  // Fetch top 5 songs — keep artwork URLs from iTunes response
+  let songs = [];
+  try {
+    const res = await fetch(`https://itunes.apple.com/lookup?id=${r.artistId}&entity=song&limit=25`);
+    const data = await res.json();
+    songs = (data.results || []).filter(x => x.wrapperType === 'track').slice(0, 5).map(s => ({
+      title: s.trackName || '',
+      album: s.collectionName || '',
+      art: (s.artworkUrl100 || '').replace('100x100bb', '300x300bb'),
+      apple: s.trackViewUrl || '',
+      spotify: ''
+    }));
+  } catch(e) {}
+
+  // Fetch artist photo and bio from Wikipedia
+  const { photo: artistPhoto, bio: artistBio } = await fetchArtistPhotoAndBio(r.artistName || '');
+
+  const artistIdx = artists.findIndex(a => a.id === activeTileId);
+  if (artistIdx !== -1) {
+    artists[artistIdx] = {
+      ...artists[artistIdx],
+      name: r.artistName || '',
+      genre: r.primaryGenreName || '',
+      bandPhoto: artistPhoto || '',
+      tilePhoto: artistPhoto || '',
+      bio: artistBio || '',
+      songs: songs.length ? songs : artists[artistIdx].songs
+    };
+  }
+
+  const savedId = activeTileId;
+  closeTileSearch();
+  renderAll();
+
+  // Apply artwork directly from the songs data we already have — no need to re-fetch
+  setTimeout(() => {
+    const updatedArtist = artists.find(a => a.id === savedId);
+    if (updatedArtist) {
+      updatedArtist.songs.forEach((s, si) => {
+        if (s.art) {
+          const artEl = document.getElementById(`art-${savedId}-${si}`);
+          if (artEl) artEl.innerHTML = `<img src="${s.art}" alt="${esc(s.album)}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
+        }
+        if (s.apple) {
+          const appleEl = document.getElementById(`apple-${savedId}-${si}`);
+          if (appleEl) appleEl.href = s.apple;
+        }
+      });
+    }
+    const el = document.getElementById(`artist-${savedId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+// ── TILE SEARCH (ALBUM) ──
+let activeAlbumTileId = null;
+let albumTileSearchTimer = null;
+
+function openAlbumTileSearch(albumId, slotIndex) {
+  activeAlbumTileId = albumId;
+  document.querySelectorAll('#album-grid .artist-tile').forEach(t => t.classList.remove('selected'));
+  const tile = document.getElementById(`album-tile-${albumId}`);
+  if (tile) tile.classList.add('selected');
+  const panel = document.getElementById('album-tile-search-panel');
+  panel.classList.add('open');
+  document.getElementById('album-tile-search-label').textContent = `Slot ${slotIndex + 1}`;
+  const input = document.getElementById('album-tile-search-input');
+  input.value = '';
+  document.getElementById('album-tile-search-results').innerHTML = '<span class="tile-search-hint">Start typing to search for an album…</span>';
+  input.focus();
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeAlbumTileSearch() {
+  document.getElementById('album-tile-search-panel').classList.remove('open');
+  document.querySelectorAll('#album-grid .artist-tile').forEach(t => t.classList.remove('selected'));
+  activeAlbumTileId = null;
+}
+
+function onAlbumTileSearchInput(val) {
+  clearTimeout(albumTileSearchTimer);
+  const results = document.getElementById('album-tile-search-results');
+  if (!val || val.length < 2) {
+    results.innerHTML = '<span class="tile-search-hint">Start typing to search for an album…</span>'; return;
+  }
+  results.innerHTML = '<span class="tile-loading">Searching…</span>';
+  albumTileSearchTimer = setTimeout(() => runAlbumTileSearch(val), 300);
+}
+
+async function runAlbumTileSearch(val) {
+  const results = document.getElementById('album-tile-search-results');
+  try {
+    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(val)}&media=music&entity=album&limit=12`);
+    const data = await res.json();
+    if (!data.results || !data.results.length) {
+      results.innerHTML = '<span class="tile-search-hint">No albums found</span>'; return;
+    }
+    results.innerHTML = data.results.map((r, idx) => {
+      const img = (r.artworkUrl100 || '').replace('100x100bb', '80x80bb');
+      return `<div class="tile-result-item" onclick="selectTileAlbum(${idx})">
+        ${img ? `<img class="tile-result-img" src="${img}" onerror="this.style.display='none'">` : ''}
+        <div style="min-width:0">
+          <div class="tile-result-name">${esc(r.collectionName || '')}</div>
+          <div class="tile-result-sub">${esc(r.artistName || '')} · ${esc((r.releaseDate || '').slice(0, 4))}</div>
+        </div>
+      </div>`;
+    }).join('');
+    results._data = data.results;
+  } catch(e) { results.innerHTML = '<span class="tile-search-hint">Error — check connection</span>'; }
+}
+
+async function selectTileAlbum(idx) {
+  const results = document.getElementById('album-tile-search-results');
+  const r = results._data && results._data[idx];
+  if (!r || activeAlbumTileId === null) return;
+  const tile = document.getElementById(`album-tile-${activeAlbumTileId}`);
+  if (tile) tile.style.opacity = '0.5';
+  // Fetch full tracklist
+  let songs = [];
+  try {
+    const res = await fetch(`https://itunes.apple.com/lookup?id=${r.collectionId}&entity=song`);
+    const data = await res.json();
+    songs = (data.results || []).filter(x => x.wrapperType === 'track').map(s => ({
+      title: s.trackName || '', album: s.collectionName || '', art: '',
+      apple: s.trackViewUrl || '', spotify: ''
+    }));
+  } catch(e) {}
+  const albumIdx = albums.findIndex(a => a.id === activeAlbumTileId);
+  if (albumIdx !== -1) {
+    albums[albumIdx] = { ...albums[albumIdx], name: r.collectionName || '', artist: r.artistName || '',
+      year: (r.releaseDate || '').slice(0, 4), iTunesId: String(r.collectionId),
+      songs: songs.length ? songs : albums[albumIdx].songs };
+  }
+  const savedId = activeAlbumTileId;
+  closeAlbumTileSearch();
+  renderAlbumGrid(); renderAlbumList(); loadAlbumTabArt();
+  setTimeout(() => { const el = document.getElementById(`album-${savedId}`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
+}
+
+// ── TAB SWITCHING ──
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'albums') { renderAlbumGrid(); renderAlbumList(); renderOtherAlbums(); loadAlbumTabArt(); }
+  if (tab === 'repeat') { renderRepeatGrid(); }
+}
+
+// ── ALBUMS DATA ──
+let albums = [
+  { id: 101, name: "The Dark Side of the Moon", artist: "Pink Floyd", year: "1973", genre: "Progressive Rock", iTunesId: "1065973699", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Speak to Me / Breathe", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/speak-to-me-breathe/1065973699?i=1065973954", spotify: "https://open.spotify.com/track/5AkBFlkTNJhqKOd2PZjnRO" },
+    { title: "On the Run", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/on-the-run/1065973699?i=1065973956", spotify: "https://open.spotify.com/track/1dTGxBNVLTHABpHzJqCZNe" },
+    { title: "Time", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/time/1065973699?i=1065973972", spotify: "https://open.spotify.com/track/3TO8CGPpbJADLfZ4T5CQ8k" },
+    { title: "The Great Gig in the Sky", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/the-great-gig-in-the-sky/1065973699?i=1065973958", spotify: "https://open.spotify.com/track/2ctvdKmETyYzPpViAx8Nco" },
+    { title: "Money", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/money/1065973699?i=1065975009", spotify: "https://open.spotify.com/track/0vFOzaXqZHahrZp6enQwQb" },
+    { title: "Us and Them", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/us-and-them/1065973699?i=1065974957", spotify: "https://open.spotify.com/track/1TKTiKp3zbkyrAMHAEbKBK" },
+    { title: "Any Colour You Like", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/any-colour-you-like/1065973699?i=1065974960", spotify: "https://open.spotify.com/track/2ctvdKmETyYzPpViAx8Nco" },
+    { title: "Brain Damage", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/brain-damage/1065973699?i=1065974959", spotify: "https://open.spotify.com/track/5eIDxmWnBmCPuRDhGOcMdj" },
+    { title: "Eclipse", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/eclipse/1065973699?i=1065974962", spotify: "https://open.spotify.com/track/5HNCy40Ni5BZJFw1TKzRsC" }
+  ]},
+  { id: 102, name: "My Beautiful Dark Twisted Fantasy", artist: "Kanye West", year: "2010", genre: "Hip-Hop", iTunesId: "1440742903", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Dark Fantasy", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/dark-fantasy/1440742903?i=1440743174", spotify: "https://open.spotify.com/track/2vSxS08MkX7FMjYkSlHLBd" },
+    { title: "Gorgeous", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/gorgeous/1440742903?i=1440743177", spotify: "https://open.spotify.com/track/5irosTUBBoBCLnFRGgJnGr" },
+    { title: "Power", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/power/1440742903?i=1440743180", spotify: "https://open.spotify.com/track/2gZUPNdnz5Y45eiGxpHGSc" },
+    { title: "All of the Lights (Interlude)", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/all-of-the-lights-interlude/1440742903?i=1440743191", spotify: "https://open.spotify.com/track/0vBs4BFSj16V9lYvJtTGEL" },
+    { title: "All of the Lights", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/all-of-the-lights/1440742903?i=1440743192", spotify: "https://open.spotify.com/track/3n3Ppam7vgaVa1iaRUIOKE" },
+    { title: "Monster", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/monster/1440742903?i=1440743183", spotify: "https://open.spotify.com/track/6AafkuTDDzHLDgLMEhGPRD" },
+    { title: "So Appalled", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/so-appalled/1440742903?i=1440743184", spotify: "https://open.spotify.com/track/4KULAHFfnTn0irOIdTglDM" },
+    { title: "Devil in a New Dress", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/devil-in-a-new-dress/1440742903?i=1440743188", spotify: "https://open.spotify.com/track/4f8V6YGNwRvXMuFmXRlWYm" },
+    { title: "Runaway", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/runaway-feat-pusha-t/1440742903?i=1440743186", spotify: "https://open.spotify.com/track/3DK6m7It6Pw857FcQftMds" },
+    { title: "Hell of a Life", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/hell-of-a-life/1440742903?i=1440743189", spotify: "https://open.spotify.com/track/4CJED9VhKGBBKcvB8rwOmB" },
+    { title: "Blame Game", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/blame-game/1440742903?i=1440743190", spotify: "https://open.spotify.com/track/4gFPSinWJBfXMdLIbr2tCy" },
+    { title: "Lost in the World", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/lost-in-the-world/1440742903?i=1440743193", spotify: "https://open.spotify.com/track/4N3GrJ3JDHmYWg4EWZgqsK" },
+    { title: "Who Will Survive in America", album: "My Beautiful Dark Twisted Fantasy", art: "", apple: "https://music.apple.com/us/album/who-will-survive-in-america/1440742903?i=1440743194", spotify: "https://open.spotify.com/track/2TJuLuAHXHkMiXD44bXMnb" }
+  ]},
+  { id: 103, name: "Is This It", artist: "The Strokes", year: "2001", genre: "Indie Rock", iTunesId: "266376953", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Is This It", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/is-this-it/251098462?i=251098462", spotify: "https://open.spotify.com/track/0MDeqpHYgXxOPRhsHHqBF1" },
+    { title: "The Modern Age", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/the-modern-age/251098462?i=251098470", spotify: "https://open.spotify.com/track/7oPSijsXMBjn3EQMdQTfS8" },
+    { title: "Soma", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/soma/251098462?i=251098473", spotify: "https://open.spotify.com/track/6FJHgLenIQ7iNsyJuFONBX" },
+    { title: "Barely Legal", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/barely-legal/251098462?i=251098475", spotify: "https://open.spotify.com/track/0NqXYnmRbJdm1EeGfFuTEL" },
+    { title: "Someday", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/someday/251098462?i=251098476", spotify: "https://open.spotify.com/track/2vSFEsSDlO0KCIAyAeHOUL" },
+    { title: "Alone, Together", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/alone-together/251098462?i=251098479", spotify: "https://open.spotify.com/track/1rJbK2P9J8vKJZ0N0e5fAn" },
+    { title: "Last Nite", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/last-nite/251098462?i=251098493", spotify: "https://open.spotify.com/track/1o2NpYGA9oA4F09tJuXWvA" },
+    { title: "Hard to Explain", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/hard-to-explain/251098462?i=251098484", spotify: "https://open.spotify.com/track/45eBOvlxfFaR5QLQkMSfkE" },
+    { title: "New York City Cops", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/new-york-city-cops/251098462?i=251098510", spotify: "https://open.spotify.com/track/2fWjBRxVCiTNg1rLMRLDvZ" },
+    { title: "Trying Your Luck", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/trying-your-luck/251098462?i=251098500", spotify: "https://open.spotify.com/track/7ACxMXFfL7bBlJHsIVkUGb" },
+    { title: "Take It or Leave It", album: "Is This It", art: "", apple: "https://music.apple.com/us/album/take-it-or-leave-it/251098462?i=251098505", spotify: "https://open.spotify.com/track/0Nb3a7SKgaINO3kfk8YUJT" }
+  ]},
+  { id: 104, name: "Room on Fire", artist: "The Strokes", year: "2003", genre: "Indie Rock", iTunesId: "302987557", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "What Ever Happened?", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/what-ever-happened/251098462?i=251098556", spotify: "https://open.spotify.com/track/01dN6TkW9cqzrDHjJPW1nj" },
+    { title: "Reptilia", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/reptilia/251098462?i=251098601", spotify: "https://open.spotify.com/track/0VBHMieBqUqGSeiSMkZ3KX" },
+    { title: "Automatic Stop", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/automatic-stop/251098462?i=251098573", spotify: "https://open.spotify.com/track/0x2jUV8f6N6vx11KWLGXWP" },
+    { title: "Entre Dos Aguas", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/entre-dos-aguas/251098462?i=251098581", spotify: "https://open.spotify.com/track/5VJKe0tNV1PO8TIiMjGqaH" },
+    { title: "12:51", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/12-51/251098462?i=251098590", spotify: "https://open.spotify.com/track/0uiFoC0ZlPJWtaEkZ8NHMQ" },
+    { title: "You Talk Way Too Much", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/you-talk-way-too-much/251098462?i=251098567", spotify: "https://open.spotify.com/track/1CWAS3EgFov4R3sNQ7UXmL" },
+    { title: "Meet Me in the Bathroom", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/meet-me-in-the-bathroom/251098462?i=251098697", spotify: "https://open.spotify.com/track/5KeC6M4tJBFLXhJRKwMYd2" },
+    { title: "Under Control", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/under-control/251098462?i=251098611", spotify: "https://open.spotify.com/track/3wGKHUBfHw3DaOqBqt0nGi" },
+    { title: "The Way It Is", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/the-way-it-is/251098462?i=251098623", spotify: "https://open.spotify.com/track/3Hf1oVXhShIRh1rT6lNiOq" },
+    { title: "The End Has No End", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/the-end-has-no-end/251098462?i=251098637", spotify: "https://open.spotify.com/track/1AJn9thNr3QN5GWJhFRpYR" },
+    { title: "I Can't Win", album: "Room on Fire", art: "", apple: "https://music.apple.com/us/album/i-cant-win/251098462?i=251098648", spotify: "https://open.spotify.com/track/1bEBBdx4DJwvuRLi7sGqkj" }
+  ]},
+  { id: 105, name: "First Impressions of Earth", artist: "The Strokes", year: "2006", genre: "Indie Rock", iTunesId: "299740383", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "You Only Live Once", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/you-only-live-once/716092891?i=716092900", spotify: "https://open.spotify.com/track/6mVD1SfTvlFAPVi7txFL5H" },
+    { title: "Juicebox", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/juicebox/716092891?i=716092908", spotify: "https://open.spotify.com/track/3JqPmBPm1IaEHNI7ThAFGa" },
+    { title: "Heart in a Cage", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/heart-in-a-cage/716092891?i=716092917", spotify: "https://open.spotify.com/track/2mzh9H4hx0D44REOFkjOsB" },
+    { title: "Razorblade", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/razorblade/716092891?i=716092925", spotify: "https://open.spotify.com/track/5JVu2D6dtBwH3sUAq0b1TX" },
+    { title: "On the Other Side", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/on-the-other-side/716092891?i=716092958", spotify: "https://open.spotify.com/track/5ZTpCHLUMDCXxLpnPdCEG7" },
+    { title: "Vision of Division", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/vision-of-division/716092891?i=716093044", spotify: "https://open.spotify.com/track/4RvWPyBa6LPDXL0jtR4RBZ" },
+    { title: "Ask Me Anything", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/ask-me-anything/716092891?i=716092979", spotify: "https://open.spotify.com/track/3NuiO0cyL4U1bwf5i2OPQW" },
+    { title: "Electricityscape", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/electricityscape/716092891?i=716092988", spotify: "https://open.spotify.com/track/3L0ToPJLCZpMFhEpaSKQEr" },
+    { title: "Killing Lies", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/killing-lies/716092891?i=716092996", spotify: "https://open.spotify.com/track/6gJZiMqGkHNSqDDqhg2PEo" },
+    { title: "Fear of Sleep", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/fear-of-sleep/716092891?i=716093006", spotify: "https://open.spotify.com/track/1W7U8RAtV6PcT5JgEvFpJf" },
+    { title: "15 Minutes", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/15-minutes/716092891?i=716093016", spotify: "https://open.spotify.com/track/3w3VWxnRBfVR1GsISLTxZ6" },
+    { title: "Ize of the World", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/ize-of-the-world/716092891?i=716093024", spotify: "https://open.spotify.com/track/0gHfUfQIfChBqGcmMdE5WK" },
+    { title: "Evening Sun", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/evening-sun/716092891?i=716093033", spotify: "https://open.spotify.com/track/7qPMTiMMjHkByUFOImHtxq" },
+    { title: "Red Light", album: "First Impressions of Earth", art: "", apple: "https://music.apple.com/us/album/red-light/716092891?i=716093039", spotify: "https://open.spotify.com/track/1jccrMQGiNUANITNGfBdPh" }
+  ]},
+  { id: 106, name: "Angles", artist: "The Strokes", year: "2011", genre: "Indie Rock", iTunesId: "425824204", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Machu Picchu", album: "Angles", art: "", apple: "https://music.apple.com/us/album/machu-picchu/425824204?i=425824211", spotify: "https://open.spotify.com/track/6QNnvkgk4DmRzosGBODltZ" },
+    { title: "Under Cover of Darkness", album: "Angles", art: "", apple: "https://music.apple.com/us/album/under-cover-of-darkness/425824204?i=425824213", spotify: "https://open.spotify.com/track/5TDJHOifx7izdPMhVtPqGh" },
+    { title: "Two Kinds of Happiness", album: "Angles", art: "", apple: "https://music.apple.com/us/album/two-kinds-of-happiness/425824204?i=425824221", spotify: "https://open.spotify.com/track/4wKN0RIXSpLJX7HFMZHMLD" },
+    { title: "You're So Right", album: "Angles", art: "", apple: "https://music.apple.com/us/album/youre-so-right/425824204?i=425824215", spotify: "https://open.spotify.com/track/4zxuLFDIlMQyoGjCVmfmFc" },
+    { title: "Taken for a Fool", album: "Angles", art: "", apple: "https://music.apple.com/us/album/taken-for-a-fool/425824204?i=425824224", spotify: "https://open.spotify.com/track/3mKJbAJnkB0GqPYetSXaJK" },
+    { title: "Games", album: "Angles", art: "", apple: "https://music.apple.com/us/album/games/425824204?i=425824217", spotify: "https://open.spotify.com/track/0x7lZiLJ3ROYjI5rPZFmKS" },
+    { title: "Call Me Back", album: "Angles", art: "", apple: "https://music.apple.com/us/album/call-me-back/425824204?i=425824219", spotify: "https://open.spotify.com/track/3NTsVyXB5YTPD0bWDRvD6H" },
+    { title: "Gratisfaction", album: "Angles", art: "", apple: "https://music.apple.com/us/album/gratisfaction/425824204?i=425824226", spotify: "https://open.spotify.com/track/3NTsVyXB5YTPD0bWDRvD6I" },
+    { title: "Metabolism", album: "Angles", art: "", apple: "https://music.apple.com/us/album/metabolism/425824204?i=425824228", spotify: "https://open.spotify.com/track/2YrTFmhg4GZMVvVe1SLLIH" },
+    { title: "Life Is Simple in the Moonlight", album: "Angles", art: "", apple: "https://music.apple.com/us/album/life-is-simple-in-the-moonlight/425824204?i=425824230", spotify: "https://open.spotify.com/track/1IDirz7BpHhA2FFQhHJvPh" }
+  ]},
+  { id: 107, name: "Gold: Greatest Hits", artist: "ABBA", year: "1992", genre: "Pop", iTunesId: "1422648512", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Dancing Queen", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/dancing-queen/1422648980?i=1422649003", spotify: "https://open.spotify.com/track/0GjEhVFGZW8afUYGChu3Rr" },
+    { title: "Knowing Me, Knowing You", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/knowing-me-knowing-you/1422648980?i=1422649005", spotify: "https://open.spotify.com/track/1Je1IMUlBXfWbRb2tPwDYs" },
+    { title: "Take a Chance on Me", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/take-a-chance-on-me/1422648980?i=1422649007", spotify: "https://open.spotify.com/track/5a7Ohx0oTFaCMkQBGXpDlq" },
+    { title: "Mamma Mia", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/mamma-mia/1422648980?i=1422649001", spotify: "https://open.spotify.com/track/1TfqLAPs4K3s2rJMoCokcE" },
+    { title: "Lay All Your Love on Me", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/lay-all-your-love-on-me/1422648980?i=1422649113", spotify: "https://open.spotify.com/track/1KNa5pBMegSAVOaHPxFRMh" },
+    { title: "Super Trouper", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/super-trouper/1422649789?i=1422649800", spotify: "https://open.spotify.com/track/3PtFGcAFBiAhQi0GWMbPzR" },
+    { title: "I Do, I Do, I Do, I Do, I Do", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/i-do-i-do-i-do-i-do-i-do/1422648980?i=1422648997", spotify: "https://open.spotify.com/track/1jbCG3VH4xAkHO7XfVKQSu" },
+    { title: "The Name of the Game", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/the-name-of-the-game/1422648980?i=1422649060", spotify: "https://open.spotify.com/track/6ZZQmh6xCBnHKMGeFetSsp" },
+    { title: "Voulez-Vous", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/voulez-vous/1422648980?i=1422649109", spotify: "https://open.spotify.com/track/3ymqiPlm7VhFrJ7cBiOpvz" },
+    { title: "Gimme! Gimme! Gimme!", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/gimme-gimme-gimme-a-man-after-midnight/1422648980?i=1422649115", spotify: "https://open.spotify.com/track/3FWvqO6v6n0bMwAGjGWOiJ" },
+    { title: "Fernando", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/fernando/1422648980?i=1422648995", spotify: "https://open.spotify.com/track/0B1Dm6ZmSFzMLFoFJfkm2c" },
+    { title: "Waterloo", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/waterloo/1422648980?i=1422648999", spotify: "https://open.spotify.com/track/1bWoiS9ipnMvjBGRIIovD1" },
+    { title: "Honey, Honey", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/honey-honey/1422648980?i=1422649059", spotify: "https://open.spotify.com/track/3rWUECOFEIfmT4JkTHBMlL" },
+    { title: "The Winner Takes It All", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/the-winner-takes-it-all/1422648980?i=1422649121", spotify: "https://open.spotify.com/track/4wnFNwTtVPFmBipCVmKUmh" },
+    { title: "SOS", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/sos/1422648980?i=1422648993", spotify: "https://open.spotify.com/track/6Fg1CZCMF8OgqKah0gr4PO" },
+    { title: "Does Your Mother Know", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/does-your-mother-know/1422648980?i=1422649111", spotify: "https://open.spotify.com/track/1pMPLbxRyMW7QjY0tEPXZ8" },
+    { title: "One of Us", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/one-of-us/1422648980?i=1422649150", spotify: "https://open.spotify.com/track/0k5GFKBJWlcuS1CWDM3P1K" },
+    { title: "The Day Before You Came", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/the-day-before-you-came/1422648980?i=1422649152", spotify: "https://open.spotify.com/track/0x8PHyfuLaFtpbCHyT71mF" },
+    { title: "Eagle", album: "Gold: Greatest Hits", art: "", apple: "https://music.apple.com/us/album/eagle/1422648980?i=1422649057", spotify: "https://open.spotify.com/track/7vUQbAJHHQFuDlCkfkimEw" }
+  ]},
+  { id: 108, name: "MTV Unplugged in New York", artist: "Nirvana", year: "1994", genre: "Grunge", iTunesId: "1440939963", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "About a Girl", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/about-a-girl-unplugged/1440939963?i=1440940124", spotify: "https://open.spotify.com/track/2TxjFEyjKAMJRPkBIPNVXI" },
+    { title: "Come as You Are", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/come-as-you-are-unplugged/1440939963?i=1440940126", spotify: "https://open.spotify.com/track/3ZMnVOsIdsHEEv5sAMgVzT" },
+    { title: "Jesus Doesn't Want Me for a Sunbeam", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/jesus-doesnt-want-me-for-a-sunbeam-unplugged/1440939963?i=1440940128", spotify: "https://open.spotify.com/track/0KqAXp6LuKoKuBFi5bF9PX" },
+    { title: "The Man Who Sold the World", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/the-man-who-sold-the-world-unplugged/1440939963?i=1440940132", spotify: "https://open.spotify.com/track/2kzGPpHiMiTHgvhFUfhJ4d" },
+    { title: "Pennyroyal Tea", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/pennyroyal-tea-unplugged/1440939963?i=1440940137", spotify: "https://open.spotify.com/track/6IYSSmWC5mMGLiNqNhFNMN" },
+    { title: "Dumb", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/dumb-unplugged/1440939963?i=1440940139", spotify: "https://open.spotify.com/track/0VU4KQYeNPP1LUMJlNKq7e" },
+    { title: "Polly", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/polly-unplugged/1440939963?i=1440940141", spotify: "https://open.spotify.com/track/4EWFoIUwuWVbG90L5TFdOj" },
+    { title: "On a Plain", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/on-a-plain-unplugged/1440939963?i=1440940142", spotify: "https://open.spotify.com/track/3SWTCZP7GFz3HWRK4yHGk7" },
+    { title: "Something in the Way", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/something-in-the-way-unplugged/1440939963?i=1440940144", spotify: "https://open.spotify.com/track/79q6XbJrWdSL48eRwWNBFl" },
+    { title: "Plateau", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/plateau-unplugged/1440939963?i=1440940145", spotify: "https://open.spotify.com/track/0VG9Nl4mKuVpSg8RkH9ZYI" },
+    { title: "Oh Me", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/oh-me-unplugged/1440939963?i=1440940146", spotify: "https://open.spotify.com/track/7c5pMWWQbnxuKP5l0Gl5bE" },
+    { title: "Lake of Fire", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/lake-of-fire-unplugged/1440939963?i=1440940147", spotify: "https://open.spotify.com/track/5Vm5lQE6VtIFqAIBFX8rKG" },
+    { title: "All Apologies", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/all-apologies-unplugged/1440939963?i=1440940150", spotify: "https://open.spotify.com/track/55SKi5T4S5DjPIEXaW2bRw" },
+    { title: "Where Did You Sleep Last Night", album: "MTV Unplugged in New York", art: "", apple: "https://music.apple.com/us/album/where-did-you-sleep-last-night-unplugged/1440939963?i=1440940143", spotify: "https://open.spotify.com/track/1yjpYCGGDFiMJrMDMFEVH3" }
+  ]},
+  { id: 109, name: "Phrazes for the Young", artist: "Julian Casablancas", year: "2009", genre: "Indie Rock", iTunesId: "339162836", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Out of the Blue", album: "Phrazes for the Young", art: "", apple: "https://music.apple.com/us/album/out-of-the-blue/339162836?i=339162851", spotify: "https://open.spotify.com/track/2eJEKBwJEyisCmFsIUqjhI" },
+    { title: "Left & Right in the Dark", album: "Phrazes for the Young", art: "", apple: "https://music.apple.com/us/album/left-right-in-the-dark/339162836?i=339162846", spotify: "https://open.spotify.com/track/4t9C2RFQrXwJYHSWPgCBpe" },
+    { title: "11th Dimension", album: "Phrazes for the Young", art: "", apple: "https://music.apple.com/us/album/11th-dimension/339162836?i=339162843", spotify: "https://open.spotify.com/track/5N1HmHXGnVDJFVUMeUsziL" },
+    { title: "4 Chords of the Apocalypse", album: "Phrazes for the Young", art: "", apple: "https://music.apple.com/us/album/4-chords-of-the-apocalypse/339162836?i=339162854", spotify: "https://open.spotify.com/track/2PUkPCz7kpFhRZHkJBIH3y" },
+    { title: "Ludlow St.", album: "Phrazes for the Young", art: "", apple: "https://music.apple.com/us/album/ludlow-st/339162836?i=339162856", spotify: "https://open.spotify.com/track/6wMlDXCwN5fU1JTfVL7Bde" },
+    { title: "Tourist", album: "Phrazes for the Young", art: "", apple: "https://music.apple.com/us/album/tourist/339162836?i=339162858", spotify: "https://open.spotify.com/track/1QD9P0ZdQmvBQ6VGlJKJxD" },
+    { title: "Glass", album: "Phrazes for the Young", art: "", apple: "https://music.apple.com/us/album/glass/339162836?i=339162860", spotify: "https://open.spotify.com/track/5j6U0cG4bBgVUCJqNFMfEe" },
+    { title: "River of Brakelights", album: "Phrazes for the Young", art: "", apple: "https://music.apple.com/us/album/river-of-brakelights/339162836?i=339162862", spotify: "https://open.spotify.com/track/2Euj0Hc2OBqPf3dFQGVwdS" }
+  ]},
+  { id: 110, name: "The Beatles (White Album)", artist: "The Beatles", year: "1968", genre: "Rock", iTunesId: "1441133180", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Back in the U.S.S.R.", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/back-in-the-u-s-s-r/1441133180?i=1441133689", spotify: "https://open.spotify.com/track/4a6Gs5OEQ0DJbOjLRBRFMh" },
+    { title: "Dear Prudence", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/dear-prudence/1441133180?i=1441133691", spotify: "https://open.spotify.com/track/1TKYPzH66GwsqyJFKFkBHQ" },
+    { title: "Glass Onion", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/glass-onion/1441133180?i=1441133693", spotify: "https://open.spotify.com/track/5HbkCBGgbIVNNkBFRkuLWC" },
+    { title: "Ob-La-Di, Ob-La-Da", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/ob-la-di-ob-la-da/1441133180?i=1441133695", spotify: "https://open.spotify.com/track/1dJ0GzOTpFWEY5HaVALGLt" },
+    { title: "While My Guitar Gently Weeps", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/while-my-guitar-gently-weeps/1441133180?i=1441133712", spotify: "https://open.spotify.com/track/0IT4cGVlakFJRvzqDHrRqJ" },
+    { title: "Happiness Is a Warm Gun", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/happiness-is-a-warm-gun/1441133180?i=1441133700", spotify: "https://open.spotify.com/track/4l8tQMkFXSCvWYS2VDJe7l" },
+    { title: "Blackbird", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/blackbird/1441133180?i=1441133716", spotify: "https://open.spotify.com/track/6vAn5MctvfCiAmrMX6M1eS" },
+    { title: "Birthday", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/birthday/1441133180?i=1441133720", spotify: "https://open.spotify.com/track/2hcMCJBOfqaEasCKP2AXqr" },
+    { title: "Sexy Sadie", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/sexy-sadie/1441133180?i=1441133728", spotify: "https://open.spotify.com/track/7jDdj7sGgTBJjlxfBzJnk2" },
+    { title: "Helter Skelter", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/helter-skelter/1441133180?i=1441133732", spotify: "https://open.spotify.com/track/7AkFGFtlHHVxQn0YmJFZ17" },
+    { title: "Revolution 1", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/revolution-1/1441133180?i=1441133736", spotify: "https://open.spotify.com/track/5CdHFcLnZnWKbNQWlNBKrn" },
+    { title: "Cry Baby Cry", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/cry-baby-cry/1441133180?i=1441133745", spotify: "https://open.spotify.com/track/4GZ7EOCx5XcGGqcpHr3MU2" }
+  ]}
+];
+let nextAlbumId = 111;
+let editingAlbumId = null;
+let modalMode = 'artist'; // 'artist' or 'album'
+
+// ── ALBUM TAB RENDERING ──
+function renderAlbumGrid() {
+  const grid = document.getElementById('album-grid');
+  if (!grid) return;
+  grid.innerHTML = albums.slice(0, 5).map((a, i) => {
+    return `<div class="artist-tile" id="album-tile-${a.id}" onclick="scrollToAlbum(${a.id})">
+      <div class="tile-img-wrap">
+        ${a.tilePhoto
+          ? `<img class="tile-img" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="this.style.display='none'">`
+          : `<div class="tile-placeholder" id="album-tile-inner-${a.id}" style="aspect-ratio:4/3;height:auto">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M16 8l-4 4-2-2-4 4"/></svg>
+            </div>`}
+        <span class="tile-rank">${i + 1}</span>
+        <div class="tile-overlay">
+          <button class="tile-change-btn" onclick="event.stopPropagation(); openAlbumTileSearch(${a.id}, ${i})">✎ Change</button>
+        </div>
+      </div>
+      <div class="tile-label">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.name)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.artist)}${a.year ? ' · ' + esc(a.year) : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAlbumList() {
+  const el = document.getElementById('album-list');
+  if (!el) return;
+  el.innerHTML = albums.slice(0, 5).map((a, i) => {
+    const color = COLORS[i % COLORS.length];
+    const songs = a.songs.filter(s => s.title);
+    return `<div class="artist-card" id="album-${a.id}">
+      ${a.coverPhoto
+        ? `<img class="artist-hero" src="${esc(a.coverPhoto)}" alt="${esc(a.name)}" style="object-fit:cover;object-position:center center;" onerror="this.style.display='none'">`
+        : `<div class="artist-hero-placeholder" id="album-hero-${a.id}" style="cursor:default">
+            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M16 8l-4 4-2-2-4 4"/></svg>
+            <span>${esc(a.name)}</span>
+           </div>`}
+      <div class="artist-header">
+        <div class="artist-avatar" style="background:linear-gradient(135deg,${color}cc,${color})">${initials(a.name)}</div>
+        <div>
+          <div class="artist-name">${esc(a.name)}</div>
+          <div class="artist-genre">${esc(a.artist)}${a.year ? ' · ' + esc(a.year) : ''}</div>
+        </div>
+        <button class="edit-btn" onclick="openEditAlbum(${a.id})">✎ Edit</button>
+      </div>
+      ${songs.length ? `<div class="song-list">
+        ${songs.map((s, si) => `
+        <div class="song-row">
+          <span class="song-num">${si + 1}</span>
+          <div class="album-art" id="albart-${a.id}-${si}"><svg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 52 52' style='display:block;border-radius:6px;opacity:0.3'><rect width='52' height='52' fill='#222'/><text x='26' y='32' font-family='sans-serif' font-size='18' fill='#666' text-anchor='middle'>♪</text></svg></div>
+          <div class="song-info">
+            <div class="song-title">${esc(s.title)}</div>
+            ${s.album ? `<div class="song-album">${esc(s.album)}</div>` : ''}
+          </div>
+          <div class="stream-links">
+            ${s.apple ? `<a href="${esc(s.apple)}" id="apple-${a.id}-${si}" class="stream-link apple" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              Apple</a>` : ''}
+            ${s.spotify ? `<a href="${esc(s.spotify)}" id="spotify-${a.id}-${si}" class="stream-link spotify" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+              Spotify</a>` : ''}
+          </div>
+        </div>`).join('')}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderOtherAlbums() {
+  const el = document.getElementById('other-albums-list');
+  if (!el) return;
+  const others = albums.slice(5);
+  el.innerHTML = others.map((a, i) => {
+    const color = COLORS[(i + 5) % COLORS.length];
+    const songs = a.songs.filter(s => s.title);
+    return `<div class="other-fav-item" id="other-album-${a.id}">
+      <div class="other-fav-trigger" onclick="toggleOtherAlbum(${a.id})">
+        <div class="other-fav-avatar" id="other-album-avatar-${a.id}" style="background:linear-gradient(135deg,${color}cc,${color});border-radius:6px;">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M16 8l-4 4-2-2-4 4"/></svg>
+        </div>
+        <div class="other-fav-info">
+          <div class="other-fav-name">${esc(a.name)}</div>
+          <div class="other-fav-genre">${esc(a.artist)}${a.year ? ' · ' + esc(a.year) : ''}</div>
+        </div>
+        <div class="other-fav-right">
+          <button class="other-fav-edit" onclick="event.stopPropagation(); openEditAlbum(${a.id})">✎ Edit</button>
+          <span class="other-fav-chevron">⌄</span>
+        </div>
+      </div>
+      <div class="other-fav-body" id="other-album-body-${a.id}">
+        ${songs.length ? `<div class="song-list">
+          ${songs.map((s, si) => `
+          <div class="song-row">
+            <span class="song-num">${si + 1}</span>
+            <div class="album-art" id="albart-other-${a.id}-${si}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52" style="display:block;border-radius:6px;opacity:0.3"><rect width="52" height="52" fill="#222"/><text x="26" y="32" font-family="sans-serif" font-size="18" fill="#666" text-anchor="middle">♪</text></svg>
+            </div>
+            <div class="song-info">
+              <div class="song-title">${esc(s.title)}</div>
+              ${s.album ? `<div class="song-album">${esc(s.album)}</div>` : ''}
+            </div>
+            <div class="stream-links">
+              ${s.apple ? `<a href="${esc(s.apple)}" class="stream-link apple" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                Apple</a>` : ''}
+              ${s.spotify ? `<a href="${esc(s.spotify)}" class="stream-link spotify" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                Spotify</a>` : ''}
+            </div>
+          </div>`).join('')}
+        </div>` : `<div style="padding:1.5rem;color:var(--faint);font-size:13px;">No tracks yet — click Edit to add some.</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleOtherAlbum(albumId) {
+  const item = document.getElementById(`other-album-${albumId}`);
+  if (!item) return;
+  const isOpen = item.classList.toggle('open');
+  if (!isOpen || item._artLoaded) return;
+  item._artLoaded = true;
+
+  const album = albums.find(a => a.id === albumId);
+  if (!album) return;
+
+  const applyArt = (url) => {
+    const art = url.replace(/\d+x\d+bb\.jpg/, '300x300bb.jpg').replace(/\d+x\d+bb/, '300x300bb');
+    const avatarEl = document.getElementById(`other-album-avatar-${albumId}`);
+    if (avatarEl) avatarEl.innerHTML = `<img src="${art}" style="width:44px;height:44px;border-radius:6px;object-fit:cover;display:block;">`;
+    album.songs.forEach((s, si) => {
+      const el = document.getElementById(`albart-other-${albumId}-${si}`);
+      if (el) el.innerHTML = `<img src="${art}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
+    });
+  };
+
+  // Try iTunes lookup first, then search fallback
+  const tryLookup = album.iTunesId
+    ? fetch(`https://itunes.apple.com/lookup?id=${album.iTunesId}`).then(r => r.json())
+    : Promise.resolve({ results: [] });
+
+  tryLookup.then(data => {
+    const hit = (data.results || []).find(r => r.artworkUrl100);
+    if (hit) { applyArt(hit.artworkUrl100); return; }
+    // Fallback: search by name
+    return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(album.name + ' ' + album.artist)}&media=music&entity=album&limit=1`)
+      .then(r => r.json())
+      .then(d => { if (d.results?.[0]?.artworkUrl100) applyArt(d.results[0].artworkUrl100); });
+  }).catch(() => { item._artLoaded = false; });
+}
+
+function scrollToAlbum(id) {
+  const el = document.getElementById('album-' + id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Fetch album art for albums tab using iTunes lookup API (exact IDs = correct art)
+async function loadAlbumTabArt() {
+  for (const a of albums) {
+    let artUrl = null;
+
+    // Use exact iTunes ID lookup — match collection by ID
+    if (a.iTunesId) {
+      try {
+        const res = await fetch(`https://itunes.apple.com/lookup?id=${a.iTunesId}&entity=song&limit=1`);
+        const data = await res.json();
+        const results = data.results || [];
+        // The collection result has wrapperType 'collection'; tracks have collectionId matching our ID
+        const albumResult = results.find(r => r.wrapperType === 'collection')
+          || results.find(r => String(r.collectionId) === String(a.iTunesId));
+        if (albumResult?.artworkUrl100) {
+          artUrl = albumResult.artworkUrl100.replace('100x100bb', '1200x1200bb');
+        }
+      } catch(e) {}
+    }
+
+    // Fallback: search by name + artist, find best matching result
+    if (!artUrl) {
+      try {
+        const q = encodeURIComponent(`${a.name} ${a.artist}`);
+        const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=album&limit=5`);
+        const data = await res.json();
+        // Try to find the result that best matches our album name
+        const results = data.results || [];
+        const match = results.find(r =>
+          r.collectionName?.toLowerCase().includes(a.name.toLowerCase()) &&
+          r.artistName?.toLowerCase().includes(a.artist.toLowerCase())
+        ) || results[0];
+        if (match?.artworkUrl100) {
+          artUrl = match.artworkUrl100.replace('100x100bb', '1200x1200bb');
+        }
+      } catch(e) {}
+    }
+
+    if (!artUrl) continue;
+    const tileUrl = artUrl.replace('1200x1200bb', '400x400bb');
+
+    // Update grid tile — only replace the image inside tile-img-wrap, not the whole tile
+    const tileEl = document.getElementById('album-tile-' + a.id);
+    if (tileEl && !a.tilePhoto) {
+      const imgWrap = tileEl.querySelector('.tile-img-wrap');
+      const placeholder = tileEl.querySelector('.tile-placeholder');
+      if (imgWrap) {
+        // Replace placeholder with actual image, keeping rank and overlay
+        if (placeholder) placeholder.outerHTML = `<img class="tile-img" src="${tileUrl}" alt="${esc(a.name)}" style="width:100%;height:100%;object-fit:cover;display:block;">`;
+        else if (!imgWrap.querySelector('img')) {
+          imgWrap.insertAdjacentHTML('afterbegin', `<img class="tile-img" src="${tileUrl}" alt="${esc(a.name)}" style="width:100%;height:100%;object-fit:cover;display:block;">`);
+        }
+      }
+    }
+
+    // Update hero
+    const heroEl = document.getElementById('album-hero-' + a.id);
+    if (heroEl && !a.coverPhoto) {
+      heroEl.outerHTML = `<img class="artist-hero" src="${artUrl}" alt="${a.name}" style="object-fit:cover;object-position:center center;">`;
+    }
+
+    // Update song art + fix Apple Music links per song
+    for (let si = 0; si < a.songs.length; si++) {
+      const s = a.songs[si];
+      const el = document.getElementById(`albart-${a.id}-${si}`);
+      if (!el) continue;
+      el.innerHTML = `<img src="${tileUrl}" alt="${s.album}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
+      // Fix Apple Music link with exact song search
+      try {
+        const q = encodeURIComponent(`${s.title} ${a.artist}`);
+        const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=1`);
+        const data = await res.json();
+        if (data.results && data.results.length > 0) {
+          const r = data.results[0];
+          const appleEl = document.getElementById(`apple-${a.id}-${si}`);
+          if (appleEl && r.trackViewUrl) appleEl.href = r.trackViewUrl;
+        }
+      } catch(e) {}
+    }
+  }
+}
+
+// ── ALBUM MODAL ──
+function openAddAlbum() {
+  modalMode = 'album';
+  currentSearchContext = 'album';
+  selectediTunesArtistId = null;
+  editingAlbumId = null;
+  document.getElementById('modal-title').textContent = 'Add album';
+  document.getElementById('f-name-label').textContent = 'Search for an album';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-photo').value = '';
+  document.getElementById('f-tile').value = '';
+  document.getElementById('songs-label').textContent = 'Tracks';
+  document.getElementById('delete-btn').style.display = 'none';
+  document.getElementById('photo-fields').style.display = 'none';
+  buildSongFields();
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEditAlbum(id) {
+  const a = albums.find(x => x.id === id);
+  if (!a) return;
+  modalMode = 'album';
+  currentSearchContext = 'album';
+  selectediTunesArtistId = null;
+  editingAlbumId = id;
+  document.getElementById('modal-title').textContent = 'Edit album';
+  document.getElementById('f-name-label').textContent = 'Search for an album';
+  document.getElementById('f-name').value = a.name;
+  document.getElementById('f-photo').value = a.coverPhoto || '';
+  document.getElementById('f-tile').value = a.tilePhoto || '';
+  document.getElementById('songs-label').textContent = 'Tracks';
+  document.getElementById('delete-btn').style.display = albums.length > 1 ? 'inline' : 'none';
+  document.getElementById('photo-fields').style.display = 'none';
+  buildSongFields(a.songs);
+  document.getElementById('modal').classList.add('open');
+}
+
+// ── UNIFIED SAVE/DELETE ──
+function saveItem() {
+  if (modalMode === 'artist') { saveArtist(); } else { saveAlbum(); }
+}
+function deleteItem() {
+  if (modalMode === 'artist') { deleteArtist(); } else { deleteAlbum(); }
+}
+
+function saveAlbum() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Please enter an album name'); return; }
+  const coverPhoto = document.getElementById('f-photo').value.trim();
+  const tilePhoto = document.getElementById('f-tile').value.trim();
+  const songs = Array.from({ length: 5 }, (_, i) => ({
+    title: document.getElementById(`s${i}-title`).value.trim(),
+    album: document.getElementById(`s${i}-album`).value.trim(),
+    art: document.getElementById(`s${i}-art`).value.trim(),
+    apple: document.getElementById(`s${i}-apple`).value.trim(),
+    spotify: document.getElementById(`s${i}-spotify`).value.trim()
+  })).filter(s => s.title);
+  if (editingAlbumId !== null) {
+    const idx = albums.findIndex(x => x.id === editingAlbumId);
+    const existing = albums[idx];
+    albums[idx] = { ...existing, name, coverPhoto: coverPhoto || existing.coverPhoto, tilePhoto: tilePhoto || existing.tilePhoto, songs };
+  } else {
+    albums.push({ id: nextAlbumId++, name, artist: '', year: '', genre: '', coverPhoto, tilePhoto, songs });
+  }
+  closeModal();
+  renderAlbumGrid(); renderAlbumList(); loadAlbumTabArt();
+}
+
+function deleteAlbum() {
+  if (!confirm('Remove this album?')) return;
+  albums = albums.filter(x => x.id !== editingAlbumId);
+  closeModal();
+  renderAlbumGrid(); renderAlbumList();
+}
+
+function buildSongFields(songs = []) {
+  document.getElementById('song-fields').innerHTML = Array.from({ length: 5 }, (_, i) => {
+    const s = songs[i] || {};
+    return `<div class="song-fields" id="song-field-${i}">
+      <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:8px;">SONG ${i + 1}</div>
+      <div class="song-search-wrap">
+        <input id="s${i}-title" placeholder="Search for a song..." autocomplete="off"
+          value="${esc(s.title||'')}"
+          oninput="debounceSongSearch(${i}, this.value)"
+          onfocus="if(this.value) debounceSongSearch(${i}, this.value)" />
+        <div class="song-dropdown" id="sdrop-${i}"></div>
+      </div>
+      <input type="hidden" id="s${i}-album" value="${esc(s.album||'')}" />
+      <input type="hidden" id="s${i}-art" value="${esc(s.art||'')}" />
+      <input type="hidden" id="s${i}-apple" value="${esc(s.apple||'')}" />
+      <input type="hidden" id="s${i}-spotify" value="${esc(s.spotify||'')}" />
+      ${s.title ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;" id="s${i}-info">📀 ${esc(s.album||'')}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── SEARCH STATE ──
+let searchTimer = null;
+let songSearchTimers = [null,null,null,null,null];
+let currentSearchContext = 'artist'; // 'artist' or 'album'
+let selectediTunesArtistId = null;
+
+function debounceSearch(val) {
+  clearTimeout(searchTimer);
+  if (!val || val.length < 2) { hideDropdown(); return; }
+  document.getElementById('search-dropdown').style.display = 'block';
+  document.getElementById('search-dropdown').innerHTML = '<div class="search-loading">Searching…</div>';
+  searchTimer = setTimeout(() => runSearch(val), 350);
+}
+
+async function runSearch(val) {
+  const dd = document.getElementById('search-dropdown');
+  try {
+    const entity = currentSearchContext === 'artist' ? 'musicArtist' : 'album';
+    const q = encodeURIComponent(val);
+    const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=${entity}&limit=8`);
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      dd.innerHTML = '<div class="search-loading">No results found</div>';
+      return;
+    }
+    dd.innerHTML = data.results.map((r, idx) => {
+      const img = (r.artworkUrl100 || '').replace('100x100bb','60x60bb');
+      const name = r.artistName || r.collectionName || '';
+      const sub = currentSearchContext === 'artist'
+        ? (r.primaryGenreName || '')
+        : `${r.artistName || ''} · ${r.releaseDate ? r.releaseDate.slice(0,4) : ''}`;
+      return `<div class="search-result-item" onclick="selectSearchResult(${idx})">
+        <img class="search-result-img" src="${img}" onerror="this.style.opacity=0">
+        <div><div class="search-result-name">${esc(name)}</div><div class="search-result-sub">${esc(sub)}</div></div>
+      </div>`;
+    }).join('');
+    dd._results = data.results;
+  } catch(e) {
+    dd.innerHTML = '<div class="search-loading">Error searching — check connection</div>';
+  }
+}
+
+async function selectSearchResult(idx) {
+  const dd = document.getElementById('search-dropdown');
+  const r = dd._results && dd._results[idx];
+  if (!r) return;
+  hideDropdown();
+  const name = r.artistName || r.collectionName || '';
+  document.getElementById('f-name').value = name;
+  if (currentSearchContext === 'artist') {
+    selectediTunesArtistId = r.artistId;
+    await autoFillSongs(r.artistId);
+  }
+}
+
+function hideDropdown() {
+  const dd = document.getElementById('search-dropdown');
+  if (dd) dd.style.display = 'none';
+}
+
+async function autoFillSongs(artistId) {
+  const id = artistId || selectediTunesArtistId;
+  if (!id) {
+    // Try searching by current name
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) return;
+    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(name)}&media=music&entity=musicArtist&limit=1`);
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      selectediTunesArtistId = data.results[0].artistId;
+      return autoFillSongs(selectediTunesArtistId);
+    }
+    return;
+  }
+  const btn = document.getElementById('autofill-btn');
+  if (btn) { btn.textContent = '⏳ Loading…'; btn.disabled = true; }
+  try {
+    const res = await fetch(`https://itunes.apple.com/lookup?id=${id}&entity=song&limit=25`);
+    const data = await res.json();
+    // Filter to songs only and sort by popularity proxy (trackCount not available, use order)
+    const songs = (data.results || []).filter(r => r.wrapperType === 'track').slice(0, 5);
+    songs.forEach((s, i) => {
+      const titleEl = document.getElementById(`s${i}-title`);
+      if (titleEl) titleEl.value = s.trackName || '';
+      const albumEl = document.getElementById(`s${i}-album`);
+      if (albumEl) albumEl.value = s.collectionName || '';
+      const artEl = document.getElementById(`s${i}-art`);
+      if (artEl) artEl.value = (s.artworkUrl100 || '').replace('100x100bb','300x300bb');
+      const appleEl = document.getElementById(`s${i}-apple`);
+      if (appleEl) appleEl.value = s.trackViewUrl || '';
+      const infoEl = document.getElementById(`s${i}-info`);
+      if (infoEl) { infoEl.textContent = `📀 ${s.collectionName || ''}`; }
+      else {
+        const wrap = document.getElementById(`song-field-${i}`);
+        if (wrap) {
+          const div = document.createElement('div');
+          div.id = `s${i}-info`;
+          div.style.cssText = 'font-size:11px;color:var(--muted);margin-top:4px;';
+          div.textContent = `📀 ${s.collectionName || ''}`;
+          wrap.appendChild(div);
+        }
+      }
+    });
+  } catch(e) {}
+  if (btn) { btn.textContent = '↻ Auto-fill from iTunes'; btn.disabled = false; }
+}
+
+// ── SONG SEARCH ──
+function debounceSongSearch(i, val) {
+  clearTimeout(songSearchTimers[i]);
+  const dd = document.getElementById(`sdrop-${i}`);
+  if (!val || val.length < 2) { if(dd) dd.style.display='none'; return; }
+  dd.style.display = 'block';
+  dd.innerHTML = '<div class="search-loading">Searching…</div>';
+  songSearchTimers[i] = setTimeout(() => runSongSearch(i, val), 350);
+}
+
+async function runSongSearch(i, val) {
+  const dd = document.getElementById(`sdrop-${i}`);
+  const artistName = document.getElementById('f-name').value.trim();
+  try {
+    const q = encodeURIComponent(artistName ? `${val} ${artistName}` : val);
+    const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=8`);
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      dd.innerHTML = '<div class="search-loading">No results</div>';
+      return;
+    }
+    dd.innerHTML = data.results.map((r, idx) => {
+      const img = (r.artworkUrl100||'').replace('100x100bb','60x60bb');
+      return `<div class="search-result-item" onclick="selectSong(${i}, ${idx})">
+        <img class="search-result-img" src="${img}" onerror="this.style.opacity=0">
+        <div>
+          <div class="search-result-name">${esc(r.trackName||'')}</div>
+          <div class="search-result-sub">${esc(r.artistName||'')} · ${esc(r.collectionName||'')}</div>
+        </div>
+      </div>`;
+    }).join('');
+    dd._results = data.results;
+  } catch(e) {
+    dd.innerHTML = '<div class="search-loading">Error</div>';
+  }
+}
+
+function selectSong(i, idx) {
+  const dd = document.getElementById(`sdrop-${i}`);
+  const r = dd._results && dd._results[idx];
+  if (!r) return;
+  dd.style.display = 'none';
+  document.getElementById(`s${i}-title`).value = r.trackName || '';
+  document.getElementById(`s${i}-album`).value = r.collectionName || '';
+  document.getElementById(`s${i}-art`).value = (r.artworkUrl100||'').replace('100x100bb','300x300bb');
+  document.getElementById(`s${i}-apple`).value = r.trackViewUrl || '';
+  // Keep existing spotify if set, otherwise clear
+  const infoEl = document.getElementById(`s${i}-info`);
+  const sub = `📀 ${r.collectionName||''}`;
+  if (infoEl) { infoEl.textContent = sub; }
+  else {
+    const wrap = document.getElementById(`song-field-${i}`);
+    if (wrap) {
+      const div = document.createElement('div');
+      div.id = `s${i}-info`;
+      div.style.cssText = 'font-size:11px;color:var(--muted);margin-top:4px;';
+      div.textContent = sub;
+      wrap.appendChild(div);
+    }
+  }
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#f-name') && !e.target.closest('#search-dropdown')) hideDropdown();
+  for (let i = 0; i < 5; i++) {
+    if (!e.target.closest(`#s${i}-title`) && !e.target.closest(`#sdrop-${i}`)) {
+      const dd = document.getElementById(`sdrop-${i}`);
+      if (dd) dd.style.display = 'none';
+    }
+  }
+});
+
+function openAddArtist() {
+  modalMode = 'artist';
+  currentSearchContext = 'artist';
+  selectediTunesArtistId = null;
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Add artist';
+  document.getElementById('f-name-label').textContent = 'Search for an artist';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-photo').value = '';
+  document.getElementById('f-tile').value = '';
+  document.getElementById('songs-label').textContent = 'Top 5 songs';
+  document.getElementById('delete-btn').style.display = 'none';
+  document.getElementById('photo-fields').style.display = '';
+  buildSongFields();
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEdit(id) {
+  const a = artists.find(x => x.id === id);
+  if (!a) return;
+  modalMode = 'artist';
+  currentSearchContext = 'artist';
+  selectediTunesArtistId = null;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Edit artist';
+  document.getElementById('f-name-label').textContent = 'Search for an artist';
+  document.getElementById('f-name').value = a.name;
+  document.getElementById('f-photo').value = a.bandPhoto || '';
+  document.getElementById('f-tile').value = a.tilePhoto || '';
+  document.getElementById('songs-label').textContent = 'Top 5 songs';
+  document.getElementById('delete-btn').style.display = artists.length > 1 ? 'inline' : 'none';
+  document.getElementById('photo-fields').style.display = '';
+  buildSongFields(a.songs);
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  hideDropdown();
+  modalMode = 'artist';
+  selectediTunesArtistId = null;
+}
+
+function saveArtist() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Please enter an artist name'); return; }
+  const bandPhoto = document.getElementById('f-photo').value.trim();
+  const tilePhoto = document.getElementById('f-tile').value.trim();
+  const songs = Array.from({ length: 5 }, (_, i) => ({
+    title: document.getElementById(`s${i}-title`).value.trim(),
+    album: document.getElementById(`s${i}-album`).value.trim(),
+    art: document.getElementById(`s${i}-art`).value.trim(),
+    apple: document.getElementById(`s${i}-apple`).value.trim(),
+    spotify: document.getElementById(`s${i}-spotify`).value.trim()
+  })).filter(s => s.title);
+  if (editingId !== null) {
+    const idx = artists.findIndex(x => x.id === editingId);
+    const existing = artists[idx];
+    artists[idx] = { ...existing, name, bandPhoto: bandPhoto || existing.bandPhoto, tilePhoto: tilePhoto || existing.tilePhoto, songs };
+  } else {
+    artists.push({ id: nextId++, name, genre: '', bandPhoto, tilePhoto, songs });
+  }
+  closeModal();
+  renderAll();
+  loadAlbumArt();
+}
+
+function deleteArtist() {
+  if (!confirm('Remove this artist?')) return;
+  artists = artists.filter(x => x.id !== editingId);
+  closeModal();
+  renderAll();
+  loadAlbumArt();
+}
+
+renderAll();
+loadAlbumArt();
+
+// ── PROFILE URL SYSTEM ──
+
+function serializeProfile() {
+  return {
+    artists: artists.map(a => ({
+      id: a.id, name: a.name, genre: a.genre || '',
+      bandPhoto: a.bandPhoto || '', tilePhoto: a.tilePhoto || '',
+      songs: (a.songs || []).map(s => ({
+        title: s.title, album: s.album || '',
+        art: s.art || '', apple: s.apple || '', spotify: s.spotify || ''
+      }))
+    })),
+    albums: albums.map(a => ({
+      id: a.id, name: a.name, artist: a.artist || '', year: a.year || '',
+      iTunesId: a.iTunesId || '', coverPhoto: a.coverPhoto || '', tilePhoto: a.tilePhoto || '',
+      songs: (a.songs || []).map(s => ({
+        title: s.title, album: s.album || '', art: s.art || '',
+        apple: s.apple || '', spotify: s.spotify || ''
+      }))
+    })),
+    repeat: repeatVideos.map(v => ({ id: v.id, videoId: v.videoId || '', title: v.title || '' }))
+  };
+}
+
+function saveProfileToURL() {
+  try {
+    const data = JSON.stringify(serializeProfile());
+    const encoded = btoa(unescape(encodeURIComponent(data)));
+    const url = window.location.origin + window.location.pathname + '#profile=' + encoded;
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('Profile link copied to clipboard!');
+    }).catch(() => {
+      // Fallback: show in a prompt
+      prompt('Copy your profile link:', url);
+    });
+  } catch(e) {
+    showToast('Error saving profile — try again');
+  }
+}
+
+function loadProfileFromURL() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#profile=')) return false;
+  try {
+    const encoded = hash.slice('#profile='.length);
+    const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+
+    if (data.artists && Array.isArray(data.artists)) {
+      artists = data.artists;
+      nextId = Math.max(...artists.map(a => a.id), 10) + 1;
+    }
+    if (data.albums && Array.isArray(data.albums)) {
+      albums = data.albums;
+      nextAlbumId = Math.max(...albums.map(a => a.id), 110) + 1;
+    }
+    if (data.repeat && Array.isArray(data.repeat)) {
+      repeatVideos = data.repeat;
+    }
+    return true;
+  } catch(e) {
+    console.warn('Failed to load profile from URL:', e);
+    return false;
+  }
+}
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#fff;color:#111;
+      font-size:13px;font-weight:600;padding:10px 20px;border-radius:30px;z-index:9999;
+      box-shadow:0 4px 24px rgba(0,0,0,0.4);opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;`;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2800);
+}
+
+// Load from URL on startup (overrides defaults if a profile hash is present)
+const loadedFromURL = loadProfileFromURL();
+if (loadedFromURL) {
+  renderAll();
+  loadAlbumArt();
+  // Show "make it yours" banner
+  const banner = document.createElement('div');
+  banner.id = 'clone-banner';
+  banner.innerHTML = `
+    <div style="background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 2rem;display:flex;align-items:center;justify-content:center;gap:14px;font-size:13px;color:var(--muted);">
+      <span>👀 You're viewing someone else's TasteList</span>
+      <button onclick="cloneProfile()" style="background:var(--accent);border:none;color:#fff;font-size:12px;font-weight:700;font-family:inherit;padding:6px 14px;border-radius:20px;cursor:pointer;letter-spacing:0.03em;">Make it yours →</button>
+      <button onclick="document.getElementById('clone-banner').remove()" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;line-height:1;">✕</button>
+    </div>`;
+  document.querySelector('.site-header').before(banner);
+}
+
+function cloneProfile() {
+  // Strip the profile hash so they start fresh with this data as their own
+  history.replaceState(null, '', window.location.pathname);
+  document.getElementById('clone-banner')?.remove();
+  showToast('Profile cloned — it\'s yours now! Hit Share to save your link.');
+}
+</script>
+</body>
+</html>
