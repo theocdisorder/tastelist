@@ -749,6 +749,63 @@
     .site-header, .top5-section, .artists-section { padding-left: 1rem; padding-right: 1rem; }
     .tab-nav { padding-left: 1rem; padding-right: 1rem; }
   }
+
+  /* ── MUSIC SECTIONS ── */
+  .music-section { padding-bottom: 1rem; }
+  .music-section-header { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 0.5rem; }
+  .music-section-title { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; cursor: pointer; }
+  .music-section-title .edit-pencil { font-size: 14px; color: var(--faint); opacity: 0; transition: opacity 0.15s; }
+  .music-section-title:hover .edit-pencil { opacity: 1; }
+  .music-section-divider { max-width: 1100px; margin: 1rem auto 0; border-top: 1px solid var(--border); }
+  .editable-title-input { font-size: 20px; font-weight: 700; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 6px 12px; color: var(--text); font-family: inherit; outline: none; min-width: 280px; }
+  .editable-title-input:focus { border-color: var(--accent); }
+  .editable-title-save { background: var(--accent); border: none; color: #fff; font-size: 13px; font-weight: 600; font-family: inherit; padding: 7px 14px; border-radius: 8px; cursor: pointer; }
+  .editable-title-cancel { background: none; border: 1px solid var(--border2); color: var(--muted); font-size: 13px; font-family: inherit; padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+
+  /* ── EXPAND PANEL ── */
+  #artist-expand-panel, #album-expand-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem; }
+  .artist-tile.tile-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [id^="album-tile-"].tile-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .expand-header { position: relative; }
+  .expand-hero-wrap { position: relative; overflow: hidden; }
+  .expand-hero { width: 100%; height: 260px; object-fit: cover; display: block; }
+  .expand-hero-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%); padding: 32px 1.5rem 1.25rem; }
+  .expand-hero-name { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+  .expand-hero-genre { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 3px; }
+  .expand-actions { position: absolute; top: 12px; right: 14px; display: flex; gap: 8px; z-index: 2; }
+  .expand-close { background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 16px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  .expand-close:hover { background: rgba(0,0,0,0.7); }
+
+  /* ── SONGS TABLE ── */
+  .songs-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .songs-table thead tr { border-bottom: 1px solid var(--border); }
+  .songs-table th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .songs-table-row { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  .songs-table-row:last-child { border-bottom: none; }
+  .songs-table-row:hover { background: var(--surface2); }
+  .songs-table td { padding: 10px 14px; vertical-align: middle; }
+  .songs-table-num { color: var(--faint); width: 28px; font-variant-numeric: tabular-nums; }
+  .songs-table-title { display: flex; align-items: center; gap: 10px; font-weight: 500; color: var(--text); }
+  .songs-table-art { flex-shrink: 0; width: 40px; height: 40px; }
+  .songs-table-album { color: var(--muted); }
+  .songs-table-links { white-space: nowrap; }
+  .songs-table-links .stream-link { margin-right: 4px; }
+
+  /* ── OTHER FAV GRID ── */
+  .other-fav-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; padding: 0 0 3rem; }
+  .other-fav-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.15s, transform 0.15s; }
+  .other-fav-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .other-fav-card-img-wrap { width: 100%; aspect-ratio: 1/1; overflow: hidden; }
+  .other-fav-card-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
+  .other-fav-card-placeholder { width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: var(--faint); background: var(--surface3); letter-spacing: 0.05em; }
+  .other-fav-card-name { font-size: 12px; font-weight: 600; color: var(--text); padding: 7px 8px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .other-fav-card-genre { font-size: 11px; color: var(--muted); padding: 0 8px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── COMING SOON ── */
+  .coming-soon-panel { max-width: 480px; margin: 6rem auto; text-align: center; padding: 3rem 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; }
+  .coming-soon-icon { font-size: 48px; margin-bottom: 1rem; }
+  .coming-soon-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+  .coming-soon-sub { font-size: 14px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -763,9 +820,10 @@
 </header>
 
 <nav class="tab-nav">
-  <button class="tab-btn active" id="tab-btn-artists" onclick="handleTabClick('artists', this)">Favorite Artists</button>
-  <button class="tab-btn" id="tab-btn-albums" onclick="handleTabClick('albums', this)">Favorite Albums</button>
-  <button class="tab-btn" id="tab-btn-repeat" onclick="handleTabClick('repeat', this)">On Repeat</button>
+  <button class="tab-btn active" id="tab-btn-music" onclick="switchTab('music', this)">My Music</button>
+  <button class="tab-btn" id="tab-btn-movies" onclick="switchTab('movies', this)">My Movies</button>
+  <button class="tab-btn" id="tab-btn-tv" onclick="switchTab('tv', this)">My TV Shows</button>
+  <button class="tab-btn" id="tab-btn-books" onclick="switchTab('books', this)">My Books</button>
 </nav>
 
 <!-- Tab rename popover - fixed position, won't affect layout -->
@@ -782,82 +840,114 @@
 </div>
 
 <!-- TAB: Favorite Artists -->
-<div class="tab-panel active" id="tab-artists">
-  <section class="top5-section">
-    <p class="section-label">Top 5 Most Influential</p>
-    <div class="artist-grid" id="artist-grid"></div>
-    <!-- Tile search panel -->
-    <div class="tile-search-panel" id="tile-search-panel">
-      <div class="tile-search-inner">
-        <span class="tile-search-label" id="tile-search-label">Slot 1</span>
-        <input class="tile-search-input" id="tile-search-input" placeholder="Search for an artist…" autocomplete="off" oninput="onTileSearchInput(this.value)" />
-        <button class="tile-search-close" onclick="closeTileSearch()">✕</button>
-      </div>
-      <div class="tile-search-results" id="tile-search-results">
-        <span class="tile-search-hint">Start typing to search…</span>
-      </div>
-    </div>
-  </section>
-  <section class="artists-section" id="artists-section">
-    <div id="artist-list"></div>
-  </section>
+<!-- TAB: My Music -->
+<div class="tab-panel active" id="tab-music">
 
-  <!-- Other Favorites -->
-  <section class="other-favorites-section">
-    <div class="other-favorites-header">
-      <h2 class="other-favorites-title">Other Favorites</h2>
-      <p class="other-favorites-sub">Click an artist to expand their top songs</p>
+  <!-- Artists That Shaped Me -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <div id="artist-title-display">
+        <h2 class="music-section-title" onclick="startTitleEdit()" title="Click to edit">Artists That Shaped Me <span class="edit-pencil">✎</span></h2>
+      </div>
+      <div id="artist-title-edit" style="display:none;align-items:center;gap:8px;">
+        <input id="artist-title-input" class="editable-title-input" value="Artists That Shaped Me" />
+        <button onclick="saveTitleEdit()" class="editable-title-save">Save</button>
+        <button onclick="cancelTitleEdit()" class="editable-title-cancel">✕</button>
+      </div>
     </div>
-    <div id="other-favorites-list"></div>
-    <button class="add-artist-btn" onclick="openAddArtist()" style="margin:1.5rem 2rem">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add artist
-    </button>
-  </section>
+    <section class="top5-section">
+      <p class="section-label">Top 5 Most Influential</p>
+      <div class="artist-grid" id="artist-grid"></div>
+      <div class="tile-search-panel" id="tile-search-panel" style="display:none;">
+        <div class="tile-search-inner">
+          <span class="tile-search-label" id="tile-search-label">Slot 1</span>
+          <input class="tile-search-input" id="tile-search-input" placeholder="Search for an artist…" autocomplete="off" oninput="onTileSearchInput(this.value)" />
+          <button class="tile-search-close" onclick="closeTileSearch()">✕</button>
+        </div>
+        <div class="tile-search-results" id="tile-search-results">
+          <span class="tile-search-hint">Start typing to search…</span>
+        </div>
+      </div>
+      <div id="artist-expand-panel" style="display:none;margin-top:20px;"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <!-- Albums I ❤️ -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Albums I ❤️</h2>
+    </div>
+    <section class="top5-section">
+      <p class="section-label">Top 5 Favorite Albums</p>
+      <div class="artist-grid" id="album-grid"></div>
+      <div class="tile-search-panel" id="album-tile-search-panel" style="display:none;">
+        <div class="tile-search-inner">
+          <span class="tile-search-label" id="album-tile-search-label">Slot 1</span>
+          <input class="tile-search-input" id="album-tile-search-input" placeholder="Search for an album…" autocomplete="off" oninput="onAlbumTileSearchInput(this.value)" />
+          <button class="tile-search-close" onclick="closeAlbumTileSearch()">✕</button>
+        </div>
+        <div class="tile-search-results" id="album-tile-search-results">
+          <span class="tile-search-hint">Start typing to search…</span>
+        </div>
+      </div>
+      <div id="album-expand-panel" style="display:none;margin-top:20px;"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <!-- On Repeat Right Now -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">On Repeat Right Now</h2>
+    </div>
+    <section class="top5-section">
+      <p class="site-sub" style="margin-bottom:24px;">Videos I keep coming back to</p>
+      <div class="repeat-grid" id="repeat-grid"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <!-- Other Favorite Artists -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Other Favorite Artists</h2>
+    </div>
+    <section class="top5-section">
+      <div class="other-fav-grid" id="other-fav-grid"></div>
+    </section>
+  </div>
+
 </div>
 
-<!-- TAB: Favorite Albums -->
-<div class="tab-panel" id="tab-albums">
-  <section class="top5-section">
-    <p class="section-label">Top 5 Favorite Albums</p>
-    <div class="artist-grid" id="album-grid"></div>
-    <!-- Album tile search panel -->
-    <div class="tile-search-panel" id="album-tile-search-panel">
-      <div class="tile-search-inner">
-        <span class="tile-search-label" id="album-tile-search-label">Slot 1</span>
-        <input class="tile-search-input" id="album-tile-search-input" placeholder="Search for an album…" autocomplete="off" oninput="onAlbumTileSearchInput(this.value)" />
-        <button class="tile-search-close" onclick="closeAlbumTileSearch()">✕</button>
-      </div>
-      <div class="tile-search-results" id="album-tile-search-results">
-        <span class="tile-search-hint">Start typing to search…</span>
-      </div>
-    </div>
-  </section>
-  <section class="artists-section" id="albums-section">
-    <div id="album-list"></div>
-  </section>
-
-  <!-- Other Favorite Albums -->
-  <section class="other-favorites-section">
-    <div class="other-favorites-header">
-      <h2 class="other-favorites-title">More Albums</h2>
-      <p class="other-favorites-sub">Click an album to expand its tracklist</p>
-    </div>
-    <div id="other-albums-list"></div>
-    <button class="add-artist-btn" onclick="openAddAlbum()" style="margin:1.5rem 2rem">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add album
-    </button>
-  </section>
+<!-- TAB: My Movies -->
+<div class="tab-panel" id="tab-movies">
+  <div class="coming-soon-panel">
+    <div class="coming-soon-icon">🎬</div>
+    <h2 class="coming-soon-title">My Movies</h2>
+    <p class="coming-soon-sub">Coming soon — add your favorite films here.</p>
+  </div>
 </div>
 
-<!-- TAB: On Repeat -->
-<div class="tab-panel" id="tab-repeat">
-  <section class="top5-section">
-    <p class="section-label">On Repeat</p>
-    <p class="site-sub" style="margin-top:-8px;margin-bottom:24px;">Videos I keep coming back to</p>
-    <div class="repeat-grid" id="repeat-grid"></div>
-  </section>
+<!-- TAB: My TV Shows -->
+<div class="tab-panel" id="tab-tv">
+  <div class="coming-soon-panel">
+    <div class="coming-soon-icon">📺</div>
+    <h2 class="coming-soon-title">My TV Shows</h2>
+    <p class="coming-soon-sub">Coming soon — add your favorite series here.</p>
+  </div>
+</div>
+
+<!-- TAB: My Books -->
+<div class="tab-panel" id="tab-books">
+  <div class="coming-soon-panel">
+    <div class="coming-soon-icon">📚</div>
+    <h2 class="coming-soon-title">My Books</h2>
+    <p class="coming-soon-sub">Coming soon — add your favorite books here.</p>
+  </div>
 </div>
 <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="modal">
@@ -1116,10 +1206,12 @@ function setAlbumArt(id, album, idx) {
   if (el) el.innerHTML = renderAlbumArt(album, idx);
 }
 
+let expandedArtistId = null;
+
 function renderGrid() {
   const grid = document.getElementById('artist-grid');
   grid.innerHTML = artists.slice(0, 5).map((a, i) => {
-    return `<div class="artist-tile" id="tile-${a.id}" onclick="scrollToArtist(${a.id})">
+    return `<div class="artist-tile" id="tile-${a.id}" onclick="toggleArtistExpand(${a.id}, ${i})">
       <div class="tile-img-wrap">
         ${a.tilePhoto
           ? `<img class="tile-img" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="this.style.display='none'">`
@@ -1127,13 +1219,83 @@ function renderGrid() {
               <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
             </div>`}
         <span class="tile-rank">${i + 1}</span>
-        <div class="tile-overlay">
-          <button class="tile-change-btn" onclick="event.stopPropagation(); openTileSearch(${a.id}, ${i})">✎ Change</button>
-        </div>
       </div>
       <div class="tile-label">${esc(a.name) || `Artist ${i + 1}`}</div>
     </div>`;
   }).join('');
+}
+
+function toggleArtistExpand(artistId, tileIdx) {
+  const panel = document.getElementById('artist-expand-panel');
+  if (expandedArtistId === artistId) {
+    panel.style.display = 'none'; panel.innerHTML = '';
+    expandedArtistId = null;
+    document.querySelectorAll('.artist-tile').forEach(t => t.classList.remove('tile-active'));
+    return;
+  }
+  expandedArtistId = artistId;
+  document.querySelectorAll('.artist-tile').forEach(t => t.classList.remove('tile-active'));
+  document.getElementById(`tile-${artistId}`)?.classList.add('tile-active');
+  const a = artists.find(x => x.id === artistId);
+  if (!a) return;
+  const songs = a.songs.filter(s => s.title).slice(0, 5);
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div class="expand-header">
+      <div class="expand-hero-wrap">
+        ${a.bandPhoto ? `<img class="expand-hero" src="${esc(a.bandPhoto)}" alt="${esc(a.name)}" style="object-position:${HERO_POS[a.id]||'center 20%'}" onerror="this.style.display='none'">` : ''}
+        <div class="expand-hero-overlay">
+          <div class="expand-hero-name">${esc(a.name)}</div>
+          ${a.genre ? `<div class="expand-hero-genre">${esc(a.genre)}</div>` : ''}
+        </div>
+      </div>
+      <div class="expand-actions">
+        <button class="expand-close" onclick="toggleArtistExpand(${artistId},${tileIdx})">✕</button>
+      </div>
+    </div>
+    ${songs.length ? `<table class="songs-table">
+      <thead><tr><th>#</th><th>Song</th><th>Album</th><th>Listen</th></tr></thead>
+      <tbody>${songs.map((s,si) => `
+        <tr class="songs-table-row">
+          <td class="songs-table-num">${si+1}</td>
+          <td class="songs-table-title"><div class="songs-table-art" id="art-${artistId}-${si}"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="#26262a" rx="5"/><text x="20" y="26" font-family="sans-serif" font-size="16" fill="#45444a" text-anchor="middle">♪</text></svg></div><span>${esc(s.title)}</span></td>
+          <td class="songs-table-album">${esc(s.album||'')}</td>
+          <td class="songs-table-links">
+            ${s.apple?`<a href="${esc(s.apple)}" class="stream-link apple" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>Apple</a>`:''}
+            ${s.spotify?`<a href="${esc(s.spotify)}" class="stream-link spotify" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>Spotify</a>`:''}
+          </td>
+        </tr>`).join('')}</tbody>
+    </table>` : `<div style="padding:1.5rem;color:var(--muted);font-size:13px;">No songs yet.</div>`}
+  `;
+  loadArtForArtist(a);
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function loadArtForArtist(a) {
+  for (let si = 0; si < a.songs.length; si++) {
+    const s = a.songs[si];
+    if (!s.title) continue;
+    const el = document.getElementById(`art-${a.id}-${si}`);
+    if (!el) continue;
+    try {
+      let art = s.art || null;
+      if (!art && s.apple) {
+        const m = s.apple.match(/\?i=(\d+)/);
+        if (m) {
+          const res = await fetch(`https://itunes.apple.com/lookup?id=${m[1]}`);
+          const data = await res.json();
+          if (data.results?.[0]) art = (data.results[0].artworkUrl100||'').replace('100x100bb','300x300bb');
+        }
+      }
+      if (!art) {
+        const q = encodeURIComponent(`${s.title} ${a.name}`);
+        const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=1`);
+        const data = await res.json();
+        if (data.results?.[0]) art = data.results[0].artworkUrl100.replace('100x100bb','300x300bb');
+      }
+      if (art) el.innerHTML = `<img src="${art}" alt="${esc(s.album)}" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;">`;
+    } catch(e) {}
+  }
 }
 
 function renderList() {
@@ -1327,57 +1489,8 @@ async function selectSongResult(artistId, idx) {
 }
 
 // ── ALBUM ART LOADING ──
-async function loadAlbumArt() {
-  for (const a of artists) {
-    for (let si = 0; si < a.songs.length; si++) {
-      const s = a.songs[si];
-      const artEl = document.getElementById(`art-${a.id}-${si}`);
-      if (!artEl) continue;
-      try {
-        // Extract track ID from Apple Music URL if available (most reliable)
-        let trackId = null;
-        if (s.apple) {
-          const m = s.apple.match(/\?i=(\d+)/);
-          if (m) trackId = m[1];
-        }
-
-        let art = null;
-        let trackViewUrl = null;
-
-        if (trackId) {
-          // Use exact iTunes lookup — guaranteed correct result
-          const res = await fetch(`https://itunes.apple.com/lookup?id=${trackId}`);
-          const data = await res.json();
-          if (data.results && data.results.length > 0) {
-            const r = data.results[0];
-            art = (r.artworkUrl100 || '').replace('100x100bb', '300x300bb');
-            trackViewUrl = r.trackViewUrl;
-          }
-        }
-
-        // Fallback to fuzzy search only if no track ID
-        if (!art) {
-          const q = encodeURIComponent(`${s.title} ${a.name}`);
-          const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=1`);
-          const data = await res.json();
-          if (data.results && data.results.length > 0) {
-            const r = data.results[0];
-            art = r.artworkUrl100.replace('100x100bb', '300x300bb');
-            trackViewUrl = r.trackViewUrl;
-          }
-        }
-
-        if (art) {
-          artEl.innerHTML = `<img src="${art}" alt="${esc(s.album)}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
-        }
-        if (trackViewUrl && !s.apple) {
-          const appleEl = document.getElementById(`apple-${a.id}-${si}`);
-          if (appleEl) appleEl.href = trackViewUrl;
-        }
-      } catch(e) {}
-    }
-  }
-}
+// Art loading is now done lazily inside toggleArtistExpand / toggleAlbumExpand
+async function loadAlbumArt() { /* no-op */ }
 
 
 // ── TAB RENAME ──
@@ -1388,18 +1501,7 @@ const TAB_PRESETS = {
 };
 let activeRenameTab = null;
 
-function handleTabClick(tab, btn) {
-  const pop = document.getElementById('tab-rename-pop');
-  if (btn.classList.contains('active')) {
-    // Already on this tab — open rename popover
-    const isOpen = pop.style.display !== 'none' && activeRenameTab === tab;
-    closeTabPop();
-    if (!isOpen) openTabPop(tab, btn);
-  } else {
-    closeTabPop();
-    switchTab(tab, btn);
-  }
-}
+function handleTabClick(tab, btn) { switchTab(tab, btn); }
 
 function openTabPop(tab, btn) {
   activeRenameTab = tab;
@@ -1436,7 +1538,192 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#tab-rename-pop') && !e.target.closest('.tab-btn')) closeTabPop();
 });
 
-function renderAll() { renderGrid(); renderList(); renderOtherFavorites(); }
+function renderList() { /* no-op: detail shown via click-expand */ }
+
+function renderAll() { renderGrid(); renderAlbumGrid(); renderRepeatGrid(); renderOtherFavGrid(); }
+
+// ── OTHER FAVORITE ARTISTS GRID ──
+const OTHER_ARTISTS = [
+  { name: "Cake",              genre: "Alternative Rock" },
+  { name: "BTS",               genre: "K-Pop"           },
+  { name: "Radiohead",         genre: "Alternative Rock" },
+  { name: "Yeah Yeah Yeahs",   genre: "Art Punk"        },
+  { name: "Queen",             genre: "Rock"            },
+  { name: "The Kills",         genre: "Indie Rock"      },
+  { name: "Interpol",          genre: "Post-Punk"       },
+  { name: "A.R. Rahman",       genre: "Film Score"      },
+  { name: "Julian Casablancas",genre: "Indie Rock"      },
+  { name: "The Decemberists",  genre: "Indie Folk"      },
+  { name: "Alt-J",             genre: "Indie Rock"      },
+  { name: "Muse",              genre: "Alternative Rock" },
+  { name: "Metallica",         genre: "Heavy Metal"     },
+];
+
+function renderOtherFavGrid() {
+  const el = document.getElementById('other-fav-grid');
+  if (!el) return;
+  el.innerHTML = OTHER_ARTISTS.map((a, i) =>
+    `<div class="other-fav-card" id="ofav-${i}">
+      <div class="other-fav-card-img-wrap" id="ofav-img-${i}">
+        <div class="other-fav-card-placeholder">${esc(a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>
+      </div>
+      <div class="other-fav-card-name">${esc(a.name)}</div>
+      <div class="other-fav-card-genre">${esc(a.genre)}</div>
+    </div>`
+  ).join('');
+  OTHER_ARTISTS.forEach((a, i) => loadOtherFavImg(a.name, i));
+}
+
+async function loadOtherFavImg(name, idx) {
+  const wrap = document.getElementById(`ofav-img-${idx}`);
+  if (!wrap) return;
+  try {
+    // Search for artist, get their artistId, then look up their most popular album for artwork
+    const q = encodeURIComponent(name);
+    const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=musicArtist&limit=5`);
+    const data = await res.json();
+    const hit = (data.results||[]).find(r =>
+      r.artistName?.toLowerCase() === name.toLowerCase()
+    ) || (data.results||[])[0];
+    if (!hit?.artistId) return;
+
+    // Get their top album for cover art (more visually distinctive than song art)
+    const res2 = await fetch(`https://itunes.apple.com/lookup?id=${hit.artistId}&entity=album&limit=3`);
+    const data2 = await res2.json();
+    const album = (data2.results||[]).find(r => r.wrapperType === 'collection' && r.artworkUrl100);
+    if (album?.artworkUrl100) {
+      const art = album.artworkUrl100.replace('100x100bb', '400x400bb');
+      if (wrap) wrap.innerHTML = `<img class="other-fav-card-img" src="${art}" alt="${esc(name)}">`;
+    }
+  } catch(e) {}
+}
+
+// ── ALBUM GRID: click-to-expand ──
+let expandedAlbumId = null;
+
+function renderAlbumGrid() {
+  const grid = document.getElementById('album-grid');
+  if (!grid) return;
+  grid.innerHTML = albums.slice(0, 5).map((a, i) => {
+    return `<div class="artist-tile" id="album-tile-${a.id}" onclick="toggleAlbumExpand(${a.id}, ${i})">
+      <div class="tile-img-wrap">
+        ${a.tilePhoto
+          ? `<img class="tile-img" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="this.style.display='none'">`
+          : `<div class="tile-placeholder" id="album-tile-inner-${a.id}" style="aspect-ratio:4/3;height:auto">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M16 8l-4 4-2-2-4 4"/></svg>
+            </div>`}
+        <span class="tile-rank">${i + 1}</span>
+      </div>
+      <div class="tile-label">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.name)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.artist)}${a.year?' · '+esc(a.year):''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  // Load cover art into tile placeholders
+  albums.slice(0, 5).forEach(a => {
+    if (a.tilePhoto) return; // already has image
+    loadAlbumTileArt(a);
+  });
+}
+
+async function loadAlbumTileArt(a) {
+  try {
+    let artUrl = null;
+    if (a.iTunesId) {
+      const res = await fetch(`https://itunes.apple.com/lookup?id=${a.iTunesId}`);
+      const data = await res.json();
+      const hit = (data.results||[]).find(r => r.artworkUrl100);
+      if (hit) artUrl = hit.artworkUrl100.replace('100x100bb','400x400bb');
+    }
+    if (!artUrl) {
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(a.name+' '+a.artist)}&media=music&entity=album&limit=1`);
+      const data = await res.json();
+      if (data.results?.[0]?.artworkUrl100) artUrl = data.results[0].artworkUrl100.replace('100x100bb','400x400bb');
+    }
+    if (artUrl) {
+      a._artUrl = artUrl; // cache for expand panel
+      const placeholder = document.getElementById(`album-tile-inner-${a.id}`);
+      if (placeholder) {
+        placeholder.style.padding = '0';
+        placeholder.innerHTML = `<img src="${artUrl}" alt="${esc(a.name)}" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;border-radius:10px 10px 0 0;">`;
+      }
+    }
+  } catch(e) {}
+}
+
+function toggleAlbumExpand(albumId, tileIdx) {
+  const panel = document.getElementById('album-expand-panel');
+  if (expandedAlbumId === albumId) {
+    panel.style.display = 'none'; panel.innerHTML = '';
+    expandedAlbumId = null;
+    document.querySelectorAll('[id^="album-tile-"]').forEach(t => t.classList.remove('tile-active'));
+    return;
+  }
+  expandedAlbumId = albumId;
+  document.querySelectorAll('[id^="album-tile-"]').forEach(t => t.classList.remove('tile-active'));
+  document.getElementById(`album-tile-${albumId}`)?.classList.add('tile-active');
+  const a = albums.find(x => x.id === albumId);
+  if (!a) return;
+  const songs = (a.songs||[]).filter(s => s.title);
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div class="expand-header">
+      <div class="expand-hero-wrap">
+        <div id="album-hero-${albumId}" style="width:100%;height:260px;background:var(--surface2);display:flex;align-items:center;justify-content:center;">
+          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="opacity:0.2"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M16 8l-4 4-2-2-4 4"/></svg>
+        </div>
+        <div class="expand-hero-overlay">
+          <div class="expand-hero-name">${esc(a.name)}</div>
+          <div class="expand-hero-genre">${esc(a.artist)}${a.year?' · '+esc(a.year):''}</div>
+        </div>
+      </div>
+      <div class="expand-actions">
+        <button class="expand-close" onclick="toggleAlbumExpand(${albumId},${tileIdx})">✕</button>
+      </div>
+    </div>
+    ${songs.length ? `<table class="songs-table">
+      <thead><tr><th>#</th><th>Song</th><th>Album</th><th>Listen</th></tr></thead>
+      <tbody>${songs.map((s,si) => `
+        <tr class="songs-table-row">
+          <td class="songs-table-num">${si+1}</td>
+          <td class="songs-table-title"><div class="songs-table-art" id="alb-art-${albumId}-${si}"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="#26262a" rx="5"/><text x="20" y="26" font-family="sans-serif" font-size="16" fill="#45444a" text-anchor="middle">♪</text></svg></div><span>${esc(s.title)}</span></td>
+          <td class="songs-table-album">${esc(s.album||a.name)}</td>
+          <td class="songs-table-links">
+            ${s.apple?`<a href="${esc(s.apple)}" class="stream-link apple" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>Apple</a>`:''}
+            ${s.spotify?`<a href="${esc(s.spotify)}" class="stream-link spotify" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>Spotify</a>`:''}
+          </td>
+        </tr>`).join('')}</tbody>
+    </table>` : `<div style="padding:1.5rem;color:var(--muted);font-size:13px;">No tracks yet.</div>`}
+  `;
+  loadArtForAlbum(a);
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function loadArtForAlbum(a) {
+  let artUrl = a._artUrl || null; // use cached value from tile load if available
+  try {
+    if (!artUrl && a.iTunesId) {
+      const res = await fetch(`https://itunes.apple.com/lookup?id=${a.iTunesId}`);
+      const data = await res.json();
+      const hit = (data.results||[]).find(r => r.artworkUrl100);
+      if (hit) artUrl = hit.artworkUrl100.replace('100x100bb','600x600bb');
+    }
+    if (!artUrl) {
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(a.name+' '+a.artist)}&media=music&entity=album&limit=1`);
+      const data = await res.json();
+      if (data.results?.[0]?.artworkUrl100) artUrl = data.results[0].artworkUrl100.replace('100x100bb','600x600bb');
+    }
+    if (artUrl) {
+      const hero = document.getElementById(`album-hero-${a.id}`);
+      if (hero) hero.innerHTML = `<img class="expand-hero" src="${artUrl}" alt="${esc(a.name)}" style="object-position:center center;">`;
+      (a.songs||[]).forEach((s,si) => {
+        const el = document.getElementById(`alb-art-${a.id}-${si}`);
+        if (el) el.innerHTML = `<img src="${artUrl}" alt="${esc(a.name)}" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;">`;
+      });
+    }
+  } catch(e) {}
+}
 
 function renderOtherFavorites() {
   const el = document.getElementById('other-favorites-list');
@@ -1972,8 +2259,6 @@ function switchTab(tab, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
-  if (tab === 'albums') { renderAlbumGrid(); renderAlbumList(); renderOtherAlbums(); loadAlbumTabArt(); }
-  if (tab === 'repeat') { renderRepeatGrid(); }
 }
 
 // ── ALBUMS DATA ──
@@ -2124,244 +2409,7 @@ let nextAlbumId = 111;
 let editingAlbumId = null;
 let modalMode = 'artist'; // 'artist' or 'album'
 
-// ── ALBUM TAB RENDERING ──
-function renderAlbumGrid() {
-  const grid = document.getElementById('album-grid');
-  if (!grid) return;
-  grid.innerHTML = albums.slice(0, 5).map((a, i) => {
-    return `<div class="artist-tile" id="album-tile-${a.id}" onclick="scrollToAlbum(${a.id})">
-      <div class="tile-img-wrap">
-        ${a.tilePhoto
-          ? `<img class="tile-img" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="this.style.display='none'">`
-          : `<div class="tile-placeholder" id="album-tile-inner-${a.id}" style="aspect-ratio:4/3;height:auto">
-              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M16 8l-4 4-2-2-4 4"/></svg>
-            </div>`}
-        <span class="tile-rank">${i + 1}</span>
-        <div class="tile-overlay">
-          <button class="tile-change-btn" onclick="event.stopPropagation(); openAlbumTileSearch(${a.id}, ${i})">✎ Change</button>
-        </div>
-      </div>
-      <div class="tile-label">
-        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.name)}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.artist)}${a.year ? ' · ' + esc(a.year) : ''}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
 
-function renderAlbumList() {
-  const el = document.getElementById('album-list');
-  if (!el) return;
-  el.innerHTML = albums.slice(0, 5).map((a, i) => {
-    const color = COLORS[i % COLORS.length];
-    const songs = a.songs.filter(s => s.title);
-    return `<div class="artist-card" id="album-${a.id}">
-      ${a.coverPhoto
-        ? `<img class="artist-hero" src="${esc(a.coverPhoto)}" alt="${esc(a.name)}" style="object-fit:cover;object-position:center center;" onerror="this.style.display='none'">`
-        : `<div class="artist-hero-placeholder" id="album-hero-${a.id}" style="cursor:default">
-            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M16 8l-4 4-2-2-4 4"/></svg>
-            <span>${esc(a.name)}</span>
-           </div>`}
-      <div class="artist-header">
-        <div class="artist-avatar" style="background:linear-gradient(135deg,${color}cc,${color})">${initials(a.name)}</div>
-        <div>
-          <div class="artist-name">${esc(a.name)}</div>
-          <div class="artist-genre">${esc(a.artist)}${a.year ? ' · ' + esc(a.year) : ''}</div>
-        </div>
-        <button class="edit-btn" onclick="openEditAlbum(${a.id})">✎ Edit</button>
-      </div>
-      ${songs.length ? `<div class="song-list">
-        ${songs.map((s, si) => `
-        <div class="song-row">
-          <span class="song-num">${si + 1}</span>
-          <div class="album-art" id="albart-${a.id}-${si}"><svg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 52 52' style='display:block;border-radius:6px;opacity:0.3'><rect width='52' height='52' fill='#222'/><text x='26' y='32' font-family='sans-serif' font-size='18' fill='#666' text-anchor='middle'>♪</text></svg></div>
-          <div class="song-info">
-            <div class="song-title">${esc(s.title)}</div>
-            ${s.album ? `<div class="song-album">${esc(s.album)}</div>` : ''}
-          </div>
-          <div class="stream-links">
-            ${s.apple ? `<a href="${esc(s.apple)}" id="apple-${a.id}-${si}" class="stream-link apple" target="_blank" rel="noopener">
-              <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-              Apple</a>` : ''}
-            ${s.spotify ? `<a href="${esc(s.spotify)}" id="spotify-${a.id}-${si}" class="stream-link spotify" target="_blank" rel="noopener">
-              <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-              Spotify</a>` : ''}
-          </div>
-        </div>`).join('')}
-      </div>` : ''}
-    </div>`;
-  }).join('');
-}
-
-function renderOtherAlbums() {
-  const el = document.getElementById('other-albums-list');
-  if (!el) return;
-  const others = albums.slice(5);
-  el.innerHTML = others.map((a, i) => {
-    const color = COLORS[(i + 5) % COLORS.length];
-    const songs = a.songs.filter(s => s.title);
-    return `<div class="other-fav-item" id="other-album-${a.id}">
-      <div class="other-fav-trigger" onclick="toggleOtherAlbum(${a.id})">
-        <div class="other-fav-avatar" id="other-album-avatar-${a.id}" style="background:linear-gradient(135deg,${color}cc,${color});border-radius:6px;">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M16 8l-4 4-2-2-4 4"/></svg>
-        </div>
-        <div class="other-fav-info">
-          <div class="other-fav-name">${esc(a.name)}</div>
-          <div class="other-fav-genre">${esc(a.artist)}${a.year ? ' · ' + esc(a.year) : ''}</div>
-        </div>
-        <div class="other-fav-right">
-          <button class="other-fav-edit" onclick="event.stopPropagation(); openEditAlbum(${a.id})">✎ Edit</button>
-          <span class="other-fav-chevron">⌄</span>
-        </div>
-      </div>
-      <div class="other-fav-body" id="other-album-body-${a.id}">
-        ${songs.length ? `<div class="song-list">
-          ${songs.map((s, si) => `
-          <div class="song-row">
-            <span class="song-num">${si + 1}</span>
-            <div class="album-art" id="albart-other-${a.id}-${si}">
-              <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52" style="display:block;border-radius:6px;opacity:0.3"><rect width="52" height="52" fill="#222"/><text x="26" y="32" font-family="sans-serif" font-size="18" fill="#666" text-anchor="middle">♪</text></svg>
-            </div>
-            <div class="song-info">
-              <div class="song-title">${esc(s.title)}</div>
-              ${s.album ? `<div class="song-album">${esc(s.album)}</div>` : ''}
-            </div>
-            <div class="stream-links">
-              ${s.apple ? `<a href="${esc(s.apple)}" class="stream-link apple" target="_blank" rel="noopener" onclick="event.stopPropagation()">
-                <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                Apple</a>` : ''}
-              ${s.spotify ? `<a href="${esc(s.spotify)}" class="stream-link spotify" target="_blank" rel="noopener" onclick="event.stopPropagation()">
-                <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-                Spotify</a>` : ''}
-            </div>
-          </div>`).join('')}
-        </div>` : `<div style="padding:1.5rem;color:var(--faint);font-size:13px;">No tracks yet — click Edit to add some.</div>`}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function toggleOtherAlbum(albumId) {
-  const item = document.getElementById(`other-album-${albumId}`);
-  if (!item) return;
-  const isOpen = item.classList.toggle('open');
-  if (!isOpen || item._artLoaded) return;
-  item._artLoaded = true;
-
-  const album = albums.find(a => a.id === albumId);
-  if (!album) return;
-
-  const applyArt = (url) => {
-    const art = url.replace(/\d+x\d+bb\.jpg/, '300x300bb.jpg').replace(/\d+x\d+bb/, '300x300bb');
-    const avatarEl = document.getElementById(`other-album-avatar-${albumId}`);
-    if (avatarEl) avatarEl.innerHTML = `<img src="${art}" style="width:44px;height:44px;border-radius:6px;object-fit:cover;display:block;">`;
-    album.songs.forEach((s, si) => {
-      const el = document.getElementById(`albart-other-${albumId}-${si}`);
-      if (el) el.innerHTML = `<img src="${art}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
-    });
-  };
-
-  // Try iTunes lookup first, then search fallback
-  const tryLookup = album.iTunesId
-    ? fetch(`https://itunes.apple.com/lookup?id=${album.iTunesId}`).then(r => r.json())
-    : Promise.resolve({ results: [] });
-
-  tryLookup.then(data => {
-    const hit = (data.results || []).find(r => r.artworkUrl100);
-    if (hit) { applyArt(hit.artworkUrl100); return; }
-    // Fallback: search by name
-    return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(album.name + ' ' + album.artist)}&media=music&entity=album&limit=1`)
-      .then(r => r.json())
-      .then(d => { if (d.results?.[0]?.artworkUrl100) applyArt(d.results[0].artworkUrl100); });
-  }).catch(() => { item._artLoaded = false; });
-}
-
-function scrollToAlbum(id) {
-  const el = document.getElementById('album-' + id);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// Fetch album art for albums tab using iTunes lookup API (exact IDs = correct art)
-async function loadAlbumTabArt() {
-  for (const a of albums) {
-    let artUrl = null;
-
-    // Use exact iTunes ID lookup — match collection by ID
-    if (a.iTunesId) {
-      try {
-        const res = await fetch(`https://itunes.apple.com/lookup?id=${a.iTunesId}&entity=song&limit=1`);
-        const data = await res.json();
-        const results = data.results || [];
-        // The collection result has wrapperType 'collection'; tracks have collectionId matching our ID
-        const albumResult = results.find(r => r.wrapperType === 'collection')
-          || results.find(r => String(r.collectionId) === String(a.iTunesId));
-        if (albumResult?.artworkUrl100) {
-          artUrl = albumResult.artworkUrl100.replace('100x100bb', '1200x1200bb');
-        }
-      } catch(e) {}
-    }
-
-    // Fallback: search by name + artist, find best matching result
-    if (!artUrl) {
-      try {
-        const q = encodeURIComponent(`${a.name} ${a.artist}`);
-        const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=album&limit=5`);
-        const data = await res.json();
-        // Try to find the result that best matches our album name
-        const results = data.results || [];
-        const match = results.find(r =>
-          r.collectionName?.toLowerCase().includes(a.name.toLowerCase()) &&
-          r.artistName?.toLowerCase().includes(a.artist.toLowerCase())
-        ) || results[0];
-        if (match?.artworkUrl100) {
-          artUrl = match.artworkUrl100.replace('100x100bb', '1200x1200bb');
-        }
-      } catch(e) {}
-    }
-
-    if (!artUrl) continue;
-    const tileUrl = artUrl.replace('1200x1200bb', '400x400bb');
-
-    // Update grid tile — only replace the image inside tile-img-wrap, not the whole tile
-    const tileEl = document.getElementById('album-tile-' + a.id);
-    if (tileEl && !a.tilePhoto) {
-      const imgWrap = tileEl.querySelector('.tile-img-wrap');
-      const placeholder = tileEl.querySelector('.tile-placeholder');
-      if (imgWrap) {
-        // Replace placeholder with actual image, keeping rank and overlay
-        if (placeholder) placeholder.outerHTML = `<img class="tile-img" src="${tileUrl}" alt="${esc(a.name)}" style="width:100%;height:100%;object-fit:cover;display:block;">`;
-        else if (!imgWrap.querySelector('img')) {
-          imgWrap.insertAdjacentHTML('afterbegin', `<img class="tile-img" src="${tileUrl}" alt="${esc(a.name)}" style="width:100%;height:100%;object-fit:cover;display:block;">`);
-        }
-      }
-    }
-
-    // Update hero
-    const heroEl = document.getElementById('album-hero-' + a.id);
-    if (heroEl && !a.coverPhoto) {
-      heroEl.outerHTML = `<img class="artist-hero" src="${artUrl}" alt="${a.name}" style="object-fit:cover;object-position:center center;">`;
-    }
-
-    // Update song art + fix Apple Music links per song
-    for (let si = 0; si < a.songs.length; si++) {
-      const s = a.songs[si];
-      const el = document.getElementById(`albart-${a.id}-${si}`);
-      if (!el) continue;
-      el.innerHTML = `<img src="${tileUrl}" alt="${s.album}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
-      // Fix Apple Music link with exact song search
-      try {
-        const q = encodeURIComponent(`${s.title} ${a.artist}`);
-        const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=1`);
-        const data = await res.json();
-        if (data.results && data.results.length > 0) {
-          const r = data.results[0];
-          const appleEl = document.getElementById(`apple-${a.id}-${si}`);
-          if (appleEl && r.trackViewUrl) appleEl.href = r.trackViewUrl;
-        }
-      } catch(e) {}
-    }
-  }
-}
 
 // ── ALBUM MODAL ──
 function openAddAlbum() {
@@ -2714,8 +2762,26 @@ function deleteArtist() {
   loadAlbumArt();
 }
 
+// ── EDITABLE TITLE ──
+function startTitleEdit() {
+  document.getElementById('artist-title-display').style.display = 'none';
+  const e = document.getElementById('artist-title-edit');
+  e.style.display = 'flex';
+  document.getElementById('artist-title-input').select();
+}
+function saveTitleEdit() {
+  const val = document.getElementById('artist-title-input').value.trim();
+  if (!val) return;
+  document.getElementById('artist-title-display').querySelector('h2').innerHTML = esc(val) + ' <span class="edit-pencil">✎</span>';
+  document.getElementById('artist-title-display').style.display = '';
+  document.getElementById('artist-title-edit').style.display = 'none';
+}
+function cancelTitleEdit() {
+  document.getElementById('artist-title-display').style.display = '';
+  document.getElementById('artist-title-edit').style.display = 'none';
+}
+
 renderAll();
-loadAlbumArt();
 
 // ── PROFILE URL SYSTEM ──
 
