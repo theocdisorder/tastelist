@@ -482,25 +482,29 @@
   .other-fav-item.open .other-fav-body { display: block; }
   .repeat-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
     max-width: 1100px;
     margin: 0 auto;
     padding: 0 2rem 3rem;
   }
   .repeat-slot {
     background: var(--surface2);
-    border-radius: 14px;
+    border-radius: 10px;
     overflow: hidden;
     border: 1px solid var(--border);
     transition: border-color 0.2s;
+    display: flex;
+    flex-direction: column;
   }
   .repeat-slot:hover { border-color: var(--border2); }
   .repeat-video-wrap {
     position: relative;
     width: 100%;
-    padding-top: 56.25%; /* 16:9 */
+    aspect-ratio: 4/3;
     background: var(--surface3);
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
   }
   .repeat-video-wrap iframe {
     position: absolute;
@@ -524,15 +528,18 @@
   .repeat-empty svg { opacity: 0.3; }
   .repeat-empty span { font-size: 13px; color: var(--muted); }
   .repeat-slot-footer {
-    padding: 12px 14px;
+    padding: 8px 10px 9px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+    border-radius: 0 0 10px 10px;
   }
   .repeat-slot-title {
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--text);
     white-space: nowrap;
     overflow: hidden;
@@ -792,9 +799,10 @@
   .songs-table-links .stream-link { margin-right: 4px; }
 
   /* ── OTHER FAV GRID ── */
-  .other-fav-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; padding: 0 0 3rem; }
-  .other-fav-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.15s, transform 0.15s; }
+  .other-fav-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; padding: 0 0 1rem; }
+  .other-fav-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.15s, transform 0.15s; cursor: pointer; }
   .other-fav-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .other-fav-card.tile-active { outline: 2px solid var(--accent); outline-offset: 2px; }
   .other-fav-card-img-wrap { width: 100%; aspect-ratio: 1/1; overflow: hidden; }
   .other-fav-card-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
   .other-fav-card-placeholder { width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: var(--faint); background: var(--surface3); letter-spacing: 0.05em; }
@@ -806,6 +814,68 @@
   .coming-soon-icon { font-size: 48px; margin-bottom: 1rem; }
   .coming-soon-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
   .coming-soon-sub { font-size: 14px; color: var(--muted); }
+
+  /* ── MUSIC LAYOUT WITH STICKY BIO ── */
+  .music-layout {
+    display: flex;
+    gap: 0;
+    max-width: 1360px;
+    margin: 0 auto;
+    align-items: flex-start;
+  }
+  .bio-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 24px;
+    padding: 2rem 0 2.5rem 2rem;
+    align-self: flex-start;
+  }
+  .bio-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+  .bio-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+  .bio-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .bio-text p { margin-bottom: 0.75rem; }
+  .bio-text p:last-child { margin-bottom: 0; }
+  .bio-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .bio-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    letter-spacing: 0.03em;
+  }
+  .music-main { flex: 1; min-width: 0; }
+  @media (max-width: 960px) {
+    .music-layout { flex-direction: column; }
+    .bio-sidebar { width: 100%; position: static; padding: 1.5rem 1rem 0; }
+    .bio-card { border-radius: 12px; }
+  }
 </style>
 </head>
 <body>
@@ -814,9 +884,7 @@
   <p class="site-title">My music</p>
   <h1 class="site-heading">The music that shaped me</h1>
   <p class="site-sub">In no particular order — click to explore my favorite tracks</p>
-  <button onclick="saveProfileToURL()" style="margin-top:16px;background:none;border:1px solid var(--border2);color:var(--muted);font-size:12px;font-weight:600;font-family:inherit;padding:7px 18px;border-radius:20px;cursor:pointer;letter-spacing:0.04em;transition:color 0.15s,border-color 0.15s;" onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--text)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border2)'">
-    ↗ Share my profile
-  </button>
+
 </header>
 
 <nav class="tab-nav">
@@ -842,6 +910,32 @@
 <!-- TAB: Favorite Artists -->
 <!-- TAB: My Music -->
 <div class="tab-panel active" id="tab-music">
+<div class="music-layout">
+
+<!-- STICKY BIO SIDEBAR -->
+<aside class="bio-sidebar">
+  <div class="bio-card">
+    <div class="bio-label">My Music Taste Profile</div>
+    <div class="bio-text">
+      <p>A strong melodic instinct runs through everything here — even the heaviest picks (Metallica, System of a Down, Muse) are chosen for songs with real hooks and emotional arcs, not just aggression.</p>
+      <p>There's a recurring pull toward bands with a distinct, unmistakable identity: Cake's deadpan funk, Interpol's gothic minimalism, The Decemberists' literary folk. Genre-crossing is consistent, but sonic personality always wins over genre membership.</p>
+      <p>Lyricism and emotional specificity seem to matter more than production polish — artists like Radiohead, The Strokes, and Yeah Yeah Yeahs are loved for the feeling they create, not their chart positions.</p>
+      <p>There's also a notable global curiosity: AR Rahman, BTS, and ABBA sit comfortably alongside American indie and metal, suggesting the ear leads and language follows.</p>
+    </div>
+    <div class="bio-tags">
+      <span class="bio-tag">Indie Rock</span>
+      <span class="bio-tag">Alt Rock</span>
+      <span class="bio-tag">Post-Punk</span>
+      <span class="bio-tag">K-Pop</span>
+      <span class="bio-tag">Heavy Metal</span>
+      <span class="bio-tag">Film Score</span>
+      <span class="bio-tag">Prog Rock</span>
+      <span class="bio-tag">Grunge</span>
+    </div>
+  </div>
+</aside>
+
+<div class="music-main">
 
   <!-- Artists That Shaped Me -->
   <div class="music-section">
@@ -880,7 +974,6 @@
       <h2 class="music-section-title">Albums I ❤️</h2>
     </div>
     <section class="top5-section">
-      <p class="section-label">Top 5 Favorite Albums</p>
       <div class="artist-grid" id="album-grid"></div>
       <div class="tile-search-panel" id="album-tile-search-panel" style="display:none;">
         <div class="tile-search-inner">
@@ -918,9 +1011,12 @@
     </div>
     <section class="top5-section">
       <div class="other-fav-grid" id="other-fav-grid"></div>
+      <div id="other-fav-expand-panel" style="display:none;margin-top:16px;"></div>
     </section>
   </div>
 
+</div><!-- /.music-main -->
+</div><!-- /.music-layout -->
 </div>
 
 <!-- TAB: My Movies -->
@@ -1071,11 +1167,11 @@ let artists = [
     bandPhoto: "https://thebluegrasssituation.com/wp-content/uploads/2021/06/Lead-10-scaled.jpg",
     tilePhoto: "https://i0.wp.com/roughdraftatlanta.com/wp-content/uploads/2024/05/CAKE.jpg?fit=640%2C407&ssl=1",
     songs: [
-      { title: "Love You Madly", album: "Comfort Eagle", art: "https://i.scdn.co/image/ab67616d0000b27383c0582dcebae5e16553bd2d", apple: "https://music.apple.com/us/album/love-you-madly/1440820181?i=1440820510", spotify: "https://open.spotify.com/track/6P7pHfhbUKlGKxb7dZGZwK" },
-      { title: "Frank Sinatra", album: "Fashion Nugget", art: "https://i.scdn.co/image/ab67616d0000b2737abcd966d8f84b2d031a7739", apple: "https://music.apple.com/us/album/frank-sinatra/1440820181?i=1440820196", spotify: "https://open.spotify.com/track/5oRcPlkjPGFAkHSHqtbCkX" },
-      { title: "Wheels", album: "Pressure Chief", art: "https://i.scdn.co/image/ab67616d0000b27383c0582dcebae5e16553bd2d", apple: "https://music.apple.com/us/album/wheels/1440820181?i=1440820520", spotify: "https://open.spotify.com/track/3EIBBfDeGIFBBMWIpkbOFj" },
-      { title: "War Pigs", album: "Fashion Nugget", art: "https://i.scdn.co/image/ab67616d0000b2737abcd966d8f84b2d031a7739", apple: "https://music.apple.com/us/album/war-pigs-f-c-k-the-pain-away/1440820181?i=1440820208", spotify: "https://open.spotify.com/track/3B7Md3vCRiEQHBGBMiFVdU" },
-      { title: "The Distance", album: "Fashion Nugget", art: "https://i.scdn.co/image/ab67616d0000b2737abcd966d8f84b2d031a7739", apple: "https://music.apple.com/us/album/the-distance/1440820181?i=1440820185", spotify: "https://open.spotify.com/track/1E4MFJfN1HdZiEcOKLF5jU" }
+      { title: "Long Line of Cars", album: "Pressure Chief", art: "", apple: "https://music.apple.com/us/album/long-line-of-cars/id159733864?i=159733890", spotify: "https://open.spotify.com/track/4HFkxd6q7PeW3GXqEJ7b9W" },
+      { title: "Love You Madly", album: "Comfort Eagle", art: "", apple: "https://music.apple.com/us/album/love-you-madly/id1440820181?i=1440820510", spotify: "https://open.spotify.com/track/6P7pHfhbUKlGKxb7dZGZwK" },
+      { title: "The Distance", album: "Fashion Nugget", art: "", apple: "https://music.apple.com/us/album/the-distance/id1440820181?i=1440820185", spotify: "https://open.spotify.com/track/1E4MFJfN1HdZiEcOKLF5jU" },
+      { title: "Frank Sinatra", album: "Fashion Nugget", art: "", apple: "https://music.apple.com/us/album/frank-sinatra/id1440820181?i=1440820196", spotify: "https://open.spotify.com/track/5oRcPlkjPGFAkHSHqtbCkX" },
+      { title: "War Pigs", album: "Fashion Nugget", art: "", apple: "https://music.apple.com/us/album/war-pigs-f-c-k-the-pain-away/id1440820181?i=1440820208", spotify: "https://open.spotify.com/track/3B7Md3vCRiEQHBGBMiFVdU" }
     ]
   },
   {
@@ -1122,14 +1218,113 @@ let artists = [
       { title: "Bohemian Rhapsody", album: "A Night at the Opera", art: "https://i.scdn.co/image/ab67616d0000b273a461aa96bd9a8fcd0a492aee", apple: "https://music.apple.com/us/album/bohemian-rhapsody/1440806025?i=1440806041", spotify: "https://open.spotify.com/track/7tFiyTwD0nx5a1eklYtX2J" },
       { title: "Don't Stop Me Now", album: "Jazz", art: "https://i.scdn.co/image/ab67616d0000b27361b719cc3813cccb3ad4d90b", apple: "https://music.apple.com/us/album/dont-stop-me-now/1440806025?i=1440806055", spotify: "https://open.spotify.com/track/5T8EDUDqKcs6OSOwEsfqG7" },
       { title: "Killer Queen", album: "Sheer Heart Attack", art: "https://i.scdn.co/image/ab67616d0000b273a461aa96bd9a8fcd0a492aee", apple: "https://music.apple.com/us/album/killer-queen/1440806025?i=1440806033", spotify: "https://open.spotify.com/track/3M2DI5mr6KLBQzZjJLDZMJ" },
-      { title: "Play the Game", album: "The Game", art: "https://i.scdn.co/image/ab67616d0000b273a461aa96bd9a8fcd0a492aee", apple: "https://music.apple.com/us/album/play-the-game/1440806025?i=1440806061", spotify: "https://open.spotify.com/track/4GlmSMEZmkGZo8CgZDpTFO" },
-      { title: "Good Old-Fashioned Lover Boy", album: "A Day at the Races", art: "https://i.scdn.co/image/ab67616d0000b27369c47467a7964a67d6dbcf14", apple: "https://music.apple.com/us/album/good-old-fashioned-lover-boy/1440806025?i=1440806047", spotify: "https://open.spotify.com/track/5c4UpBPBCIKOoMVZ5XHJZE" }
+      { title: "Good Old-Fashioned Lover Boy", album: "A Day at the Races", art: "https://i.scdn.co/image/ab67616d0000b27369c47467a7964a67d6dbcf14", apple: "https://music.apple.com/us/album/good-old-fashioned-lover-boy/1440806025?i=1440806047", spotify: "https://open.spotify.com/track/5c4UpBPBCIKOoMVZ5XHJZE" },
+      { title: "Play the Game", album: "The Game", art: "https://i.scdn.co/image/ab67616d0000b273a461aa96bd9a8fcd0a492aee", apple: "https://music.apple.com/us/album/play-the-game/1440806025?i=1440806061", spotify: "https://open.spotify.com/track/4GlmSMEZmkGZo8CgZDpTFO" }
+    ]
+  },
+  {
+    id: 11, name: "The Kills", genre: "Indie Rock",
+    bandPhoto: "", tilePhoto: "",
+    songs: [
+      { title: "Blue Moon", album: "Midnight Boom", art: "", apple: "", spotify: "" },
+      { title: "Future Starts Slow", album: "Blood Pressures", art: "", apple: "", spotify: "" },
+      { title: "Black Balloon", album: "Midnight Boom", art: "", apple: "", spotify: "" },
+      { title: "DNA", album: "Blood Pressures", art: "", apple: "", spotify: "" },
+      { title: "Satellite", album: "Keep On Your Mean Side", art: "", apple: "", spotify: "" }
+    ]
+  },
+  {
+    id: 12, name: "Interpol", genre: "Post-Punk",
+    bandPhoto: "", tilePhoto: "",
+    songs: [
+      { title: "PDA", album: "Turn On the Bright Lights", art: "", apple: "", spotify: "" },
+      { title: "Evil", album: "Antics", art: "", apple: "", spotify: "" },
+      { title: "Slow Hands", album: "Antics", art: "", apple: "", spotify: "" },
+      { title: "Narc", album: "Antics", art: "", apple: "", spotify: "" },
+      { title: "Obstacle 1", album: "Turn On the Bright Lights", art: "", apple: "", spotify: "" }
+    ]
+  },
+  {
+    id: 13, name: "A.R. Rahman", genre: "Film Score",
+    bandPhoto: "", tilePhoto: "",
+    songs: [
+      { title: "Ramta Jogi", album: "Taal", art: "", apple: "", spotify: "" },
+      { title: "Chaiyya Chaiyya", album: "Dil Se", art: "", apple: "", spotify: "" },
+      { title: "Taal Se Taal Mila", album: "Taal", art: "", apple: "", spotify: "" },
+      { title: "E Ajnabi", album: "Dil Se", art: "", apple: "", spotify: "" },
+      { title: "Ishq Bina", album: "Taal", art: "", apple: "", spotify: "" }
+    ]
+  },
+  {
+    id: 14, name: "Julian Casablancas", genre: "Indie Rock",
+    bandPhoto: "", tilePhoto: "",
+    songs: [
+      { title: "Tourist", album: "Phrazes for the Young", art: "", apple: "", spotify: "" },
+      { title: "Out of the Blue", album: "Phrazes for the Young", art: "", apple: "", spotify: "" },
+      { title: "Glass", album: "Phrazes for the Young", art: "", apple: "", spotify: "" },
+      { title: "Left & Right in the Dark", album: "Phrazes for the Young", art: "", apple: "", spotify: "" },
+      { title: "11th Dimension", album: "Phrazes for the Young", art: "", apple: "", spotify: "" }
+    ]
+  },
+  {
+    id: 15, name: "The Decemberists", genre: "Indie Folk",
+    bandPhoto: "", tilePhoto: "",
+    songs: [
+      { title: "O Valencia!", album: "The Crane Wife", art: "", apple: "", spotify: "" },
+      { title: "The Engine Driver", album: "Picaresque", art: "", apple: "", spotify: "" },
+      { title: "The Island: Come and See", album: "The Crane Wife", art: "", apple: "", spotify: "" },
+      { title: "We Both Go Down Together", album: "Picaresque", art: "", apple: "", spotify: "" },
+      { title: "The Infanta", album: "Picaresque", art: "", apple: "", spotify: "" }
+    ]
+  },
+  {
+    id: 16, name: "Alt-J", genre: "Indie Rock",
+    bandPhoto: "", tilePhoto: "",
+    songs: [
+      { title: "Breezeblocks", album: "An Awesome Wave", art: "", apple: "", spotify: "" },
+      { title: "Tessellate", album: "An Awesome Wave", art: "", apple: "", spotify: "" },
+      { title: "Left Hand Free", album: "This Is All Yours", art: "", apple: "", spotify: "" },
+      { title: "Dissolve Me", album: "An Awesome Wave", art: "", apple: "", spotify: "" },
+      { title: "Fitzpleasure", album: "An Awesome Wave", art: "", apple: "", spotify: "" }
+    ]
+  },
+  {
+    id: 17, name: "Muse", genre: "Alternative Rock",
+    bandPhoto: "", tilePhoto: "",
+    songs: [
+      { title: "Hysteria", album: "Absolution", art: "", apple: "", spotify: "" },
+      { title: "Knights of Cydonia", album: "Black Holes and Revelations", art: "", apple: "", spotify: "" },
+      { title: "Uprising", album: "The Resistance", art: "", apple: "", spotify: "" },
+      { title: "Madness", album: "The 2nd Law", art: "", apple: "", spotify: "" },
+      { title: "Stockholm Syndrome", album: "Absolution", art: "", apple: "", spotify: "" }
+    ]
+  },
+  {
+    id: 18, name: "Metallica", genre: "Heavy Metal",
+    bandPhoto: "", tilePhoto: "",
+    songs: [
+      { title: "The Unforgiven III", album: "Death Magnetic", art: "", apple: "", spotify: "" },
+      { title: "The Unforgiven II", album: "Reload", art: "", apple: "", spotify: "" },
+      { title: "The Unforgiven", album: "Metallica (Black Album)", art: "", apple: "", spotify: "" },
+      { title: "Nothing Else Matters", album: "Metallica (Black Album)", art: "", apple: "", spotify: "" },
+      { title: "Turn the Page", album: "Garage Inc.", art: "", apple: "", spotify: "" }
+    ]
+  },
+  {
+    id: 19, name: "System of a Down", genre: "Heavy Metal",
+    bandPhoto: "", tilePhoto: "",
+    songs: [
+      { title: "Hypnotize", album: "Hypnotize", art: "", apple: "", spotify: "" },
+      { title: "Chop Suey!", album: "Toxicity", art: "", apple: "", spotify: "" },
+      { title: "Toxicity", album: "Toxicity", art: "", apple: "", spotify: "" },
+      { title: "ATWA", album: "Toxicity", art: "", apple: "", spotify: "" },
+      { title: "B.Y.O.B.", album: "Mezmerize", art: "", apple: "", spotify: "" }
     ]
   },
 ];
 
 let editingId = null;
-let nextId = 11;
+let nextId = 20;
 
 function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1214,8 +1409,8 @@ function renderGrid() {
     return `<div class="artist-tile" id="tile-${a.id}" onclick="toggleArtistExpand(${a.id}, ${i})">
       <div class="tile-img-wrap">
         ${a.tilePhoto
-          ? `<img class="tile-img" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="this.style.display='none'">`
-          : `<div class="tile-placeholder" style="aspect-ratio:4/3;height:auto">
+          ? `<img class="tile-img" id="tile-img-${a.id}" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="loadTileImgFallback(${a.id})">`
+          : `<div class="tile-placeholder" id="tile-ph-${a.id}" style="aspect-ratio:4/3;height:auto">
               <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
             </div>`}
         <span class="tile-rank">${i + 1}</span>
@@ -1223,6 +1418,31 @@ function renderGrid() {
       <div class="tile-label">${esc(a.name) || `Artist ${i + 1}`}</div>
     </div>`;
   }).join('');
+  // Load art for tiles that have no tilePhoto
+  artists.slice(0, 5).forEach(a => {
+    if (!a.tilePhoto) loadTileImgFallback(a.id);
+  });
+}
+
+async function loadTileImgFallback(artistId) {
+  const a = artists.find(x => x.id === artistId);
+  if (!a) return;
+  try {
+    const firstSong = a.songs?.[0]?.title || '';
+    const q = encodeURIComponent(firstSong ? `${firstSong} ${a.name}` : a.name);
+    const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=5`);
+    const data = await res.json();
+    const hit = (data.results||[]).find(r =>
+      r.artistName?.toLowerCase().includes(a.name.toLowerCase().split(' ')[0])
+    ) || (data.results||[])[0];
+    if (!hit?.artworkUrl100) return;
+    const art = hit.artworkUrl100.replace('100x100bb', '400x400bb');
+    // Replace placeholder or broken img
+    const wrap = document.querySelector(`#tile-${artistId} .tile-img-wrap`);
+    if (!wrap) return;
+    const rank = wrap.querySelector('.tile-rank')?.outerHTML || '';
+    wrap.innerHTML = `<img class="tile-img" src="${art}" alt="${esc(a.name)}">${rank}`;
+  } catch(e) {}
 }
 
 function toggleArtistExpand(artistId, tileIdx) {
@@ -1293,7 +1513,11 @@ async function loadArtForArtist(a) {
         const data = await res.json();
         if (data.results?.[0]) art = data.results[0].artworkUrl100.replace('100x100bb','300x300bb');
       }
-      if (art) el.innerHTML = `<img src="${art}" alt="${esc(s.album)}" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;">`;
+      if (art) {
+        const isAlbumArt = !!el.closest('.album-art');
+        const size = isAlbumArt ? 52 : 40;
+        el.innerHTML = `<img src="${art}" alt="${esc(s.album||s.title)}" style="width:${size}px;height:${size}px;border-radius:5px;display:block;object-fit:cover;">`;
+      }
     } catch(e) {}
   }
 }
@@ -1559,41 +1783,123 @@ const OTHER_ARTISTS = [
   { name: "Metallica",         genre: "Heavy Metal"     },
 ];
 
+let expandedOtherFavId = null;
+
 function renderOtherFavGrid() {
   const el = document.getElementById('other-fav-grid');
   if (!el) return;
-  el.innerHTML = OTHER_ARTISTS.map((a, i) =>
-    `<div class="other-fav-card" id="ofav-${i}">
-      <div class="other-fav-card-img-wrap" id="ofav-img-${i}">
+  const others = artists.slice(5);
+  el.innerHTML = others.map((a) =>
+    `<div class="other-fav-card" id="ofav-card-${a.id}" onclick="toggleOtherFavTile(${a.id})" style="cursor:pointer;">
+      <div class="other-fav-card-img-wrap" id="ofav-img-${a.id}">
         <div class="other-fav-card-placeholder">${esc(a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>
       </div>
       <div class="other-fav-card-name">${esc(a.name)}</div>
       <div class="other-fav-card-genre">${esc(a.genre)}</div>
     </div>`
   ).join('');
-  OTHER_ARTISTS.forEach((a, i) => loadOtherFavImg(a.name, i));
+  others.forEach(a => loadOtherFavTileImg(a));
+}
+
+async function loadOtherFavTileImg(a) {
+  const wrap = document.getElementById(`ofav-img-${a.id}`);
+  if (!wrap) return;
+  try {
+    // Search by artist name + first known song title for reliable artwork
+    const firstSong = a.songs?.[0]?.title || '';
+    const q = encodeURIComponent(firstSong ? `${firstSong} ${a.name}` : a.name);
+    const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=5`);
+    const data = await res.json();
+    // Find a result matching this artist
+    const hit = (data.results||[]).find(r =>
+      r.artistName?.toLowerCase().includes(a.name.toLowerCase().split(' ')[0])
+    ) || (data.results||[])[0];
+    if (hit?.artworkUrl100) {
+      const art = hit.artworkUrl100.replace('100x100bb', '400x400bb');
+      wrap.innerHTML = `<img class="other-fav-card-img" src="${art}" alt="${esc(a.name)}">`;
+    }
+  } catch(e) {}
+}
+
+function toggleOtherFavTile(artistId) {
+  const panel = document.getElementById('other-fav-expand-panel');
+  // Deactivate old
+  document.querySelectorAll('.other-fav-card').forEach(c => c.classList.remove('tile-active'));
+  if (expandedOtherFavId === artistId) {
+    panel.style.display = 'none'; panel.innerHTML = '';
+    expandedOtherFavId = null;
+    return;
+  }
+  expandedOtherFavId = artistId;
+  document.getElementById(`ofav-card-${artistId}`)?.classList.add('tile-active');
+  const a = artists.find(x => x.id === artistId);
+  if (!a) return;
+  const songs = (a.songs||[]).filter(s => s.title);
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:14px;padding:1.125rem 1.5rem;border-bottom:1px solid var(--border);">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,${COLORS[artistId%COLORS.length]}cc,${COLORS[artistId%COLORS.length]});display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0;">${initials(a.name)}</div>
+        <div>
+          <div style="font-size:16px;font-weight:600;">${esc(a.name)}</div>
+          ${a.genre?`<div style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(a.genre)}</div>`:''}
+        </div>
+        <button onclick="toggleOtherFavTile(${artistId})" style="margin-left:auto;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+      ${songs.length ? `<table class="songs-table">
+        <thead><tr><th>#</th><th>Song</th><th>Album</th></tr></thead>
+        <tbody>${songs.map((s,si) => `
+          <tr class="songs-table-row">
+            <td class="songs-table-num">${si+1}</td>
+            <td class="songs-table-title"><div class="songs-table-art" id="ofav-art-${artistId}-${si}"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="#26262a" rx="5"/><text x="20" y="26" font-family="sans-serif" font-size="16" fill="#45444a" text-anchor="middle">♪</text></svg></div><span>${esc(s.title)}</span></td>
+            <td class="songs-table-album">${esc(s.album||'')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : `<div style="padding:1.5rem;color:var(--muted);font-size:13px;">No songs yet.</div>`}
+    </div>`;
+  // Load art
+  songs.forEach((s,si) => {
+    if (!s.title) return;
+    const q = encodeURIComponent(`${s.title} ${a.name}`);
+    fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=1`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.results?.[0]?.artworkUrl100) {
+          const art = data.results[0].artworkUrl100.replace('100x100bb','200x200bb');
+          const el = document.getElementById(`ofav-art-${artistId}-${si}`);
+          if (el) el.innerHTML = `<img src="${art}" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;">`;
+        }
+      }).catch(()=>{});
+  });
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 async function loadOtherFavImg(name, idx) {
-  const wrap = document.getElementById(`ofav-img-${idx}`);
-  if (!wrap) return;
-  try {
-    // Search for artist, get their artistId, then look up their most popular album for artwork
-    const q = encodeURIComponent(name);
-    const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=musicArtist&limit=5`);
-    const data = await res.json();
-    const hit = (data.results||[]).find(r =>
-      r.artistName?.toLowerCase() === name.toLowerCase()
-    ) || (data.results||[])[0];
-    if (!hit?.artistId) return;
+  // This function is no longer used — images load via artists array artwork loading
+}
 
-    // Get their top album for cover art (more visually distinctive than song art)
-    const res2 = await fetch(`https://itunes.apple.com/lookup?id=${hit.artistId}&entity=album&limit=3`);
+async function loadMBArtistImg(artistId, imgEl) {
+  try {
+    // Search MusicBrainz for the artist
+    const q = encodeURIComponent(`artist:"${artistId}"`);
+    const res = await fetch(`https://musicbrainz.org/ws/2/artist/?query=${q}&limit=1&fmt=json`, {
+      headers: { 'User-Agent': 'tastelist.ai/1.0 (tastelist.ai)' }
+    });
+    const data = await res.json();
+    const artist = data.artists?.[0];
+    if (!artist?.id) return;
+    // Get their most popular release for cover art
+    const res2 = await fetch(`https://musicbrainz.org/ws/2/release-group/?artist=${artist.id}&type=album&limit=1&fmt=json`, {
+      headers: { 'User-Agent': 'tastelist.ai/1.0 (tastelist.ai)' }
+    });
     const data2 = await res2.json();
-    const album = (data2.results||[]).find(r => r.wrapperType === 'collection' && r.artworkUrl100);
-    if (album?.artworkUrl100) {
-      const art = album.artworkUrl100.replace('100x100bb', '400x400bb');
-      if (wrap) wrap.innerHTML = `<img class="other-fav-card-img" src="${art}" alt="${esc(name)}">`;
+    const rg = data2['release-groups']?.[0];
+    if (!rg?.id) return;
+    const artRes = await fetch(`https://coverartarchive.org/release-group/${rg.id}/front-500`);
+    if (artRes.ok) {
+      const blob = await artRes.blob();
+      const url = URL.createObjectURL(blob);
+      if (imgEl && imgEl.parentNode) imgEl.innerHTML = `<img class="other-fav-card-img" src="${url}" alt="">`;
     }
   } catch(e) {}
 }
@@ -1604,7 +1910,7 @@ let expandedAlbumId = null;
 function renderAlbumGrid() {
   const grid = document.getElementById('album-grid');
   if (!grid) return;
-  grid.innerHTML = albums.slice(0, 5).map((a, i) => {
+  grid.innerHTML = albums.map((a, i) => {
     return `<div class="artist-tile" id="album-tile-${a.id}" onclick="toggleAlbumExpand(${a.id}, ${i})">
       <div class="tile-img-wrap">
         ${a.tilePhoto
@@ -1621,8 +1927,8 @@ function renderAlbumGrid() {
     </div>`;
   }).join('');
   // Load cover art into tile placeholders
-  albums.slice(0, 5).forEach(a => {
-    if (a.tilePhoto) return; // already has image
+  albums.forEach(a => {
+    if (a.tilePhoto) return;
     loadAlbumTileArt(a);
   });
 }
@@ -1631,23 +1937,57 @@ async function loadAlbumTileArt(a) {
   try {
     let artUrl = null;
     if (a.iTunesId) {
-      const res = await fetch(`https://itunes.apple.com/lookup?id=${a.iTunesId}`);
+      // Direct lookup by collection ID — most reliable
+      const res = await fetch(`https://itunes.apple.com/lookup?id=${a.iTunesId}&entity=album`);
       const data = await res.json();
       const hit = (data.results||[]).find(r => r.artworkUrl100);
-      if (hit) artUrl = hit.artworkUrl100.replace('100x100bb','400x400bb');
+      if (hit) artUrl = hit.artworkUrl100.replace('100x100bb','600x600bb');
     }
     if (!artUrl) {
-      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(a.name+' '+a.artist)}&media=music&entity=album&limit=1`);
+      // Fallback: search by first song title + artist
+      const firstSong = a.songs?.[0]?.title || a.name;
+      const q = encodeURIComponent(`${firstSong} ${a.artist}`);
+      const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=3`);
       const data = await res.json();
-      if (data.results?.[0]?.artworkUrl100) artUrl = data.results[0].artworkUrl100.replace('100x100bb','400x400bb');
+      const hit = (data.results||[]).find(r =>
+        r.artistName?.toLowerCase().includes(a.artist.toLowerCase().split(' ')[0])
+      ) || (data.results||[])[0];
+      if (hit?.artworkUrl100) artUrl = hit.artworkUrl100.replace('100x100bb','600x600bb');
     }
     if (artUrl) {
-      a._artUrl = artUrl; // cache for expand panel
+      a._artUrl = artUrl;
       const placeholder = document.getElementById(`album-tile-inner-${a.id}`);
       if (placeholder) {
         placeholder.style.padding = '0';
         placeholder.innerHTML = `<img src="${artUrl}" alt="${esc(a.name)}" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;border-radius:10px 10px 0 0;">`;
       }
+    }
+  } catch(e) {}
+}
+
+async function fetchMBAlbumArt(albumName, artistName) { return null; }
+
+async function loadArtForAlbum(a) {
+  let artUrl = a._artUrl || null;
+  try {
+    if (!artUrl && a.iTunesId) {
+      const res = await fetch(`https://itunes.apple.com/lookup?id=${a.iTunesId}`);
+      const data = await res.json();
+      const hit = (data.results||[]).find(r => r.artworkUrl100);
+      if (hit) artUrl = hit.artworkUrl100.replace('100x100bb','600x600bb');
+    }
+    if (!artUrl) {
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(a.name+' '+a.artist)}&media=music&entity=album&limit=1`);
+      const data = await res.json();
+      if (data.results?.[0]?.artworkUrl100) artUrl = data.results[0].artworkUrl100.replace('100x100bb','600x600bb');
+    }
+    if (artUrl) {
+      const hero = document.getElementById(`album-hero-${a.id}`);
+      if (hero) hero.innerHTML = `<img class="expand-hero" src="${artUrl}" alt="${esc(a.name)}" style="object-position:center center;">`;
+      (a.songs||[]).forEach((s,si) => {
+        const el = document.getElementById(`alb-art-${a.id}-${si}`);
+        if (el) el.innerHTML = `<img src="${artUrl}" alt="${esc(a.name)}" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;">`;
+      });
     }
   } catch(e) {}
 }
@@ -1701,18 +2041,23 @@ function toggleAlbumExpand(albumId, tileIdx) {
 }
 
 async function loadArtForAlbum(a) {
-  let artUrl = a._artUrl || null; // use cached value from tile load if available
+  let artUrl = a._artUrl || null;
   try {
     if (!artUrl && a.iTunesId) {
-      const res = await fetch(`https://itunes.apple.com/lookup?id=${a.iTunesId}`);
+      const res = await fetch(`https://itunes.apple.com/lookup?id=${a.iTunesId}&entity=album`);
       const data = await res.json();
       const hit = (data.results||[]).find(r => r.artworkUrl100);
       if (hit) artUrl = hit.artworkUrl100.replace('100x100bb','600x600bb');
     }
     if (!artUrl) {
-      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(a.name+' '+a.artist)}&media=music&entity=album&limit=1`);
+      const firstSong = a.songs?.[0]?.title || a.name;
+      const q = encodeURIComponent(`${firstSong} ${a.artist}`);
+      const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=3`);
       const data = await res.json();
-      if (data.results?.[0]?.artworkUrl100) artUrl = data.results[0].artworkUrl100.replace('100x100bb','600x600bb');
+      const hit = (data.results||[]).find(r =>
+        r.artistName?.toLowerCase().includes(a.artist.toLowerCase().split(' ')[0])
+      ) || (data.results||[])[0];
+      if (hit?.artworkUrl100) artUrl = hit.artworkUrl100.replace('100x100bb','600x600bb');
     }
     if (artUrl) {
       const hero = document.getElementById(`album-hero-${a.id}`);
@@ -1794,23 +2139,20 @@ function toggleOtherFav(artistId) {
   if (!item) return;
   const wasOpen = item.classList.contains('open');
   item.classList.toggle('open');
-  // Load art when first opened
   if (!wasOpen) {
     const artist = artists.find(a => a.id === artistId);
     if (artist) {
       artist.songs.forEach((s, si) => {
-        if (!s.apple) return;
-        const m = s.apple.match(/\?i=(\d+)/);
-        if (!m) return;
-        fetch(`https://itunes.apple.com/lookup?id=${m[1]}`)
+        if (!s.title) return;
+        const el = document.getElementById(`art-${artistId}-${si}`);
+        if (!el || el.querySelector('img')) return;
+        const q = encodeURIComponent(`${s.title} ${artist.name}`);
+        fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=1`)
           .then(r => r.json())
           .then(data => {
-            if (data.results && data.results[0]) {
-              const art = data.results[0].artworkUrl100?.replace('100x100bb','300x300bb');
-              if (art) {
-                const el = document.getElementById(`art-${artistId}-${si}`);
-                if (el) el.innerHTML = `<img src="${art}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
-              }
+            if (data.results?.[0]?.artworkUrl100) {
+              const art = data.results[0].artworkUrl100.replace('100x100bb','300x300bb');
+              if (el) el.innerHTML = `<img src="${art}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
             }
           }).catch(() => {});
       });
@@ -1819,15 +2161,8 @@ function toggleOtherFav(artistId) {
 }
 
 async function loadOtherFavArt() {
-  // Preload art for all other favorites (not just on open)
-  for (const a of artists.slice(5)) {
-    for (let si = 0; si < a.songs.length; si++) {
-      const s = a.songs[si];
-      if (!s.art) continue;
-      const el = document.getElementById(`art-${a.id}-${si}`);
-      if (el) el.innerHTML = `<img src="${s.art}" alt="${esc(s.album)}" style="width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;">`;
-    }
-  }
+  // Load art from MusicBrainz for other favorites that open
+  // Art is loaded on-demand in toggleOtherFav
 }
 
 // ── ON REPEAT DATA ──
@@ -2403,9 +2738,30 @@ let albums = [
     { title: "Helter Skelter", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/helter-skelter/1441133180?i=1441133732", spotify: "https://open.spotify.com/track/7AkFGFtlHHVxQn0YmJFZ17" },
     { title: "Revolution 1", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/revolution-1/1441133180?i=1441133736", spotify: "https://open.spotify.com/track/5CdHFcLnZnWKbNQWlNBKrn" },
     { title: "Cry Baby Cry", album: "The Beatles (White Album)", art: "", apple: "https://music.apple.com/us/album/cry-baby-cry/1441133180?i=1441133745", spotify: "https://open.spotify.com/track/4GZ7EOCx5XcGGqcpHr3MU2" }
+  ]},
+  { id: 112, name: "Weezer (Blue Album)", artist: "Weezer", year: "1994", genre: "Alternative Rock", iTunesId: "1440878798", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Buddy Holly", album: "Weezer (Blue Album)", art: "", apple: "https://music.apple.com/us/album/buddy-holly/1440919281?i=1440919486", spotify: "https://open.spotify.com/track/7eutFEMNtJq9C7BSEP7P9k" },
+    { title: "Undone – The Sweater Song", album: "Weezer (Blue Album)", art: "", apple: "https://music.apple.com/us/album/undone-the-sweater-song/1440919281?i=1440919488", spotify: "https://open.spotify.com/track/6vAXjBiHJkMJx6omZfXBxr" },
+    { title: "Say It Ain't So", album: "Weezer (Blue Album)", art: "", apple: "https://music.apple.com/us/album/say-it-aint-so/1440919281?i=1440919500", spotify: "https://open.spotify.com/track/1JhJuPHGRNZqmxTqDiONcb" },
+    { title: "In the Garage", album: "Weezer (Blue Album)", art: "", apple: "https://music.apple.com/us/album/in-the-garage/1440919281?i=1440919494", spotify: "https://open.spotify.com/track/0qBMp6YzM5pBQLNFsTgPEj" },
+    { title: "Only in Dreams", album: "Weezer (Blue Album)", art: "", apple: "https://music.apple.com/us/album/only-in-dreams/1440919281?i=1440919502", spotify: "https://open.spotify.com/track/3dB0bCgmpEgCSABtJhLDSt" }
+  ]},
+  { id: 113, name: "The Wall", artist: "Pink Floyd", year: "1979", genre: "Progressive Rock", iTunesId: "1065975840", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "In the Flesh?", album: "The Wall", art: "", apple: "https://music.apple.com/us/album/in-the-flesh/1065975840?i=1065975857", spotify: "https://open.spotify.com/track/5HNCy40Ni5BZJFw1TKzRsC" },
+    { title: "Another Brick in the Wall, Pt. 2", album: "The Wall", art: "", apple: "https://music.apple.com/us/album/another-brick-in-the-wall-pt-2/1065975840?i=1065975862", spotify: "https://open.spotify.com/track/3MqMaAVTJPGOFEVtSvKHbW" },
+    { title: "Comfortably Numb", album: "The Wall", art: "", apple: "https://music.apple.com/us/album/comfortably-numb/1065975840?i=1065975888", spotify: "https://open.spotify.com/track/7q3kkfAVpmcZ8g6JUThi3o" },
+    { title: "Hey You", album: "The Wall", art: "", apple: "https://music.apple.com/us/album/hey-you/1065975840?i=1065975880", spotify: "https://open.spotify.com/track/1Zypzp4T58SVvNBuGWPwNr" },
+    { title: "Run Like Hell", album: "The Wall", art: "", apple: "https://music.apple.com/us/album/run-like-hell/1065975840?i=1065975895", spotify: "https://open.spotify.com/track/0PVqhRkQJTYoSMfKxOGGrH" }
+  ]},
+  { id: 115, name: "West End Girl", artist: "Lily Allen", year: "2025", genre: "Pop", iTunesId: "1846342052", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "West End Girl", album: "West End Girl", art: "", apple: "https://music.apple.com/us/album/west-end-girl/1846342052", spotify: "" },
+    { title: "Madeline", album: "West End Girl", art: "", apple: "https://music.apple.com/us/album/west-end-girl/1846342052", spotify: "" },
+    { title: "Pussy Palace", album: "West End Girl", art: "", apple: "https://music.apple.com/us/album/west-end-girl/1846342052", spotify: "" },
+    { title: "Sleepwalking", album: "West End Girl", art: "", apple: "https://music.apple.com/us/album/west-end-girl/1846342052", spotify: "" },
+    { title: "Beg for Me", album: "West End Girl", art: "", apple: "https://music.apple.com/us/album/west-end-girl/1846342052", spotify: "" }
   ]}
 ];
-let nextAlbumId = 111;
+let nextAlbumId = 117;
 let editingAlbumId = null;
 let modalMode = 'artist'; // 'artist' or 'album'
 
