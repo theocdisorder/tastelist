@@ -816,13 +816,13 @@
   .coming-soon-sub { font-size: 14px; color: var(--muted); }
 
   /* ── MOVIE GRID ── */
-  #movie-grid, #comedy-grid, #thriller-grid, #drama-grid, #tv-comedy-grid, #tv-drama-grid, #tv-other-grid, #tv-dropoff-grid {
+  #movie-grid, #comedy-grid, #thriller-grid, #drama-grid, #tv-comedy-grid, #tv-drama-grid, #tv-other-grid, #tv-dropoff-grid, #books-shaped-grid, #books-reread-grid, #books-recent-grid {
     grid-template-columns: repeat(5, 1fr);
   }
-  #movie-grid .tile-img-wrap, #comedy-grid .tile-img-wrap, #thriller-grid .tile-img-wrap, #drama-grid .tile-img-wrap, #tv-comedy-grid .tile-img-wrap, #tv-drama-grid .tile-img-wrap, #tv-other-grid .tile-img-wrap, #tv-dropoff-grid .tile-img-wrap {
+  #movie-grid .tile-img-wrap, #comedy-grid .tile-img-wrap, #thriller-grid .tile-img-wrap, #drama-grid .tile-img-wrap, #tv-comedy-grid .tile-img-wrap, #tv-drama-grid .tile-img-wrap, #tv-other-grid .tile-img-wrap, #tv-dropoff-grid .tile-img-wrap, #books-shaped-grid .tile-img-wrap, #books-reread-grid .tile-img-wrap, #books-recent-grid .tile-img-wrap {
     aspect-ratio: 2/3;
   }
-  #movie-grid .tile-img, #comedy-grid .tile-img, #thriller-grid .tile-img, #drama-grid .tile-img, #tv-comedy-grid .tile-img, #tv-drama-grid .tile-img, #tv-other-grid .tile-img, #tv-dropoff-grid .tile-img {
+  #movie-grid .tile-img, #comedy-grid .tile-img, #thriller-grid .tile-img, #drama-grid .tile-img, #tv-comedy-grid .tile-img, #tv-drama-grid .tile-img, #tv-other-grid .tile-img, #tv-dropoff-grid .tile-img, #books-shaped-grid .tile-img, #books-reread-grid .tile-img, #books-recent-grid .tile-img {
     object-position: center top;
   }
   .music-layout {
@@ -890,8 +890,8 @@
 <body>
 
 <header class="site-header">
-  <p class="site-title">My music</p>
-  <h1 class="site-heading">The music that shaped me</h1>
+  <p class="site-title">Sreya's Taste Profile</p>
+  <h1 class="site-heading">The arts and culture that shaped me</h1>
   <p class="site-sub">In no particular order — click to explore my favorite tracks</p>
 
 </header>
@@ -1171,12 +1171,65 @@
   </div>
 
 </div><!-- /.music-main -->
+</div><!-- /.music-layout -->
+</div><!-- /#tab-tv -->
 <div class="tab-panel" id="tab-books">
-  <div class="coming-soon-panel">
-    <div class="coming-soon-icon">📚</div>
-    <h2 class="coming-soon-title">My Books</h2>
-    <p class="coming-soon-sub">Coming soon — add your favorite books here.</p>
+<div class="music-layout">
+
+<!-- BOOKS BIO SIDEBAR -->
+<aside class="bio-sidebar">
+  <div class="bio-card">
+    <div class="bio-label">My Reading Profile</div>
+    <div class="bio-text">
+      <p>A reader shaped equally by Ayn Rand's philosophical fiction, Jane Austen's social precision, and Albert Camus's existential economy. The through-line is books that take ideas seriously — whether that's Objectivism, class and marriage, or the absurd.</p>
+      <p>The Austen obsession runs deep: Pride and Prejudice, Persuasion, and Mansfield Park all appear in the reread list alongside all seven Harry Potter books, suggesting a particular love for worlds you can return to as much as visit.</p>
+      <p>Recent picks (Franzen, Min Jin Lee, Gabrielle Zevin) share an interest in sweeping, character-driven narratives about how people build — and sometimes lose — meaningful lives.</p>
+    </div>
+    <div class="bio-tags">
+      <span class="bio-tag">Philosophy</span>
+      <span class="bio-tag">Classic Fiction</span>
+      <span class="bio-tag">Existentialism</span>
+      <span class="bio-tag">Literary Fiction</span>
+      <span class="bio-tag">Austen</span>
+      <span class="bio-tag">Fantasy</span>
+    </div>
   </div>
+</aside>
+
+<div class="music-main">
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Books That Shaped Me</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="books-shaped-grid"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Books I've Reread Too Many Times</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="books-reread-grid"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Recent Favorites</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="books-recent-grid"></div>
+    </section>
+  </div>
+
+</div><!-- /.music-main -->
+</div><!-- /.music-layout -->
 </div>
 <!-- TAB: Taste Graph -->
 <div class="tab-panel" id="tab-graph">
@@ -1927,10 +1980,9 @@ function updateMusicProfile() {
   const otherNames = artists.slice(5).map(a => a.name).filter(Boolean).slice(0, 4);
   const hasHeavy = allNames.some(n => ['Metallica','System of a Down','Muse'].includes(n));
   const hasGlobal = allNames.some(n => ['A.R. Rahman','BTS','ABBA'].includes(n));
-  const hasIndie = allNames.some(n => ['The Strokes','Radiohead','Interpol','Alt-J'].includes(n));
   let paras = [];
   if (topFiveNames.length) paras.push(`The five most influential artists — ${topFiveNames.join(', ')} — reveal a taste anchored in melodically strong, personality-driven music that prioritizes feeling and identity over genre purity.`);
-  if (hasHeavy && hasIndie) paras.push(`A strong melodic instinct runs through everything — even the heavier picks are chosen for songs with real hooks and emotional arcs. Genre-crossing is consistent, but sonic personality always wins over genre membership.`);
+  if (hasHeavy) paras.push(`A strong melodic instinct runs through everything — even the heavier picks are chosen for songs with real hooks and emotional arcs. Genre-crossing is consistent, but sonic personality always wins over genre membership.`);
   else paras.push(`Lyricism and emotional specificity matter more than production polish. These artists are loved for the feeling they create, not their chart positions.`);
   if (otherNames.length) paras.push(`Beyond the top five, the list extends into ${otherNames.join(', ')} and more — a wide range that rewards artists with a distinct, unmistakable identity.`);
   if (hasGlobal) paras.push(`A notable global curiosity: international artists sit comfortably alongside indie and rock picks, suggesting the ear leads and language follows.`);
@@ -4539,6 +4591,81 @@ let tvDropoffShows = [];
 
 preloadTVGrid(TV_OTHER_PRELOAD, tvOtherShows, 'tv-other', 'tv-other-grid');
 preloadTVGrid(TV_DROPOFF_PRELOAD, tvDropoffShows, 'tv-dropoff', 'tv-dropoff-grid');
+
+// ── BOOKS ──
+const BOOKS_SHAPED = [
+  { title: 'Atlas Shrugged',      author: 'Ayn Rand',        year: '1957' },
+  { title: 'The Fountainhead',    author: 'Ayn Rand',        year: '1943' },
+  { title: 'Pride and Prejudice', author: 'Jane Austen',     year: '1813' },
+  { title: 'Persuasion',          author: 'Jane Austen',     year: '1817' },
+  { title: 'The Stranger',        author: 'Albert Camus',    year: '1942' },
+  { title: 'The Westing Game',    author: 'Ellen Raskin',    year: '1978' },
+  { title: 'Wuthering Heights',   author: 'Emily Brontë',   year: '1847' },
+];
+
+const BOOKS_REREAD = [
+  { title: "Harry Potter and the Philosopher's Stone", author: 'J.K. Rowling', year: '1997' },
+  { title: 'Harry Potter and the Chamber of Secrets',  author: 'J.K. Rowling', year: '1998' },
+  { title: 'Harry Potter and the Prisoner of Azkaban', author: 'J.K. Rowling', year: '1999' },
+  { title: 'Harry Potter and the Goblet of Fire',      author: 'J.K. Rowling', year: '2000' },
+  { title: 'Harry Potter and the Order of the Phoenix',author: 'J.K. Rowling', year: '2003' },
+  { title: 'Harry Potter and the Half-Blood Prince',   author: 'J.K. Rowling', year: '2005' },
+  { title: 'Harry Potter and the Deathly Hallows',     author: 'J.K. Rowling', year: '2007' },
+  { title: 'Pride and Prejudice',                      author: 'Jane Austen',  year: '1813' },
+  { title: 'Persuasion',                               author: 'Jane Austen',  year: '1817' },
+  { title: 'Mansfield Park',                           author: 'Jane Austen',  year: '1814' },
+  { title: 'The Westing Game',                         author: 'Ellen Raskin', year: '1978' },
+];
+
+const BOOKS_RECENT = [
+  { title: 'Freedom',                        author: 'Jonathan Franzen', year: '2010' },
+  { title: 'Pachinko',                       author: 'Min Jin Lee',      year: '2017' },
+  { title: 'Tomorrow, and Tomorrow, and Tomorrow', author: 'Gabrielle Zevin', year: '2022' },
+];
+
+let booksShapedData = [];
+let booksRereadData = [];
+let booksRecentData = [];
+
+async function preloadBooks(bookList, dataArr, gridId) {
+  for (let i = 0; i < bookList.length; i++) {
+    const b = bookList[i];
+    dataArr.push({ ...b, cover: '' });
+    const idx = i;
+    const q = encodeURIComponent(`${b.title} ${b.author}`);
+    fetch(`https://openlibrary.org/search.json?q=${q}&limit=1&fields=cover_i,title,author_name`)
+      .then(r => r.json())
+      .then(data => {
+        const doc = data.docs?.[0];
+        if (doc?.cover_i) dataArr[idx].cover = `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+        renderBookGrid(dataArr, gridId);
+      }).catch(() => {});
+  }
+  renderBookGrid(dataArr, gridId);
+}
+
+function renderBookGrid(dataArr, gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.innerHTML = dataArr.map((b, i) =>
+    `<div class="artist-tile" style="cursor:default;">
+      <div class="tile-img-wrap" style="aspect-ratio:2/3;">
+        ${b.cover
+          ? `<img class="tile-img" src="${b.cover}" alt="${esc(b.title)}" style="object-position:center top;">`
+          : `<div class="tile-placeholder" style="aspect-ratio:2/3;height:auto;font-size:11px;color:var(--faint);">No cover</div>`}
+        <span class="tile-rank">${i + 1}</span>
+      </div>
+      <div class="tile-label">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(b.title)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${esc(b.author)}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+preloadBooks(BOOKS_SHAPED, booksShapedData, 'books-shaped-grid');
+preloadBooks(BOOKS_REREAD, booksRereadData, 'books-reread-grid');
+preloadBooks(BOOKS_RECENT, booksRecentData, 'books-recent-grid');
 </script>
 </body>
 </html>
