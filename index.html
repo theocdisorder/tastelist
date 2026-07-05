@@ -815,7 +815,16 @@
   .coming-soon-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
   .coming-soon-sub { font-size: 14px; color: var(--muted); }
 
-  /* ── MUSIC LAYOUT WITH STICKY BIO ── */
+  /* ── MOVIE GRID ── */
+  #movie-grid, #comedy-grid, #thriller-grid, #drama-grid, #tv-comedy-grid, #tv-drama-grid, #tv-other-grid, #tv-dropoff-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  #movie-grid .tile-img-wrap, #comedy-grid .tile-img-wrap, #thriller-grid .tile-img-wrap, #drama-grid .tile-img-wrap, #tv-comedy-grid .tile-img-wrap, #tv-drama-grid .tile-img-wrap, #tv-other-grid .tile-img-wrap, #tv-dropoff-grid .tile-img-wrap {
+    aspect-ratio: 2/3;
+  }
+  #movie-grid .tile-img, #comedy-grid .tile-img, #thriller-grid .tile-img, #drama-grid .tile-img, #tv-comedy-grid .tile-img, #tv-drama-grid .tile-img, #tv-other-grid .tile-img, #tv-dropoff-grid .tile-img {
+    object-position: center top;
+  }
   .music-layout {
     display: flex;
     gap: 0;
@@ -892,6 +901,7 @@
   <button class="tab-btn" id="tab-btn-movies" onclick="switchTab('movies', this)">My Movies</button>
   <button class="tab-btn" id="tab-btn-tv" onclick="switchTab('tv', this)">My TV Shows</button>
   <button class="tab-btn" id="tab-btn-books" onclick="switchTab('books', this)">My Books</button>
+  <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph', this)">Taste Graph</button>
 </nav>
 
 <!-- Tab rename popover - fixed position, won't affect layout -->
@@ -916,22 +926,8 @@
 <aside class="bio-sidebar">
   <div class="bio-card">
     <div class="bio-label">My Music Taste Profile</div>
-    <div class="bio-text">
-      <p>A strong melodic instinct runs through everything here — even the heaviest picks (Metallica, System of a Down, Muse) are chosen for songs with real hooks and emotional arcs, not just aggression.</p>
-      <p>There's a recurring pull toward bands with a distinct, unmistakable identity: Cake's deadpan funk, Interpol's gothic minimalism, The Decemberists' literary folk. Genre-crossing is consistent, but sonic personality always wins over genre membership.</p>
-      <p>Lyricism and emotional specificity seem to matter more than production polish — artists like Radiohead, The Strokes, and Yeah Yeah Yeahs are loved for the feeling they create, not their chart positions.</p>
-      <p>There's also a notable global curiosity: AR Rahman, BTS, and ABBA sit comfortably alongside American indie and metal, suggesting the ear leads and language follows.</p>
-    </div>
-    <div class="bio-tags">
-      <span class="bio-tag">Indie Rock</span>
-      <span class="bio-tag">Alt Rock</span>
-      <span class="bio-tag">Post-Punk</span>
-      <span class="bio-tag">K-Pop</span>
-      <span class="bio-tag">Heavy Metal</span>
-      <span class="bio-tag">Film Score</span>
-      <span class="bio-tag">Prog Rock</span>
-      <span class="bio-tag">Grunge</span>
-    </div>
+    <div id="music-bio-text" class="bio-text"></div>
+    <div id="music-bio-tags" class="bio-tags"></div>
   </div>
 </aside>
 
@@ -1021,28 +1017,186 @@
 
 <!-- TAB: My Movies -->
 <div class="tab-panel" id="tab-movies">
-  <div class="coming-soon-panel">
-    <div class="coming-soon-icon">🎬</div>
-    <h2 class="coming-soon-title">My Movies</h2>
-    <p class="coming-soon-sub">Coming soon — add your favorite films here.</p>
-  </div>
-</div>
+<div class="music-layout">
 
-<!-- TAB: My TV Shows -->
+<!-- MOVIE BIO SIDEBAR -->
+<aside class="bio-sidebar">
+  <div class="bio-card">
+    <div class="bio-label">My Film Taste Profile</div>
+    <div id="film-bio-text" class="bio-text"></div>
+    <div class="bio-tags" id="movie-bio-tags"></div>
+  </div>
+</aside>
+
+<div class="music-main">
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Favorite Movies</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="movie-grid"></div>
+      <div id="movie-expand-panel" style="display:none;margin-top:20px;"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <!-- Favorite Dramas -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Favorite Dramas</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="drama-grid"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <!-- Favorite Thrillers -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Favorite Thrillers</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="thriller-grid"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <!-- Most Rewatchable Comedies -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Most Rewatchable Comedies</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="comedy-grid"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <!-- Favorite Directors -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Favorite Directors</h2>
+    </div>
+    <section class="top5-section">
+      <div class="other-fav-grid" id="directors-grid"></div>
+      <div id="director-expand-panel" style="display:none;margin-top:16px;"></div>
+      <div class="tile-search-panel" id="director-search-panel" style="display:none;margin-top:16px;">
+        <div class="tile-search-inner">
+          <input class="tile-search-input" id="director-search-input" placeholder="Search for a director…" autocomplete="off" oninput="onDirectorSearchInput(this.value)" />
+          <button class="tile-search-close" onclick="closeDirectorSearch()">✕</button>
+        </div>
+        <div class="tile-search-results" id="director-search-results">
+          <span class="tile-search-hint">Start typing to search…</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</div><!-- /.music-main -->
+</div><!-- /.music-layout -->
+</div>
 <div class="tab-panel" id="tab-tv">
-  <div class="coming-soon-panel">
-    <div class="coming-soon-icon">📺</div>
-    <h2 class="coming-soon-title">My TV Shows</h2>
-    <p class="coming-soon-sub">Coming soon — add your favorite series here.</p>
-  </div>
-</div>
+<div class="music-layout">
 
-<!-- TAB: My Books -->
+<!-- TV BIO SIDEBAR -->
+<aside class="bio-sidebar">
+  <div class="bio-card">
+    <div class="bio-label">My TV Taste Profile</div>
+    <div id="tv-bio-text" class="bio-text">
+      <p>A taste that spans the full prestige-drama canon alongside some of the sharpest comedy ever made for television — and takes both equally seriously.</p>
+      <p>The drama selections (Breaking Bad, The Wire, Succession, Game of Thrones, Friday Night Lights) share a preoccupation with power, moral collapse, and institutions failing their people. The comedy picks (30 Rock, Veep, Arrested Development, Seinfeld, Community) are all writer-driven, densely layered, and reward rewatching.</p>
+      <p>The common thread across both: intelligence on the page. Whether it's Vince Gilligan's plotting or Armando Iannucci's political satire, the writing always comes first.</p>
+    </div>
+    <div class="bio-tags">
+      <span class="bio-tag">Prestige Drama</span>
+      <span class="bio-tag">Satire</span>
+      <span class="bio-tag">Crime</span>
+      <span class="bio-tag">Dark Comedy</span>
+      <span class="bio-tag">Writer-Led</span>
+    </div>
+  </div>
+</aside>
+
+<div class="music-main">
+
+  <!-- Favorite Comedies -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Favorite Comedies</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="tv-comedy-grid"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <!-- Favorite Dramas -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Favorite Dramas</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="tv-drama-grid"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <!-- Other Favorites -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Other Favorites</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="tv-other-grid"></div>
+    </section>
+  </div>
+
+  <div class="music-section-divider"></div>
+
+  <!-- Great Shows That Dropped Off -->
+  <div class="music-section">
+    <div class="music-section-header">
+      <h2 class="music-section-title">Shows That Were Good Until They Weren't</h2>
+    </div>
+    <section class="top5-section">
+      <div class="artist-grid" id="tv-dropoff-grid"></div>
+    </section>
+  </div>
+
+</div><!-- /.music-main -->
 <div class="tab-panel" id="tab-books">
   <div class="coming-soon-panel">
     <div class="coming-soon-icon">📚</div>
     <h2 class="coming-soon-title">My Books</h2>
     <p class="coming-soon-sub">Coming soon — add your favorite books here.</p>
+  </div>
+</div>
+<!-- TAB: Taste Graph -->
+<div class="tab-panel" id="tab-graph">
+  <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 0;">
+    <h2 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:0.25rem;">Taste Graph</h2>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:1.5rem;">A map of how your music, film, and cultural tastes connect. Drag nodes to explore. Click a node to see its connections.</p>
+  </div>
+  <div id="graph-container" style="width:100%;height:calc(100vh - 200px);min-height:600px;position:relative;background:var(--surface);border-top:1px solid var(--border);">
+    <canvas id="taste-graph" style="width:100%;height:100%;display:block;"></canvas>
+    <div id="graph-tooltip" style="display:none;position:absolute;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text);pointer-events:none;max-width:200px;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+      <div id="graph-tooltip-title" style="font-weight:700;margin-bottom:3px;"></div>
+      <div id="graph-tooltip-sub" style="color:var(--muted);font-size:11px;"></div>
+    </div>
+    <div style="position:absolute;bottom:16px;right:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#a78bfa;display:inline-block;"></span>Artists</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>Films</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#fb923c;display:inline-block;"></span>TV Shows</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#f472b6;display:inline-block;"></span>Directors</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;display:inline-block;"></span>Themes</div>
+    </div>
   </div>
 </div>
 <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
@@ -1764,7 +1918,45 @@ document.addEventListener('click', e => {
 
 function renderList() { /* no-op: detail shown via click-expand */ }
 
-function renderAll() { renderGrid(); renderAlbumGrid(); renderRepeatGrid(); renderOtherFavGrid(); }
+function updateMusicProfile() {
+  const textEl = document.getElementById('music-bio-text');
+  const tagsEl = document.getElementById('music-bio-tags');
+  if (!textEl || !tagsEl) return;
+  const allNames = artists.map(a => a.name);
+  const topFiveNames = artists.slice(0, 5).map(a => a.name).filter(Boolean);
+  const otherNames = artists.slice(5).map(a => a.name).filter(Boolean).slice(0, 4);
+  const hasHeavy = allNames.some(n => ['Metallica','System of a Down','Muse'].includes(n));
+  const hasGlobal = allNames.some(n => ['A.R. Rahman','BTS','ABBA'].includes(n));
+  const hasIndie = allNames.some(n => ['The Strokes','Radiohead','Interpol','Alt-J'].includes(n));
+  let paras = [];
+  if (topFiveNames.length) paras.push(`The five most influential artists — ${topFiveNames.join(', ')} — reveal a taste anchored in melodically strong, personality-driven music that prioritizes feeling and identity over genre purity.`);
+  if (hasHeavy && hasIndie) paras.push(`A strong melodic instinct runs through everything — even the heavier picks are chosen for songs with real hooks and emotional arcs. Genre-crossing is consistent, but sonic personality always wins over genre membership.`);
+  else paras.push(`Lyricism and emotional specificity matter more than production polish. These artists are loved for the feeling they create, not their chart positions.`);
+  if (otherNames.length) paras.push(`Beyond the top five, the list extends into ${otherNames.join(', ')} and more — a wide range that rewards artists with a distinct, unmistakable identity.`);
+  if (hasGlobal) paras.push(`A notable global curiosity: international artists sit comfortably alongside indie and rock picks, suggesting the ear leads and language follows.`);
+  textEl.innerHTML = paras.map(p => `<p>${p}</p>`).join('');
+  const genres = [...new Set(artists.map(a => a.genre).filter(Boolean))].slice(0, 8);
+  tagsEl.innerHTML = genres.map(g => `<span class="bio-tag">${g}</span>`).join('');
+}
+
+function updateFilmProfile() {
+  const textEl = document.getElementById('film-bio-text');
+  if (!textEl) return;
+  const thrillerTitles = (typeof THRILLER_PRELOAD !== 'undefined') ? THRILLER_PRELOAD.map(m => m.title) : [];
+  const dramaTitles = (typeof DRAMA_PRELOAD !== 'undefined') ? DRAMA_PRELOAD.map(m => m.title) : [];
+  const comedyTitles = (typeof COMEDY_PRELOAD !== 'undefined') ? COMEDY_PRELOAD.map(m => m.title) : [];
+  const directorNames = (typeof directors !== 'undefined') ? directors.map(d => d.name).filter(Boolean) : [];
+  const hasClassics = dramaTitles.some(t => ['The Godfather','The Godfather Part II','The Shawshank Redemption'].includes(t));
+  let paras = [];
+  paras.push(`A genuine dual appetite: serious, demanding cinema sitting comfortably next to deeply rewatchable comedies — and no sense that one half cancels out the other.`);
+  if (thrillerTitles.length) paras.push(`The thriller selections (${thrillerTitles.slice(0,3).join(', ')}) share a preference for psychological control and slow revelation — films that build elaborate traps and spring them perfectly.`);
+  if (hasClassics) paras.push(`The dramatic picks span decades and continents: from Iranian realism to American crime classics, connected by an interest in moral complexity and characters under pressure.`);
+  if (comedyTitles.length) paras.push(`The comedy selections are notably ensemble-driven and chaos-forward — from the madness of It's a Mad Mad Mad Mad World and Rat Race to the sharp social wit of Mean Girls and The Birdcage.`);
+  if (directorNames.length) paras.push(`Director taste — ${directorNames.join(', ')} — confirms the preference: maximalist style alongside quiet humanism, genre filmmaking alongside pure cinema.`);
+  textEl.innerHTML = paras.map(p => `<p>${p}</p>`).join('');
+}
+
+function renderAll() { renderGrid(); renderAlbumGrid(); renderRepeatGrid(); renderOtherFavGrid(); updateMusicProfile(); }
 
 // ── OTHER FAVORITE ARTISTS GRID ──
 const OTHER_ARTISTS = [
@@ -2594,6 +2786,12 @@ function switchTab(tab, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'graph') {
+    setTimeout(() => {
+      const canvas = document.getElementById('taste-graph');
+      if (canvas && !canvas._graphRunning) { canvas._graphRunning = true; initTasteGraph(); }
+    }, 50);
+  }
 }
 
 // ── ALBUMS DATA ──
@@ -3243,6 +3441,1104 @@ function cloneProfile() {
   document.getElementById('clone-banner')?.remove();
   showToast('Profile cloned — it\'s yours now! Hit Share to save your link.');
 }
+
+// ── MOVIES ──
+const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZmVmMDhlOTgwNjgxZmJhMWQ0M2NmNWE0NzliMWMyYiIsIm5iZiI6MTc4MzE5MjQ5OC45Niwic3ViIjoiNmE0OTViYjJlOWNjYThmZmE2OTk4OGViIiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.OP31L-k2KffRCmedt7Wg6ICCKrMpfFUCBltuDH3m9rY';
+const TMDB_KEY = 'c685dcf202d23bfd35ff2e96a637cb22';
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
+const TMDB_IMG_FULL = 'https://image.tmdb.org/t/p/w780';
+
+function tmdbFetch(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  return fetch(`https://api.themoviedb.org/3${path}${sep}language=en-US`, {
+    headers: {
+      'Authorization': `Bearer ${TMDB_TOKEN}`,
+      'Accept': 'application/json'
+    }
+  });
+}
+
+let movies = [];
+let nextMovieId = 6;
+let expandedMovieId = null;
+let movieSearchTimer = null;
+
+// Pre-populate with Sreya's top 5 — details loaded async on init
+const MOVIE_PRELOAD = [
+  { tmdbId: 680,   title: 'Pulp Fiction',         year: '1994', type: 'movie' },
+  { tmdbId: 1457,  title: 'Pride and Prejudice',  year: '1995', type: 'tv'    },
+  { tmdbId: 11000, title: 'The Birdcage',         year: '1996', type: 'movie' },
+  { tmdbId: 161,   title: "Ocean's Eleven",       year: '2001', type: 'movie' },
+  { tmdbId: 2196,  title: 'Death at a Funeral',   year: '2007', type: 'movie' },
+];
+
+async function preloadMovies() {
+  for (let i = 0; i < MOVIE_PRELOAD.length; i++) {
+    const p = MOVIE_PRELOAD[i];
+    try {
+      const [detailRes, creditsRes] = await Promise.all([
+        tmdbFetch(p.type === 'tv' ? `/tv/${p.tmdbId}` : `/movie/${p.tmdbId}`),
+        tmdbFetch(p.type === 'tv' ? `/tv/${p.tmdbId}/credits` : `/movie/${p.tmdbId}/credits`)
+      ]);
+      const detail = await detailRes.json();
+      const credits = await creditsRes.json();
+      const director = p.type === 'tv'
+        ? (detail.created_by?.[0]?.name || '')
+        : (credits.crew?.find(c => c.job === 'Director')?.name || '');
+      movies.push({
+        id: i + 1,
+        tmdbId: p.tmdbId,
+        type: p.type,
+        title: p.title || detail.title || detail.name,
+        year: (detail.release_date || detail.first_air_date || p.year).slice(0, 4),
+        poster: detail.poster_path || '',
+        backdrop: detail.backdrop_path || '',
+        overview: detail.overview || '',
+        genres: detail.genres?.map(g => g.name) || [],
+        rating: detail.vote_average ? Math.round(detail.vote_average * 10) / 10 : null,
+        runtime: detail.runtime || (detail.episode_run_time?.[0] ? `${detail.episode_run_time[0]} min/ep` : null),
+        director
+      });
+    } catch(e) {
+      movies.push({ id: i + 1, tmdbId: p.tmdbId, type: p.type || 'movie', title: p.title, year: p.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' });
+    }
+    renderMovieGrid();
+  }
+}
+
+function renderMovieGrid() {
+  const grid = document.getElementById('movie-grid');
+  if (!grid) return;
+  if (!movies.length) {
+    grid.innerHTML = '';
+    return;
+  }
+  grid.innerHTML = movies.map((m, i) =>
+    `<div class="artist-tile" id="movie-tile-${m.id}" onclick="toggleMovieExpand(${m.id})">
+      <div class="tile-img-wrap">
+        ${m.poster
+          ? `<img class="tile-img" src="${TMDB_IMG}${m.poster}" alt="${esc(m.title)}" onerror="this.style.display='none'">`
+          : `<div class="tile-placeholder" style="aspect-ratio:2/3;height:auto;font-size:12px;color:var(--faint);">No poster</div>`}
+        <span class="tile-rank">${i + 1}</span>
+      </div>
+      <div class="tile-label">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.title)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${m.year || ''}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function toggleMovieExpand(movieId) {
+  const panel = document.getElementById('movie-expand-panel');
+  document.querySelectorAll('#movie-grid .artist-tile').forEach(t => t.classList.remove('tile-active'));
+  if (expandedMovieId === movieId) {
+    panel.style.display = 'none'; panel.innerHTML = '';
+    expandedMovieId = null;
+    return;
+  }
+  expandedMovieId = movieId;
+  document.getElementById(`movie-tile-${movieId}`)?.classList.add('tile-active');
+  const m = movies.find(x => x.id === movieId);
+  if (!m) return;
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+      <div class="expand-header">
+        <div class="expand-hero-wrap" style="position:relative;overflow:hidden;">
+          ${m.backdrop
+            ? `<img style="width:100%;height:260px;object-fit:cover;object-position:center 30%;display:block;" src="${TMDB_IMG_FULL}${m.backdrop}" alt="${esc(m.title)}">`
+            : m.poster
+              ? `<img style="width:100%;height:260px;object-fit:cover;object-position:center top;display:block;" src="${TMDB_IMG}${m.poster}" alt="${esc(m.title)}">`
+              : `<div style="width:100%;height:260px;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:32px;">🎬</div>`}
+          <div class="expand-hero-overlay">
+            <div class="expand-hero-name">${esc(m.title)}</div>
+            <div class="expand-hero-genre">${[m.year, m.genres?.join(', ')].filter(Boolean).join(' · ')}</div>
+          </div>
+        </div>
+        <div class="expand-actions">
+          <button class="expand-close" onclick="toggleMovieExpand(${movieId})">✕</button>
+          <button onclick="removeMovie(${movieId})" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.25);color:var(--apple);font-size:11px;font-weight:600;font-family:inherit;padding:4px 10px;border-radius:20px;cursor:pointer;backdrop-filter:blur(4px);">Remove</button>
+        </div>
+      </div>
+      ${m.overview ? `<div class="artist-bio">${esc(m.overview)}</div>` : ''}
+      <div style="padding:1rem 1.5rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+        ${m.rating ? `<span style="font-size:13px;color:var(--muted);">⭐ ${m.rating}/10</span>` : ''}
+        ${m.runtime ? `<span style="font-size:13px;color:var(--muted);">🕐 ${m.runtime} min</span>` : ''}
+        ${m.director ? `<span style="font-size:13px;color:var(--muted);">🎬 ${esc(m.director)}</span>` : ''}
+      </div>
+    </div>`;
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function removeMovie(movieId) {
+  movies = movies.filter(m => m.id !== movieId);
+  const panel = document.getElementById('movie-expand-panel');
+  panel.style.display = 'none'; panel.innerHTML = '';
+  expandedMovieId = null;
+  renderMovieGrid();
+}
+
+function openMovieSearch() {
+  const p = document.getElementById('movie-search-panel');
+  p.classList.add('open');
+  document.getElementById('movie-search-input').focus();
+}
+
+function closeMovieSearch() {
+  document.getElementById('movie-search-panel').classList.remove('open');
+  document.getElementById('movie-search-input').value = '';
+  document.getElementById('movie-search-results').innerHTML = '<span class="tile-search-hint">Start typing to search…</span>';
+}
+
+function onMovieSearchInput(val) {
+  clearTimeout(movieSearchTimer);
+  const results = document.getElementById('movie-search-results');
+  if (!val || val.length < 2) {
+    results.innerHTML = '<span class="tile-search-hint">Start typing to search…</span>';
+    return;
+  }
+  results.innerHTML = '<span class="tile-loading">Searching…</span>';
+  movieSearchTimer = setTimeout(() => runMovieSearch(val), 350);
+}
+
+async function runMovieSearch(val) {
+  const results = document.getElementById('movie-search-results');
+  try {
+    const res = await tmdbFetch(`/search/movie?query=${encodeURIComponent(val)}&page=1`);
+    const data = await res.json();
+    if (!data.results?.length) {
+      results.innerHTML = '<span class="tile-search-hint">No films found — try a different title</span>';
+      return;
+    }
+    results._data = data.results;
+    results.innerHTML = data.results.slice(0, 8).map((r, i) => {
+      const year = r.release_date ? r.release_date.slice(0,4) : '';
+      return `<div class="tile-result-item" onclick="selectMovie(${i})">
+        ${r.poster_path
+          ? `<img class="tile-result-img" src="https://image.tmdb.org/t/p/w92${r.poster_path}" alt="${esc(r.title)}">`
+          : `<div style="width:40px;height:40px;border-radius:6px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🎬</div>`}
+        <div>
+          <div class="tile-result-name">${esc(r.title)}</div>
+          <div class="tile-result-sub">${year}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    results.innerHTML = '<span class="tile-search-hint">Error — check connection</span>';
+  }
+}
+
+async function selectMovie(idx) {
+  const results = document.getElementById('movie-search-results');
+  const r = results._data?.[idx];
+  if (!r) return;
+  // Fetch full details for genres, runtime, director, backdrop
+  try {
+    const [detailRes, creditsRes] = await Promise.all([
+      tmdbFetch(`/movie/${r.id}`),
+      tmdbFetch(`/movie/${r.id}/credits`)
+    ]);
+    const detail = await detailRes.json();
+    const credits = await creditsRes.json();
+    const director = credits.crew?.find(c => c.job === 'Director')?.name || '';
+    movies.push({
+      id: nextMovieId++,
+      tmdbId: r.id,
+      title: r.title,
+      year: r.release_date ? r.release_date.slice(0,4) : '',
+      poster: r.poster_path || '',
+      backdrop: detail.backdrop_path || '',
+      overview: detail.overview || '',
+      genres: detail.genres?.map(g => g.name) || [],
+      rating: detail.vote_average ? Math.round(detail.vote_average * 10) / 10 : null,
+      runtime: detail.runtime || null,
+      director
+    });
+  } catch(e) {
+    // Fallback with basic info
+    movies.push({
+      id: nextMovieId++,
+      tmdbId: r.id,
+      title: r.title,
+      year: r.release_date ? r.release_date.slice(0,4) : '',
+      poster: r.poster_path || '',
+      backdrop: '',
+      overview: r.overview || '',
+      genres: [],
+      rating: null,
+      runtime: null,
+      director: ''
+    });
+  }
+  closeMovieSearch();
+  renderMovieGrid();
+  showToast(`Added "${r.title}"`);
+}
+
+// ── DIRECTORS ──
+let directors = [];
+let nextDirectorId = 5;
+let expandedDirectorId = null;
+let directorSearchTimer = null;
+
+// Pre-populate directors — posters loaded async
+const DIRECTOR_PRELOAD = [
+  {
+    id: 1, tmdbId: 309, name: 'Pedro Almodóvar', known_for: 'The Skin I Live In, Volver',
+    movies: [
+      { tmdbId: 63311, title: 'The Skin I Live In', year: '2011' },
+      { tmdbId: 11795, title: 'Volver',             year: '2006' },
+      { tmdbId: 20544, title: 'Broken Embraces',    year: '2009' },
+      { tmdbId: 11216, title: 'All About My Mother',year: '1999' },
+    ]
+  },
+  {
+    id: 2, tmdbId: 138, name: 'Quentin Tarantino', known_for: 'Pulp Fiction, Kill Bill',
+    movies: [
+      { tmdbId: 680,   title: 'Pulp Fiction',         year: '1994' },
+      { tmdbId: 500,   title: 'Reservoir Dogs',        year: '1992' },
+      { tmdbId: 24,    title: 'Kill Bill: Vol. 1',     year: '2003' },
+      { tmdbId: 393,   title: 'Kill Bill: Vol. 2',     year: '2004' },
+      { tmdbId: 16869, title: 'Inglourious Basterds',  year: '2009' },
+    ]
+  },
+  {
+    id: 3, tmdbId: 7467, name: 'David Fincher', known_for: 'Fight Club, Gone Girl',
+    movies: [
+      { tmdbId: 550,   title: 'Fight Club',                       year: '1999' },
+      { tmdbId: 210577,title: 'Gone Girl',                        year: '2014' },
+      { tmdbId: 807,   title: 'Se7en',                            year: '1995' },
+      { tmdbId: 65754, title: 'The Girl with the Dragon Tattoo',  year: '2011' },
+    ]
+  },
+  {
+    id: 4, tmdbId: 12160, name: 'Satyajit Ray', known_for: 'Pather Panchali, The Apu Trilogy',
+    movies: [
+      { tmdbId: null, searchTitle: 'Nayak Satyajit Ray 1966',                      title: 'Nayak',                       year: '1966' },
+      { tmdbId: null, searchTitle: 'Pather Panchali 1955',                          title: 'Pather Panchali',             year: '1955' },
+      { tmdbId: null, searchTitle: 'Aparajito Satyajit Ray 1956',                   title: 'Aparajito',                   year: '1956' },
+      { tmdbId: null, searchTitle: 'Apur Sansar 1959',                              title: 'Apur Sansar',                 year: '1959' },
+      { tmdbId: null, searchTitle: 'Goopy Gyne Bagha Byne 1968',                    title: 'Goopy Gyne Bagha Byne',       year: '1968' },
+      { tmdbId: null, searchTitle: 'Aranyer Din Ratri Days and Nights in the Forest',title: 'Days and Nights in the Forest',year: '1970' },
+      { tmdbId: null, searchTitle: 'Ganashatru Enemy of the People Satyajit Ray',   title: 'An Enemy of the People',      year: '1989' },
+      { tmdbId: null, searchTitle: 'Seemabaddha Company Limited Satyajit Ray 1971', title: 'Seemabaddha',                 year: '1971' },
+      { tmdbId: null, searchTitle: 'Sonar Kella 1974 Satyajit Ray',                 title: 'Sonar Kella',                 year: '1974' },
+    ]
+  }
+];
+
+async function preloadDirectors() {
+  for (const dp of DIRECTOR_PRELOAD) {
+    const dir = { ...dp, photo: '', movies: dp.movies.map(m => ({ ...m, poster: '' })) };
+    directors.push(dir);
+    // Fetch director photo
+    tmdbFetch(`/person/${dp.tmdbId}`)
+      .then(r => r.json())
+      .then(data => { dir.photo = data.profile_path || ''; renderDirectorsList(); })
+      .catch(() => {});
+    // Fetch each film's poster
+    for (let i = 0; i < dir.movies.length; i++) {
+      const m = dir.movies[i];
+      if (m.tmdbId) {
+        tmdbFetch(`/movie/${m.tmdbId}`)
+          .then(r => r.json())
+          .then(data => { m.poster = data.poster_path || ''; renderDirectorsList(); })
+          .catch(() => {});
+      } else if (m.searchTitle) {
+        // Resolve via search
+        tmdbFetch(`/search/movie?query=${encodeURIComponent(m.searchTitle)}&page=1`)
+          .then(r => r.json())
+          .then(data => {
+            const hit = data.results?.[0];
+            if (hit) { m.tmdbId = hit.id; m.poster = hit.poster_path || ''; renderDirectorsList(); }
+          })
+          .catch(() => {});
+      }
+    }
+  }
+  renderDirectorsList();
+}
+
+function renderDirectorsList() {
+  // Tile grid
+  const grid = document.getElementById('directors-grid');
+  if (!grid) return;
+  grid.innerHTML = directors.map(d =>
+    `<div class="other-fav-card ${expandedDirectorId === d.id ? 'tile-active' : ''}" id="director-tile-${d.id}" onclick="toggleDirector(${d.id})" style="cursor:pointer;">
+      <div class="other-fav-card-img-wrap">
+        ${d.photo
+          ? `<img class="other-fav-card-img" src="${TMDB_IMG}${d.photo}" alt="${esc(d.name)}" style="object-position:center top;">`
+          : `<div class="other-fav-card-placeholder">${esc(d.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>`}
+      </div>
+      <div class="other-fav-card-name">${esc(d.name)}</div>
+      <div class="other-fav-card-genre">${esc(d.known_for || '')}</div>
+    </div>`
+  ).join('');
+
+  // Expand panel
+  const panel = document.getElementById('director-expand-panel');
+  if (!panel) return;
+  const d = directors.find(x => x.id === expandedDirectorId);
+  if (!d) { panel.style.display = 'none'; panel.innerHTML = ''; return; }
+
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:14px;padding:1.125rem 1.5rem;border-bottom:1px solid var(--border);">
+        ${d.photo
+          ? `<img src="${TMDB_IMG}${d.photo}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center top;flex-shrink:0;">`
+          : `<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#a78bfacc,#a78bfa);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0;">${esc(d.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>`}
+        <div>
+          <div style="font-size:17px;font-weight:700;">${esc(d.name)}</div>
+          ${d.known_for ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(d.known_for)}</div>` : ''}
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button onclick="removeDirector(${d.id})" style="background:none;border:1px solid var(--border2);color:var(--apple);font-size:11px;font-weight:600;font-family:inherit;padding:5px 12px;border-radius:20px;cursor:pointer;">Remove</button>
+          <button onclick="toggleDirector(${d.id})" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:30px;height:30px;border-radius:50%;cursor:pointer;">✕</button>
+        </div>
+      </div>
+      ${d.movies.length ? `
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:1.25rem 1.5rem;">
+        ${d.movies.map((m, mi) => `
+        <div style="display:flex;flex-direction:column;gap:0;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+          <div style="aspect-ratio:2/3;overflow:hidden;background:var(--surface3);">
+            ${m.poster
+              ? `<img src="${TMDB_IMG}${m.poster}" style="width:100%;height:100%;object-fit:cover;display:block;">`
+              : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;">🎬</div>`}
+          </div>
+          <div style="padding:6px 8px 7px;border-top:1px solid var(--border);">
+            <div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.title)}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px;">${m.year || ''}</div>
+          </div>
+        </div>`).join('')}
+      </div>` : `<div style="padding:1.5rem;color:var(--faint);font-size:13px;">No films yet.</div>`}
+      <div style="padding:0 1.5rem 1.25rem;">
+        <button class="add-artist-btn" style="max-width:280px;" onclick="openDirectorMovieSearch(${d.id})">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add a film by ${esc(d.name)}
+        </button>
+        <div class="tile-search-panel" id="dir-movie-panel-${d.id}" style="display:none;margin-top:12px;">
+          <div class="tile-search-inner">
+            <input class="tile-search-input" id="dir-movie-input-${d.id}" placeholder="Search for a film…" autocomplete="off"
+              oninput="onDirMovieInput(${d.id}, this.value)" />
+            <button class="tile-search-close" onclick="closeDirMovieSearch(${d.id})">✕</button>
+          </div>
+          <div class="tile-search-results" id="dir-movie-results-${d.id}">
+            <span class="tile-search-hint">Start typing…</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function toggleDirector(id) {
+  expandedDirectorId = (expandedDirectorId === id) ? null : id;
+  renderDirectorsList();
+}
+
+function removeDirector(id) {
+  directors = directors.filter(d => d.id !== id);
+  if (expandedDirectorId === id) expandedDirectorId = null;
+  renderDirectorsList();
+}
+
+function openDirectorSearch() {
+  const p = document.getElementById('director-search-panel');
+  p.classList.add('open');
+  document.getElementById('director-search-input').focus();
+}
+
+function closeDirectorSearch() {
+  document.getElementById('director-search-panel').classList.remove('open');
+  document.getElementById('director-search-input').value = '';
+  document.getElementById('director-search-results').innerHTML = '<span class="tile-search-hint">Start typing to search…</span>';
+}
+
+function onDirectorSearchInput(val) {
+  clearTimeout(directorSearchTimer);
+  const results = document.getElementById('director-search-results');
+  if (!val || val.length < 2) { results.innerHTML = '<span class="tile-search-hint">Start typing to search…</span>'; return; }
+  results.innerHTML = '<span class="tile-loading">Searching…</span>';
+  directorSearchTimer = setTimeout(() => runDirectorSearch(val), 350);
+}
+
+async function runDirectorSearch(val) {
+  const results = document.getElementById('director-search-results');
+  try {
+    const res = await tmdbFetch(`/search/person?query=${encodeURIComponent(val)}&page=1`);
+    const data = await res.json();
+    const directors_only = (data.results || []).filter(p => p.known_for_department === 'Directing').slice(0, 6);
+    if (!directors_only.length) {
+      results.innerHTML = '<span class="tile-search-hint">No directors found — try a different name</span>';
+      return;
+    }
+    results._data = directors_only;
+    results.innerHTML = directors_only.map((p, i) => {
+      const knownFor = (p.known_for || []).map(k => k.title || k.name).slice(0,2).join(', ');
+      return `<div class="tile-result-item" onclick="selectDirector(${i})">
+        ${p.profile_path
+          ? `<img class="tile-result-img" src="https://image.tmdb.org/t/p/w92${p.profile_path}" alt="${esc(p.name)}" style="border-radius:50%;">`
+          : `<div style="width:40px;height:40px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎬</div>`}
+        <div>
+          <div class="tile-result-name">${esc(p.name)}</div>
+          ${knownFor ? `<div class="tile-result-sub">${esc(knownFor)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    results.innerHTML = '<span class="tile-search-hint">Error — check connection</span>';
+  }
+}
+
+function selectDirector(idx) {
+  const results = document.getElementById('director-search-results');
+  const p = results._data?.[idx];
+  if (!p) return;
+  if (directors.find(d => d.tmdbId === p.id)) { showToast(`${p.name} is already added`); return; }
+  const knownFor = (p.known_for || []).map(k => k.title || k.name).slice(0,2).join(', ');
+  directors.push({
+    id: nextDirectorId++,
+    tmdbId: p.id,
+    name: p.name,
+    photo: p.profile_path || '',
+    known_for: knownFor,
+    movies: []
+  });
+  closeDirectorSearch();
+  renderDirectorsList();
+  showToast(`Added ${p.name}`);
+}
+
+// Per-director film search
+let dirMovieTimers = {};
+
+function openDirectorMovieSearch(dirId) {
+  const p = document.getElementById(`dir-movie-panel-${dirId}`);
+  if (p) { p.style.display = 'block'; document.getElementById(`dir-movie-input-${dirId}`)?.focus(); }
+}
+
+function closeDirMovieSearch(dirId) {
+  const p = document.getElementById(`dir-movie-panel-${dirId}`);
+  if (p) p.style.display = 'none';
+}
+
+function onDirMovieInput(dirId, val) {
+  clearTimeout(dirMovieTimers[dirId]);
+  const results = document.getElementById(`dir-movie-results-${dirId}`);
+  if (!val || val.length < 2) { results.innerHTML = '<span class="tile-search-hint">Start typing…</span>'; return; }
+  results.innerHTML = '<span class="tile-loading">Searching…</span>';
+  dirMovieTimers[dirId] = setTimeout(() => runDirMovieSearch(dirId, val), 350);
+}
+
+async function runDirMovieSearch(dirId, val) {
+  const results = document.getElementById(`dir-movie-results-${dirId}`);
+  const dir = directors.find(d => d.id === dirId);
+  try {
+    const res = await tmdbFetch(`/search/movie?query=${encodeURIComponent(val)}&page=1`);
+    const data = await res.json();
+    if (!data.results?.length) { results.innerHTML = '<span class="tile-search-hint">No films found</span>'; return; }
+    results._data = data.results.slice(0, 6);
+    results.innerHTML = results._data.map((r, i) => {
+      const year = r.release_date ? r.release_date.slice(0,4) : '';
+      return `<div class="tile-result-item" onclick="selectDirMovie(${dirId}, ${i})">
+        ${r.poster_path
+          ? `<img class="tile-result-img" src="https://image.tmdb.org/t/p/w92${r.poster_path}" alt="${esc(r.title)}">`
+          : `<div style="width:40px;height:40px;border-radius:6px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🎬</div>`}
+        <div>
+          <div class="tile-result-name">${esc(r.title)}</div>
+          <div class="tile-result-sub">${year}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    results.innerHTML = '<span class="tile-search-hint">Error</span>';
+  }
+}
+
+function selectDirMovie(dirId, idx) {
+  const results = document.getElementById(`dir-movie-results-${dirId}`);
+  const r = results._data?.[idx];
+  if (!r) return;
+  const dir = directors.find(d => d.id === dirId);
+  if (!dir) return;
+  if (dir.movies.find(m => m.tmdbId === r.id)) { showToast('Already added'); return; }
+  dir.movies.push({
+    tmdbId: r.id,
+    title: r.title,
+    year: r.release_date ? r.release_date.slice(0,4) : '',
+    poster: r.poster_path || ''
+  });
+  closeDirMovieSearch(dirId);
+  renderDirectorsList();
+  showToast(`Added "${r.title}"`);
+}
+
+// ── COMEDY GRID ──
+const COMEDY_PRELOAD = [
+  { tmdbId: 11000,  title: 'The Birdcage',                 year: '1996' },
+  { tmdbId: 10625,  title: 'Mean Girls',                   year: '2004' },
+  { tmdbId: 6957,   title: 'The 40-Year-Old Virgin',       year: '2005' },
+  { tmdbId: 109414, title: 'This Is the End',              year: '2013' },
+  { tmdbId: 16538,  title: 'I Love You, Man',              year: '2009' },
+  { tmdbId: 9870,   title: 'Forgetting Sarah Marshall',    year: '2008' },
+  { tmdbId: 9896,   title: 'Rat Race',                     year: '2001' },
+];
+
+let comedyMovies = [];
+
+async function preloadComedies() {
+  for (let i = 0; i < COMEDY_PRELOAD.length; i++) {
+    const p = COMEDY_PRELOAD[i];
+    comedyMovies.push({ ...p, poster: '' });
+    const idx = i;
+    tmdbFetch(`/movie/${p.tmdbId}`)
+      .then(r => r.json())
+      .then(data => { comedyMovies[idx].poster = data.poster_path || ''; renderComedyGrid(); })
+      .catch(() => {});
+  }
+  renderComedyGrid();
+}
+
+function renderComedyGrid() {
+  const grid = document.getElementById('comedy-grid');
+  if (!grid) return;
+  grid.innerHTML = comedyMovies.map((m, i) =>
+    `<div class="artist-tile" id="comedy-tile-${i}" style="cursor:default;">
+      <div class="tile-img-wrap" style="aspect-ratio:2/3;">
+        ${m.poster
+          ? `<img class="tile-img" src="${TMDB_IMG}${m.poster}" alt="${esc(m.title)}" style="object-position:center top;">`
+          : `<div class="tile-placeholder" style="aspect-ratio:2/3;height:auto;font-size:11px;color:var(--faint);">No poster</div>`}
+        <span class="tile-rank">${i + 1}</span>
+      </div>
+      <div class="tile-label">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.title)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${m.year}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+const THRILLER_PRELOAD = [
+  { tmdbId: 670,    title: 'Oldboy',             year: '2003' },
+  { tmdbId: 63311,  title: 'The Skin I Live In', year: '2011' },
+  { tmdbId: 242582, title: 'Nightcrawler',       year: '2014' },
+  { tmdbId: 550,    title: 'Fight Club',         year: '1999' },
+  { tmdbId: 210577, title: 'Gone Girl',          year: '2014' },
+  { tmdbId: 27205,  title: 'Inception',          year: '2010' },
+];
+
+const DRAMA_PRELOAD = [
+  { tmdbId: 60243, title: 'A Separation',            year: '2011' },
+  { tmdbId: 1417,  title: "Pan's Labyrinth",         year: '2006' },
+  { tmdbId: 2118,  title: 'L.A. Confidential',       year: '1997' },
+  { tmdbId: 278,   title: 'The Shawshank Redemption', year: '1994' },
+  { tmdbId: 238,   title: 'The Godfather',            year: '1972' },
+  { tmdbId: 240,   title: 'The Godfather Part II',    year: '1974' },
+];
+
+let thrillerMovies = [];
+let dramaMovies = [];
+
+function makeStaticGrid(movies, idPrefix, gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.innerHTML = movies.map((m, i) =>
+    `<div class="artist-tile" style="cursor:default;">
+      <div class="tile-img-wrap" style="aspect-ratio:2/3;">
+        ${m.poster
+          ? `<img class="tile-img" src="${TMDB_IMG}${m.poster}" alt="${esc(m.title)}" style="object-position:center top;">`
+          : `<div class="tile-placeholder" style="aspect-ratio:2/3;height:auto;font-size:11px;color:var(--faint);">No poster</div>`}
+        <span class="tile-rank">${i + 1}</span>
+      </div>
+      <div class="tile-label">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.title)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${m.year}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+async function preloadStaticGrid(preloadArr, moviesArr, idPrefix, gridId) {
+  for (let i = 0; i < preloadArr.length; i++) {
+    const p = preloadArr[i];
+    moviesArr.push({ ...p, poster: '' });
+    const idx = i;
+    tmdbFetch(`/movie/${p.tmdbId}`)
+      .then(r => r.json())
+      .then(data => { moviesArr[idx].poster = data.poster_path || ''; makeStaticGrid(moviesArr, idPrefix, gridId); })
+      .catch(() => {});
+  }
+  makeStaticGrid(moviesArr, idPrefix, gridId);
+}
+
+// ── TASTE GRAPH ──
+function initTasteGraph() {
+  const canvas = document.getElementById('taste-graph');
+  if (!canvas) return;
+  const container = document.getElementById('graph-container');
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+  const ctx = canvas.getContext('2d');
+
+  const COLORS = {
+    artist: '#a78bfa', album: '#34d399', film: '#f59e0b',
+    director: '#f472b6', theme: '#60a5fa', tv: '#fb923c'
+  };
+
+  // ── NODE DEFINITIONS ──
+  const nodes = [
+    // Central themes
+    { id: 'th-control',    label: 'Psychological Control',   type: 'theme', size: 24 },
+    { id: 'th-world',      label: 'World Cinema',            type: 'theme', size: 24 },
+    { id: 'th-social',     label: 'Sharp Social Comedy',     type: 'theme', size: 22 },
+    { id: 'th-ensemble',   label: 'Ensemble Comedy',         type: 'theme', size: 22 },
+    { id: 'th-identity',   label: 'Identity & Transformation',type: 'theme', size: 20 },
+    { id: 'th-melody',     label: 'Strong Melody & Hooks',   type: 'theme', size: 20 },
+    { id: 'th-maximalist', label: 'Maximalist Sound',        type: 'theme', size: 18 },
+    { id: 'th-sincerity',  label: 'Emotional Sincerity',     type: 'theme', size: 18 },
+    { id: 'th-power',      label: 'Power & Moral Collapse',  type: 'theme', size: 20 },
+    { id: 'th-writer',     label: 'Writer-Led TV',           type: 'theme', size: 18 },
+
+    // Directors
+    { id: 'd-tarantino', label: 'Tarantino',    type: 'director', size: 20 },
+    { id: 'd-fincher',   label: 'Fincher',      type: 'director', size: 20 },
+    { id: 'd-almodovar', label: 'Almodóvar',    type: 'director', size: 20 },
+    { id: 'd-ray',       label: 'Satyajit Ray', type: 'director', size: 20 },
+
+    // Favorite Movies
+    { id: 'f-pulp',     label: 'Pulp Fiction',       type: 'film', size: 16 },
+    { id: 'f-pp',       label: 'Pride & Prejudice',  type: 'film', size: 16 },
+    { id: 'f-birdcage', label: 'The Birdcage',       type: 'film', size: 16 },
+    { id: 'f-oceans',   label: "Ocean's Eleven",     type: 'film', size: 15 },
+    { id: 'f-funeral',  label: 'Death at a Funeral', type: 'film', size: 14 },
+
+    // Thrillers
+    { id: 'f-oldboy',      label: 'Oldboy',             type: 'film', size: 15 },
+    { id: 'f-skin',        label: 'The Skin I Live In', type: 'film', size: 15 },
+    { id: 'f-nightcrawler',label: 'Nightcrawler',       type: 'film', size: 14 },
+    { id: 'f-fight',       label: 'Fight Club',         type: 'film', size: 15 },
+    { id: 'f-gone',        label: 'Gone Girl',          type: 'film', size: 14 },
+    { id: 'f-inception',   label: 'Inception',          type: 'film', size: 14 },
+
+    // Dramas
+    { id: 'f-sep',       label: 'A Separation',          type: 'film', size: 15 },
+    { id: 'f-pan',       label: "Pan's Labyrinth",       type: 'film', size: 14 },
+    { id: 'f-lac',       label: 'L.A. Confidential',     type: 'film', size: 14 },
+    { id: 'f-shawshank', label: 'The Shawshank Redemption', type: 'film', size: 14 },
+    { id: 'f-godfather', label: 'The Godfather',         type: 'film', size: 15 },
+    { id: 'f-godfather2',label: 'The Godfather II',      type: 'film', size: 14 },
+
+    // Comedies
+    { id: 'f-mean',  label: 'Mean Girls',              type: 'film', size: 14 },
+    { id: 'f-40yr',  label: '40-Year-Old Virgin',      type: 'film', size: 13 },
+    { id: 'f-end',   label: 'This Is the End',         type: 'film', size: 13 },
+    { id: 'f-ilyg',  label: 'I Love You, Man',         type: 'film', size: 13 },
+    { id: 'f-sarah', label: 'Forgetting Sarah Marshall',type: 'film', size: 13 },
+    { id: 'f-rat',   label: 'Rat Race',                type: 'film', size: 12 },
+
+    // TV — Comedies
+    { id: 'tv-30rock', label: '30 Rock',              type: 'tv', size: 15 },
+    { id: 'tv-comm',   label: 'Community',            type: 'tv', size: 14 },
+    { id: 'tv-veep',   label: 'Veep',                 type: 'tv', size: 15 },
+    { id: 'tv-ad',     label: 'Arrested Development', type: 'tv', size: 14 },
+    { id: 'tv-sein',   label: 'Seinfeld',             type: 'tv', size: 15 },
+
+    // TV — Dramas
+    { id: 'tv-bb',   label: 'Breaking Bad',       type: 'tv', size: 16 },
+    { id: 'tv-wire', label: 'The Wire',           type: 'tv', size: 16 },
+    { id: 'tv-got',  label: 'Game of Thrones',   type: 'tv', size: 15 },
+    { id: 'tv-fnl',  label: 'Friday Night Lights',type: 'tv', size: 14 },
+    { id: 'tv-succ', label: 'Succession',         type: 'tv', size: 15 },
+
+    // TV — Other
+    { id: 'tv-bojack', label: 'BoJack Horseman',      type: 'tv', size: 14 },
+    { id: 'tv-curb',   label: 'Curb Your Enthusiasm', type: 'tv', size: 14 },
+    { id: 'tv-office', label: 'The Office',           type: 'tv', size: 14 },
+    { id: 'tv-parks',  label: 'Parks & Recreation',   type: 'tv', size: 13 },
+
+    // TV — Dropped off
+    { id: 'tv-homeland', label: 'Homeland',       type: 'tv', size: 13 },
+    { id: 'tv-td',       label: 'True Detective', type: 'tv', size: 13 },
+    { id: 'tv-weeds',    label: 'Weeds',          type: 'tv', size: 12 },
+    { id: 'tv-niptuck',  label: 'Nip/Tuck',       type: 'tv', size: 12 },
+    { id: 'tv-trueblood',label: 'True Blood',     type: 'tv', size: 12 },
+
+    // Artists
+    { id: 'a-strokes',   label: 'The Strokes',       type: 'artist', size: 18 },
+    { id: 'a-radiohead', label: 'Radiohead',         type: 'artist', size: 18 },
+    { id: 'a-pf',        label: 'Pink Floyd',        type: 'artist', size: 16 },
+    { id: 'a-nirvana',   label: 'Nirvana',           type: 'artist', size: 16 },
+    { id: 'a-abba',      label: 'ABBA',              type: 'artist', size: 16 },
+    { id: 'a-bts',       label: 'BTS',              type: 'artist', size: 16 },
+    { id: 'a-queen',     label: 'Queen',             type: 'artist', size: 16 },
+    { id: 'a-muse',      label: 'Muse',              type: 'artist', size: 14 },
+    { id: 'a-interpol',  label: 'Interpol',          type: 'artist', size: 14 },
+    { id: 'a-metallica', label: 'Metallica',         type: 'artist', size: 14 },
+    { id: 'a-rahman',    label: 'A.R. Rahman',       type: 'artist', size: 14 },
+    { id: 'a-weezer',    label: 'Weezer',            type: 'artist', size: 14 },
+    { id: 'a-cake',      label: 'Cake',              type: 'artist', size: 13 },
+    { id: 'a-jc',        label: 'Julian Casablancas',type: 'artist', size: 13 },
+    { id: 'a-dec',       label: 'The Decemberists',  type: 'artist', size: 13 },
+    { id: 'a-altj',      label: 'Alt-J',             type: 'artist', size: 13 },
+  ];
+
+  const edges = [
+    // Directors → films
+    { a: 'd-tarantino', b: 'f-pulp' },
+    { a: 'd-fincher',   b: 'f-fight' }, { a: 'd-fincher', b: 'f-gone' },
+    { a: 'd-almodovar', b: 'f-skin' },
+    { a: 'd-ray',       b: 'th-world' },
+
+    // Directors → themes
+    { a: 'd-tarantino', b: 'th-control' }, { a: 'd-fincher',   b: 'th-control' },
+    { a: 'd-almodovar', b: 'th-identity' },{ a: 'd-almodovar', b: 'th-world' },
+
+    // Thrillers → themes
+    { a: 'f-fight',        b: 'th-control' }, { a: 'f-oldboy',  b: 'th-control' },
+    { a: 'f-skin',         b: 'th-control' }, { a: 'f-gone',    b: 'th-control' },
+    { a: 'f-nightcrawler', b: 'th-control' }, { a: 'f-inception',b: 'th-control' },
+    { a: 'f-skin',    b: 'th-identity' }, { a: 'f-fight',  b: 'th-identity' },
+    { a: 'f-oldboy',  b: 'th-identity' }, { a: 'f-inception',b: 'th-identity' },
+    { a: 'f-oldboy',  b: 'th-world' },
+
+    // Dramas → themes
+    { a: 'f-sep',       b: 'th-world' },     { a: 'f-pan',  b: 'th-world' },
+    { a: 'f-sep',       b: 'th-sincerity' }, { a: 'f-pp',   b: 'th-sincerity' },
+    { a: 'f-shawshank', b: 'th-sincerity' }, { a: 'tv-fnl', b: 'th-sincerity' },
+    { a: 'f-godfather', b: 'th-power' },     { a: 'f-godfather2', b: 'th-power' },
+    { a: 'f-lac',       b: 'th-control' },   { a: 'f-pan',  b: 'th-identity' },
+
+    // Favorites → themes
+    { a: 'f-pulp',    b: 'th-control' }, { a: 'f-pulp',    b: 'th-social' },
+    { a: 'f-birdcage',b: 'th-social' },  { a: 'f-pp',      b: 'th-social' },
+    { a: 'f-oceans',  b: 'th-social' },  { a: 'f-funeral', b: 'th-social' },
+    { a: 'f-mean',    b: 'th-social' },
+
+    // Film comedies → themes
+    { a: 'f-end',   b: 'th-ensemble' }, { a: 'f-rat',  b: 'th-ensemble' },
+    { a: 'f-ilyg',  b: 'th-ensemble' }, { a: 'f-sarah',b: 'th-ensemble' },
+    { a: 'f-40yr',  b: 'th-ensemble' },
+
+    // TV dramas → themes
+    { a: 'tv-bb',   b: 'th-power' },   { a: 'tv-wire', b: 'th-power' },
+    { a: 'tv-succ', b: 'th-power' },   { a: 'tv-got',  b: 'th-power' },
+    { a: 'tv-fnl',  b: 'th-sincerity' },
+    { a: 'tv-bb',   b: 'th-control' }, { a: 'tv-wire', b: 'th-world' },
+
+    // TV comedies → themes
+    { a: 'tv-veep',  b: 'th-social' },  { a: 'tv-sein', b: 'th-social' },
+    { a: 'tv-30rock',b: 'th-social' },  { a: 'tv-ad',   b: 'th-social' },
+    { a: 'tv-comm',  b: 'th-ensemble' },
+    { a: 'tv-veep',  b: 'th-writer' },  { a: 'tv-30rock',b: 'th-writer' },
+    { a: 'tv-ad',    b: 'th-writer' },  { a: 'tv-sein',  b: 'th-writer' },
+    { a: 'tv-succ',  b: 'th-writer' },  { a: 'tv-bb',    b: 'th-writer' },
+
+    // TV other → themes
+    { a: 'tv-bojack', b: 'th-sincerity' }, { a: 'tv-bojack', b: 'th-identity' },
+    { a: 'tv-curb',   b: 'th-social' },    { a: 'tv-office', b: 'th-social' },
+    { a: 'tv-parks',  b: 'th-sincerity' },
+
+    // TV dropped off → themes
+    { a: 'tv-homeland', b: 'th-control' }, { a: 'tv-td',    b: 'th-control' },
+    { a: 'tv-weeds',    b: 'th-social' },  { a: 'tv-niptuck',b: 'th-identity' },
+    { a: 'tv-trueblood',b: 'th-identity' },
+
+    // Cross-medium links
+    { a: 'a-rahman',  b: 'th-world' },    { a: 'a-bts',    b: 'th-world' },
+    { a: 'a-interpol',b: 'th-control' },  { a: 'a-cake',   b: 'th-social' },
+    { a: 'a-strokes', b: 'a-jc' },
+
+    // Artists → melody/maximalist/sincerity
+    { a: 'a-strokes',   b: 'th-melody' }, { a: 'a-abba',    b: 'th-melody' },
+    { a: 'a-queen',     b: 'th-melody' }, { a: 'a-weezer',  b: 'th-melody' },
+    { a: 'a-radiohead', b: 'th-melody' }, { a: 'a-altj',    b: 'th-melody' },
+    { a: 'a-jc',        b: 'th-melody' },
+    { a: 'a-queen',     b: 'th-maximalist' }, { a: 'a-muse', b: 'th-maximalist' },
+    { a: 'a-metallica', b: 'th-maximalist' }, { a: 'a-pf',   b: 'th-maximalist' },
+    { a: 'a-bts',    b: 'th-sincerity' }, { a: 'a-rahman', b: 'th-sincerity' },
+    { a: 'a-dec',    b: 'th-sincerity' }, { a: 'a-nirvana',b: 'th-sincerity' },
+    { a: 'a-abba',   b: 'th-sincerity' },
+  ];
+
+  // ── PHYSICS SIMULATION ──
+  const W = canvas.width, H = canvas.height;
+  const nodeMap = {};
+  nodes.forEach((n, i) => {
+    const angle = (i / nodes.length) * Math.PI * 2;
+    const r = Math.min(W, H) * 0.3;
+    n.x = W/2 + r * Math.cos(angle) * (0.5 + Math.random() * 0.5);
+    n.y = H/2 + r * Math.sin(angle) * (0.5 + Math.random() * 0.5);
+    n.vx = 0; n.vy = 0;
+    nodeMap[n.id] = n;
+  });
+
+  // Theme nodes in center
+  ['th-control','th-world','th-social','th-ensemble','th-identity','th-melody','th-maximalist','th-sincerity','th-power','th-writer'].forEach((id, i, arr) => {
+    const n = nodeMap[id];
+    const a = (i / arr.length) * Math.PI * 2;
+    n.x = W/2 + 120 * Math.cos(a);
+    n.y = H/2 + 100 * Math.sin(a);
+  });
+
+  let dragging = null, dragOffX = 0, dragOffY = 0;
+  let highlighted = null;
+
+  function tick() {
+    // Repulsion
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i+1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+        const force = 1800 / (dist * dist);
+        const fx = (dx/dist)*force, fy = (dy/dist)*force;
+        a.vx -= fx; a.vy -= fy; b.vx += fx; b.vy += fy;
+      }
+    }
+    // Attraction along edges
+    edges.forEach(e => {
+      const a = nodeMap[e.a], b = nodeMap[e.b];
+      if (!a || !b) return;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      const force = (dist - 160) * 0.012;
+      const fx = (dx/dist)*force, fy = (dy/dist)*force;
+      a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+    });
+    // Center gravity
+    nodes.forEach(n => {
+      n.vx += (W/2 - n.x) * 0.003;
+      n.vy += (H/2 - n.y) * 0.003;
+    });
+    // Integrate + dampen
+    nodes.forEach(n => {
+      if (n === dragging) return;
+      n.vx *= 0.75; n.vy *= 0.75;
+      n.x += n.vx; n.y += n.vy;
+      n.x = Math.max(n.size+4, Math.min(W-n.size-4, n.x));
+      n.y = Math.max(n.size+4, Math.min(H-n.size-4, n.y));
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // Edges
+    edges.forEach(e => {
+      const a = nodeMap[e.a], b = nodeMap[e.b];
+      if (!a || !b) return;
+      const isHighlit = highlighted && (e.a === highlighted || e.b === highlighted);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = isHighlit ? 'rgba(167,139,250,0.7)' : 'rgba(255,255,255,0.07)';
+      ctx.lineWidth = isHighlit ? 1.5 : 1;
+      ctx.stroke();
+    });
+    // Nodes
+    nodes.forEach(n => {
+      const isHighlit = highlighted === n.id ||
+        edges.some(e => (e.a === highlighted && e.b === n.id) || (e.b === highlighted && e.a === n.id));
+      const alpha = highlighted ? (isHighlit ? 1 : 0.25) : 1;
+      ctx.globalAlpha = alpha;
+      // Glow for highlighted
+      if (highlighted === n.id) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.size + 6, 0, Math.PI*2);
+        ctx.fillStyle = COLORS[n.type] + '33';
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.size, 0, Math.PI*2);
+      ctx.fillStyle = COLORS[n.type];
+      ctx.fill();
+      // Label
+      ctx.fillStyle = '#fff';
+      ctx.font = `${Math.max(9, n.size * 0.62)}px Inter, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const label = n.label.length > 18 ? n.label.slice(0, 17) + '…' : n.label;
+      // Background pill for readability
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(13,13,15,0.65)';
+      ctx.fillRect(n.x - tw/2 - 3, n.y + n.size + 2, tw + 6, 14);
+      ctx.fillStyle = highlighted && !isHighlit ? 'rgba(255,255,255,0.35)' : '#eeecea';
+      ctx.fillText(label, n.x, n.y + n.size + 9);
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  let rafId;
+  let ticks = 0;
+  function loop() {
+    if (ticks < 300 || dragging) tick();
+    ticks++;
+    draw();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function nodeAt(x, y) {
+    return nodes.find(n => Math.hypot(n.x - x, n.y - y) < n.size + 6);
+  }
+
+  // Mouse events
+  canvas.addEventListener('mousedown', e => {
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (canvas.width / r.width);
+    const y = (e.clientY - r.top) * (canvas.height / r.height);
+    const n = nodeAt(x, y);
+    if (n) { dragging = n; dragOffX = n.x - x; dragOffY = n.y - y; }
+  });
+  canvas.addEventListener('mousemove', e => {
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (canvas.width / r.width);
+    const y = (e.clientY - r.top) * (canvas.height / r.height);
+    if (dragging) {
+      dragging.x = x + dragOffX; dragging.y = y + dragOffY;
+      dragging.vx = 0; dragging.vy = 0;
+    }
+    const n = nodeAt(x, y);
+    const tooltip = document.getElementById('graph-tooltip');
+    if (n && !dragging) {
+      const connCount = edges.filter(e => e.a === n.id || e.b === n.id).length;
+      document.getElementById('graph-tooltip-title').textContent = n.label;
+      document.getElementById('graph-tooltip-sub').textContent = `${n.type.charAt(0).toUpperCase() + n.type.slice(1)} · ${connCount} connection${connCount !== 1 ? 's' : ''}`;
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX - r.left + 14) + 'px';
+      tooltip.style.top = (e.clientY - r.top - 10) + 'px';
+      canvas.style.cursor = 'grab';
+    } else {
+      tooltip.style.display = 'none';
+      canvas.style.cursor = dragging ? 'grabbing' : 'default';
+    }
+  });
+  canvas.addEventListener('mouseup', () => { dragging = null; canvas.style.cursor = 'default'; });
+  canvas.addEventListener('click', e => {
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (canvas.width / r.width);
+    const y = (e.clientY - r.top) * (canvas.height / r.height);
+    const n = nodeAt(x, y);
+    highlighted = n ? (highlighted === n.id ? null : n.id) : null;
+    ticks = 0;
+  });
+
+  // Touch support
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const x = (t.clientX - r.left) * (canvas.width / r.width);
+    const y = (t.clientY - r.top) * (canvas.height / r.height);
+    const n = nodeAt(x, y);
+    if (n) { dragging = n; dragOffX = n.x - x; dragOffY = n.y - y; }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!dragging) return;
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const x = (t.clientX - r.left) * (canvas.width / r.width);
+    const y = (t.clientY - r.top) * (canvas.height / r.height);
+    dragging.x = x + dragOffX; dragging.y = y + dragOffY;
+    dragging.vx = 0; dragging.vy = 0;
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => { dragging = null; });
+
+  // Resize
+  window.addEventListener('resize', () => {
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+  });
+
+  loop();
+  return () => cancelAnimationFrame(rafId);
+}
+
+preloadMovies();
+preloadDirectors();
+preloadComedies();
+preloadStaticGrid(THRILLER_PRELOAD, thrillerMovies, 'thriller', 'thriller-grid');
+preloadStaticGrid(DRAMA_PRELOAD, dramaMovies, 'drama', 'drama-grid');
+renderDirectorsList();
+updateFilmProfile();
+
+// ── TV SHOWS ──
+const TV_COMEDY_PRELOAD = [
+  { tmdbId: 4608,  title: '30 Rock',              year: '2006', type: 'tv' },
+  { tmdbId: 18347, title: 'Community',            year: '2009', type: 'tv' },
+  { tmdbId: 2947,  title: 'Veep',                 year: '2012', type: 'tv' },
+  { tmdbId: 4589,  title: 'Arrested Development', year: '2003', type: 'tv' },
+  { tmdbId: 1400,  title: 'Seinfeld',             year: '1989', type: 'tv' },
+];
+const TV_DRAMA_PRELOAD = [
+  { tmdbId: 1396,  title: 'Breaking Bad',         year: '2008', type: 'tv' },
+  { tmdbId: 1438,  title: 'The Wire',             year: '2002', type: 'tv' },
+  { tmdbId: 1399,  title: 'Game of Thrones',      year: '2011', type: 'tv' },
+  { tmdbId: 4278,  title: 'Friday Night Lights',  year: '2006', type: 'tv' },
+  { tmdbId: 76331, title: 'Succession',           year: '2018', type: 'tv' },
+];
+
+let tvComedyShows = [];
+let tvDramaShows = [];
+
+async function preloadTVGrid(preloadArr, moviesArr, idPrefix, gridId) {
+  for (let i = 0; i < preloadArr.length; i++) {
+    const p = preloadArr[i];
+    moviesArr.push({ ...p, poster: '' });
+    const idx = i;
+    tmdbFetch(`/tv/${p.tmdbId}`)
+      .then(r => r.json())
+      .then(data => {
+        moviesArr[idx].poster = data.poster_path || '';
+        renderTVGrid(moviesArr, idPrefix, gridId);
+      }).catch(() => {});
+  }
+  renderTVGrid(moviesArr, idPrefix, gridId);
+}
+
+function renderTVGrid(moviesArr, idPrefix, gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.innerHTML = moviesArr.map((m, i) =>
+    `<div class="artist-tile" style="cursor:default;">
+      <div class="tile-img-wrap" style="aspect-ratio:2/3;">
+        ${m.poster
+          ? `<img class="tile-img" src="${TMDB_IMG}${m.poster}" alt="${esc(m.title)}" style="object-position:center top;">`
+          : `<div class="tile-placeholder" style="aspect-ratio:2/3;height:auto;font-size:11px;color:var(--faint);">No poster</div>`}
+        <span class="tile-rank">${i + 1}</span>
+      </div>
+      <div class="tile-label">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.title)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${m.year}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+preloadTVGrid(TV_COMEDY_PRELOAD, tvComedyShows, 'tv-comedy', 'tv-comedy-grid');
+preloadTVGrid(TV_DRAMA_PRELOAD, tvDramaShows, 'tv-drama', 'tv-drama-grid');
+
+const TV_OTHER_PRELOAD = [
+  { tmdbId: 61222, title: 'BoJack Horseman',        year: '2014', type: 'tv' },
+  { tmdbId: 4546,  title: 'Curb Your Enthusiasm',   year: '2000', type: 'tv' },
+  { tmdbId: 2316,  title: 'The Office',             year: '2005', type: 'tv' },
+  { tmdbId: 8592,  title: 'Parks and Recreation',   year: '2009', type: 'tv' },
+];
+
+const TV_DROPOFF_PRELOAD = [
+  { tmdbId: 1407,  title: 'Homeland',       year: '2011', type: 'tv' },
+  { tmdbId: 46648, title: 'True Detective', year: '2014', type: 'tv' },
+  { tmdbId: 186,   title: 'Weeds',          year: '2005', type: 'tv' },
+  { tmdbId: 3750,  title: 'Nip/Tuck',       year: '2003', type: 'tv' },
+  { tmdbId: 10545, title: 'True Blood',     year: '2008', type: 'tv' },
+];
+
+let tvOtherShows = [];
+let tvDropoffShows = [];
+
+preloadTVGrid(TV_OTHER_PRELOAD, tvOtherShows, 'tv-other', 'tv-other-grid');
+preloadTVGrid(TV_DROPOFF_PRELOAD, tvDropoffShows, 'tv-dropoff', 'tv-dropoff-grid');
 </script>
 </body>
 </html>
