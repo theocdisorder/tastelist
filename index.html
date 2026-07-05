@@ -1181,16 +1181,16 @@
   <div class="bio-card">
     <div class="bio-label">My Reading Profile</div>
     <div class="bio-text">
-      <p>A reader shaped equally by Ayn Rand's philosophical fiction, Jane Austen's social precision, and Albert Camus's existential economy. The through-line is books that take ideas seriously — whether that's Objectivism, class and marriage, or the absurd.</p>
-      <p>The Austen obsession runs deep: Pride and Prejudice, Persuasion, and Mansfield Park all appear in the reread list alongside all seven Harry Potter books, suggesting a particular love for worlds you can return to as much as visit.</p>
-      <p>Recent picks (Franzen, Min Jin Lee, Gabrielle Zevin) share an interest in sweeping, character-driven narratives about how people build — and sometimes lose — meaningful lives.</p>
+      <p>A reader who responds to writing that has a genuine point of view. Jane Austen's wit isn't period charm — it's surgical. Her prose exposes the gap between what people say and what they mean, the cowardice behind social performance, the absurdity of a world run on posturing. That precision is as sharp now as it was in 1813.</p>
+      <p>Ayn Rand operates at the other extreme: maximalist, argumentative, world-building around a philosophy. The appeal isn't the politics — it's the conviction. These are books that force you to interrogate how you think about merit, sacrifice, and individual will. You finish them different from how you started.</p>
+      <p>The recent picks share a preoccupation with how people construct meaning — through family (Pachinko), friendship and creative ambition (Tomorrow and Tomorrow and Tomorrow), and the slow erosion of idealism (Freedom). The writing in each case earns the emotional weight it asks for.</p>
     </div>
     <div class="bio-tags">
+      <span class="bio-tag">Sharp Prose</span>
+      <span class="bio-tag">Social Satire</span>
       <span class="bio-tag">Philosophy</span>
-      <span class="bio-tag">Classic Fiction</span>
-      <span class="bio-tag">Existentialism</span>
       <span class="bio-tag">Literary Fiction</span>
-      <span class="bio-tag">Austen</span>
+      <span class="bio-tag">Classic Fiction</span>
       <span class="bio-tag">Fantasy</span>
     </div>
   </div>
@@ -1981,11 +1981,11 @@ function updateMusicProfile() {
   const hasHeavy = allNames.some(n => ['Metallica','System of a Down','Muse'].includes(n));
   const hasGlobal = allNames.some(n => ['A.R. Rahman','BTS','ABBA'].includes(n));
   let paras = [];
-  if (topFiveNames.length) paras.push(`The five most influential artists — ${topFiveNames.join(', ')} — reveal a taste anchored in melodically strong, personality-driven music that prioritizes feeling and identity over genre purity.`);
-  if (hasHeavy) paras.push(`A strong melodic instinct runs through everything — even the heavier picks are chosen for songs with real hooks and emotional arcs. Genre-crossing is consistent, but sonic personality always wins over genre membership.`);
-  else paras.push(`Lyricism and emotional specificity matter more than production polish. These artists are loved for the feeling they create, not their chart positions.`);
-  if (otherNames.length) paras.push(`Beyond the top five, the list extends into ${otherNames.join(', ')} and more — a wide range that rewards artists with a distinct, unmistakable identity.`);
-  if (hasGlobal) paras.push(`A notable global curiosity: international artists sit comfortably alongside indie and rock picks, suggesting the ear leads and language follows.`);
+  paras.push(`The clearest thread across everything here is melody — not as decoration but as structure. These are songs built around a hook that earns its place, a chorus that actually arrives somewhere, a musical arc that gives you the feeling of going on a journey and coming back changed.`);
+  if (topFiveNames.length) paras.push(`The five most influential — ${topFiveNames.join(', ')} — are all artists who understood that a big moment only works if you've built toward it. The Strokes' guitar lines, ABBA's harmonies, Pink Floyd's slow-burning crescendos, Nirvana's quiet-loud-quiet — the payoff is always earned.`);
+  if (hasHeavy) paras.push(`Even the heavier picks (${allNames.filter(n => ['Metallica','System of a Down','Muse'].includes(n)).join(', ')}) are chosen for their melodic architecture, not pure aggression. These are bands that know how to build a wall of sound and then pull it apart at exactly the right moment.`);
+  if (otherNames.length) paras.push(`Beyond the top five, the list extends into ${otherNames.join(', ')} and more — all artists with a strong enough musical identity that you know within three seconds who you're listening to.`);
+  if (hasGlobal) paras.push(`The global range — A.R. Rahman's orchestral sweep, ABBA's pop precision, BTS's production scale — suggests the real criterion is emotional impact, regardless of origin.`);
   textEl.innerHTML = paras.map(p => `<p>${p}</p>`).join('');
   const genres = [...new Set(artists.map(a => a.genre).filter(Boolean))].slice(0, 8);
   tagsEl.innerHTML = genres.map(g => `<span class="bio-tag">${g}</span>`).join('');
@@ -1996,15 +1996,14 @@ function updateFilmProfile() {
   if (!textEl) return;
   const thrillerTitles = (typeof THRILLER_PRELOAD !== 'undefined') ? THRILLER_PRELOAD.map(m => m.title) : [];
   const dramaTitles = (typeof DRAMA_PRELOAD !== 'undefined') ? DRAMA_PRELOAD.map(m => m.title) : [];
-  const comedyTitles = (typeof COMEDY_PRELOAD !== 'undefined') ? COMEDY_PRELOAD.map(m => m.title) : [];
   const directorNames = (typeof directors !== 'undefined') ? directors.map(d => d.name).filter(Boolean) : [];
   const hasClassics = dramaTitles.some(t => ['The Godfather','The Godfather Part II','The Shawshank Redemption'].includes(t));
   let paras = [];
-  paras.push(`A genuine dual appetite: serious, demanding cinema sitting comfortably next to deeply rewatchable comedies — and no sense that one half cancels out the other.`);
-  if (thrillerTitles.length) paras.push(`The thriller selections (${thrillerTitles.slice(0,3).join(', ')}) share a preference for psychological control and slow revelation — films that build elaborate traps and spring them perfectly.`);
-  if (hasClassics) paras.push(`The dramatic picks span decades and continents: from Iranian realism to American crime classics, connected by an interest in moral complexity and characters under pressure.`);
-  if (comedyTitles.length) paras.push(`The comedy selections are notably ensemble-driven and chaos-forward — from the madness of It's a Mad Mad Mad Mad World and Rat Race to the sharp social wit of Mean Girls and The Birdcage.`);
-  if (directorNames.length) paras.push(`Director taste — ${directorNames.join(', ')} — confirms the preference: maximalist style alongside quiet humanism, genre filmmaking alongside pure cinema.`);
+  paras.push(`The films here share a quality that's harder to fake than it looks: genuine tension. Not action-movie tension, but the kind that comes from expert writing and performance — where you understand exactly what's at stake for every character and can't look away.`);
+  if (thrillerTitles.length) paras.push(`The psychological thrillers (${thrillerTitles.slice(0,3).join(', ')}) are studies in control — films where the screenplay is airtight, the performances are precise, and the pressure builds so methodically that the release feels earned rather than manufactured.`);
+  if (hasClassics) paras.push(`The dramatic selections share a preoccupation with moral weight. The Godfather films, A Separation, The Shawshank Redemption — these are films where the writing and acting are inseparable, where every scene is carrying more than its surface suggests.`);
+  paras.push(`The comedy picks (The Birdcage, Mean Girls, Pulp Fiction, Ocean's Eleven) are sharp, not broad — they work because the writing is precise and the performers know exactly what they're doing.`);
+  if (directorNames.length) paras.push(`Director taste — ${directorNames.join(', ')} — confirms everything: these are filmmakers known for craft, control, and a screenplay that does its job before the camera rolls.`);
   textEl.innerHTML = paras.map(p => `<p>${p}</p>`).join('');
 }
 
@@ -2841,8 +2840,13 @@ function switchTab(tab, btn) {
   if (tab === 'graph') {
     setTimeout(() => {
       const canvas = document.getElementById('taste-graph');
-      if (canvas && !canvas._graphRunning) { canvas._graphRunning = true; initTasteGraph(); }
-    }, 50);
+      if (!canvas) return;
+      // Re-init if never run, or if canvas was 0x0 (was hidden on first init)
+      if (!canvas._graphRunning || canvas.width === 0) {
+        canvas._graphRunning = true;
+        initTasteGraph();
+      }
+    }, 80);
   }
 }
 
@@ -4130,9 +4134,14 @@ function initTasteGraph() {
   const canvas = document.getElementById('taste-graph');
   if (!canvas) return;
   const container = document.getElementById('graph-container');
-  canvas.width = container.clientWidth;
-  canvas.height = container.clientHeight;
+
+  // Use window dimensions as fallback when container is hidden (clientWidth=0)
+  const W0 = container.clientWidth || window.innerWidth;
+  const H0 = container.clientHeight || Math.max(600, window.innerHeight - 200);
+  canvas.width = W0;
+  canvas.height = H0;
   const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
   const COLORS = {
     artist: '#a78bfa', album: '#34d399', film: '#f59e0b',
@@ -4499,8 +4508,10 @@ function initTasteGraph() {
 
   // Resize
   window.addEventListener('resize', () => {
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
+    const newW = container.clientWidth || window.innerWidth;
+    const newH = container.clientHeight || Math.max(600, window.innerHeight - 200);
+    canvas.width = newW;
+    canvas.height = newH;
   });
 
   loop();
