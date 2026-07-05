@@ -1233,22 +1233,93 @@
 </div>
 <!-- TAB: Taste Graph -->
 <div class="tab-panel" id="tab-graph">
-  <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 0;">
-    <h2 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:0.25rem;">Taste Graph</h2>
-    <p style="font-size:14px;color:var(--muted);margin-bottom:1.5rem;">A map of how your music, film, and cultural tastes connect. Drag nodes to explore. Click a node to see its connections.</p>
-  </div>
-  <div id="graph-container" style="width:100%;height:calc(100vh - 200px);min-height:600px;position:relative;background:var(--surface);border-top:1px solid var(--border);">
-    <canvas id="taste-graph" style="width:100%;height:100%;display:block;"></canvas>
-    <div id="graph-tooltip" style="display:none;position:absolute;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text);pointer-events:none;max-width:200px;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
-      <div id="graph-tooltip-title" style="font-weight:700;margin-bottom:3px;"></div>
-      <div id="graph-tooltip-sub" style="color:var(--muted);font-size:11px;"></div>
-    </div>
-    <div style="position:absolute;bottom:16px;right:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#a78bfa;display:inline-block;"></span>Artists</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>Films</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#fb923c;display:inline-block;"></span>TV Shows</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#f472b6;display:inline-block;"></span>Directors</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;display:inline-block;"></span>Themes</div>
+  <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 1rem;">
+    <h2 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:0.25rem;">Taste Constellation</h2>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:2rem;">The throughlines that run across everything — music, film, TV, and books.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+      <div style="border-radius:12px;padding:20px 22px;background:rgba(192,132,252,0.06);border:1px solid rgba(192,132,252,0.2);">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#c084fc;opacity:.7;margin-bottom:8px;">Across everything</div>
+        <div style="font-size:20px;font-weight:600;color:#e9d5ff;margin-bottom:10px;line-height:1.2;">Sharp writing</div>
+        <div style="font-size:12px;line-height:1.65;color:#d8b4fe;opacity:.75;margin-bottom:16px;">The non-negotiable. Austen's surgical social precision, Succession landing every line, Tarantino's dialogue. The writing earns everything else — if it isn't on the page, it isn't on the screen.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(192,132,252,0.12);color:#c084fc;border:1px solid rgba(192,132,252,0.2);">Jane Austen</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(192,132,252,0.12);color:#c084fc;border:1px solid rgba(192,132,252,0.2);">Succession</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(192,132,252,0.12);color:#c084fc;border:1px solid rgba(192,132,252,0.2);">Pulp Fiction</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(192,132,252,0.12);color:#c084fc;border:1px solid rgba(192,132,252,0.2);">Veep</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(192,132,252,0.12);color:#c084fc;border:1px solid rgba(192,132,252,0.2);">30 Rock</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(192,132,252,0.12);color:#c084fc;border:1px solid rgba(192,132,252,0.2);">The Godfather</span>
+        </div>
+      </div>
+
+      <div style="border-radius:12px;padding:20px 22px;background:rgba(244,114,182,0.06);border:1px solid rgba(244,114,182,0.2);">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#f472b6;opacity:.7;margin-bottom:8px;">Film & TV</div>
+        <div style="font-size:20px;font-weight:600;color:#fce7f3;margin-bottom:10px;line-height:1.2;">Earned tension</div>
+        <div style="font-size:12px;line-height:1.65;color:#fbcfe8;opacity:.75;margin-bottom:16px;">Not manufactured suspense — methodical, psychological pressure that builds because you understand exactly what's at stake. Edge of your seat because the writing and performances put you there.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">Oldboy</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">Breaking Bad</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">Gone Girl</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">Nightcrawler</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">Fight Club</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">The Wire</span>
+        </div>
+      </div>
+
+      <div style="border-radius:12px;padding:20px 22px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#38bdf8;opacity:.7;margin-bottom:8px;">Books, film & TV</div>
+        <div style="font-size:20px;font-weight:600;color:#e0f2fe;margin-bottom:10px;line-height:1.2;">Strong characters</div>
+        <div style="font-size:12px;line-height:1.65;color:#bae6fd;opacity:.75;margin-bottom:16px;">Morally complex people with real interior lives. Characters who make decisions you feel, not just observe — whose choices have weight because you understand exactly who they are.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">The Wire</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">A Separation</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">Pachinko</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">BoJack Horseman</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">Harry Potter</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">Austen heroines</span>
+        </div>
+      </div>
+
+      <div style="border-radius:12px;padding:20px 22px;background:rgba(163,230,53,0.06);border:1px solid rgba(163,230,53,0.2);">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#a3e635;opacity:.7;margin-bottom:8px;">Music</div>
+        <div style="font-size:20px;font-weight:600;color:#ecfccb;margin-bottom:10px;line-height:1.2;">Melodic architecture</div>
+        <div style="font-size:12px;line-height:1.65;color:#d9f99d;opacity:.75;margin-bottom:16px;">Songs built to go somewhere. A hook that earns its place, a chorus that actually arrives, a crescendo that pays off everything before it. The quiet parts exist to make the loud parts hit harder.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(163,230,53,0.12);color:#a3e635;border:1px solid rgba(163,230,53,0.2);">Pink Floyd</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(163,230,53,0.12);color:#a3e635;border:1px solid rgba(163,230,53,0.2);">Muse</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(163,230,53,0.12);color:#a3e635;border:1px solid rgba(163,230,53,0.2);">ABBA</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(163,230,53,0.12);color:#a3e635;border:1px solid rgba(163,230,53,0.2);">Radiohead</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(163,230,53,0.12);color:#a3e635;border:1px solid rgba(163,230,53,0.2);">Queen</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(163,230,53,0.12);color:#a3e635;border:1px solid rgba(163,230,53,0.2);">The Strokes</span>
+        </div>
+      </div>
+
+      <div style="border-radius:12px;padding:20px 22px;background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.2);">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#fb923c;opacity:.7;margin-bottom:8px;">Across everything</div>
+        <div style="font-size:20px;font-weight:600;color:#ffedd5;margin-bottom:10px;line-height:1.2;">Emotional impact</div>
+        <div style="font-size:12px;line-height:1.65;color:#fed7aa;opacity:.75;margin-bottom:16px;">Art that makes you feel something you didn't expect to feel that deeply. Not sentimentality — a genuine emotional arc that lands because everything leading up to it was earned.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">Shawshank Redemption</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">A.R. Rahman</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">Friday Night Lights</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">ABBA</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">Wuthering Heights</span>
+        </div>
+      </div>
+
+      <div style="border-radius:12px;padding:20px 22px;background:rgba(232,121,249,0.06);border:1px solid rgba(232,121,249,0.2);">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#e879f9;opacity:.7;margin-bottom:8px;">Books & film</div>
+        <div style="font-size:20px;font-weight:600;color:#fae8ff;margin-bottom:10px;line-height:1.2;">Strong worldview</div>
+        <div style="font-size:12px;line-height:1.65;color:#f5d0fe;opacity:.75;margin-bottom:16px;">Art that has a position and commits to it. Ayn Rand reshaping how you think about merit and individual will. Camus on the absurd. Pan's Labyrinth on what stories are actually for.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(232,121,249,0.12);color:#e879f9;border:1px solid rgba(232,121,249,0.2);">Ayn Rand</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(232,121,249,0.12);color:#e879f9;border:1px solid rgba(232,121,249,0.2);">Camus</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(232,121,249,0.12);color:#e879f9;border:1px solid rgba(232,121,249,0.2);">Pan's Labyrinth</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(232,121,249,0.12);color:#e879f9;border:1px solid rgba(232,121,249,0.2);">The Wire</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(232,121,249,0.12);color:#e879f9;border:1px solid rgba(232,121,249,0.2);">Radiohead</span>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -2837,17 +2908,6 @@ function switchTab(tab, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
-  if (tab === 'graph') {
-    setTimeout(() => {
-      const canvas = document.getElementById('taste-graph');
-      if (!canvas) return;
-      // Re-init if never run, or if canvas was 0x0 (was hidden on first init)
-      if (!canvas._graphRunning || canvas.width === 0) {
-        canvas._graphRunning = true;
-        initTasteGraph();
-      }
-    }, 80);
-  }
 }
 
 // ── ALBUMS DATA ──
@@ -4130,393 +4190,6 @@ async function preloadStaticGrid(preloadArr, moviesArr, idPrefix, gridId) {
 }
 
 // ── TASTE GRAPH ──
-function initTasteGraph() {
-  const canvas = document.getElementById('taste-graph');
-  if (!canvas) return;
-  const container = document.getElementById('graph-container');
-
-  // Use window dimensions as fallback when container is hidden (clientWidth=0)
-  const W0 = container.clientWidth || window.innerWidth;
-  const H0 = container.clientHeight || Math.max(600, window.innerHeight - 200);
-  canvas.width = W0;
-  canvas.height = H0;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  const COLORS = {
-    artist: '#a78bfa', album: '#34d399', film: '#f59e0b',
-    director: '#f472b6', theme: '#60a5fa', tv: '#fb923c'
-  };
-
-  // ── NODE DEFINITIONS ──
-  const nodes = [
-    // Central themes
-    { id: 'th-control',    label: 'Psychological Control',   type: 'theme', size: 24 },
-    { id: 'th-world',      label: 'World Cinema',            type: 'theme', size: 24 },
-    { id: 'th-social',     label: 'Sharp Social Comedy',     type: 'theme', size: 22 },
-    { id: 'th-ensemble',   label: 'Ensemble Comedy',         type: 'theme', size: 22 },
-    { id: 'th-identity',   label: 'Identity & Transformation',type: 'theme', size: 20 },
-    { id: 'th-melody',     label: 'Strong Melody & Hooks',   type: 'theme', size: 20 },
-    { id: 'th-maximalist', label: 'Maximalist Sound',        type: 'theme', size: 18 },
-    { id: 'th-sincerity',  label: 'Emotional Sincerity',     type: 'theme', size: 18 },
-    { id: 'th-power',      label: 'Power & Moral Collapse',  type: 'theme', size: 20 },
-    { id: 'th-writer',     label: 'Writer-Led TV',           type: 'theme', size: 18 },
-
-    // Directors
-    { id: 'd-tarantino', label: 'Tarantino',    type: 'director', size: 20 },
-    { id: 'd-fincher',   label: 'Fincher',      type: 'director', size: 20 },
-    { id: 'd-almodovar', label: 'Almodóvar',    type: 'director', size: 20 },
-    { id: 'd-ray',       label: 'Satyajit Ray', type: 'director', size: 20 },
-
-    // Favorite Movies
-    { id: 'f-pulp',     label: 'Pulp Fiction',       type: 'film', size: 16 },
-    { id: 'f-pp',       label: 'Pride & Prejudice',  type: 'film', size: 16 },
-    { id: 'f-birdcage', label: 'The Birdcage',       type: 'film', size: 16 },
-    { id: 'f-oceans',   label: "Ocean's Eleven",     type: 'film', size: 15 },
-    { id: 'f-funeral',  label: 'Death at a Funeral', type: 'film', size: 14 },
-
-    // Thrillers
-    { id: 'f-oldboy',      label: 'Oldboy',             type: 'film', size: 15 },
-    { id: 'f-skin',        label: 'The Skin I Live In', type: 'film', size: 15 },
-    { id: 'f-nightcrawler',label: 'Nightcrawler',       type: 'film', size: 14 },
-    { id: 'f-fight',       label: 'Fight Club',         type: 'film', size: 15 },
-    { id: 'f-gone',        label: 'Gone Girl',          type: 'film', size: 14 },
-    { id: 'f-inception',   label: 'Inception',          type: 'film', size: 14 },
-
-    // Dramas
-    { id: 'f-sep',       label: 'A Separation',          type: 'film', size: 15 },
-    { id: 'f-pan',       label: "Pan's Labyrinth",       type: 'film', size: 14 },
-    { id: 'f-lac',       label: 'L.A. Confidential',     type: 'film', size: 14 },
-    { id: 'f-shawshank', label: 'The Shawshank Redemption', type: 'film', size: 14 },
-    { id: 'f-godfather', label: 'The Godfather',         type: 'film', size: 15 },
-    { id: 'f-godfather2',label: 'The Godfather II',      type: 'film', size: 14 },
-
-    // Comedies
-    { id: 'f-mean',  label: 'Mean Girls',              type: 'film', size: 14 },
-    { id: 'f-40yr',  label: '40-Year-Old Virgin',      type: 'film', size: 13 },
-    { id: 'f-end',   label: 'This Is the End',         type: 'film', size: 13 },
-    { id: 'f-ilyg',  label: 'I Love You, Man',         type: 'film', size: 13 },
-    { id: 'f-sarah', label: 'Forgetting Sarah Marshall',type: 'film', size: 13 },
-    { id: 'f-rat',   label: 'Rat Race',                type: 'film', size: 12 },
-
-    // TV — Comedies
-    { id: 'tv-30rock', label: '30 Rock',              type: 'tv', size: 15 },
-    { id: 'tv-comm',   label: 'Community',            type: 'tv', size: 14 },
-    { id: 'tv-veep',   label: 'Veep',                 type: 'tv', size: 15 },
-    { id: 'tv-ad',     label: 'Arrested Development', type: 'tv', size: 14 },
-    { id: 'tv-sein',   label: 'Seinfeld',             type: 'tv', size: 15 },
-
-    // TV — Dramas
-    { id: 'tv-bb',   label: 'Breaking Bad',       type: 'tv', size: 16 },
-    { id: 'tv-wire', label: 'The Wire',           type: 'tv', size: 16 },
-    { id: 'tv-got',  label: 'Game of Thrones',   type: 'tv', size: 15 },
-    { id: 'tv-fnl',  label: 'Friday Night Lights',type: 'tv', size: 14 },
-    { id: 'tv-succ', label: 'Succession',         type: 'tv', size: 15 },
-
-    // TV — Other
-    { id: 'tv-bojack', label: 'BoJack Horseman',      type: 'tv', size: 14 },
-    { id: 'tv-curb',   label: 'Curb Your Enthusiasm', type: 'tv', size: 14 },
-    { id: 'tv-office', label: 'The Office',           type: 'tv', size: 14 },
-    { id: 'tv-parks',  label: 'Parks & Recreation',   type: 'tv', size: 13 },
-
-    // TV — Dropped off
-    { id: 'tv-homeland', label: 'Homeland',       type: 'tv', size: 13 },
-    { id: 'tv-td',       label: 'True Detective', type: 'tv', size: 13 },
-    { id: 'tv-weeds',    label: 'Weeds',          type: 'tv', size: 12 },
-    { id: 'tv-niptuck',  label: 'Nip/Tuck',       type: 'tv', size: 12 },
-    { id: 'tv-trueblood',label: 'True Blood',     type: 'tv', size: 12 },
-
-    // Artists
-    { id: 'a-strokes',   label: 'The Strokes',       type: 'artist', size: 18 },
-    { id: 'a-radiohead', label: 'Radiohead',         type: 'artist', size: 18 },
-    { id: 'a-pf',        label: 'Pink Floyd',        type: 'artist', size: 16 },
-    { id: 'a-nirvana',   label: 'Nirvana',           type: 'artist', size: 16 },
-    { id: 'a-abba',      label: 'ABBA',              type: 'artist', size: 16 },
-    { id: 'a-bts',       label: 'BTS',              type: 'artist', size: 16 },
-    { id: 'a-queen',     label: 'Queen',             type: 'artist', size: 16 },
-    { id: 'a-muse',      label: 'Muse',              type: 'artist', size: 14 },
-    { id: 'a-interpol',  label: 'Interpol',          type: 'artist', size: 14 },
-    { id: 'a-metallica', label: 'Metallica',         type: 'artist', size: 14 },
-    { id: 'a-rahman',    label: 'A.R. Rahman',       type: 'artist', size: 14 },
-    { id: 'a-weezer',    label: 'Weezer',            type: 'artist', size: 14 },
-    { id: 'a-cake',      label: 'Cake',              type: 'artist', size: 13 },
-    { id: 'a-jc',        label: 'Julian Casablancas',type: 'artist', size: 13 },
-    { id: 'a-dec',       label: 'The Decemberists',  type: 'artist', size: 13 },
-    { id: 'a-altj',      label: 'Alt-J',             type: 'artist', size: 13 },
-  ];
-
-  const edges = [
-    // Directors → films
-    { a: 'd-tarantino', b: 'f-pulp' },
-    { a: 'd-fincher',   b: 'f-fight' }, { a: 'd-fincher', b: 'f-gone' },
-    { a: 'd-almodovar', b: 'f-skin' },
-    { a: 'd-ray',       b: 'th-world' },
-
-    // Directors → themes
-    { a: 'd-tarantino', b: 'th-control' }, { a: 'd-fincher',   b: 'th-control' },
-    { a: 'd-almodovar', b: 'th-identity' },{ a: 'd-almodovar', b: 'th-world' },
-
-    // Thrillers → themes
-    { a: 'f-fight',        b: 'th-control' }, { a: 'f-oldboy',  b: 'th-control' },
-    { a: 'f-skin',         b: 'th-control' }, { a: 'f-gone',    b: 'th-control' },
-    { a: 'f-nightcrawler', b: 'th-control' }, { a: 'f-inception',b: 'th-control' },
-    { a: 'f-skin',    b: 'th-identity' }, { a: 'f-fight',  b: 'th-identity' },
-    { a: 'f-oldboy',  b: 'th-identity' }, { a: 'f-inception',b: 'th-identity' },
-    { a: 'f-oldboy',  b: 'th-world' },
-
-    // Dramas → themes
-    { a: 'f-sep',       b: 'th-world' },     { a: 'f-pan',  b: 'th-world' },
-    { a: 'f-sep',       b: 'th-sincerity' }, { a: 'f-pp',   b: 'th-sincerity' },
-    { a: 'f-shawshank', b: 'th-sincerity' }, { a: 'tv-fnl', b: 'th-sincerity' },
-    { a: 'f-godfather', b: 'th-power' },     { a: 'f-godfather2', b: 'th-power' },
-    { a: 'f-lac',       b: 'th-control' },   { a: 'f-pan',  b: 'th-identity' },
-
-    // Favorites → themes
-    { a: 'f-pulp',    b: 'th-control' }, { a: 'f-pulp',    b: 'th-social' },
-    { a: 'f-birdcage',b: 'th-social' },  { a: 'f-pp',      b: 'th-social' },
-    { a: 'f-oceans',  b: 'th-social' },  { a: 'f-funeral', b: 'th-social' },
-    { a: 'f-mean',    b: 'th-social' },
-
-    // Film comedies → themes
-    { a: 'f-end',   b: 'th-ensemble' }, { a: 'f-rat',  b: 'th-ensemble' },
-    { a: 'f-ilyg',  b: 'th-ensemble' }, { a: 'f-sarah',b: 'th-ensemble' },
-    { a: 'f-40yr',  b: 'th-ensemble' },
-
-    // TV dramas → themes
-    { a: 'tv-bb',   b: 'th-power' },   { a: 'tv-wire', b: 'th-power' },
-    { a: 'tv-succ', b: 'th-power' },   { a: 'tv-got',  b: 'th-power' },
-    { a: 'tv-fnl',  b: 'th-sincerity' },
-    { a: 'tv-bb',   b: 'th-control' }, { a: 'tv-wire', b: 'th-world' },
-
-    // TV comedies → themes
-    { a: 'tv-veep',  b: 'th-social' },  { a: 'tv-sein', b: 'th-social' },
-    { a: 'tv-30rock',b: 'th-social' },  { a: 'tv-ad',   b: 'th-social' },
-    { a: 'tv-comm',  b: 'th-ensemble' },
-    { a: 'tv-veep',  b: 'th-writer' },  { a: 'tv-30rock',b: 'th-writer' },
-    { a: 'tv-ad',    b: 'th-writer' },  { a: 'tv-sein',  b: 'th-writer' },
-    { a: 'tv-succ',  b: 'th-writer' },  { a: 'tv-bb',    b: 'th-writer' },
-
-    // TV other → themes
-    { a: 'tv-bojack', b: 'th-sincerity' }, { a: 'tv-bojack', b: 'th-identity' },
-    { a: 'tv-curb',   b: 'th-social' },    { a: 'tv-office', b: 'th-social' },
-    { a: 'tv-parks',  b: 'th-sincerity' },
-
-    // TV dropped off → themes
-    { a: 'tv-homeland', b: 'th-control' }, { a: 'tv-td',    b: 'th-control' },
-    { a: 'tv-weeds',    b: 'th-social' },  { a: 'tv-niptuck',b: 'th-identity' },
-    { a: 'tv-trueblood',b: 'th-identity' },
-
-    // Cross-medium links
-    { a: 'a-rahman',  b: 'th-world' },    { a: 'a-bts',    b: 'th-world' },
-    { a: 'a-interpol',b: 'th-control' },  { a: 'a-cake',   b: 'th-social' },
-    { a: 'a-strokes', b: 'a-jc' },
-
-    // Artists → melody/maximalist/sincerity
-    { a: 'a-strokes',   b: 'th-melody' }, { a: 'a-abba',    b: 'th-melody' },
-    { a: 'a-queen',     b: 'th-melody' }, { a: 'a-weezer',  b: 'th-melody' },
-    { a: 'a-radiohead', b: 'th-melody' }, { a: 'a-altj',    b: 'th-melody' },
-    { a: 'a-jc',        b: 'th-melody' },
-    { a: 'a-queen',     b: 'th-maximalist' }, { a: 'a-muse', b: 'th-maximalist' },
-    { a: 'a-metallica', b: 'th-maximalist' }, { a: 'a-pf',   b: 'th-maximalist' },
-    { a: 'a-bts',    b: 'th-sincerity' }, { a: 'a-rahman', b: 'th-sincerity' },
-    { a: 'a-dec',    b: 'th-sincerity' }, { a: 'a-nirvana',b: 'th-sincerity' },
-    { a: 'a-abba',   b: 'th-sincerity' },
-  ];
-
-  // ── PHYSICS SIMULATION ──
-  const W = canvas.width, H = canvas.height;
-  const nodeMap = {};
-  nodes.forEach((n, i) => {
-    const angle = (i / nodes.length) * Math.PI * 2;
-    const r = Math.min(W, H) * 0.3;
-    n.x = W/2 + r * Math.cos(angle) * (0.5 + Math.random() * 0.5);
-    n.y = H/2 + r * Math.sin(angle) * (0.5 + Math.random() * 0.5);
-    n.vx = 0; n.vy = 0;
-    nodeMap[n.id] = n;
-  });
-
-  // Theme nodes in center
-  ['th-control','th-world','th-social','th-ensemble','th-identity','th-melody','th-maximalist','th-sincerity','th-power','th-writer'].forEach((id, i, arr) => {
-    const n = nodeMap[id];
-    const a = (i / arr.length) * Math.PI * 2;
-    n.x = W/2 + 120 * Math.cos(a);
-    n.y = H/2 + 100 * Math.sin(a);
-  });
-
-  let dragging = null, dragOffX = 0, dragOffY = 0;
-  let highlighted = null;
-
-  function tick() {
-    // Repulsion
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i+1; j < nodes.length; j++) {
-        const a = nodes[i], b = nodes[j];
-        const dx = b.x - a.x, dy = b.y - a.y;
-        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-        const force = 1800 / (dist * dist);
-        const fx = (dx/dist)*force, fy = (dy/dist)*force;
-        a.vx -= fx; a.vy -= fy; b.vx += fx; b.vy += fy;
-      }
-    }
-    // Attraction along edges
-    edges.forEach(e => {
-      const a = nodeMap[e.a], b = nodeMap[e.b];
-      if (!a || !b) return;
-      const dx = b.x - a.x, dy = b.y - a.y;
-      const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-      const force = (dist - 160) * 0.012;
-      const fx = (dx/dist)*force, fy = (dy/dist)*force;
-      a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
-    });
-    // Center gravity
-    nodes.forEach(n => {
-      n.vx += (W/2 - n.x) * 0.003;
-      n.vy += (H/2 - n.y) * 0.003;
-    });
-    // Integrate + dampen
-    nodes.forEach(n => {
-      if (n === dragging) return;
-      n.vx *= 0.75; n.vy *= 0.75;
-      n.x += n.vx; n.y += n.vy;
-      n.x = Math.max(n.size+4, Math.min(W-n.size-4, n.x));
-      n.y = Math.max(n.size+4, Math.min(H-n.size-4, n.y));
-    });
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    // Edges
-    edges.forEach(e => {
-      const a = nodeMap[e.a], b = nodeMap[e.b];
-      if (!a || !b) return;
-      const isHighlit = highlighted && (e.a === highlighted || e.b === highlighted);
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.strokeStyle = isHighlit ? 'rgba(167,139,250,0.7)' : 'rgba(255,255,255,0.07)';
-      ctx.lineWidth = isHighlit ? 1.5 : 1;
-      ctx.stroke();
-    });
-    // Nodes
-    nodes.forEach(n => {
-      const isHighlit = highlighted === n.id ||
-        edges.some(e => (e.a === highlighted && e.b === n.id) || (e.b === highlighted && e.a === n.id));
-      const alpha = highlighted ? (isHighlit ? 1 : 0.25) : 1;
-      ctx.globalAlpha = alpha;
-      // Glow for highlighted
-      if (highlighted === n.id) {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.size + 6, 0, Math.PI*2);
-        ctx.fillStyle = COLORS[n.type] + '33';
-        ctx.fill();
-      }
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.size, 0, Math.PI*2);
-      ctx.fillStyle = COLORS[n.type];
-      ctx.fill();
-      // Label
-      ctx.fillStyle = '#fff';
-      ctx.font = `${Math.max(9, n.size * 0.62)}px Inter, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const label = n.label.length > 18 ? n.label.slice(0, 17) + '…' : n.label;
-      // Background pill for readability
-      const tw = ctx.measureText(label).width;
-      ctx.fillStyle = 'rgba(13,13,15,0.65)';
-      ctx.fillRect(n.x - tw/2 - 3, n.y + n.size + 2, tw + 6, 14);
-      ctx.fillStyle = highlighted && !isHighlit ? 'rgba(255,255,255,0.35)' : '#eeecea';
-      ctx.fillText(label, n.x, n.y + n.size + 9);
-      ctx.globalAlpha = 1;
-    });
-  }
-
-  let rafId;
-  let ticks = 0;
-  function loop() {
-    if (ticks < 300 || dragging) tick();
-    ticks++;
-    draw();
-    rafId = requestAnimationFrame(loop);
-  }
-
-  function nodeAt(x, y) {
-    return nodes.find(n => Math.hypot(n.x - x, n.y - y) < n.size + 6);
-  }
-
-  // Mouse events
-  canvas.addEventListener('mousedown', e => {
-    const r = canvas.getBoundingClientRect();
-    const x = (e.clientX - r.left) * (canvas.width / r.width);
-    const y = (e.clientY - r.top) * (canvas.height / r.height);
-    const n = nodeAt(x, y);
-    if (n) { dragging = n; dragOffX = n.x - x; dragOffY = n.y - y; }
-  });
-  canvas.addEventListener('mousemove', e => {
-    const r = canvas.getBoundingClientRect();
-    const x = (e.clientX - r.left) * (canvas.width / r.width);
-    const y = (e.clientY - r.top) * (canvas.height / r.height);
-    if (dragging) {
-      dragging.x = x + dragOffX; dragging.y = y + dragOffY;
-      dragging.vx = 0; dragging.vy = 0;
-    }
-    const n = nodeAt(x, y);
-    const tooltip = document.getElementById('graph-tooltip');
-    if (n && !dragging) {
-      const connCount = edges.filter(e => e.a === n.id || e.b === n.id).length;
-      document.getElementById('graph-tooltip-title').textContent = n.label;
-      document.getElementById('graph-tooltip-sub').textContent = `${n.type.charAt(0).toUpperCase() + n.type.slice(1)} · ${connCount} connection${connCount !== 1 ? 's' : ''}`;
-      tooltip.style.display = 'block';
-      tooltip.style.left = (e.clientX - r.left + 14) + 'px';
-      tooltip.style.top = (e.clientY - r.top - 10) + 'px';
-      canvas.style.cursor = 'grab';
-    } else {
-      tooltip.style.display = 'none';
-      canvas.style.cursor = dragging ? 'grabbing' : 'default';
-    }
-  });
-  canvas.addEventListener('mouseup', () => { dragging = null; canvas.style.cursor = 'default'; });
-  canvas.addEventListener('click', e => {
-    const r = canvas.getBoundingClientRect();
-    const x = (e.clientX - r.left) * (canvas.width / r.width);
-    const y = (e.clientY - r.top) * (canvas.height / r.height);
-    const n = nodeAt(x, y);
-    highlighted = n ? (highlighted === n.id ? null : n.id) : null;
-    ticks = 0;
-  });
-
-  // Touch support
-  canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    const r = canvas.getBoundingClientRect();
-    const t = e.touches[0];
-    const x = (t.clientX - r.left) * (canvas.width / r.width);
-    const y = (t.clientY - r.top) * (canvas.height / r.height);
-    const n = nodeAt(x, y);
-    if (n) { dragging = n; dragOffX = n.x - x; dragOffY = n.y - y; }
-  }, { passive: false });
-  canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (!dragging) return;
-    const r = canvas.getBoundingClientRect();
-    const t = e.touches[0];
-    const x = (t.clientX - r.left) * (canvas.width / r.width);
-    const y = (t.clientY - r.top) * (canvas.height / r.height);
-    dragging.x = x + dragOffX; dragging.y = y + dragOffY;
-    dragging.vx = 0; dragging.vy = 0;
-  }, { passive: false });
-  canvas.addEventListener('touchend', () => { dragging = null; });
-
-  // Resize
-  window.addEventListener('resize', () => {
-    const newW = container.clientWidth || window.innerWidth;
-    const newH = container.clientHeight || Math.max(600, window.innerHeight - 200);
-    canvas.width = newW;
-    canvas.height = newH;
-  });
-
-  loop();
-  return () => cancelAnimationFrame(rafId);
-}
 
 preloadMovies();
 preloadDirectors();
