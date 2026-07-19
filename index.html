@@ -4794,7 +4794,7 @@ const ACTIVITY_FEED_ITEMS = [
     art: 'https://covers.openlibrary.org/b/isbn/0060977493-L.jpg' },
   { label: 'Persuasion', sub: 'Jane Austen · Finished reading', color: '#38bdf8', icon: 'book', tab: 'books', type: 'book',
     note: "Jane Austen's a very witty writer, and her wry observations of people are still relevant today.", timestamp: 'December 2024',
-    art: 'https://covers.openlibrary.org/b/id/9279141-L.jpg' },
+    art: 'https://covers.openlibrary.org/b/isbn/9780141439686-L.jpg' },
 ];
 
 function activityFeedAvatarHtml() {
@@ -4812,7 +4812,7 @@ function activityCardHtml(item, globalIndex) {
   const thumb = item.art
     ? `<div style="width:32px;height:32px;border-radius:8px;flex-shrink:0;position:relative;overflow:hidden;background:${iconColor}18;">
          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">${mediaIcon(iconType,20)}</div>
-         <img src="${item.art}" style="position:relative;width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">
+         <img src="${item.art}" style="position:relative;width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'; handleActivityArtError(${globalIndex})">
        </div>`
     : mediaIcon(iconType, 32);
   return `<div style="scroll-snap-align:start;flex:0 0 260px;width:260px;padding:14px;border-radius:14px;background:var(--surface2);border:1px solid var(--border);display:flex;flex-direction:column;">
@@ -4955,6 +4955,41 @@ async function openActivitySummary(globalIndex) {
 function closeActivitySummary() {
   const modal = document.getElementById('activity-summary-modal');
   if (modal) modal.style.display = 'none';
+}
+
+// A hardcoded/previously-fetched art URL turned out to be broken — retry with a fresh fetch
+// instead of leaving the thumbnail permanently blank. Queued (like handleBookCoverError) so a
+// burst of simultaneously-broken images doesn't fire a pile of concurrent requests at once.
+let activityArtErrorQueue = Promise.resolve();
+async function handleActivityArtError(globalIndex) {
+  const item = ACTIVITY_FEED_ITEMS[globalIndex];
+  if (!item || item._artRetried) return;
+  item._artRetried = true;
+  item.art = '';
+  activityArtErrorQueue = activityArtErrorQueue.then(async () => {
+    let newArt = '';
+    try {
+      if (item.type === 'book') {
+        const author = item.bookAuthor || item.sub?.split('·')[0]?.trim();
+        newArt = await fetchBookCover(item.bookTitle || item.label, author);
+      } else if (item.type === 'movie' && item.tmdbQuery) {
+        const res = await tmdbFetch(`/search/movie?query=${encodeURIComponent(item.tmdbQuery)}&page=1`);
+        const data = await res.json();
+        const hit = data.results?.[0];
+        if (hit) {
+          const detail = await fetchMovieDetail(hit.id);
+          if (detail.poster) newArt = `${TMDB_IMG}${detail.poster}`;
+        }
+      } else if (item.type === 'song' && item.artQuery) {
+        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=music&entity=song&limit=1`);
+        const data = await res.json();
+        newArt = data.results?.[0]?.artworkUrl100?.replace('100x100bb', '200x200bb') || '';
+      }
+    } catch (e) {}
+    if (newArt) { item.art = newArt; refreshActivityFeeds(); }
+    await new Promise(res => setTimeout(res, 200));
+  });
+  await activityArtErrorQueue;
 }
 
 
@@ -5328,13 +5363,13 @@ updateTVProfile();
 
 // ── BOOKS ──
 const BOOKS_SHAPED = [
-  { title: 'Atlas Shrugged',      author: 'Ayn Rand',      year: '1957', cover: 'https://covers.openlibrary.org/b/id/6793507-L.jpg' },
+  { title: 'Atlas Shrugged',      author: 'Ayn Rand',      year: '1957', cover: 'https://covers.openlibrary.org/b/isbn/9780451191144-L.jpg' },
   { title: 'The Fountainhead',    author: 'Ayn Rand',      year: '1943', cover: 'https://covers.openlibrary.org/b/id/15140829-L.jpg' },
-  { title: 'Pride and Prejudice', author: 'Jane Austen',   year: '1813', cover: 'https://covers.openlibrary.org/b/id/8467127-L.jpg' },
-  { title: 'Persuasion',          author: 'Jane Austen',   year: '1817', cover: 'https://covers.openlibrary.org/b/id/9279141-L.jpg' },
+  { title: 'Pride and Prejudice', author: 'Jane Austen',   year: '1813', cover: 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg' },
+  { title: 'Persuasion',          author: 'Jane Austen',   year: '1817', cover: 'https://covers.openlibrary.org/b/isbn/9780141439686-L.jpg' },
   { title: 'The Stranger',        author: 'Albert Camus',  year: '1942', cover: 'https://covers.openlibrary.org/b/id/12727338-L.jpg' },
-  { title: 'The Westing Game',    author: 'Ellen Raskin',  year: '1978', cover: 'https://covers.openlibrary.org/b/id/360798-L.jpg' },
-  { title: 'Wuthering Heights',   author: 'Emily Brontë', year: '1847', cover: 'https://covers.openlibrary.org/b/id/13496213-L.jpg' },
+  { title: 'The Westing Game',    author: 'Ellen Raskin',  year: '1978', cover: 'https://covers.openlibrary.org/b/isbn/9780142401200-L.jpg' },
+  { title: 'Wuthering Heights',   author: 'Emily Brontë', year: '1847', cover: 'https://covers.openlibrary.org/b/isbn/9780141439556-L.jpg' },
 ];
 
 const BOOKS_REREAD = [
@@ -5345,10 +5380,10 @@ const BOOKS_REREAD = [
   { title: 'Harry Potter and the Order of the Phoenix',author: 'J.K. Rowling', year: '2003', cover: 'https://covers.openlibrary.org/b/id/8234423-L.jpg' },
   { title: 'Harry Potter and the Half-Blood Prince',   author: 'J.K. Rowling', year: '2005', cover: 'https://covers.openlibrary.org/b/id/8406786-L.jpg' },
   { title: 'Harry Potter and the Deathly Hallows',     author: 'J.K. Rowling', year: '2007', cover: 'https://covers.openlibrary.org/b/id/8406789-L.jpg' },
-  { title: 'Pride and Prejudice',                      author: 'Jane Austen',  year: '1813', cover: 'https://covers.openlibrary.org/b/id/8467127-L.jpg' },
-  { title: 'Persuasion',                               author: 'Jane Austen',  year: '1817', cover: 'https://covers.openlibrary.org/b/id/9279141-L.jpg' },
+  { title: 'Pride and Prejudice',                      author: 'Jane Austen',  year: '1813', cover: 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg' },
+  { title: 'Persuasion',                               author: 'Jane Austen',  year: '1817', cover: 'https://covers.openlibrary.org/b/isbn/9780141439686-L.jpg' },
   { title: 'Mansfield Park',                           author: 'Jane Austen',  year: '1814', cover: 'https://covers.openlibrary.org/b/id/8739161-L.jpg' },
-  { title: 'The Westing Game',                         author: 'Ellen Raskin', year: '1978', cover: 'https://covers.openlibrary.org/b/id/360798-L.jpg' },
+  { title: 'The Westing Game',                         author: 'Ellen Raskin', year: '1978', cover: 'https://covers.openlibrary.org/b/isbn/9780142401200-L.jpg' },
 ];
 
 const BOOKS_RECENT = [
@@ -5368,23 +5403,40 @@ const BOOK_ARRAYS = {
   'books-recent-grid': booksRecentData,
 };
 
-async function fetchBookCover(title, author) {
+async function fetchBookCoverCandidates(title, author) {
+  const candidates = [];
+  // Open Library's own search API — same domain family as covers.openlibrary.org itself, so this
+  // avoids depending on a separate third-party domain (Google Books) that may be blocked even when
+  // Open Library's own CDN isn't. Collect several candidates, since not every cover_i in the search
+  // index actually has a valid image behind it.
+  try {
+    const res = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=5&fields=cover_i`);
+    const data = await res.json();
+    (data.docs || []).forEach(d => { if (d.cover_i) candidates.push(`https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg`); });
+  } catch (e) {}
+
+  // Fallback: Google Books
   async function trySearch(q) {
     try {
       const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&fields=items(volumeInfo(imageLinks))`);
       const data = await res.json();
-      const hit = (data.items || []).find(it => it.volumeInfo?.imageLinks);
-      const img = hit?.volumeInfo?.imageLinks;
-      if (img) {
-        return (img.thumbnail || img.smallThumbnail || '').replace('http:', 'https:').replace('zoom=1', 'zoom=2');
-      }
-    } catch(e) {}
-    return '';
+      (data.items || []).forEach(it => {
+        const img = it.volumeInfo?.imageLinks;
+        const url = img && (img.thumbnail || img.smallThumbnail);
+        if (url) candidates.push(url.replace('http:', 'https:').replace('zoom=1', 'zoom=2'));
+      });
+    } catch (e) {}
   }
-  // Try a strict search first, then fall back to a looser one if nothing has cover art
-  const strict = await trySearch(`intitle:"${title}" inauthor:"${author}"`);
-  if (strict) return strict;
-  return await trySearch(`${title} ${author}`);
+  await trySearch(`intitle:"${title}" inauthor:"${author}"`);
+  await trySearch(`${title} ${author}`);
+  return candidates;
+}
+
+// Kept for anything still calling the single-URL version (e.g. the Activity Feed retry) — just the
+// first candidate from the fuller list above.
+async function fetchBookCover(title, author) {
+  const candidates = await fetchBookCoverCandidates(title, author);
+  return candidates[0] || '';
 }
 
 async function fetchBookDescription(title, author) {
@@ -5448,20 +5500,37 @@ function toggleBookExpand(gridId, index) {
   }
 }
 
-// A hardcoded cover URL turned out to be broken (404, moved, etc.) — clear it and fetch a live
-// replacement from Google Books instead of leaving the tile permanently blank.
+// A cover URL turned out to be broken (404, moved, etc.) — advance to the next candidate instead
+// of leaving the tile with either a permanently blank placeholder or a broken-image icon.
+let bookCoverErrorQueue = Promise.resolve();
 async function handleBookCoverError(gridId, index) {
   const dataArr = BOOK_ARRAYS[gridId];
   const b = dataArr?.[index];
-  if (!b || b._coverRetried) return; // avoid retry loops
-  b._coverRetried = true;
+  if (!b) return;
+
+  // Already have a candidate list from a previous failure — just advance to the next one, no need
+  // to re-fetch or re-queue.
+  if (b._coverCandidates) {
+    b._coverCandidateIdx = (b._coverCandidateIdx ?? -1) + 1;
+    b.cover = b._coverCandidates[b._coverCandidateIdx] || ''; // '' once every candidate is exhausted
+    renderBookGrid(dataArr, gridId);
+    return;
+  }
+
   b.cover = '';
   renderBookGrid(dataArr, gridId);
-  const cover = await fetchBookCover(b.title, b.author);
-  if (cover) {
-    b.cover = cover;
+  // Multiple broken covers can trigger onerror at nearly the same moment (e.g. right after initial
+  // render). Chain these through a single queue with a small delay between each, rather than firing
+  // a burst of concurrent requests that can get rate-limited.
+  bookCoverErrorQueue = bookCoverErrorQueue.then(async () => {
+    const candidates = await fetchBookCoverCandidates(b.title, b.author);
+    b._coverCandidates = candidates;
+    b._coverCandidateIdx = 0;
+    b.cover = candidates[0] || '';
     renderBookGrid(dataArr, gridId);
-  }
+    await new Promise(res => setTimeout(res, 200));
+  });
+  await bookCoverErrorQueue;
 }
 
 async function loadBooks(bookList, dataArr, gridId) {
