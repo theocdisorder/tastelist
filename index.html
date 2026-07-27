@@ -29,7 +29,7 @@
     --faint: #45444a;
     --apple: #fc3c44;
     --spotify: #1DB954;
-    --accent: #a78bfa;
+    --accent: #7C4DFF;
   }
 
   html { scroll-behavior: smooth; }
@@ -731,6 +731,16 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+  #profile-feed::-webkit-scrollbar, #music-feed::-webkit-scrollbar, #movies-feed::-webkit-scrollbar, #tv-feed::-webkit-scrollbar, #books-feed::-webkit-scrollbar {
+    width: 6px;
+  }
+  #profile-feed::-webkit-scrollbar-thumb, #music-feed::-webkit-scrollbar-thumb, #movies-feed::-webkit-scrollbar-thumb, #tv-feed::-webkit-scrollbar-thumb, #books-feed::-webkit-scrollbar-thumb {
+    background: var(--border2);
+    border-radius: 10px;
+  }
+  #profile-feed::-webkit-scrollbar-track, #music-feed::-webkit-scrollbar-track, #movies-feed::-webkit-scrollbar-track, #tv-feed::-webkit-scrollbar-track, #books-feed::-webkit-scrollbar-track {
+    background: transparent;
+  }
   .tab-nav {
     display: flex;
     gap: 0;
@@ -762,6 +772,7 @@
     .stream-link { font-size: 11px; padding: 4px 7px; }
     .site-header, .top5-section, .artists-section { padding-left: 1rem; padding-right: 1rem; }
     .tab-nav { padding-left: 1rem; padding-right: 1rem; }
+    .whatsnew-rec-grid { grid-template-columns: 1fr; }
   }
 
   /* ── MUSIC SECTIONS ── */
@@ -913,12 +924,12 @@
   .mention-tag {
     font-weight: 700;
     color: var(--accent);
-    background: rgba(167,139,250,0.14);
+    background: rgba(124,77,255,0.14);
     padding: 1px 6px;
     border-radius: 6px;
     cursor: pointer;
   }
-  .mention-tag:hover { background: rgba(167,139,250,0.24); }
+  .mention-tag:hover { background: rgba(124,77,255,0.24); }
   .bio-tag {
     font-size: 12px;
     font-weight: 700;
@@ -929,14 +940,14 @@
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
   .bio-tag:hover { transform: translateY(-2px) scale(1.05); }
-  .bio-tags .bio-tag:nth-child(8n+1) { background: rgba(167,139,250,0.18); border: 1px solid rgba(167,139,250,0.45); color: #c4b5fd; box-shadow: 0 0 0 0 transparent; }
-  .bio-tags .bio-tag:nth-child(8n+1):hover { box-shadow: 0 6px 16px rgba(167,139,250,0.3); }
-  .bio-tags .bio-tag:nth-child(8n+2) { background: rgba(52,216,235,0.18); border: 1px solid rgba(52,216,235,0.45); color: #67e8f9; }
-  .bio-tags .bio-tag:nth-child(8n+2):hover { box-shadow: 0 6px 16px rgba(52,216,235,0.3); }
-  .bio-tags .bio-tag:nth-child(8n+3) { background: rgba(251,146,60,0.18); border: 1px solid rgba(251,146,60,0.45); color: #fdba74; }
-  .bio-tags .bio-tag:nth-child(8n+3):hover { box-shadow: 0 6px 16px rgba(251,146,60,0.3); }
-  .bio-tags .bio-tag:nth-child(8n+4) { background: rgba(56,189,248,0.18); border: 1px solid rgba(56,189,248,0.45); color: #7dd3fc; }
-  .bio-tags .bio-tag:nth-child(8n+4):hover { box-shadow: 0 6px 16px rgba(56,189,248,0.3); }
+  .bio-tags .bio-tag:nth-child(8n+1) { background: rgba(124,77,255,0.18); border: 1px solid rgba(124,77,255,0.45); color: #c4b5fd; box-shadow: 0 0 0 0 transparent; }
+  .bio-tags .bio-tag:nth-child(8n+1):hover { box-shadow: 0 6px 16px rgba(124,77,255,0.3); }
+  .bio-tags .bio-tag:nth-child(8n+2) { background: rgba(249,115,96,0.18); border: 1px solid rgba(249,115,96,0.45); color: #67e8f9; }
+  .bio-tags .bio-tag:nth-child(8n+2):hover { box-shadow: 0 6px 16px rgba(249,115,96,0.3); }
+  .bio-tags .bio-tag:nth-child(8n+3) { background: rgba(59,130,246,0.18); border: 1px solid rgba(59,130,246,0.45); color: #fdba74; }
+  .bio-tags .bio-tag:nth-child(8n+3):hover { box-shadow: 0 6px 16px rgba(59,130,246,0.3); }
+  .bio-tags .bio-tag:nth-child(8n+4) { background: rgba(34,197,94,0.18); border: 1px solid rgba(34,197,94,0.45); color: #7dd3fc; }
+  .bio-tags .bio-tag:nth-child(8n+4):hover { box-shadow: 0 6px 16px rgba(34,197,94,0.3); }
   .bio-tags .bio-tag:nth-child(8n+5) { background: rgba(52,211,153,0.18); border: 1px solid rgba(52,211,153,0.45); color: #6ee7b7; }
   .bio-tags .bio-tag:nth-child(8n+5):hover { box-shadow: 0 6px 16px rgba(52,211,153,0.3); }
   .bio-tags .bio-tag:nth-child(8n+6) { background: rgba(244,114,182,0.18); border: 1px solid rgba(244,114,182,0.45); color: #f9a8d4; }
@@ -1001,20 +1012,28 @@
     </div>
 
     <div class="section-switcher">
-      <button class="section-switcher-btn" style="color:#a78bfa;" onclick="switchTab('music')" title="Music"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
-      <button class="section-switcher-btn" style="color:#34d8eb;" onclick="switchTab('movies')" title="Movies"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></button>
-      <button class="section-switcher-btn" style="color:#fb923c;" onclick="switchTab('tv')" title="TV Shows"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></button>
-      <button class="section-switcher-btn" style="color:#38bdf8;" onclick="switchTab('books')" title="Books"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></button>
+      <button class="section-switcher-btn" style="color:#7C4DFF;" onclick="switchTab('music')" title="Music"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
+      <button class="section-switcher-btn" style="color:#F97360;" onclick="switchTab('movies')" title="Movies"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></button>
+      <button class="section-switcher-btn" style="color:#3B82F6;" onclick="switchTab('tv')" title="TV Shows"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></button>
+      <button class="section-switcher-btn" style="color:#22C55E;" onclick="switchTab('books')" title="Books"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></button>
     </div>
 
-    <!-- What's New feed -->
-    <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);margin-bottom:2rem;">
-      <div style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:18px;">Activity Feed</div>
-      <div id="profile-feed" style="display:flex;flex-direction:row;gap:14px;overflow-x:auto;overflow-y:hidden;padding-bottom:6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;"></div>
+    <!-- What's New feed + Recommendations -->
+    <div class="whatsnew-rec-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:2rem;align-items:stretch;">
+      <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:18px;">What's New</div>
+        <div id="profile-feed" style="display:flex;flex-direction:column;gap:16px;max-height:640px;overflow-y:auto;padding-right:6px;"></div>
+      </div>
+
+      <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:18px;">What's Next</div>
+        <p class="site-sub" style="margin:-14px 0 16px;font-size:12px;">Things friends told me to check out</p>
+        <div id="friend-recs" style="display:flex;flex-direction:column;gap:12px;max-height:640px;overflow-y:auto;padding-right:6px;"></div>
+      </div>
     </div>
 
     <!-- Taste in a sentence -->
-    <div style="border-radius:14px;padding:24px 28px;background:linear-gradient(135deg,rgba(192,132,252,0.08),rgba(56,189,248,0.06));border:1px solid rgba(255,255,255,0.08);margin-bottom:2rem;">
+    <div style="border-radius:14px;padding:24px 28px;background:linear-gradient(135deg,rgba(192,132,252,0.08),rgba(34,197,94,0.06));border:1px solid rgba(255,255,255,0.08);margin-bottom:2rem;">
       <div style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:10px;">Taste in a sentence</div>
       <div id="profile-sentence" style="font-size:18px;font-weight:500;line-height:1.5;color:var(--text);"></div>
     </div>
@@ -1034,10 +1053,10 @@
 <!-- STICKY BIO SIDEBAR -->
 <aside class="bio-sidebar">
   <div class="section-switcher">
-    <button class="section-switcher-btn active" style="background:#a78bfa22;color:#a78bfa;" onclick="switchTab('music')" title="Music"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
-    <button class="section-switcher-btn" style="color:#34d8eb;" onclick="switchTab('movies')" title="Movies"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></button>
-    <button class="section-switcher-btn" style="color:#fb923c;" onclick="switchTab('tv')" title="TV Shows"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></button>
-    <button class="section-switcher-btn" style="color:#38bdf8;" onclick="switchTab('books')" title="Books"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></button>
+    <button class="section-switcher-btn active" style="background:#7C4DFF22;color:#7C4DFF;" onclick="switchTab('music')" title="Music"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#F97360;" onclick="switchTab('movies')" title="Movies"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#3B82F6;" onclick="switchTab('tv')" title="TV Shows"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#22C55E;" onclick="switchTab('books')" title="Books"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></button>
   </div>
   <div class="bio-card">
     <div class="bio-label">My Music Taste Profile</div>
@@ -1051,10 +1070,10 @@
   <!-- Activity Feed (Music only) -->
   <div class="music-section">
     <div class="music-section-header">
-      <h2 class="music-section-title">Activity Feed</h2>
+      <h2 class="music-section-title">What's New</h2>
     </div>
     <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;">
-      <div id="music-feed" style="display:flex;flex-direction:row;gap:14px;overflow-x:auto;overflow-y:hidden;padding-bottom:6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;"></div>
+      <div id="music-feed" style="display:flex;flex-direction:column;gap:16px;max-height:820px;overflow-y:auto;padding-right:6px;"></div>
     </div>
   </div>
 
@@ -1138,10 +1157,10 @@
 <!-- MOVIE BIO SIDEBAR -->
 <aside class="bio-sidebar">
   <div class="section-switcher">
-    <button class="section-switcher-btn" style="color:#a78bfa;" onclick="switchTab('music')" title="Music"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
-    <button class="section-switcher-btn active" style="background:#34d8eb22;color:#34d8eb;" onclick="switchTab('movies')" title="Movies"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></button>
-    <button class="section-switcher-btn" style="color:#fb923c;" onclick="switchTab('tv')" title="TV Shows"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></button>
-    <button class="section-switcher-btn" style="color:#38bdf8;" onclick="switchTab('books')" title="Books"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#7C4DFF;" onclick="switchTab('music')" title="Music"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
+    <button class="section-switcher-btn active" style="background:#F9736022;color:#F97360;" onclick="switchTab('movies')" title="Movies"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#3B82F6;" onclick="switchTab('tv')" title="TV Shows"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#22C55E;" onclick="switchTab('books')" title="Books"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></button>
   </div>
   <div class="bio-card">
     <div class="bio-label">My Film Taste Profile</div>
@@ -1162,10 +1181,10 @@
   <!-- Activity Feed (Movies only) -->
   <div class="music-section">
     <div class="music-section-header">
-      <h2 class="music-section-title">Activity Feed</h2>
+      <h2 class="music-section-title">What's New</h2>
     </div>
     <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;">
-      <div id="movies-feed" style="display:flex;flex-direction:row;gap:14px;overflow-x:auto;overflow-y:hidden;padding-bottom:6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;"></div>
+      <div id="movies-feed" style="display:flex;flex-direction:column;gap:16px;max-height:820px;overflow-y:auto;padding-right:6px;"></div>
     </div>
   </div>
 
@@ -1248,10 +1267,10 @@
 <!-- TV BIO SIDEBAR -->
 <aside class="bio-sidebar">
   <div class="section-switcher">
-    <button class="section-switcher-btn" style="color:#a78bfa;" onclick="switchTab('music')" title="Music"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
-    <button class="section-switcher-btn" style="color:#34d8eb;" onclick="switchTab('movies')" title="Movies"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></button>
-    <button class="section-switcher-btn active" style="background:#fb923c22;color:#fb923c;" onclick="switchTab('tv')" title="TV Shows"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></button>
-    <button class="section-switcher-btn" style="color:#38bdf8;" onclick="switchTab('books')" title="Books"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#7C4DFF;" onclick="switchTab('music')" title="Music"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#F97360;" onclick="switchTab('movies')" title="Movies"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></button>
+    <button class="section-switcher-btn active" style="background:#3B82F622;color:#3B82F6;" onclick="switchTab('tv')" title="TV Shows"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#22C55E;" onclick="switchTab('books')" title="Books"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></button>
   </div>
   <div class="bio-card">
     <div class="bio-label">My TV Taste Profile</div>
@@ -1275,10 +1294,10 @@
   <!-- Activity Feed (TV only) -->
   <div class="music-section">
     <div class="music-section-header">
-      <h2 class="music-section-title">Activity Feed</h2>
+      <h2 class="music-section-title">What's New</h2>
     </div>
     <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;">
-      <div id="tv-feed" style="display:flex;flex-direction:row;gap:14px;overflow-x:auto;overflow-y:hidden;padding-bottom:6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;"></div>
+      <div id="tv-feed" style="display:flex;flex-direction:column;gap:16px;max-height:820px;overflow-y:auto;padding-right:6px;"></div>
     </div>
   </div>
 
@@ -1339,10 +1358,10 @@
 <!-- BOOKS BIO SIDEBAR -->
 <aside class="bio-sidebar">
   <div class="section-switcher">
-    <button class="section-switcher-btn" style="color:#a78bfa;" onclick="switchTab('music')" title="Music"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
-    <button class="section-switcher-btn" style="color:#34d8eb;" onclick="switchTab('movies')" title="Movies"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></button>
-    <button class="section-switcher-btn" style="color:#fb923c;" onclick="switchTab('tv')" title="TV Shows"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></button>
-    <button class="section-switcher-btn active" style="background:#38bdf822;color:#38bdf8;" onclick="switchTab('books')" title="Books"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#7C4DFF;" onclick="switchTab('music')" title="Music"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#F97360;" onclick="switchTab('movies')" title="Movies"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></button>
+    <button class="section-switcher-btn" style="color:#3B82F6;" onclick="switchTab('tv')" title="TV Shows"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></button>
+    <button class="section-switcher-btn active" style="background:#22C55E22;color:#22C55E;" onclick="switchTab('books')" title="Books"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></button>
   </div>
   <div class="bio-card">
     <div class="bio-label">My Reading Profile</div>
@@ -1363,10 +1382,10 @@
   <!-- Activity Feed (Books only) -->
   <div class="music-section">
     <div class="music-section-header">
-      <h2 class="music-section-title">Activity Feed</h2>
+      <h2 class="music-section-title">What's New</h2>
     </div>
     <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;">
-      <div id="books-feed" style="display:flex;flex-direction:row;gap:14px;overflow-x:auto;overflow-y:hidden;padding-bottom:6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;"></div>
+      <div id="books-feed" style="display:flex;flex-direction:column;gap:16px;max-height:820px;overflow-y:auto;padding-right:6px;"></div>
     </div>
   </div>
 
@@ -1432,6 +1451,7 @@
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(192,132,252,0.12);color:#c084fc;border:1px solid rgba(192,132,252,0.2);">Veep</span>
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(192,132,252,0.12);color:#c084fc;border:1px solid rgba(192,132,252,0.2);">30 Rock</span>
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(192,132,252,0.12);color:#c084fc;border:1px solid rgba(192,132,252,0.2);">The Godfather</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(192,132,252,0.12);color:#c084fc;border:1px solid rgba(192,132,252,0.2);">Andhadhun</span>
         </div>
       </div>
 
@@ -1446,20 +1466,21 @@
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">Nightcrawler</span>
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">Fight Club</span>
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">The Wire</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">The Handmaiden</span>
         </div>
       </div>
 
-      <div style="border-radius:12px;padding:20px 22px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);">
-        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#38bdf8;opacity:.7;margin-bottom:8px;">Books, film & TV</div>
+      <div style="border-radius:12px;padding:20px 22px;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#22C55E;opacity:.7;margin-bottom:8px;">Books, film & TV</div>
         <div style="font-size:20px;font-weight:600;color:#e0f2fe;margin-bottom:10px;line-height:1.2;">Strong characters</div>
         <div style="font-size:12px;line-height:1.65;color:#bae6fd;opacity:.75;margin-bottom:16px;">Morally complex people with real interior lives. Characters who make decisions you feel, not just observe — whose choices have weight because you understand exactly who they are.</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;">
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">The Wire</span>
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">A Separation</span>
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">Pachinko</span>
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">BoJack Horseman</span>
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">Harry Potter</span>
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);">Austen heroines</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(34,197,94,0.12);color:#22C55E;border:1px solid rgba(34,197,94,0.2);">The Wire</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(34,197,94,0.12);color:#22C55E;border:1px solid rgba(34,197,94,0.2);">A Separation</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(34,197,94,0.12);color:#22C55E;border:1px solid rgba(34,197,94,0.2);">Pachinko</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(34,197,94,0.12);color:#22C55E;border:1px solid rgba(34,197,94,0.2);">BoJack Horseman</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(34,197,94,0.12);color:#22C55E;border:1px solid rgba(34,197,94,0.2);">Harry Potter</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(34,197,94,0.12);color:#22C55E;border:1px solid rgba(34,197,94,0.2);">Austen heroines</span>
         </div>
       </div>
 
@@ -1477,16 +1498,16 @@
         </div>
       </div>
 
-      <div style="border-radius:12px;padding:20px 22px;background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.2);">
-        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#fb923c;opacity:.7;margin-bottom:8px;">Across everything</div>
+      <div style="border-radius:12px;padding:20px 22px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#3B82F6;opacity:.7;margin-bottom:8px;">Across everything</div>
         <div style="font-size:20px;font-weight:600;color:#ffedd5;margin-bottom:10px;line-height:1.2;">Emotional impact</div>
         <div style="font-size:12px;line-height:1.65;color:#fed7aa;opacity:.75;margin-bottom:16px;">Art that makes you feel something you didn't expect to feel that deeply. Not sentimentality — a genuine emotional arc that lands because everything leading up to it was earned.</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;">
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">Shawshank Redemption</span>
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">A.R. Rahman</span>
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">Friday Night Lights</span>
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">ABBA</span>
-          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">Wuthering Heights</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(59,130,246,0.12);color:#3B82F6;border:1px solid rgba(59,130,246,0.2);">Shawshank Redemption</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(59,130,246,0.12);color:#3B82F6;border:1px solid rgba(59,130,246,0.2);">A.R. Rahman</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(59,130,246,0.12);color:#3B82F6;border:1px solid rgba(59,130,246,0.2);">Friday Night Lights</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(59,130,246,0.12);color:#3B82F6;border:1px solid rgba(59,130,246,0.2);">ABBA</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(59,130,246,0.12);color:#3B82F6;border:1px solid rgba(59,130,246,0.2);">Wuthering Heights</span>
         </div>
       </div>
 
@@ -1500,6 +1521,7 @@
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(232,121,249,0.12);color:#e879f9;border:1px solid rgba(232,121,249,0.2);">Pan's Labyrinth</span>
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(232,121,249,0.12);color:#e879f9;border:1px solid rgba(232,121,249,0.2);">The Wire</span>
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(232,121,249,0.12);color:#e879f9;border:1px solid rgba(232,121,249,0.2);">Radiohead</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(232,121,249,0.12);color:#e879f9;border:1px solid rgba(232,121,249,0.2);">Satyajit Ray</span>
         </div>
       </div>
 
@@ -1511,8 +1533,8 @@
       <p class="site-sub" style="margin:-8px 0 16px;">Based on the patterns across everything above — not on your list yet</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
 
-        <div style="border-radius:12px;padding:20px 22px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2);">
-          <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#a78bfa;opacity:.7;margin-bottom:14px;">Music</div>
+        <div style="border-radius:12px;padding:20px 22px;background:rgba(124,77,255,0.06);border:1px solid rgba(124,77,255,0.2);">
+          <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7C4DFF;opacity:.7;margin-bottom:14px;">Music</div>
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div>
               <div style="font-size:14px;font-weight:600;color:#ede9fe;">Parquet Courts</div>
@@ -1529,8 +1551,8 @@
           </div>
         </div>
 
-        <div style="border-radius:12px;padding:20px 22px;background:rgba(52,216,235,0.06);border:1px solid rgba(52,216,235,0.2);">
-          <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#34d8eb;opacity:.7;margin-bottom:14px;">Movies</div>
+        <div style="border-radius:12px;padding:20px 22px;background:rgba(249,115,96,0.06);border:1px solid rgba(249,115,96,0.2);">
+          <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#F97360;opacity:.7;margin-bottom:14px;">Movies</div>
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div>
               <div style="font-size:14px;font-weight:600;color:#cffafe;">Parasite</div>
@@ -1547,8 +1569,8 @@
           </div>
         </div>
 
-        <div style="border-radius:12px;padding:20px 22px;background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.2);">
-          <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#fb923c;opacity:.7;margin-bottom:14px;">TV Shows</div>
+        <div style="border-radius:12px;padding:20px 22px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);">
+          <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#3B82F6;opacity:.7;margin-bottom:14px;">TV Shows</div>
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div>
               <div style="font-size:14px;font-weight:600;color:#ffedd5;">The Good Place</div>
@@ -1565,8 +1587,8 @@
           </div>
         </div>
 
-        <div style="border-radius:12px;padding:20px 22px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);">
-          <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#38bdf8;opacity:.7;margin-bottom:14px;">Books</div>
+        <div style="border-radius:12px;padding:20px 22px;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);">
+          <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#22C55E;opacity:.7;margin-bottom:14px;">Books</div>
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div>
               <div style="font-size:14px;font-weight:600;color:#e0f2fe;">Never Let Me Go — Kazuo Ishiguro</div>
@@ -1684,6 +1706,18 @@ const TV_WHY_INFLUENTIAL = {
   'Homeland': "Influenced by @Ayushman Ghosh.",
   'True Detective': "Influenced by @Utpal Sengupta.",
 };
+
+// Watchlist/readlist of things friends have recommended that haven't been added to the taste
+// lists yet. Each entry: { from: 'Name', title: 'Item name', type: 'movie'|'tv'|'book'|'song'|'album', note: 'optional short blurb' }
+const FRIEND_RECOMMENDATIONS = [
+  { title: 'First Cow', type: 'film', tmdbId: 558582, art: '' },
+  { title: 'Devi', type: 'film', tmdbId: 43031, art: '' },
+  { title: 'The Idiot', type: 'book', art: 'https://covers.openlibrary.org/b/isbn/9780140447927-L.jpg' },
+  { title: 'Martyr!', type: 'book', art: 'https://covers.openlibrary.org/b/isbn/9780593537619-L.jpg' },
+  { title: 'Private Citizens', type: 'book', art: 'https://covers.openlibrary.org/b/isbn/9780062399106-L.jpg' },
+  { title: 'Beef Season 2', type: 'tv', tmdbId: 154385, art: '' },
+  { title: 'Industry', type: 'tv', tmdbId: 90812, art: '' },
+];
 
 // Personal — why each book made the list (shown in the tap-to-expand panel), keyed by book title.
 // Kept separate from MOVIE_WHY_INFLUENTIAL even though a title can collide (e.g. "Pride and
@@ -1976,15 +2010,15 @@ const ART_PALETTES = {
   // ABBA
   'Voulez-Vous':               ['#1a1000','#fbbf24','VV'],
   'Greatest Hits Vol. 2':      ['#001a0a','#34d399','GH'],
-  'The Album':                 ['#0a0a1c','#a78bfa','TA'],
+  'The Album':                 ['#0a0a1c','#7C4DFF','TA'],
   'The Visitors':              ['#1a0010','#f472b6','TV'],
   'Super Trouper':             ['#001a14','#2dd4bf','ST'],
   // Pink Floyd
   'The Wall':                  ['#0a0a0a','#e2e8f0','TW'],
-  'Wish You Were Here':        ['#0d0d0d','#fb923c','WY'],
+  'Wish You Were Here':        ['#0d0d0d','#3B82F6','WY'],
   'The Dark Side of the Moon': ['#000000','#818cf8','DS'],
   // Nirvana
-  'Nevermind':                 ['#001020','#38bdf8','NV'],
+  'Nevermind':                 ['#001020','#22C55E','NV'],
   'In Utero':                  ['#100020','#e879f9','IU'],
   // Weezer
   'Weezer (Blue Album)':       ['#0a1428','#3b82f6','WB'],
@@ -2008,7 +2042,7 @@ const ART_PALETTES = {
   'Love Yourself: Her':        ['#1a0008','#f43f5e','LY'],
   // Queen
   'A Night at the Opera':      ['#1a0a00','#f97316','NO'],
-  'Jazz':                      ['#0a001a','#a78bfa','JZ'],
+  'Jazz':                      ['#0a001a','#7C4DFF','JZ'],
   'News of the World':         ['#1a0000','#dc2626','NW'],
   'A Day at the Races':        ['#001a00','#16a34a','DR'],
 };
@@ -2016,7 +2050,7 @@ const ART_PALETTES = {
 function renderAlbumArt(album, idx) {
   const fallbackColors = [
     ['#1a1a2e','#e94560'], ['#16213e','#4fc3f7'], ['#1b1b2f','#f72585'],
-    ['#2d1b69','#a78bfa'], ['#1a3a1a','#4ade80'], ['#3d1a00','#fb923c'],
+    ['#2d1b69','#7C4DFF'], ['#1a3a1a','#4ade80'], ['#3d1a00','#3B82F6'],
   ];
   const palette = ART_PALETTES[album];
   const bg = palette ? palette[0] : fallbackColors[idx % fallbackColors.length][0];
@@ -2406,14 +2440,21 @@ function updateMusicProfile() {
   const otherNames = artists.slice(5).map(a => a.name).filter(Boolean).slice(0, 4);
   const hasHeavy = allNames.some(n => ['Metallica','System of a Down','Muse'].includes(n));
   const hasGlobal = allNames.some(n => ['A.R. Rahman','BTS','ABBA'].includes(n));
+  const albumList = (typeof albums !== 'undefined') ? albums : [];
+  const soundtrackNames = albumList.filter(a => a.genre === 'Soundtrack').map(a => a.name.replace(/\s*\(.*\)$/, ''));
   let paras = [];
   paras.push(`The clearest thread across everything here is melody — not as decoration but as structure. These are songs built around a hook that earns its place, a chorus that actually arrives somewhere, a musical arc that gives you the feeling of going on a journey and coming back changed.`);
   if (topFiveNames.length) paras.push(`The five most influential — ${topFiveNames.join(', ')} — are all artists who understood that a big moment only works if you've built toward it. The Strokes' guitar lines, ABBA's harmonies, Pink Floyd's slow-burning crescendos, Nirvana's quiet-loud-quiet — the payoff is always earned.`);
   if (hasHeavy) paras.push(`Even the heavier picks (${allNames.filter(n => ['Metallica','System of a Down','Muse'].includes(n)).join(', ')}) are chosen for their melodic architecture, not pure aggression. These are bands that know how to build a wall of sound and then pull it apart at exactly the right moment.`);
   if (otherNames.length) paras.push(`Beyond the top five, the list extends into ${otherNames.join(', ')} and more — all artists with a strong enough musical identity that you know within three seconds who you're listening to.`);
   if (hasGlobal) paras.push(`The global range — A.R. Rahman's orchestral sweep, ABBA's pop precision, BTS's production scale — suggests the real criterion is emotional impact, regardless of origin.`);
+  if (soundtrackNames.length) paras.push(`The album shelf extends that same ear beyond individual artists — soundtracks like ${soundtrackNames.slice(0, 4).join(', ')} sit right alongside studio albums, since a well-built song is a well-built song whether it's a band's own record or a mixtape assembled by a music supervisor.`);
   textEl.innerHTML = paras.map(p => `<p>${p}</p>`).join('');
-  const genres = [...new Set(artists.map(a => a.genre).filter(Boolean))].slice(0, 8);
+  // Genre tags pull from both favorite artists AND favorite albums, so an album-only addition
+  // (a soundtrack, a one-off record from an artist who isn't in the main roster) still shows up here.
+  const artistGenres = artists.map(a => a.genre).filter(Boolean);
+  const albumGenres = albumList.map(a => a.genre).filter(Boolean);
+  const genres = [...new Set([...artistGenres, ...albumGenres])].slice(0, 8);
   tagsEl.innerHTML = genres.map(g => `<span class="bio-tag">${g}</span>`).join('');
 }
 
@@ -3584,9 +3625,96 @@ let albums = [
     { title: "Made Men", album: "Culture II", art: "", apple: "", spotify: "" },
     { title: "Top Down on da NAWF", album: "Culture II", art: "", apple: "", spotify: "" },
     { title: "Culture National Anthem (Outro)", album: "Culture II", art: "", apple: "", spotify: "" }
+  ]},
+  { id: 118, name: "O Brother, Where Art Thou? (Music from the Motion Picture)", artist: "Various Artists", year: "2000", genre: "Soundtrack", iTunesId: "1469575447", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Po Lazarus", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "Big Rock Candy Mountain", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "You Are My Sunshine", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "Down to the River to Pray", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "I Am a Man of Constant Sorrow", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "Hard Time Killing Floor Blues", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "I Am Weary (Let Me Rest)", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "In the Highways", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "Man of Constant Sorrow (Instrumental)", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "O Death", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "In the Jailhouse Now", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "Didn't Leave Nobody but the Baby", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "Keep on the Sunny Side", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "I'll Fly Away", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "I Am a Man of Constant Sorrow (Radio Station Version)", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "Lonesome Valley", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "Indian War Whoop", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "In the Highways (Reprise)", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" },
+    { title: "Angel Band", album: "O Brother, Where Art Thou?", art: "", apple: "", spotify: "" }
+  ]},
+  { id: 119, name: "Inside Llewyn Davis (Original Soundtrack Recording)", artist: "Various Artists", year: "2013", genre: "Soundtrack", iTunesId: "712838705", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Hang Me, Oh Hang Me", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "Fare Thee Well (Dink's Song)", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "The Last Thing on My Mind", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "Five Hundred Miles", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "Please Mr. Kennedy", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "Green, Green Rocky Road", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "The Death of Queen Jane", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "The Roving Gambler", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "The Shoals of Herring", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "The Auld Triangle", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "The Storms Are on the Ocean", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "Fare Thee Well (Dink's Song) (Reprise)", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "Farewell", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" },
+    { title: "Green, Green Rocky Road (Reprise)", album: "Inside Llewyn Davis", art: "", apple: "", spotify: "" }
+  ]},
+  { id: 120, name: "Garden State (Music from the Motion Picture)", artist: "Various Artists", year: "2004", genre: "Soundtrack", iTunesId: "153445128", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Don't Panic", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "Caring Is Creepy", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "In the Waiting Line", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "New Slang", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "I Just Don't Think I'll Ever Get Over You", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "Blue Eyes", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "Fair", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "One of These Things First", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "Lebanese Blonde", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "The Only Living Boy in New York", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "Such Great Heights", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "Let Go", album: "Garden State", art: "", apple: "", spotify: "" },
+    { title: "Winding Road", album: "Garden State", art: "", apple: "", spotify: "" }
+  ]},
+  { id: 121, name: "Dil Se (Original Motion Picture Soundtrack)", artist: "A.R. Rahman", year: "1998", genre: "Soundtrack", iTunesId: "1130322055", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Chaiyya Chaiyya", album: "Dil Se", art: "", apple: "", spotify: "" },
+    { title: "Dil Se Re", album: "Dil Se", art: "", apple: "", spotify: "" },
+    { title: "Jiya Jale", album: "Dil Se", art: "", apple: "", spotify: "" },
+    { title: "Satrangi Re", album: "Dil Se", art: "", apple: "", spotify: "" },
+    { title: "Ae Ajnabi", album: "Dil Se", art: "", apple: "", spotify: "" },
+    { title: "E Hairat-E-Aashiqui", album: "Dil Se", art: "", apple: "", spotify: "" }
+  ]},
+  { id: 122, name: "Taal (Original Motion Picture Soundtrack)", artist: "A.R. Rahman", year: "1999", genre: "Soundtrack", iTunesId: "1536519242", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Ishq Bina", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Kahin Aag Lage", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Ramta Jogi", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Nahin Saamne", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Taal Se Taal Mila", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Aaja Aaja", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Ishq Bina (Reprise)", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Kahin Aag Lage (Reprise)", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Ramta Jogi (Reprise)", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Nahin Saamne (Reprise)", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Taal (Theme)", album: "Taal", art: "", apple: "", spotify: "" },
+    { title: "Ni Main Samajh Gayee", album: "Taal", art: "", apple: "", spotify: "" }
+  ]},
+  { id: 123, name: "Andhadhun (Original Motion Picture Soundtrack)", artist: "Amit Trivedi", year: "2018", genre: "Soundtrack", iTunesId: "1529564093", coverPhoto: "", tilePhoto: "", songs: [
+    { title: "Naina Da Kya Kasoor", album: "Andhadhun", art: "", apple: "", spotify: "" },
+    { title: "Andhadhun (Title Track)", album: "Andhadhun", art: "", apple: "", spotify: "" },
+    { title: "Aap Se Milkar", album: "Andhadhun", art: "", apple: "", spotify: "" },
+    { title: "Laila Laila", album: "Andhadhun", art: "", apple: "", spotify: "" },
+    { title: "Woh Ladki", album: "Andhadhun", art: "", apple: "", spotify: "" },
+    { title: "Andhadhun (Theme 1)", album: "Andhadhun", art: "", apple: "", spotify: "" },
+    { title: "Andhadhun (Theme 2)", album: "Andhadhun", art: "", apple: "", spotify: "" },
+    { title: "Andhadhun (Theme 3)", album: "Andhadhun", art: "", apple: "", spotify: "" },
+    { title: "Naina Da Kya Kasoor (Reprise)", album: "Andhadhun", art: "", apple: "", spotify: "" },
+    { title: "Aap Se Milkar (Reprise)", album: "Andhadhun", art: "", apple: "", spotify: "" },
+    { title: "Laila Laila (Reprise)", album: "Andhadhun", art: "", apple: "", spotify: "" }
   ]}
 ];
-let nextAlbumId = 118;
+let nextAlbumId = 124;
 let editingAlbumId = null;
 let modalMode = 'artist'; // 'artist' or 'album'
 
@@ -4448,7 +4576,7 @@ function renderDirectorsList() {
       <div style="display:flex;align-items:center;gap:14px;padding:1.125rem 1.5rem;border-bottom:1px solid var(--border);">
         ${d.photo
           ? `<img src="${TMDB_IMG}${d.photo}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center top;flex-shrink:0;">`
-          : `<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#a78bfacc,#a78bfa);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0;">${esc(d.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>`}
+          : `<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7C4DFFcc,#7C4DFF);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0;">${esc(d.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>`}
         <div>
           <div style="font-size:17px;font-weight:700;">${esc(d.name)}</div>
           ${d.known_for ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(d.known_for)}</div>` : ''}
@@ -4827,14 +4955,27 @@ const _filmSVG  = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" s
 const _tvSVG    = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>`;
 const _bookSVG  = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c0-1.1.9-2 2-2h7v16H4a2 2 0 0 1-2-2V6z"/><path d="M22 6c0-1.1-.9-2-2-2h-7v16h7a2 2 0 0 0 2-2V6z"/><line x1="12" y1="4" x2="12" y2="20"/></svg>`;
 
+// Color palette per media type. To add a new media type (e.g. podcasts, games), add a new key
+// here with { color, bg, svg } for anything that reads MEDIA_ICONS directly. Note: several
+// sections (Taste Graph cards, Recommendations panel, section-switcher) use their own hardcoded
+// hex values for this same palette rather than referencing this object — if the palette changes
+// again, those need updating too, not just this table.
+// Current palette: Music = Electric Purple, TV = Sky Blue, Film = Coral, Books = Emerald.
+// Reserved for future media types (not yet implemented — colors picked, nothing built on them yet):
+//   Podcasts → Amber   #F59E0B
+//   Articles → Slate   #64748B
+//   Games    → Pink    #EC4899
 const MEDIA_ICONS = {
-  music:  { color: '#a78bfa', bg: 'rgba(167,139,250,0.15)', svg: _musicSVG },
-  film:   { color: '#34d8eb', bg: 'rgba(52,216,235,0.15)',  svg: _filmSVG  },
-  tv:     { color: '#fb923c', bg: 'rgba(251,146,60,0.15)',  svg: _tvSVG    },
-  books:  { color: '#38bdf8', bg: 'rgba(56,189,248,0.15)',  svg: _bookSVG  },
-  song:   { color: '#a78bfa', bg: 'rgba(167,139,250,0.15)', svg: _musicSVG },
-  artist: { color: '#a78bfa', bg: 'rgba(167,139,250,0.15)', svg: _musicSVG },
-  book:   { color: '#38bdf8', bg: 'rgba(56,189,248,0.15)',  svg: _bookSVG  },
+  music:  { color: '#7C4DFF', bg: 'rgba(124,77,255,0.15)', svg: _musicSVG },
+  film:   { color: '#F97360', bg: 'rgba(249,115,96,0.15)',  svg: _filmSVG  },
+  tv:     { color: '#3B82F6', bg: 'rgba(59,130,246,0.15)',  svg: _tvSVG    },
+  books:  { color: '#22C55E', bg: 'rgba(34,197,94,0.15)',  svg: _bookSVG  },
+  song:   { color: '#7C4DFF', bg: 'rgba(124,77,255,0.15)', svg: _musicSVG },
+  artist: { color: '#7C4DFF', bg: 'rgba(124,77,255,0.15)', svg: _musicSVG },
+  book:   { color: '#22C55E', bg: 'rgba(34,197,94,0.15)',  svg: _bookSVG  },
+  // podcast: { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)', svg: _podcastSVG },
+  // article: { color: '#64748B', bg: 'rgba(100,116,139,0.15)', svg: _articleSVG },
+  // game:    { color: '#EC4899', bg: 'rgba(236,72,153,0.15)', svg: _gameSVG },
 };
 
 function mediaIcon(type, size=40) {
@@ -4859,25 +5000,31 @@ function badgeIcon(type, size=14) {
 
 // ── ACTIVITY FEED (shared between Profile tab and Music tab) ──
 const ACTIVITY_FEED_ITEMS = [
-  { label: 'Yesteryear', sub: 'Caro Claire Burke · Finished reading', color: '#38bdf8', icon: 'book', tab: 'books', type: 'book',
+  { label: 'The Invite', sub: 'Watched', color: '#F97360', icon: 'film', tab: 'movies', type: 'movie',
+    note: "Probably my favorite movie of the year so far! Absolutely hilarious and awkward and fascinating. The entire cast was great. Highly recommend.", timestamp: 'July 26, 2026',
+    art: '', tmdbId: 950028 },
+  { label: 'Animals', sub: 'Pink Floyd · Album', color: '#7C4DFF', icon: 'music', tab: 'music', type: 'song',
+    note: "Not my favorite Pink Floyd album but 👌🏼 excellence in storytelling through music.", timestamp: 'July 25, 2026',
+    art: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ef/03/66/ef036634-5956-38db-ba78-db6200adfdc4/886445635942.jpg/600x600bf-60.jpg', artQuery: 'Animals Pink Floyd' },
+  { label: 'Yesteryear', sub: 'Caro Claire Burke · Finished reading', color: '#22C55E', icon: 'book', tab: 'books', type: 'book',
     note: "Very easy read, and I enjoyed the snarky narrator. The ending was pretty disappointing though relative to the promise of the premise.", timestamp: 'July 21, 2026',
     art: '', bookTitle: 'Yesteryear', bookAuthor: 'Caro Claire Burke' },
-  { label: 'The Odyssey', sub: 'Watched', color: '#34d8eb', icon: 'film', tab: 'movies', type: 'movie',
+  { label: 'The Odyssey', sub: 'Watched', color: '#F97360', icon: 'film', tab: 'movies', type: 'movie',
     note: "Highly entertaining and great adaptation. Casting was weird though. I like Matt Damon, but he doesn't really have the gravitas that Russell Crowe had in Gladiator or even Sean Bean in GOT. It could also be the direction, but the emotional moments fell kind of flat to me.", timestamp: 'July 19, 2026',
     art: '', tmdbId: 1368337 },
-  { label: 'Falling Out of Love', sub: 'The Strokes · Currently into', color: '#a78bfa', icon: 'song', tab: 'music', type: 'song',
+  { label: 'Falling Out of Love', sub: 'The Strokes · Currently into', color: '#7C4DFF', icon: 'song', tab: 'music', type: 'song',
     note: "This one grew on me! Not typical Strokes sound but really beautiful to me", timestamp: 'July 14, 2026',
     art: '', artQuery: 'Falling Out of Love The Strokes' },
-  { label: 'Flexorcist', sub: 'The Voidz · Currently into', color: '#a78bfa', icon: 'song', tab: 'music', type: 'song',
+  { label: 'Flexorcist', sub: 'The Voidz · Currently into', color: '#7C4DFF', icon: 'song', tab: 'music', type: 'song',
     note: "Love Julian Casablancas but was never a huge fan of The Voidz. This song is great, however, so it may be a gateway voidz song.", timestamp: 'July 4, 2026',
     art: '', artQuery: 'Flexorcist The Voidz' },
-  { label: 'Twinless', sub: 'Watched', color: '#34d8eb', icon: 'film', tab: 'movies', type: 'movie',
+  { label: 'Twinless', sub: 'Watched', color: '#F97360', icon: 'film', tab: 'movies', type: 'movie',
     note: "Highly original concept and moving depiction of loneliness and connection. Warning: graphic sex scenes.", timestamp: 'March 20, 2026',
     art: '', tmdbQuery: 'Twinless' },
-  { label: 'The God of Small Things', sub: 'Arundhati Roy · Finished reading', color: '#38bdf8', icon: 'book', tab: 'books', type: 'book',
+  { label: 'The God of Small Things', sub: 'Arundhati Roy · Finished reading', color: '#22C55E', icon: 'book', tab: 'books', type: 'book',
     note: "Arundhati Roy has an incredible grasp of the English language. This is beautifully written, but I really can't handle the layers and layers of nested metaphors. It's too much. I had a hard time reading it and had to reread passages to understand what tf was going on. If people like that kind of dense writing, go for it! But it was not for me.", timestamp: 'February 10, 2026',
     art: 'https://covers.openlibrary.org/b/isbn/0060977493-L.jpg' },
-  { label: 'Persuasion', sub: 'Jane Austen · Finished reading', color: '#38bdf8', icon: 'book', tab: 'books', type: 'book',
+  { label: 'Persuasion', sub: 'Jane Austen · Finished reading', color: '#22C55E', icon: 'book', tab: 'books', type: 'book',
     note: "Jane Austen's a very witty writer, and her wry observations of people are still relevant today.", timestamp: 'December 2024',
     art: 'https://covers.openlibrary.org/b/isbn/9780141439686-L.jpg' },
 ];
@@ -4886,36 +5033,32 @@ function activityFeedAvatarHtml() {
   const avatarSrc = document.getElementById('profile-avatar')?.src || '';
   return avatarSrc
     ? `<img src="${avatarSrc}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;object-position:center top;flex-shrink:0;">`
-    : `<div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#7c6ff0);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">S</div>`;
+    : `<div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#7C4DFF,#7c6ff0);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">S</div>`;
 }
 
 function activityCardHtml(item, globalIndex) {
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
   const iconColor = (MEDIA_ICONS[iconType] || MEDIA_ICONS.music).color;
   const typeIcon = badgeIcon(iconType, 13);
-  const note = item.note ? `<div style="font-size:13px;color:var(--text);line-height:1.5;margin:2px 0 12px;flex:1;">${esc(item.note)}</div>` : '';
-  const thumb = item.art
-    ? `<div style="width:32px;height:32px;border-radius:8px;flex-shrink:0;position:relative;overflow:hidden;background:${iconColor}18;">
-         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">${mediaIcon(iconType,20)}</div>
-         <img src="${item.art}" style="position:relative;width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'; handleActivityArtError(${globalIndex})">
-       </div>`
-    : mediaIcon(iconType, 32);
-  return `<div style="scroll-snap-align:start;flex:0 0 260px;width:260px;padding:14px;border-radius:14px;background:var(--surface2);border:1px solid var(--border);display:flex;flex-direction:column;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-      ${activityFeedAvatarHtml()}
-      <div style="min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);">Sreya S.</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.35);">${item.timestamp || ''}</div>
-      </div>
+  const note = item.note ? `<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:8px;">${esc(item.note)}</div>` : '';
+  const art = item.art
+    ? `<img src="${item.art}" style="display:block;width:150px;height:220px;object-fit:cover;" onerror="this.style.display='none'; handleActivityArtError(${globalIndex})">`
+    : `<div style="width:150px;height:220px;background:${iconColor}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(iconType,42)}</div>`;
+  return `<div onclick="openActivitySummary(${globalIndex})" style="cursor:pointer;display:table;width:100%;border-radius:16px;background:var(--surface2);border:1px solid var(--border);overflow:hidden;table-layout:fixed;" onmouseover="this.style.borderColor='${iconColor}55'" onmouseout="this.style.borderColor='var(--border)'">
+    <div style="display:table-cell;width:150px;vertical-align:top;">
+      ${art}
     </div>
-    ${note}
-    <div onclick="openActivitySummary(${globalIndex})" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;background:linear-gradient(135deg,${iconColor}14,${iconColor}08);border:1px solid ${iconColor}2a;transition:transform 0.15s ease, border-color 0.15s ease;margin-top:auto;" onmouseover="this.style.transform='translateY(-2px)';this.style.borderColor='${iconColor}55'" onmouseout="this.style.transform='';this.style.borderColor='${iconColor}2a'">
-      ${thumb}
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.label)}</div>
-        <div style="font-size:10.5px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.sub)}</div>
+    <div style="display:table-cell;vertical-align:top;padding:18px 20px;">
+      <table style="border-collapse:collapse;width:100%;"><tr><td style="vertical-align:middle;width:38px;padding:0;">${activityFeedAvatarHtml()}</td><td style="vertical-align:middle;padding:0 0 0 10px;">
+        <div style="font-size:13.5px;font-weight:600;color:var(--text);">Sreya S.</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);">${item.timestamp || ''}</div>
+      </td></tr></table>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.label)}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
+        <span title="${esc(item.type)}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:${iconColor}18;color:${iconColor};flex-shrink:0;">${typeIcon}</span>
+        <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.sub)}</span>
       </div>
-      <span title="${esc(item.type)}" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;background:${iconColor}18;color:${iconColor};flex-shrink:0;">${typeIcon}</span>
+      ${note}
     </div>
   </div>`;
 }
@@ -5091,6 +5234,63 @@ function refreshActivityFeeds() {
   renderActivityFeed('movies-feed', item => item.tab === 'movies');
   renderActivityFeed('tv-feed', item => item.tab === 'tv');
   renderActivityFeed('books-feed', item => item.tab === 'books');
+  renderFriendRecs();
+}
+
+function renderFriendRecs() {
+  const el = document.getElementById('friend-recs');
+  if (!el) return;
+  if (!FRIEND_RECOMMENDATIONS.length) {
+    el.innerHTML = `<div style="font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">Nothing here yet — recommendations from friends will show up in this list.</div>`;
+    return;
+  }
+  const typeLabels = { film: 'Movies', tv: 'TV Shows', book: 'Books', song: 'Music', album: 'Music' };
+  const order = ['film', 'tv', 'book', 'song', 'album'];
+  const groups = {};
+  FRIEND_RECOMMENDATIONS.forEach(r => {
+    const t = MEDIA_ICONS[r.type] ? r.type : 'song';
+    (groups[t] = groups[t] || []).push(r);
+  });
+  el.innerHTML = order.filter(t => groups[t]).map(t => {
+    const iconColor = (MEDIA_ICONS[t] || MEDIA_ICONS.music).color;
+    const items = groups[t].map(r => {
+      const idx = FRIEND_RECOMMENDATIONS.indexOf(r);
+      const thumb = r.art
+        ? `<div style="width:40px;height:40px;border-radius:8px;flex-shrink:0;position:relative;overflow:hidden;background:${iconColor}18;">
+             <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">${mediaIcon(t,22)}</div>
+             <img src="${r.art}" style="position:relative;width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">
+           </div>`
+        : `<span style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;background:${iconColor}18;color:${iconColor};flex-shrink:0;">${badgeIcon(t,17)}</span>`;
+      return `
+      <div style="padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,${iconColor}14,${iconColor}08);border:1px solid ${iconColor}2a;display:flex;align-items:center;gap:12px;">
+        ${thumb}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r.title)}</div>
+          ${r.from ? `<div style="font-size:11px;color:var(--muted);margin-top:3px;">Rec'd by ${esc(abbreviateName(r.from))}</div>` : ''}
+          ${r.note ? `<div style="font-size:11.5px;color:var(--text);opacity:.8;line-height:1.4;margin-top:3px;">${esc(r.note)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${iconColor};opacity:.75;margin-bottom:8px;">${typeLabels[t]}</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">${items}</div>
+    </div>`;
+  }).join('<div style="height:6px;"></div>');
+}
+
+// Fetches poster/cover art for each recommendation that doesn't already have a static one —
+// movies and TV shows via TMDB, using the same helpers as the rest of the app.
+async function loadFriendRecArt() {
+  for (const r of FRIEND_RECOMMENDATIONS) {
+    if (r.art || !r.tmdbId) continue;
+    try {
+      const detail = r.type === 'tv' ? await fetchTVDetail(r.tmdbId) : await fetchMovieDetail(r.tmdbId);
+      if (detail.poster) {
+        r.art = `${TMDB_IMG}${detail.poster}`;
+        renderFriendRecs();
+      }
+    } catch (e) {}
+  }
 }
 
 let activityFeedArtFetched = false;
@@ -5151,11 +5351,11 @@ function renderProfileTab() {
                      (typeof BOOKS_RECENT!=='undefined'?BOOKS_RECENT.length:0);
 
   const stats = [
-    { label: 'Artists', value: totalArtists, color: '#a78bfa', tab: 'music' },
+    { label: 'Artists', value: totalArtists, color: '#7C4DFF', tab: 'music' },
     { label: 'Albums',  value: totalAlbums,  color: '#34d399', tab: 'music' },
     { label: 'Films',   value: totalFilms,   color: '#f59e0b', tab: 'movies' },
-    { label: 'TV Shows',value: totalTV,      color: '#fb923c', tab: 'tv' },
-    { label: 'Books',   value: totalBooks,   color: '#38bdf8', tab: 'books' },
+    { label: 'TV Shows',value: totalTV,      color: '#3B82F6', tab: 'tv' },
+    { label: 'Books',   value: totalBooks,   color: '#22C55E', tab: 'books' },
   ];
 
   const statsEl = document.getElementById('profile-stats');
@@ -5187,10 +5387,10 @@ function renderProfileTab() {
 
   // Render placeholders immediately
   const picksData = [
-    { id: 'pick-music', label: 'My Music Taste',     icon: 'music', name: topArtist?.name || '', sub: 'Most influential artist', color: '#a78bfa', tab: 'music',  art: '', mosaic: artists.slice(0,4).map(a => a.tilePhoto).filter(Boolean) },
-    { id: 'pick-film',  label: 'My Movie Taste',    icon: 'film',  name: topFilmObj?.title || '', sub: 'Top favorite film',    color: '#34d8eb', tab: 'movies', art: topFilmObj?.poster ? `https://image.tmdb.org/t/p/w185${topFilmObj.poster}` : '', mosaic: [] },
-    { id: 'pick-tv',    label: 'My TV Show Taste',  icon: 'tv',    name: topTVObj?.title || '', sub: 'Favorite drama',         color: '#fb923c', tab: 'tv',     art: topTVObj?.poster ? `https://image.tmdb.org/t/p/w185${topTVObj.poster}` : '', mosaic: [] },
-    { id: 'pick-book',  label: 'My Book Taste',     icon: 'books', name: topBookObj?.title || '', sub: 'Most formative book',  color: '#38bdf8', tab: 'books',  art: topBookObj?.cover || '', mosaic: (typeof BOOKS_SHAPED!=='undefined' ? BOOKS_SHAPED.slice(0,4).map(b => b.cover).filter(Boolean) : []) },
+    { id: 'pick-music', label: 'My Music Taste',     icon: 'music', name: topArtist?.name || '', sub: 'Most influential artist', color: '#7C4DFF', tab: 'music',  art: '', mosaic: artists.slice(0,4).map(a => a.tilePhoto).filter(Boolean) },
+    { id: 'pick-film',  label: 'My Movie Taste',    icon: 'film',  name: topFilmObj?.title || '', sub: 'Top favorite film',    color: '#F97360', tab: 'movies', art: topFilmObj?.poster ? `https://image.tmdb.org/t/p/w185${topFilmObj.poster}` : '', mosaic: [] },
+    { id: 'pick-tv',    label: 'My TV Show Taste',  icon: 'tv',    name: topTVObj?.title || '', sub: 'Favorite drama',         color: '#3B82F6', tab: 'tv',     art: topTVObj?.poster ? `https://image.tmdb.org/t/p/w185${topTVObj.poster}` : '', mosaic: [] },
+    { id: 'pick-book',  label: 'My Book Taste',     icon: 'books', name: topBookObj?.title || '', sub: 'Most formative book',  color: '#22C55E', tab: 'books',  art: topBookObj?.cover || '', mosaic: (typeof BOOKS_SHAPED!=='undefined' ? BOOKS_SHAPED.slice(0,4).map(b => b.cover).filter(Boolean) : []) },
   ];
 
   function mosaicCell(src, color) {
@@ -5280,9 +5480,9 @@ function renderProfileTab() {
   const throughlines = [
     { color: '#c084fc', label: 'Sharp writing',       desc: 'The non-negotiable across every medium' },
     { color: '#f472b6', label: 'Earned tension',      desc: 'Methodical pressure, never manufactured' },
-    { color: '#38bdf8', label: 'Strong characters',   desc: 'Moral complexity, real interior lives' },
+    { color: '#22C55E', label: 'Strong characters',   desc: 'Moral complexity, real interior lives' },
     { color: '#a3e635', label: 'Melodic architecture',desc: 'Hooks that pay off, crescendos that land' },
-    { color: '#fb923c', label: 'Emotional impact',    desc: 'Earned, not reached for' },
+    { color: '#3B82F6', label: 'Emotional impact',    desc: 'Earned, not reached for' },
     { color: '#e879f9', label: 'Strong worldview',    desc: 'Art that has a position and commits' },
   ];
   const tlEl = document.getElementById('profile-throughlines');
@@ -5671,6 +5871,8 @@ loadBooks(BOOKS_REREAD, booksRereadData, 'books-reread-grid');
 loadBooks(BOOKS_RECENT, booksRecentData, 'books-recent-grid');
 updateBooksProfile();
 renderProfileTab();
+renderFriendRecs();
+loadFriendRecArt();
 
 // ── TASTE INFLUENCES (Taste Graph tab) ──
 // Scans "why influential" text across taste sections for @mentions and ranks people
@@ -5682,11 +5884,11 @@ function renderTasteInfluences() {
   if (!el || !section) return;
 
   const sources = [
-    { data: ARTIST_WHY_INFLUENTIAL, lookup: id => artists.find(a => a.id === Number(id))?.name, sectionLabel: 'Music', color: '#a78bfa' },
-    { data: MOVIE_WHY_INFLUENTIAL, lookup: title => title, sectionLabel: 'Movies', color: '#34d8eb' },
-    { data: DIRECTOR_WHY_INFLUENTIAL, lookup: name => name, sectionLabel: 'Directors', color: '#fb923c' },
-    { data: TV_WHY_INFLUENTIAL, lookup: title => title, sectionLabel: 'TV Shows', color: '#fb923c' },
-    { data: BOOK_WHY_INFLUENTIAL, lookup: title => title, sectionLabel: 'Books', color: '#38bdf8' },
+    { data: ARTIST_WHY_INFLUENTIAL, lookup: id => artists.find(a => a.id === Number(id))?.name, sectionLabel: 'Music', color: '#7C4DFF' },
+    { data: MOVIE_WHY_INFLUENTIAL, lookup: title => title, sectionLabel: 'Movies', color: '#F97360' },
+    { data: DIRECTOR_WHY_INFLUENTIAL, lookup: name => name, sectionLabel: 'Directors', color: '#3B82F6' },
+    { data: TV_WHY_INFLUENTIAL, lookup: title => title, sectionLabel: 'TV Shows', color: '#3B82F6' },
+    { data: BOOK_WHY_INFLUENTIAL, lookup: title => title, sectionLabel: 'Books', color: '#22C55E' },
   ];
 
   const people = {}; // name -> { count, items: [{label, sectionLabel, color}] }
@@ -5715,7 +5917,7 @@ function renderTasteInfluences() {
       `<span style="font-size:10px;padding:2px 9px;border-radius:10px;background:${it.color}18;color:${it.color};border:1px solid ${it.color}33;">${esc(it.label)}</span>`
     ).join('');
     return `<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;" onclick="toggleInfluenceChips(${idx})">
-      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#a78bfacc,#7c6ff0);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${esc(initials(p.name))}</div>
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7C4DFFcc,#7c6ff0);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${esc(initials(p.name))}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:14px;font-weight:600;color:var(--text);">${esc(abbreviateName(p.name))}</div>
         <div id="influence-chips-${idx}" style="display:none;flex-wrap:wrap;gap:5px;margin-top:6px;">${chips}</div>
