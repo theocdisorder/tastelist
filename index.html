@@ -1078,7 +1078,7 @@
 
       <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);">
         <div style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:18px;">What's Next</div>
-        <p class="site-sub" style="margin:-14px 0 16px;font-size:12px;">Things friends told me to check out</p>
+        <p class="site-sub" style="margin:-14px 0 16px;font-size:12px;">Things I want to check out</p>
         <div id="friend-recs" style="display:flex;flex-direction:column;gap:12px;max-height:640px;overflow-y:auto;padding-right:6px;"></div>
       </div>
     </div>
@@ -5015,6 +5015,12 @@ function badgeIcon(type, size=14) {
 
 // ── ACTIVITY FEED (shared between Profile tab and Music tab) ──
 const ACTIVITY_FEED_ITEMS = [
+  { label: 'The Dink', sub: 'Did not finish', color: '#F97360', icon: 'film', tab: 'movies', type: 'movie',
+    note: "Love Jake Johnson, but this movie is not good. Not really funny either. Appreciated the Vero Beach reference though.", timestamp: 'August 2, 2026',
+    art: '', tmdbId: 1361774 },
+  { label: 'Rye Lane', sub: 'Watched', color: '#F97360', icon: 'film', tab: 'movies', type: 'movie',
+    note: "Since David Jonsson was announced as the new Black Panther, I wanted to recommend this very sweet and charming rom-com he did a few years ago.", timestamp: 'August 1, 2026',
+    art: '', tmdbQuery: 'Rye Lane' },
   { label: 'The Invite', sub: 'Watched', color: '#F97360', icon: 'film', tab: 'movies', type: 'movie',
     note: "Probably my favorite movie of the year so far! Absolutely hilarious and awkward and fascinating. The entire cast was great. Highly recommend.", timestamp: 'July 26, 2026',
     art: '', tmdbId: 950028 },
