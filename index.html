@@ -1003,6 +1003,74 @@
     .bio-sidebar { width: 100%; position: static; padding: 1.5rem 1rem 0; }
     .bio-card { border-radius: 12px; }
   }
+
+  /* ── COLLAGE / PINTEREST-STYLE PLAYLIST ── */
+  .collage-grid {
+    column-count: 4;
+    column-gap: 18px;
+  }
+  @media (max-width: 900px) { .collage-grid { column-count: 3; } }
+  @media (max-width: 620px) { .collage-grid { column-count: 2; } }
+  .collage-card {
+    break-inside: avoid;
+    margin-bottom: 18px;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(.2,.8,.2,1), box-shadow 0.25s ease, z-index 0s;
+    position: relative;
+  }
+  .collage-card:hover {
+    transform: rotate(0deg) scale(1.045) translateY(-3px);
+    box-shadow: 0 18px 44px rgba(0,0,0,0.6);
+    z-index: 5;
+  }
+  .collage-card:nth-child(6n+1) { transform: rotate(-2deg); }
+  .collage-card:nth-child(6n+2) { transform: rotate(1.5deg); }
+  .collage-card:nth-child(6n+3) { transform: rotate(-1deg); }
+  .collage-card:nth-child(6n+4) { transform: rotate(2deg); }
+  .collage-card:nth-child(6n+5) { transform: rotate(-1.5deg); }
+  .collage-card:nth-child(6n+6) { transform: rotate(1deg); }
+  .collage-card-art {
+    width: 100%;
+    display: block;
+    background-size: cover;
+    background-position: center;
+  }
+  .collage-card-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 20px;
+    backdrop-filter: blur(6px);
+  }
+  .collage-card-body {
+    padding: 12px 14px 14px;
+  }
+  .collage-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .collage-card-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .collage-card-by {
+    font-size: 11px;
+    font-style: italic;
+    color: var(--faint);
+    margin-top: 4px;
+  }
 </style>
   </head>
 <body>
@@ -1487,8 +1555,8 @@
 
       <div style="border-radius:12px;padding:20px 22px;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);">
         <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#22C55E;opacity:.7;margin-bottom:8px;">Books, film & TV</div>
-        <div style="font-size:20px;font-weight:600;color:#e0f2fe;margin-bottom:10px;line-height:1.2;">Strong characters</div>
-        <div style="font-size:12px;line-height:1.65;color:#bae6fd;opacity:.75;margin-bottom:16px;">Morally complex people with real interior lives. Characters who make decisions you feel, not just observe — whose choices have weight because you understand exactly who they are.</div>
+        <div style="font-size:20px;font-weight:600;color:#dcfce7;margin-bottom:10px;line-height:1.2;">Strong characters</div>
+        <div style="font-size:12px;line-height:1.65;color:#bbf7d0;opacity:.75;margin-bottom:16px;">Morally complex people with real interior lives. Characters who make decisions you feel, not just observe — whose choices have weight because you understand exactly who they are.</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;">
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(34,197,94,0.12);color:#22C55E;border:1px solid rgba(34,197,94,0.2);">The Wire</span>
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(34,197,94,0.12);color:#22C55E;border:1px solid rgba(34,197,94,0.2);">A Separation</span>
@@ -1515,8 +1583,8 @@
 
       <div style="border-radius:12px;padding:20px 22px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);">
         <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#3B82F6;opacity:.7;margin-bottom:8px;">Across everything</div>
-        <div style="font-size:20px;font-weight:600;color:#ffedd5;margin-bottom:10px;line-height:1.2;">Emotional impact</div>
-        <div style="font-size:12px;line-height:1.65;color:#fed7aa;opacity:.75;margin-bottom:16px;">Art that makes you feel something you didn't expect to feel that deeply. Not sentimentality — a genuine emotional arc that lands because everything leading up to it was earned.</div>
+        <div style="font-size:20px;font-weight:600;color:#dbeafe;margin-bottom:10px;line-height:1.2;">Emotional impact</div>
+        <div style="font-size:12px;line-height:1.65;color:#bfdbfe;opacity:.75;margin-bottom:16px;">Art that makes you feel something you didn't expect to feel that deeply. Not sentimentality — a genuine emotional arc that lands because everything leading up to it was earned.</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;">
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(59,130,246,0.12);color:#3B82F6;border:1px solid rgba(59,130,246,0.2);">Shawshank Redemption</span>
           <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(59,130,246,0.12);color:#3B82F6;border:1px solid rgba(59,130,246,0.2);">A.R. Rahman</span>
@@ -1570,16 +1638,16 @@
           <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#F97360;opacity:.7;margin-bottom:14px;">Movies</div>
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div>
-              <div style="font-size:14px;font-weight:600;color:#cffafe;">Parasite</div>
-              <div style="font-size:11.5px;line-height:1.5;color:#a5f3fc;opacity:.75;margin-top:2px;">Bong Joon-ho's class thriller has Oldboy's mounting tension and The Shawshank Redemption's slow-building dread.</div>
+              <div style="font-size:14px;font-weight:600;color:#ffe0d9;">Parasite</div>
+              <div style="font-size:11.5px;line-height:1.5;color:#ffc4b3;opacity:.75;margin-top:2px;">Bong Joon-ho's class thriller has Oldboy's mounting tension and The Shawshank Redemption's slow-building dread.</div>
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;color:#cffafe;">In Bruges</div>
-              <div style="font-size:11.5px;line-height:1.5;color:#a5f3fc;opacity:.75;margin-top:2px;">Pitch-black comedy with real feeling underneath — the same register as The Birdcage and Death at a Funeral.</div>
+              <div style="font-size:14px;font-weight:600;color:#ffe0d9;">In Bruges</div>
+              <div style="font-size:11.5px;line-height:1.5;color:#ffc4b3;opacity:.75;margin-top:2px;">Pitch-black comedy with real feeling underneath — the same register as The Birdcage and Death at a Funeral.</div>
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;color:#cffafe;">Anatomy of a Fall</div>
-              <div style="font-size:11.5px;line-height:1.5;color:#a5f3fc;opacity:.75;margin-top:2px;">A Separation's moral ambiguity meets Gone Girl's psychological unraveling, in courtroom form.</div>
+              <div style="font-size:14px;font-weight:600;color:#ffe0d9;">Anatomy of a Fall</div>
+              <div style="font-size:11.5px;line-height:1.5;color:#ffc4b3;opacity:.75;margin-top:2px;">A Separation's moral ambiguity meets Gone Girl's psychological unraveling, in courtroom form.</div>
             </div>
           </div>
         </div>
@@ -1588,16 +1656,16 @@
           <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#3B82F6;opacity:.7;margin-bottom:14px;">TV Shows</div>
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div>
-              <div style="font-size:14px;font-weight:600;color:#ffedd5;">The Good Place</div>
-              <div style="font-size:11.5px;line-height:1.5;color:#fed7aa;opacity:.75;margin-top:2px;">Community and 30 Rock's density and joke-per-minute rate, with a genuinely moving long-game arc.</div>
+              <div style="font-size:14px;font-weight:600;color:#dbeafe;">The Good Place</div>
+              <div style="font-size:11.5px;line-height:1.5;color:#bfdbfe;opacity:.75;margin-top:2px;">Community and 30 Rock's density and joke-per-minute rate, with a genuinely moving long-game arc.</div>
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;color:#ffedd5;">Better Call Saul</div>
-              <div style="font-size:11.5px;line-height:1.5;color:#fed7aa;opacity:.75;margin-top:2px;">Direct Breaking Bad lineage — the same patience and eye for slow-building consequence.</div>
+              <div style="font-size:14px;font-weight:600;color:#dbeafe;">Better Call Saul</div>
+              <div style="font-size:11.5px;line-height:1.5;color:#bfdbfe;opacity:.75;margin-top:2px;">Direct Breaking Bad lineage — the same patience and eye for slow-building consequence.</div>
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;color:#ffedd5;">The Bear</div>
-              <div style="font-size:11.5px;line-height:1.5;color:#fed7aa;opacity:.75;margin-top:2px;">Fleabag's blend of chaos and heartbreak, compressed into half-hour bursts.</div>
+              <div style="font-size:14px;font-weight:600;color:#dbeafe;">The Bear</div>
+              <div style="font-size:11.5px;line-height:1.5;color:#bfdbfe;opacity:.75;margin-top:2px;">Fleabag's blend of chaos and heartbreak, compressed into half-hour bursts.</div>
             </div>
           </div>
         </div>
@@ -1606,16 +1674,16 @@
           <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#22C55E;opacity:.7;margin-bottom:14px;">Books</div>
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div>
-              <div style="font-size:14px;font-weight:600;color:#e0f2fe;">Never Let Me Go — Kazuo Ishiguro</div>
-              <div style="font-size:11.5px;line-height:1.5;color:#bae6fd;opacity:.75;margin-top:2px;">Franzen and Zevin's quiet emotional devastation, taken one notch further.</div>
+              <div style="font-size:14px;font-weight:600;color:#dcfce7;">Never Let Me Go — Kazuo Ishiguro</div>
+              <div style="font-size:11.5px;line-height:1.5;color:#bbf7d0;opacity:.75;margin-top:2px;">Franzen and Zevin's quiet emotional devastation, taken one notch further.</div>
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;color:#e0f2fe;">Middlemarch — George Eliot</div>
-              <div style="font-size:11.5px;line-height:1.5;color:#bae6fd;opacity:.75;margin-top:2px;">Austen's surgical social precision, at epic scale.</div>
+              <div style="font-size:14px;font-weight:600;color:#dcfce7;">Middlemarch — George Eliot</div>
+              <div style="font-size:11.5px;line-height:1.5;color:#bbf7d0;opacity:.75;margin-top:2px;">Austen's surgical social precision, at epic scale.</div>
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;color:#e0f2fe;">Circe — Madeline Miller</div>
-              <div style="font-size:11.5px;line-height:1.5;color:#bae6fd;opacity:.75;margin-top:2px;">Pachinko's sweep meets The Odyssey — same myth, told from the other side of it.</div>
+              <div style="font-size:14px;font-weight:600;color:#dcfce7;">Circe — Madeline Miller</div>
+              <div style="font-size:11.5px;line-height:1.5;color:#bbf7d0;opacity:.75;margin-top:2px;">Pachinko's sweep meets The Odyssey — same myth, told from the other side of it.</div>
             </div>
           </div>
         </div>
@@ -1623,7 +1691,22 @@
       </div>
     </div>
   </div>
-</div>
+</div><!-- /#tab-graph -->
+
+<!-- TAB: Playlist (hidden — no nav button, reached via What's New feed / direct link) -->
+<div class="tab-panel" id="tab-playlist">
+  <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 1rem;">
+    <h2 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:0.25rem;">Taste Lists</h2>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:2rem;">Curated lists, published from time to time.</p>
+
+    <!-- Current Playlist (books / movies / music, grouped, art auto-fetched from TMDB/iTunes/Open Library) -->
+    <div id="trip-playlist-section">
+      <div style="font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:6px;display:flex;align-items:center;gap:10px;">Yellowstone / Grand Teton '26 <span style="flex:1;height:1px;background:var(--border);"></span></div>
+      <p class="site-sub" style="margin:-2px 0 18px;">Things we told each other to watch, read & listen to.</p>
+      <div id="trip-playlist-list"></div>
+    </div>
+  </div>
+</div><!-- /#tab-playlist -->
 
 
 <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
@@ -4988,6 +5071,7 @@ const MEDIA_ICONS = {
   song:   { color: '#7C4DFF', bg: 'rgba(124,77,255,0.15)', svg: _musicSVG },
   artist: { color: '#7C4DFF', bg: 'rgba(124,77,255,0.15)', svg: _musicSVG },
   book:   { color: '#22C55E', bg: 'rgba(34,197,94,0.15)',  svg: _bookSVG  },
+  list:   { color: '#7C4DFF', bg: 'rgba(124,77,255,0.15)', svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>' },
   // podcast: { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)', svg: _podcastSVG },
   // article: { color: '#64748B', bg: 'rgba(100,116,139,0.15)', svg: _articleSVG },
   // game:    { color: '#EC4899', bg: 'rgba(236,72,153,0.15)', svg: _gameSVG },
@@ -5007,6 +5091,7 @@ const BADGE_ICONS = {
   tv:     `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>`,
   book:   `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>`,
   books:  `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>`,
+  list:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
 };
 function badgeIcon(type, size=14) {
   const svg = BADGE_ICONS[type] || BADGE_ICONS.song;
@@ -5015,6 +5100,9 @@ function badgeIcon(type, size=14) {
 
 // ── ACTIVITY FEED (shared between Profile tab and Music tab) ──
 const ACTIVITY_FEED_ITEMS = [
+  { label: "Yellowstone / Grand Teton '26", sub: 'Published a new list', color: '#7C4DFF', icon: 'list', tab: 'playlist', type: 'list',
+    note: "Published a new taste list — Yellowstone / Grand Teton '26", timestamp: 'August 16, 2026',
+    art: '' },
   { label: 'The Dink', sub: 'Did not finish', color: '#F97360', icon: 'film', tab: 'movies', type: 'movie',
     note: "Love Jake Johnson, but this movie is not good. Not really funny either. Appreciated the Vero Beach reference though.", timestamp: 'August 2, 2026',
     art: '', tmdbId: 1361774 },
@@ -5050,6 +5138,205 @@ const ACTIVITY_FEED_ITEMS = [
     art: 'https://covers.openlibrary.org/b/isbn/9780141439686-L.jpg' },
 ];
 
+// ── CURRENT PLAYLIST ──
+// Books now resolve their cover at runtime via Open Library's search API (title+author), same as
+// movies/songs — hardcoded ISBN cover URLs were unreliable (many editions have no cover indexed
+// under that specific ISBN even when the work has one elsewhere). See initTripPlaylistArt below.
+const TRIP_PLAYLIST_ITEMS = {
+  books: [
+    { title: 'Notes on an Execution', sub: 'Danya Kukafka', by: 'Ritu', art: '', bookQuery: 'Notes on an Execution Danya Kukafka' },
+    { title: 'The Lion Women of Tehran', sub: 'Marjan Kamali', by: 'Ritu', art: '', bookQuery: 'The Lion Women of Tehran Marjan Kamali' },
+    { title: 'The Mountain Is You', sub: 'Brianna Wiest', by: 'Sreya', art: '', bookQuery: 'The Mountain Is You Brianna Wiest' },
+    { title: 'The Never King', sub: 'Vicious Lost Boys, Book 1 · Nikki St. Crowe', by: '', caption: 'Level 5 🔥 per the internet', art: '', bookQuery: 'The Never King Nikki St. Crowe' },
+  ],
+  movies: [
+    { title: 'The Invite', sub: '', by: 'Sreya', art: '', tmdbId: 950028 },
+    { title: 'Brittany Runs a Marathon', sub: '', by: 'Sreya', art: '', tmdbQuery: 'Brittany Runs a Marathon' },
+    { title: 'Rye Lane', sub: '', by: 'Sreya', art: '', tmdbQuery: 'Rye Lane' },
+    { title: 'Lootera', sub: '', by: 'Sreya', art: '', tmdbId: 205017 }, // disambiguated: a plain title search also matches an unrelated 1965 film of the same name
+    { title: 'Twinless', sub: '', by: 'Sreya', art: '', tmdbQuery: 'Twinless' },
+  ],
+  music: [
+    { title: 'Creatures in Heaven', sub: 'Glass Animals', by: 'Sreya', art: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/cd/57/49/cd574928-97af-234b-2099-539262e163ce/24UMGIM27646.rgb.jpg/600x600bf-60.jpg', artQuery: 'Creatures in Heaven Glass Animals', artQueryFallback: 'Creatures in Heaven' },
+    { title: 'It Depends / Obvious', sub: 'Chris Brown', by: 'Rabeea', art: 'https://is1-ssl.mzstatic.com/image/thumb/Video211/v4/98/3b/a5/983ba50a-0c1f-1a25-e235-6630f35b2712/1968745105200101.jpg/600x600bf.jpg', artQuery: 'It Depends Chris Brown', artQueryFallback: 'It Depends' },
+    { title: 'Spend Sum Cash', sub: 'LightSkinKeisha', by: 'Rabeea', art: 'https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/df/32/e4/df32e404-875c-83c2-0440-7c7df11d3754/13511.jpg/600x600bf-60.jpg', artQuery: 'Spend Sum Cash LightSkinKeisha', artQueryFallback: 'Spend Sum Cash' },
+    { title: 'Back That Azz Up', sub: 'Juvenile', by: 'Rabeea', art: 'https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/0c/c9/2e/0cc92e6a-789e-3116-095e-5071f778bfee/06UMGIM04297.rgb.jpg/600x600bf-60.jpg', artQuery: 'Back That Azz Up Juvenile', artQueryFallback: 'Back That Azz Up' },
+  ],
+};
+const TRIP_PLAYLIST_CATEGORIES = [
+  { key: 'books',  label: 'Books',  color: '#22C55E' },
+  { key: 'movies', label: 'Movies', color: '#F97360' },
+  { key: 'music',  label: 'Music',  color: '#7C4DFF' },
+];
+let tripPlaylistArtFetched = false;
+let tripPlaylistFlatItems = []; // rebuilt on every render; click handlers reference items by index into this array
+
+function renderTripPlaylist() {
+  const el = document.getElementById('trip-playlist-list');
+  if (!el) return;
+  const catMeta = { books: { label: 'Books', color: '#22C55E' }, movies: { label: 'Movies', color: '#F97360' }, music: { label: 'Music', color: '#7C4DFF' } };
+  // Flat index (across all categories, in category order) so click handlers can find the right
+  // item regardless of which section's grid it was clicked from.
+  const flat = [];
+  TRIP_PLAYLIST_CATEGORIES.forEach(c => TRIP_PLAYLIST_ITEMS[c.key].forEach(item => flat.push({ ...item, cat: c.key })));
+  tripPlaylistFlatItems = flat;
+  // Varying tile heights, deterministic per position, for a Pinterest-style waterfall within each section
+  const heights = [230, 165, 270, 190, 245, 205, 255, 175, 215, 235, 190, 225];
+
+  let globalIndex = 0;
+  el.innerHTML = TRIP_PLAYLIST_CATEGORIES.map(c => {
+    const cat = catMeta[c.key];
+    const items = TRIP_PLAYLIST_ITEMS[c.key];
+    const cards = items.map((item, i) => {
+      const idx = globalIndex++;
+      const h = heights[i % heights.length];
+      const artStyle = item.art
+        ? `background-image:url('${item.art}');`
+        : `background:${cat.color}20;display:flex;align-items:center;justify-content:center;`;
+      const placeholder = !item.art ? `<span style="font-size:10px;font-weight:600;letter-spacing:.08em;color:${cat.color};opacity:.7;">${cat.label.toUpperCase()}</span>` : '';
+      return `
+        <div class="collage-card" onclick="openTripPlaylistSummary(${idx})" role="button" tabindex="0">
+          <div class="collage-card-art" style="height:${h}px;${artStyle}">${placeholder}</div>
+          <span class="collage-card-tag" style="background:${cat.color}33;color:${cat.color};">${cat.label}</span>
+          <div class="collage-card-body">
+            <div class="collage-card-title">${item.title}</div>
+            ${item.sub ? `<div class="collage-card-sub">${item.sub}</div>` : ''}
+            ${item.caption ? `<div class="collage-card-by">— ${item.caption}</div>` : (item.by ? `<div class="collage-card-by">— rec'd by ${item.by}</div>` : '')}
+          </div>
+        </div>`;
+    }).join('');
+    return `
+      <div style="margin-bottom:28px;">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:${cat.color};opacity:.85;margin-bottom:12px;">${cat.label}</div>
+        <div class="collage-grid">${cards}</div>
+      </div>`;
+  }).join('');
+}
+
+function initTripPlaylistArt() {
+  if (tripPlaylistArtFetched) return;
+  tripPlaylistArtFetched = true;
+  TRIP_PLAYLIST_ITEMS.movies.forEach(item => {
+    (async () => {
+      try {
+        let movieId = item.tmdbId;
+        if (!movieId) {
+          const r = await tmdbFetch(`/search/movie?query=${encodeURIComponent(item.tmdbQuery)}&page=1`);
+          const d = await r.json();
+          movieId = d.results?.[0]?.id;
+        }
+        if (!movieId) return;
+        const detail = await fetchMovieDetail(movieId);
+        if (detail.poster) { item.art = `${TMDB_IMG}${detail.poster}`; renderTripPlaylist(); refreshActivityFeeds(); }
+      } catch (e) {}
+    })();
+  });
+  TRIP_PLAYLIST_ITEMS.books.forEach(item => {
+    (async () => {
+      try {
+        const r = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(item.bookQuery)}&limit=1&fields=cover_i`);
+        const d = await r.json();
+        const coverId = d.docs?.[0]?.cover_i;
+        if (coverId) { item.art = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`; renderTripPlaylist(); refreshActivityFeeds(); }
+      } catch (e) {}
+    })();
+  });
+  TRIP_PLAYLIST_ITEMS.music.forEach(item => {
+    (async () => {
+      try {
+        async function search(term) {
+          const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=1`);
+          const d = await r.json();
+          return d.results?.[0];
+        }
+        let hit = await search(item.artQuery);
+        if (!hit && item.artQueryFallback) hit = await search(item.artQueryFallback);
+        const art = hit?.artworkUrl100?.replace('100x100bb', '400x400bb');
+        if (art) { item.art = art; renderTripPlaylist(); refreshActivityFeeds(); }
+      } catch (e) {}
+    })();
+  });
+}
+
+// ── Click-to-preview summary for playlist cards (reuses the same modal as the Activity Feed) ──
+async function getTripPlaylistSummary(item) {
+  if (item._summary !== undefined) return item._summary;
+  let summary = '';
+  try {
+    if (item.cat === 'movies') {
+      let movieId = item.tmdbId;
+      if (!movieId) {
+        const r = await tmdbFetch(`/search/movie?query=${encodeURIComponent(item.tmdbQuery)}&page=1`);
+        const d = await r.json();
+        movieId = d.results?.[0]?.id;
+      }
+      if (movieId) {
+        const detail = await fetchMovieDetail(movieId);
+        summary = detail.overview || '';
+        if (detail.poster && !item.art) item.art = `${TMDB_IMG}${detail.poster}`;
+      }
+    } else if (item.cat === 'books') {
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(item.bookQuery || item.title)}&maxResults=3&fields=items(volumeInfo(description))`);
+      const data = await res.json();
+      summary = (data.items || []).find(it => it.volumeInfo?.description)?.volumeInfo?.description || '';
+    } else if (item.cat === 'music') {
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=music&entity=song&limit=1`);
+      const data = await res.json();
+      const hit = data.results?.[0];
+      if (hit) {
+        const parts = [];
+        if (hit.collectionName) parts.push(`from the album "${hit.collectionName}"`);
+        if (hit.primaryGenreName) parts.push(hit.primaryGenreName);
+        summary = parts.length ? `Song ${parts.join(' · ')}.` : '';
+        if (hit.trackViewUrl) item.appleMusicUrl = hit.trackViewUrl;
+      }
+      if (!item.spotifyUrl) item.spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(item.artQuery)}`;
+    }
+  } catch (e) {}
+  if (!summary) summary = item.sub ? `${item.sub}.` : 'No summary available.';
+  item._summary = summary;
+  return summary;
+}
+
+function tripPlaylistSummaryHtml(item, summary, loading) {
+  const catMeta = { books: { color: '#22C55E' }, movies: { color: '#F97360' }, music: { color: '#7C4DFF' } };
+  const color = catMeta[item.cat]?.color || '#7C4DFF';
+  return `
+    <div style="position:relative;">
+      <button onclick="closeActivitySummary()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:28px;height:28px;border-radius:50%;cursor:pointer;z-index:2;">✕</button>
+      <div style="display:flex;gap:14px;padding:22px 50px 16px 20px;">
+        ${item.art
+          ? `<img src="${item.art}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0;">`
+          : `<div style="width:64px;height:64px;border-radius:10px;background:${color}18;flex-shrink:0;"></div>`}
+        <div style="min-width:0;">
+          <div style="font-size:17px;font-weight:700;color:var(--text);">${esc(item.title)}</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(item.sub || '')}</div>
+          ${item.caption ? `<div style="font-size:11.5px;color:${color};margin-top:4px;font-style:italic;">— ${esc(item.caption)}</div>` : (item.by ? `<div style="font-size:11.5px;color:${color};margin-top:4px;font-style:italic;">— recommended by ${esc(item.by)}</div>` : '')}
+        </div>
+      </div>
+      <div style="padding:14px 20px 20px;border-top:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);min-height:20px;">
+        ${loading ? `<span style="color:var(--faint);">Loading summary…</span>` : (summary ? esc(summary) : `<span style="color:var(--faint);">No summary available.</span>`)}
+      </div>
+      ${item.cat === 'music' && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
+      <div style="padding:0 20px 20px;display:flex;gap:8px;">
+        ${item.appleMusicUrl ? `<a href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
+        ${item.spotifyUrl ? `<a href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
+      </div>` : ''}
+    </div>`;
+}
+
+async function openTripPlaylistSummary(idx) {
+  const item = tripPlaylistFlatItems[idx];
+  if (!item) return;
+  const modal = document.getElementById('activity-summary-modal');
+  const content = document.getElementById('activity-summary-content');
+  if (!modal || !content) return;
+  modal.style.display = 'flex';
+  content.innerHTML = tripPlaylistSummaryHtml(item, '', true);
+  const summary = await getTripPlaylistSummary(item);
+  if (modal.style.display === 'flex') content.innerHTML = tripPlaylistSummaryHtml(item, summary, false);
+}
+
 function activityFeedAvatarHtml() {
   const avatarSrc = document.getElementById('profile-avatar')?.src || '';
   return avatarSrc
@@ -5057,14 +5344,35 @@ function activityFeedAvatarHtml() {
     : `<div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#7C4DFF,#7c6ff0);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">S</div>`;
 }
 
+// Builds a 2x2 mosaic of real playlist thumbnails (one per category, plus a 4th pick) for the
+// "published a new list" What's New card, instead of a plain icon placeholder.
+function tripPlaylistMosaicHtml() {
+  const catColor = { books: '#22C55E', movies: '#F97360', music: '#7C4DFF' };
+  const picks = [];
+  TRIP_PLAYLIST_CATEGORIES.forEach(c => {
+    const items = TRIP_PLAYLIST_ITEMS[c.key] || [];
+    if (items.length) picks.push({ item: items.find(i => i.art) || items[0], cat: c.key });
+  });
+  const extraMovie = TRIP_PLAYLIST_ITEMS.movies?.[1];
+  if (extraMovie) picks.push({ item: extraMovie, cat: 'movies' });
+  const cells = picks.slice(0, 4).map(p => p.item.art
+    ? `<div style="background-image:url('${p.item.art}');background-size:cover;background-position:center;"></div>`
+    : `<div style="background:${catColor[p.cat]}22;"></div>`
+  ).join('');
+  return `<div class="activity-card-art-img" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;">${cells}</div>`;
+}
+
 function activityCardHtml(item, globalIndex) {
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
   const iconColor = (MEDIA_ICONS[iconType] || MEDIA_ICONS.music).color;
   const typeIcon = badgeIcon(iconType, 13);
   const note = item.note ? `<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:8px;">${esc(item.note)}</div>` : '';
-  const art = item.art
-    ? `<img src="${item.art}" class="activity-card-art-img" style="display:block;object-fit:cover;" onerror="this.style.display='none'; handleActivityArtError(${globalIndex})">`
-    : `<div class="activity-card-art-img" style="background:${iconColor}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(iconType,42)}</div>`;
+  const isPlaylistAnnouncement = item.type === 'list' && item.tab === 'playlist';
+  const art = isPlaylistAnnouncement
+    ? tripPlaylistMosaicHtml()
+    : (item.art
+      ? `<img src="${item.art}" class="activity-card-art-img" style="display:block;object-fit:cover;" onerror="this.style.display='none'; handleActivityArtError(${globalIndex})">`
+      : `<div class="activity-card-art-img" style="background:${iconColor}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(iconType,42)}</div>`);
   return `<div class="activity-card" onclick="openActivitySummary(${globalIndex})" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);" onmouseover="this.style.borderColor='${iconColor}55'" onmouseout="this.style.borderColor='var(--border)'">
     <div class="activity-card-art">
       ${art}
@@ -5155,6 +5463,8 @@ async function getActivitySummary(item) {
       summary = author ? `A book by ${author}.` : '';
     } else if (item.type === 'movie') {
       summary = 'No summary available for this title.';
+    } else if (item.type === 'list') {
+      summary = item.note || 'A new list.';
     }
   }
   item._summary = summary;
@@ -5164,7 +5474,7 @@ async function getActivitySummary(item) {
 function activitySummaryHtml(item, summary, loading) {
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
   const iconColor = (MEDIA_ICONS[iconType] || MEDIA_ICONS.music).color;
-  const tabLabel = { music: 'Music', movies: 'Movies', tv: 'TV Shows', books: 'Books' }[item.tab] || item.tab;
+  const tabLabel = { music: 'Music', movies: 'Movies', tv: 'TV Shows', books: 'Books', playlist: 'Playlist' }[item.tab] || item.tab;
   return `
     <div style="position:relative;">
       <button onclick="closeActivitySummary()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:28px;height:28px;border-radius:50%;cursor:pointer;z-index:2;">✕</button>
@@ -5520,6 +5830,10 @@ function renderProfileTab() {
   // Activity Feed (shared component — also powers the Music tab's feed)
   refreshActivityFeeds();
   initActivityFeedArt();
+
+  // Current Playlist (Taste Graph tab)
+  renderTripPlaylist();
+  initTripPlaylistArt();
 }
 
 preloadMovies();
