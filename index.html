@@ -5215,6 +5215,25 @@ function renderTripPlaylist() {
   }).join('');
 }
 
+// Tries Open Library's search API first (keyed by title/author query), then falls back to Google
+// Books' volume search if Open Library has no cover indexed — Open Library is crowdsourced and
+// often missing covers for less mainstream editions; Google Books has much broader coverage.
+async function fetchBookCoverArt(query) {
+  try {
+    const r = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=1&fields=cover_i`);
+    const d = await r.json();
+    const coverId = d.docs?.[0]?.cover_i;
+    if (coverId) return `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
+  } catch (e) {}
+  try {
+    const gr = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=1&fields=items(volumeInfo(imageLinks))`);
+    const gd = await gr.json();
+    const thumb = gd.items?.[0]?.volumeInfo?.imageLinks?.thumbnail || gd.items?.[0]?.volumeInfo?.imageLinks?.smallThumbnail;
+    if (thumb) return thumb.replace('http://', 'https://');
+  } catch (e) {}
+  return null;
+}
+
 function initTripPlaylistArt() {
   if (tripPlaylistArtFetched) return;
   tripPlaylistArtFetched = true;
@@ -5233,14 +5252,11 @@ function initTripPlaylistArt() {
       } catch (e) {}
     })();
   });
+
   TRIP_PLAYLIST_ITEMS.books.forEach(item => {
     (async () => {
-      try {
-        const r = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(item.bookQuery)}&limit=1&fields=cover_i`);
-        const d = await r.json();
-        const coverId = d.docs?.[0]?.cover_i;
-        if (coverId) { item.art = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`; renderTripPlaylist(); refreshActivityFeeds(); }
-      } catch (e) {}
+      const art = await fetchBookCoverArt(item.bookQuery);
+      if (art) { item.art = art; renderTripPlaylist(); refreshActivityFeeds(); }
     })();
   });
   TRIP_PLAYLIST_ITEMS.music.forEach(item => {
@@ -5615,12 +5631,17 @@ function renderFriendRecs() {
 // movies and TV shows via TMDB, using the same helpers as the rest of the app.
 async function loadFriendRecArt() {
   for (const r of FRIEND_RECOMMENDATIONS) {
-    if (r.art || !r.tmdbId) continue;
+    if (r.art) continue;
     try {
-      const detail = r.type === 'tv' ? await fetchTVDetail(r.tmdbId) : await fetchMovieDetail(r.tmdbId);
-      if (detail.poster) {
-        r.art = `${TMDB_IMG}${detail.poster}`;
-        renderFriendRecs();
+      if (r.tmdbId) {
+        const detail = r.type === 'tv' ? await fetchTVDetail(r.tmdbId) : await fetchMovieDetail(r.tmdbId);
+        if (detail.poster) {
+          r.art = `${TMDB_IMG}${detail.poster}`;
+          renderFriendRecs();
+        }
+      } else if (r.type === 'book') {
+        const art = await fetchBookCoverArt(r.title);
+        if (art) { r.art = art; renderFriendRecs(); }
       }
     } catch (e) {}
   }
