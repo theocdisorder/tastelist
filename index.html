@@ -10,6 +10,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tastelist.ai">
 <meta name="twitter:card" content="summary">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <meta name="twitter:title" content="Sreya's Taste List">
 <meta name="twitter:description" content="The music that shaped me — favorite artists, albums, and songs.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1077,7 +1078,8 @@
 
 
 <div class="page-shell">
-<header class="site-header">
+<header class="site-header" style="position:relative;">
+  <div id="auth-widget" style="position:absolute;top:0;right:0;font-size:13px;"></div>
   <p class="site-title">Sreya's Taste List</p>
   <h1 class="site-heading">The arts and culture that shaped me</h1>
   <p class="site-sub">Click to explore my favorites</p>
@@ -1737,6 +1739,119 @@
 </div>
 
 <script>
+// ============================================================================
+// SUPABASE AUTH — fill these in from Settings → API in your Supabase project.
+// The anon key is safe to expose client-side by design (it's what RLS is for);
+// never put the service_role key here.
+// ============================================================================
+const SUPABASE_URL = 'https://dqjsenstzcmbsvmmtypd.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_T3tizMfDuTlY9VIbpU--nw_URMN0B1-';
+const supabaseConfigured = SUPABASE_URL !== 'YOUR_SUPABASE_PROJECT_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
+const sb = supabaseConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+let currentUser = null;
+let currentProfile = null;
+let authMode = 'signin'; // or 'signup'
+
+function renderAuthWidget() {
+  const el = document.getElementById('auth-widget');
+  if (!el) return;
+  if (!supabaseConfigured) {
+    el.innerHTML = `<span style="color:var(--faint);">Auth not configured</span>`;
+    return;
+  }
+  if (currentUser) {
+    const name = currentProfile?.display_name || currentUser.email;
+    el.innerHTML = `
+      <span style="color:var(--muted);">${esc(name)}</span>
+      <a href="javascript:void(0)" onclick="signOut()" style="color:var(--accent);text-decoration:none;margin-left:10px;">Sign out</a>`;
+  } else {
+    el.innerHTML = `<a href="javascript:void(0)" onclick="openAuthModal('signin')" style="color:var(--accent);text-decoration:none;">Sign in</a>`;
+  }
+}
+
+function openAuthModal(mode) {
+  authMode = mode;
+  document.getElementById('auth-modal-error').style.display = 'none';
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+  updateAuthModalMode();
+  document.getElementById('auth-modal').style.display = 'flex';
+}
+function closeAuthModal() {
+  document.getElementById('auth-modal').style.display = 'none';
+}
+function toggleAuthMode() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  updateAuthModalMode();
+}
+function updateAuthModalMode() {
+  const isSignIn = authMode === 'signin';
+  document.getElementById('auth-modal-title').textContent = isSignIn ? 'Sign in' : 'Create account';
+  document.getElementById('auth-modal-sub').textContent = isSignIn ? 'Welcome back.' : 'Build your own taste list.';
+  document.getElementById('auth-submit-btn').textContent = isSignIn ? 'Sign in' : 'Sign up';
+  document.getElementById('auth-toggle-text').textContent = isSignIn ? "Don't have an account?" : 'Already have an account?';
+  document.getElementById('auth-toggle-link').textContent = isSignIn ? 'Sign up' : 'Sign in';
+}
+
+async function submitAuthForm() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-modal-error');
+  errEl.style.display = 'none';
+  if (!email || !password) {
+    errEl.textContent = 'Enter an email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+  try {
+    const { error } = authMode === 'signin'
+      ? await sb.auth.signInWithPassword({ email, password })
+      : await sb.auth.signUp({ email, password });
+    if (error) throw error;
+    if (authMode === 'signup') {
+      errEl.style.color = '#22C55E';
+      errEl.style.background = 'rgba(34,197,94,0.1)';
+      errEl.textContent = 'Check your email to confirm your account, then sign in.';
+      errEl.style.display = 'block';
+    } else {
+      closeAuthModal();
+    }
+  } catch (e) {
+    errEl.style.color = '#F97360';
+    errEl.style.background = 'rgba(249,115,96,0.1)';
+    errEl.textContent = e.message || 'Something went wrong.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function signOut() {
+  if (!sb) return;
+  await sb.auth.signOut();
+}
+
+async function loadCurrentProfile() {
+  if (!sb || !currentUser) { currentProfile = null; return; }
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  currentProfile = data || null;
+}
+
+async function initAuth() {
+  if (!sb) { renderAuthWidget(); return; }
+  const { data: { session } } = await sb.auth.getSession();
+  currentUser = session?.user || null;
+  await loadCurrentProfile();
+  renderAuthWidget();
+
+  sb.auth.onAuthStateChange(async (event, session) => {
+    currentUser = session?.user || null;
+    await loadCurrentProfile();
+    renderAuthWidget();
+    // Once data-loading is migrated to Supabase (next step), this is where
+    // we'd re-fetch this user's taste lists / friend recs / activity feed.
+  });
+}
+
 const COLORS = ['#7c3aed','#0891b2','#059669','#d97706','#dc2626','#db2777','#4f46e5'];
 
 const HERO_POS = {
@@ -5102,6 +5217,9 @@ function badgeIcon(type, size=14) {
 
 // ── ACTIVITY FEED (shared between Profile tab and Music tab) ──
 const ACTIVITY_FEED_ITEMS = [
+  { label: 'The Other Bennet Sister', sub: 'Finished watching', color: '#3B82F6', icon: 'tv', tab: 'tv', type: 'tv',
+    note: "A sweet but predictable retelling and extended universe of Pride and Prejudice. A nice one for the Austen fans :-)", timestamp: 'September 3, 2026',
+    art: '', tmdbTvId: 273866 },
   { label: "Yellowstone / Grand Teton '26", sub: 'Published a new list', color: '#7C4DFF', icon: 'list', tab: 'playlist', type: 'list',
     note: "Published a new taste list — Yellowstone / Grand Teton '26", timestamp: 'August 16, 2026',
     art: '' },
@@ -5146,10 +5264,10 @@ const ACTIVITY_FEED_ITEMS = [
 // under that specific ISBN even when the work has one elsewhere). See initTripPlaylistArt below.
 const TRIP_PLAYLIST_ITEMS = {
   books: [
-    { title: 'Notes on an Execution', sub: 'Danya Kukafka', by: 'Ritu', art: '', bookQuery: 'Notes on an Execution Danya Kukafka' },
-    { title: 'The Lion Women of Tehran', sub: 'Marjan Kamali', by: 'Ritu', art: '', bookQuery: 'The Lion Women of Tehran Marjan Kamali' },
-    { title: 'The Mountain Is You', sub: 'Brianna Wiest', by: 'Sreya', art: '', bookQuery: 'The Mountain Is You Brianna Wiest' },
-    { title: 'The Never King', sub: 'Vicious Lost Boys, Book 1 · Nikki St. Crowe', by: '', caption: 'Level 5 🔥 per the internet', art: '', bookQuery: 'The Never King Nikki St. Crowe' },
+    { title: 'Notes on an Execution', sub: 'Danya Kukafka', by: 'Ritu', art: 'https://covers.openlibrary.org/b/olid/OL36013767M-L.jpg', bookQuery: 'Notes on an Execution Danya Kukafka' },
+    { title: 'The Lion Women of Tehran', sub: 'Marjan Kamali', by: 'Ritu', art: 'https://covers.openlibrary.org/b/olid/OL50718872M-L.jpg', bookQuery: 'The Lion Women of Tehran Marjan Kamali' },
+    { title: 'The Mountain Is You', sub: 'Brianna Wiest', by: 'Sreya', art: 'https://covers.openlibrary.org/b/olid/OL34105393M-L.jpg', bookQuery: 'The Mountain Is You Brianna Wiest' },
+    { title: 'The Never King', sub: 'Vicious Lost Boys, Book 1 · Nikki St. Crowe', by: '', caption: 'Level 5 🔥 per the internet', art: 'https://covers.openlibrary.org/b/olid/OL59991623M-L.jpg', bookQuery: 'The Never King Nikki St. Crowe' },
   ],
   movies: [
     { title: 'The Invite', sub: '', by: 'Sreya', art: '', tmdbId: 950028 },
@@ -5254,6 +5372,7 @@ function initTripPlaylistArt() {
   });
 
   TRIP_PLAYLIST_ITEMS.books.forEach(item => {
+    if (item.art) return;
     (async () => {
       const art = await fetchBookCoverArt(item.bookQuery);
       if (art) { item.art = art; renderTripPlaylist(); refreshActivityFeeds(); }
@@ -5455,6 +5574,18 @@ async function getActivitySummary(item) {
       const author = item.sub?.split('·')[0]?.trim();
       summary = await tryBookSearch(`intitle:"${item.label}"${author ? ` inauthor:"${author}"` : ''}`);
       if (!summary) summary = await tryBookSearch(`${item.label} ${author || ''}`.trim());
+    } else if (item.type === 'tv' && (item.tmdbTvId || item.tmdbTvQuery)) {
+      let tvId = item.tmdbTvId;
+      if (!tvId) {
+        const res = await tmdbFetch(`/search/tv?query=${encodeURIComponent(item.tmdbTvQuery)}&page=1`);
+        const data = await res.json();
+        tvId = data.results?.[0]?.id;
+      }
+      if (tvId) {
+        const detail = await fetchTVDetail(tvId);
+        summary = detail.overview || '';
+        if (detail.poster && !item.art) { item.art = `${TMDB_IMG}${detail.poster}`; refreshActivityFeeds(); }
+      }
     } else if (item.type === 'song' && item.artQuery) {
       const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=music&entity=song&limit=1`);
       const data = await res.json();
@@ -5480,6 +5611,8 @@ async function getActivitySummary(item) {
       const author = item.sub?.split('·')[0]?.trim();
       summary = author ? `A book by ${author}.` : '';
     } else if (item.type === 'movie') {
+      summary = 'No summary available for this title.';
+    } else if (item.type === 'tv') {
       summary = 'No summary available for this title.';
     } else if (item.type === 'list') {
       summary = item.note || 'A new list.';
@@ -5663,6 +5796,22 @@ function initActivityFeedArt() {
           item.spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(item.artQuery)}`;
           if (art || hit) refreshActivityFeeds();
         }).catch(() => {});
+    } else if (item.tmdbTvId || item.tmdbTvQuery) {
+      (async () => {
+        try {
+          let tvId = item.tmdbTvId;
+          if (!tvId) {
+            const r = await tmdbFetch(`/search/tv?query=${encodeURIComponent(item.tmdbTvQuery)}&page=1`);
+            const d = await r.json();
+            tvId = d.results?.[0]?.id;
+          }
+          if (!tvId) return;
+          const detail = await fetchTVDetail(tvId);
+          if (detail.poster) item.art = `${TMDB_IMG}${detail.poster}`;
+          if (detail.overview) item._summary = detail.overview;
+          refreshActivityFeeds();
+        } catch (e) {}
+      })();
     } else if (item.tmdbId || item.tmdbQuery) {
       (async () => {
         try {
@@ -6231,6 +6380,7 @@ updateBooksProfile();
 renderProfileTab();
 renderFriendRecs();
 loadFriendRecArt();
+initAuth();
 
 // ── TASTE INFLUENCES (Taste Graph tab) ──
 // Scans "why influential" text across taste sections for @mentions and ranks people
@@ -6298,6 +6448,27 @@ renderTasteInfluences();
 </script>
 
 <!-- Activity Feed item summary modal -->
+<div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeAuthModal()">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:360px;width:100%;padding:24px;position:relative;">
+    <button onclick="closeAuthModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+    <div id="auth-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">Sign in</div>
+    <div id="auth-modal-sub" style="font-size:13px;color:var(--muted);margin-bottom:18px;">Welcome back.</div>
+    <div id="auth-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+    <input id="auth-email" type="email" placeholder="Email" autocomplete="email"
+      style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:10px;box-sizing:border-box;">
+    <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password"
+      style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:16px;box-sizing:border-box;">
+    <button id="auth-submit-btn" onclick="submitAuthForm()"
+      style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;margin-bottom:12px;">Sign in</button>
+    <div style="text-align:center;font-size:13px;color:var(--muted);">
+      <span id="auth-toggle-text">Don't have an account?</span>
+      <a href="javascript:void(0)" onclick="toggleAuthMode()" style="color:var(--accent);text-decoration:none;font-weight:600;">
+        <span id="auth-toggle-link">Sign up</span>
+      </a>
+    </div>
+  </div>
+</div>
+
 <div id="activity-summary-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1000;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeActivitySummary()">
   <div id="activity-summary-content" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;overflow:hidden;"></div>
 </div>
