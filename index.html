@@ -1703,8 +1703,8 @@
 
     <!-- Current Playlist (books / movies / music, grouped, art auto-fetched from TMDB/iTunes/Open Library) -->
     <div id="trip-playlist-section">
-      <div style="font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:6px;display:flex;align-items:center;gap:10px;">Yellowstone / Grand Teton '26 <span style="flex:1;height:1px;background:var(--border);"></span></div>
-      <p class="site-sub" style="margin:-2px 0 18px;">Things we told each other to watch, read & listen to.</p>
+      <div id="taste-list-title" style="font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:6px;display:flex;align-items:center;gap:10px;">Yellowstone / Grand Teton '26 <span style="flex:1;height:1px;background:var(--border);"></span></div>
+      <p id="taste-list-subtitle" class="site-sub" style="margin:-2px 0 18px;">Things we told each other to watch, read & listen to.</p>
       <div id="trip-playlist-list"></div>
     </div>
   </div>
@@ -1836,19 +1836,69 @@ async function loadCurrentProfile() {
   currentProfile = data || null;
 }
 
+async function loadTasteListFromSupabase(userId) {
+  if (!sb || !userId) return false;
+  try {
+    const { data: list } = await sb.from('taste_lists')
+      .select('id, title, subtitle')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!list) return false;
+
+    const { data: items } = await sb.from('taste_list_items')
+      .select('*')
+      .eq('list_id', list.id)
+      .order('sort_order', { ascending: true });
+    if (!items) return false;
+
+    // Reshape DB rows back into the {books:[], movies:[], music:[]} structure
+    // renderTripPlaylist already knows how to render.
+    const grouped = { books: [], movies: [], music: [] };
+    items.forEach(row => {
+      grouped[row.category]?.push({
+        title: row.title,
+        sub: row.sub || '',
+        by: row.recommended_by || '',
+        caption: row.caption || undefined,
+        art: row.art_url || '',
+        tmdbId: row.tmdb_id || undefined,
+      });
+    });
+    TRIP_PLAYLIST_ITEMS.books = grouped.books;
+    TRIP_PLAYLIST_ITEMS.movies = grouped.movies;
+    TRIP_PLAYLIST_ITEMS.music = grouped.music;
+
+    const titleEl = document.getElementById('taste-list-title');
+    const subEl = document.getElementById('taste-list-subtitle');
+    if (titleEl && list.title) titleEl.childNodes[0].textContent = list.title + ' ';
+    if (subEl && list.subtitle) subEl.textContent = list.subtitle;
+
+    tripPlaylistArtFetched = false; // allow art resolution to run again against the new data
+    renderTripPlaylist();
+    initTripPlaylistArt();
+    return true;
+  } catch (e) {
+    console.error('Failed to load taste list from Supabase, keeping hardcoded fallback:', e);
+    return false;
+  }
+}
+
 async function initAuth() {
   if (!sb) { renderAuthWidget(); return; }
   const { data: { session } } = await sb.auth.getSession();
   currentUser = session?.user || null;
   await loadCurrentProfile();
   renderAuthWidget();
+  if (currentUser) await loadTasteListFromSupabase(currentUser.id);
 
   sb.auth.onAuthStateChange(async (event, session) => {
     currentUser = session?.user || null;
     await loadCurrentProfile();
     renderAuthWidget();
-    // Once data-loading is migrated to Supabase (next step), this is where
-    // we'd re-fetch this user's taste lists / friend recs / activity feed.
+    if (currentUser) await loadTasteListFromSupabase(currentUser.id);
+    // Friend recs / activity feed migration follow the same pattern, next.
   });
 }
 
