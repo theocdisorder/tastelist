@@ -1864,6 +1864,11 @@ async function loadTasteListFromSupabase(userId) {
         caption: row.caption || undefined,
         art: row.art_url || '',
         tmdbId: row.tmdb_id || undefined,
+        // These aren't stored columns — reconstructed from title/sub so the
+        // live fallback search (Open Library / Google Books / TMDB) always has
+        // a real query to work with, never undefined.
+        bookQuery: row.category === 'books' ? `${row.title} ${row.sub || ''}`.trim() : undefined,
+        tmdbQuery: row.category === 'movies' && !row.tmdb_id ? row.title : undefined,
       });
     });
     TRIP_PLAYLIST_ITEMS.books = grouped.books;
