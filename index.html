@@ -1885,20 +1885,112 @@ async function loadTasteListFromSupabase(userId) {
   }
 }
 
+async function loadFriendRecsFromSupabase(userId) {
+  if (!sb || !userId) return false;
+  try {
+    const { data, error } = await sb.from('friend_recs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true });
+    if (error || !data) return false;
+
+    FRIEND_RECOMMENDATIONS.length = 0;
+    data.forEach(row => {
+      FRIEND_RECOMMENDATIONS.push({
+        title: row.title,
+        type: row.type,
+        from: row.from_name || undefined,
+        art: row.art_url || '',
+        tmdbId: row.tmdb_id || undefined,
+      });
+    });
+    renderFriendRecs();
+    loadFriendRecArt();
+    return true;
+  } catch (e) {
+    console.error('Failed to load friend recs from Supabase, keeping hardcoded fallback:', e);
+    return false;
+  }
+}
+
+// type -> {icon, tab, color} the card display needs, since the DB doesn't store these
+// directly (they're fully determined by type, so no need to duplicate them as columns).
+const ACTIVITY_TYPE_META = {
+  movie: { icon: 'film', tab: 'movies', color: '#F97360' },
+  tv:    { icon: 'tv',   tab: 'tv',     color: '#3B82F6' },
+  book:  { icon: 'book', tab: 'books',  color: '#22C55E' },
+  song:  { icon: 'song', tab: 'music',  color: '#7C4DFF' },
+  list:  { icon: 'list', tab: 'playlist', color: '#7C4DFF' },
+};
+
+function formatActivityDate(dateStr) {
+  // Parse the YYYY-MM-DD components directly rather than `new Date(dateStr)`,
+  // which treats bare date strings as UTC midnight and can roll back a day in
+  // negative-UTC-offset timezones.
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+async function loadActivityFeedFromSupabase(userId) {
+  if (!sb || !userId) return false;
+  try {
+    const { data, error } = await sb.from('activity_feed')
+      .select('*')
+      .eq('user_id', userId)
+      .order('activity_date', { ascending: false });
+    if (error || !data) return false;
+
+    ACTIVITY_FEED_ITEMS.length = 0;
+    data.forEach(row => {
+      const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
+      const item = {
+        label: row.label,
+        sub: row.sub || '',
+        color: meta.color,
+        icon: meta.icon,
+        tab: meta.tab,
+        type: row.type,
+        note: row.note || '',
+        timestamp: formatActivityDate(row.activity_date),
+        art: row.art_url || '',
+      };
+      if (row.tmdb_id) {
+        if (row.type === 'tv') item.tmdbTvId = row.tmdb_id;
+        else item.tmdbId = row.tmdb_id;
+      }
+      ACTIVITY_FEED_ITEMS.push(item);
+    });
+    activityFeedArtFetched = false; // allow art resolution to run again against the new data
+    refreshActivityFeeds();
+    initActivityFeedArt();
+    return true;
+  } catch (e) {
+    console.error('Failed to load activity feed from Supabase, keeping hardcoded fallback:', e);
+    return false;
+  }
+}
+
 async function initAuth() {
   if (!sb) { renderAuthWidget(); return; }
   const { data: { session } } = await sb.auth.getSession();
   currentUser = session?.user || null;
   await loadCurrentProfile();
   renderAuthWidget();
-  if (currentUser) await loadTasteListFromSupabase(currentUser.id);
+  if (currentUser) {
+    await loadTasteListFromSupabase(currentUser.id);
+    await loadFriendRecsFromSupabase(currentUser.id);
+    await loadActivityFeedFromSupabase(currentUser.id);
+  }
 
   sb.auth.onAuthStateChange(async (event, session) => {
     currentUser = session?.user || null;
     await loadCurrentProfile();
     renderAuthWidget();
-    if (currentUser) await loadTasteListFromSupabase(currentUser.id);
-    // Friend recs / activity feed migration follow the same pattern, next.
+    if (currentUser) {
+      await loadTasteListFromSupabase(currentUser.id);
+      await loadFriendRecsFromSupabase(currentUser.id);
+      await loadActivityFeedFromSupabase(currentUser.id);
+    }
   });
 }
 
