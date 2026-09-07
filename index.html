@@ -5538,7 +5538,7 @@ let tripPlaylistFlatItems = []; // rebuilt on every render; click handlers refer
 function renderTripPlaylist() {
   const el = document.getElementById('trip-playlist-list');
   if (!el) return;
-  const catMeta = { books: { label: 'Books', color: '#22C55E' }, movies: { label: 'Movies', color: '#F97360' }, music: { label: 'Music', color: '#7C4DFF' } };
+  const catMeta = { books: { label: 'Books', singular: 'book', color: '#22C55E' }, movies: { label: 'Movies', singular: 'movie', color: '#F97360' }, music: { label: 'Music', singular: 'song', color: '#7C4DFF' } };
   // Flat index (across all categories, in category order) so click handlers can find the right
   // item regardless of which section's grid it was clicked from.
   const flat = [];
@@ -5582,7 +5582,7 @@ function renderTripPlaylist() {
     }).join('');
     const addTile = editMode ? `
         <div class="collage-card" onclick="openTasteItemForm('${c.key}')" role="button" tabindex="0" style="display:flex;align-items:center;justify-content:center;min-height:120px;border:1.5px dashed var(--border);background:transparent;">
-          <span style="font-size:13px;color:var(--muted);font-weight:600;">+ Add ${cat.label.toLowerCase().slice(0, -1)}</span>
+          <span style="font-size:13px;color:var(--muted);font-weight:600;">+ Add ${cat.singular}</span>
         </div>` : '';
     return `
       <div style="margin-bottom:28px;">
