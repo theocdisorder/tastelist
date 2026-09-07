@@ -1350,6 +1350,7 @@
       <h2 class="music-section-title">Other Favorite Artists</h2>
       <p class="section-hint" style="margin:2px 0 0;">Tap for my favorite songs →</p>
     </div>
+    <div id="other-fav-artist-controls" style="margin:10px 0 14px;"></div>
     <section class="top5-section">
       <div class="other-fav-grid" id="other-fav-grid"></div>
       <div id="other-fav-expand-panel" style="display:none;margin-top:16px;"></div>
@@ -2631,7 +2632,8 @@ async function loadFavoriteArtistsFromSupabase(userId) {
     renderGrid();
     updateMusicProfile();
     renderOtherFavGrid();
-    renderMusicControls();
+    renderTop5Controls();
+    renderOtherFavControls();
     return true;
   } catch (e) {
     console.error('Failed to load favorite artists from Supabase, keeping hardcoded fallback:', e);
@@ -3115,24 +3117,42 @@ function setAlbumArt(id, album, idx) {
 
 let expandedArtistId = null;
 
-let musicEditMode = false;
-function toggleMusicEditMode() {
-  musicEditMode = !musicEditMode;
+let top5EditMode = false;
+let otherFavEditMode = false;
+
+function toggleTop5EditMode() {
+  top5EditMode = !top5EditMode;
   renderGrid();
+  renderTop5Controls();
+}
+function toggleOtherFavEditMode() {
+  otherFavEditMode = !otherFavEditMode;
   renderOtherFavGrid();
-  renderMusicControls();
+  renderOtherFavControls();
 }
 
-function renderMusicControls() {
+function renderTop5Controls() {
   const el = document.getElementById('music-artist-controls');
-  console.log('[DEBUG renderMusicControls]', { elFound: !!el, isOwnProfile, currentUser: currentUser?.email, viewedProfile });
   if (!el) return;
   if (!isOwnProfile) { el.innerHTML = ''; return; }
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;">
-      ${musicEditMode ? `<button onclick="openArtistItemForm()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add artist</button>` : ''}
-      <button onclick="toggleMusicEditMode()" style="font-size:11px;font-weight:600;background:${musicEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${musicEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
-        ${musicEditMode ? '✓ Done editing' : '✎ Edit artists'}
+      ${top5EditMode ? `<button onclick="openArtistItemForm(undefined,'top5')" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add to Top 5</button>` : ''}
+      <button onclick="toggleTop5EditMode()" style="font-size:11px;font-weight:600;background:${top5EditMode ? 'var(--accent)' : 'var(--surface2)'};color:${top5EditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+        ${top5EditMode ? '✓ Done editing' : '✎ Edit artists'}
+      </button>
+    </div>`;
+}
+
+function renderOtherFavControls() {
+  const el = document.getElementById('other-fav-artist-controls');
+  if (!el) return;
+  if (!isOwnProfile) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${otherFavEditMode ? `<button onclick="openArtistItemForm(undefined,'other')" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add artist</button>` : ''}
+      <button onclick="toggleOtherFavEditMode()" style="font-size:11px;font-weight:600;background:${otherFavEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${otherFavEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+        ${otherFavEditMode ? '✓ Done editing' : '✎ Edit artists'}
       </button>
     </div>`;
 }
@@ -3158,17 +3178,17 @@ async function lookupArtistArt(name) {
   return null;
 }
 
-let artistItemFormState = { id: null };
+let artistItemFormState = { id: null, targetSection: 'other' };
 
-function openArtistItemForm(artistId) {
+function openArtistItemForm(artistId, targetSection) {
   if (!isOwnProfile) return;
-  artistItemFormState = { id: null };
+  artistItemFormState = { id: null, targetSection: targetSection || 'other' };
   document.getElementById('artist-item-modal-error').style.display = 'none';
   document.getElementById('artist-item-name').value = '';
   document.getElementById('artist-item-genre').value = '';
   document.getElementById('artist-item-why').value = '';
   document.getElementById('artist-item-photo').value = '';
-  document.getElementById('artist-item-modal-title').textContent = 'Add artist';
+  document.getElementById('artist-item-modal-title').textContent = targetSection === 'top5' ? 'Add to Top 5' : 'Add artist';
 
   if (artistId !== undefined) {
     const a = artists.find(x => x.id === artistId);
@@ -3225,7 +3245,17 @@ async function saveArtistItemForm() {
       if (error) throw error;
     } else {
       row.user_id = currentUser.id;
-      row.sort_order = artists.length;
+      if (artistItemFormState.targetSection === 'top5') {
+        // Inserting into the top 5 pushes everyone from position 5 (index 4) onward down by
+        // one — including the artist who used to be #5, who becomes the new #1 in Other Favorites.
+        const toShift = artists.slice(4);
+        for (let i = 0; i < toShift.length; i++) {
+          await sb.from('favorite_artists').update({ sort_order: 5 + i }).eq('id', toShift[i].id);
+        }
+        row.sort_order = 4;
+      } else {
+        row.sort_order = artists.length;
+      }
       const { error } = await sb.from('favorite_artists').insert(row);
       if (error) throw error;
     }
@@ -3265,7 +3295,7 @@ function renderGrid() {
     return;
   }
   grid.innerHTML = artists.slice(0, 5).map((a, i) => {
-    const editControls = (musicEditMode && isOwnProfile) ? `
+    const editControls = (top5EditMode && isOwnProfile) ? `
       <div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:3;">
         <button onclick="event.stopPropagation(); openArtistItemForm('${a.id}')" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✎</button>
         <button onclick="event.stopPropagation(); deleteArtistItem('${a.id}')" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✕</button>
@@ -3732,7 +3762,7 @@ function renderOtherFavGrid() {
   if (!el) return;
   const others = artists.slice(5);
   el.innerHTML = others.map((a) => {
-    const editControls = (musicEditMode && isOwnProfile) ? `
+    const editControls = (otherFavEditMode && isOwnProfile) ? `
       <div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:3;">
         <button onclick="event.stopPropagation(); openArtistItemForm('${a.id}')" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✎</button>
         <button onclick="event.stopPropagation(); deleteArtistItem('${a.id}')" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✕</button>
