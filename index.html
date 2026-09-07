@@ -5498,6 +5498,7 @@ function initTripPlaylistArt() {
   if (tripPlaylistArtFetched) return;
   tripPlaylistArtFetched = true;
   TRIP_PLAYLIST_ITEMS.movies.forEach(item => {
+    if (item.art) return;
     (async () => {
       try {
         let movieId = item.tmdbId;
@@ -5521,6 +5522,7 @@ function initTripPlaylistArt() {
     })();
   });
   TRIP_PLAYLIST_ITEMS.music.forEach(item => {
+    if (item.art || !item.artQuery) return;
     (async () => {
       try {
         async function search(term) {
