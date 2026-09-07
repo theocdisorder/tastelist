@@ -3576,7 +3576,7 @@ function renderOtherFavGrid() {
   if (!el) return;
   const others = artists.slice(5);
   el.innerHTML = others.map((a) =>
-    `<div class="other-fav-card" id="ofav-card-${a.id}" onclick="toggleOtherFavTile(${a.id})" style="cursor:pointer;">
+    `<div class="other-fav-card" id="ofav-card-${a.id}" onclick="toggleOtherFavTile('${a.id}')" style="cursor:pointer;">
       <div class="other-fav-card-img-wrap" id="ofav-img-${a.id}">
         <div class="other-fav-card-placeholder">${esc(a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>
       </div>
@@ -3632,16 +3632,16 @@ function toggleOtherFavTile(artistId) {
   panel.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
       <div style="display:flex;align-items:center;gap:14px;padding:1.125rem 1.5rem;border-bottom:1px solid var(--border);">
-        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,${COLORS[artistId%COLORS.length]}cc,${COLORS[artistId%COLORS.length]});display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0;">${initials(a.name)}</div>
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,${COLORS[a.name.charCodeAt(0)%COLORS.length]}cc,${COLORS[a.name.charCodeAt(0)%COLORS.length]});display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0;">${initials(a.name)}</div>
         <div>
           <div style="font-size:16px;font-weight:600;">${esc(a.name)}</div>
           ${a.genre?`<div style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(a.genre)}</div>`:''}
         </div>
-        <button onclick="toggleOtherFavTile(${artistId})" style="margin-left:auto;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+        <button onclick="toggleOtherFavTile('${artistId}')" style="margin-left:auto;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
       </div>
-      ${ARTIST_WHY_INFLUENTIAL[a.id] ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
+      ${(a.whyInfluential || ARTIST_WHY_INFLUENTIAL[a.id]) ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
-        ${renderMentions(ARTIST_WHY_INFLUENTIAL[a.id])}
+        ${renderMentions(a.whyInfluential || ARTIST_WHY_INFLUENTIAL[a.id])}
       </div>` : ''}
       ${songs.length ? `<table class="songs-table">
         <thead><tr><th>#</th><th>Song</th><th>Album</th></tr></thead>
