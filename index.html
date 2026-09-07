@@ -1300,6 +1300,7 @@
         <button onclick="cancelTitleEdit()" class="editable-title-cancel">✕</button>
       </div>
     </div>
+    <div id="music-artist-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <p class="section-label">Top 5 Most Influential</p>
       <p class="section-hint">Tap for my favorite songs →</p>
@@ -2629,6 +2630,8 @@ async function loadFavoriteArtistsFromSupabase(userId) {
     }
     renderGrid();
     updateMusicProfile();
+    renderOtherFavGrid();
+    renderMusicControls();
     return true;
   } catch (e) {
     console.error('Failed to load favorite artists from Supabase, keeping hardcoded fallback:', e);
@@ -3112,10 +3115,163 @@ function setAlbumArt(id, album, idx) {
 
 let expandedArtistId = null;
 
+let musicEditMode = false;
+function toggleMusicEditMode() {
+  musicEditMode = !musicEditMode;
+  renderGrid();
+  renderOtherFavGrid();
+  renderMusicControls();
+}
+
+function renderMusicControls() {
+  const el = document.getElementById('music-artist-controls');
+  console.log('[DEBUG renderMusicControls]', { elFound: !!el, isOwnProfile, currentUser: currentUser?.email, viewedProfile });
+  if (!el) return;
+  if (!isOwnProfile) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${musicEditMode ? `<button onclick="openArtistItemForm()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add artist</button>` : ''}
+      <button onclick="toggleMusicEditMode()" style="font-size:11px;font-weight:600;background:${musicEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${musicEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+        ${musicEditMode ? '✓ Done editing' : '✎ Edit artists'}
+      </button>
+    </div>`;
+}
+
+// Looks up a default artist photo when someone adds an artist without pasting their own URL.
+// Tries TheAudioDB first (a purpose-built music database with artist photos), then falls back
+// to Wikipedia's page image — both are free, keyless (or shared-test-key), CORS-friendly APIs
+// callable directly from the browser.
+async function lookupArtistArt(name) {
+  try {
+    const res = await fetch(`https://www.theaudiodb.com/api/v1/json/123/search.php?s=${encodeURIComponent(name)}`);
+    const data = await res.json();
+    const hit = data.artists?.[0];
+    if (hit?.strArtistThumb) return { bandPhoto: hit.strArtistThumb, tilePhoto: hit.strArtistThumb };
+  } catch (e) {}
+  try {
+    const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(name)}&prop=pageimages&format=json&pithumbsize=800&origin=*`);
+    const data = await res.json();
+    const pages = data.query?.pages || {};
+    const page = Object.values(pages)[0];
+    if (page?.thumbnail?.source) return { bandPhoto: page.thumbnail.source, tilePhoto: page.thumbnail.source };
+  } catch (e) {}
+  return null;
+}
+
+let artistItemFormState = { id: null };
+
+function openArtistItemForm(artistId) {
+  if (!isOwnProfile) return;
+  artistItemFormState = { id: null };
+  document.getElementById('artist-item-modal-error').style.display = 'none';
+  document.getElementById('artist-item-name').value = '';
+  document.getElementById('artist-item-genre').value = '';
+  document.getElementById('artist-item-why').value = '';
+  document.getElementById('artist-item-photo').value = '';
+  document.getElementById('artist-item-modal-title').textContent = 'Add artist';
+
+  if (artistId !== undefined) {
+    const a = artists.find(x => x.id === artistId);
+    if (a) {
+      artistItemFormState.id = a.id;
+      document.getElementById('artist-item-modal-title').textContent = 'Edit artist';
+      document.getElementById('artist-item-name').value = a.name || '';
+      document.getElementById('artist-item-genre').value = a.genre || '';
+      document.getElementById('artist-item-why').value = a.whyInfluential || '';
+      document.getElementById('artist-item-photo').value = a.bandPhoto || '';
+    }
+  }
+  document.getElementById('artist-item-modal').style.display = 'flex';
+}
+
+function closeArtistItemModal() {
+  document.getElementById('artist-item-modal').style.display = 'none';
+}
+
+async function saveArtistItemForm() {
+  const name = document.getElementById('artist-item-name').value.trim();
+  const genre = document.getElementById('artist-item-genre').value.trim();
+  const why = document.getElementById('artist-item-why').value.trim();
+  let photo = document.getElementById('artist-item-photo').value.trim();
+  const errEl = document.getElementById('artist-item-modal-error');
+  errEl.style.display = 'none';
+
+  if (!name) {
+    errEl.textContent = 'Artist name is required.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!(await requireFreshSession())) {
+    errEl.textContent = SESSION_EXPIRED_MESSAGE;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const saveBtn = document.getElementById('artist-item-save-btn');
+  saveBtn.textContent = 'Saving…';
+  saveBtn.disabled = true;
+
+  let bandPhoto = photo, tilePhoto = photo;
+  if (!photo) {
+    const found = await lookupArtistArt(name);
+    if (found) { bandPhoto = found.bandPhoto; tilePhoto = found.tilePhoto; }
+  }
+
+  const row = { name, genre: genre || null, why_influential: why || null, band_photo: bandPhoto || null, tile_photo: tilePhoto || null };
+
+  try {
+    if (artistItemFormState.id) {
+      const { error } = await sb.from('favorite_artists').update(row).eq('id', artistItemFormState.id);
+      if (error) throw error;
+    } else {
+      row.user_id = currentUser.id;
+      row.sort_order = artists.length;
+      const { error } = await sb.from('favorite_artists').insert(row);
+      if (error) throw error;
+    }
+    closeArtistItemModal();
+    await loadFavoriteArtistsFromSupabase(currentUser.id);
+    renderOtherFavGrid();
+  } catch (e) {
+    errEl.textContent = e.message || 'Something went wrong saving this artist.';
+    errEl.style.display = 'block';
+  } finally {
+    saveBtn.textContent = 'Save';
+    saveBtn.disabled = false;
+  }
+}
+
+async function deleteArtistItem(artistId) {
+  if (!isOwnProfile) return;
+  const a = artists.find(x => x.id === artistId);
+  if (!a) return;
+  if (!confirm(`Remove "${a.name}" from your favorite artists?`)) return;
+  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  try {
+    const { error } = await sb.from('favorite_artists').delete().eq('id', artistId);
+    if (error) throw error;
+    await loadFavoriteArtistsFromSupabase(currentUser.id);
+    renderOtherFavGrid();
+  } catch (e) {
+    alert('Failed to delete: ' + (e.message || 'unknown error'));
+  }
+}
+
 function renderGrid() {
   const grid = document.getElementById('artist-grid');
+  if (!grid) return;
+  if (artists.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">No favorite artists added yet.${isOwnProfile ? ' Click "Edit artists" above to add your first one.' : ''}</div>`;
+    return;
+  }
   grid.innerHTML = artists.slice(0, 5).map((a, i) => {
-    return `<div class="artist-tile" id="tile-${a.id}" onclick="toggleArtistExpand('${a.id}', ${i})">
+    const editControls = (musicEditMode && isOwnProfile) ? `
+      <div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:3;">
+        <button onclick="event.stopPropagation(); openArtistItemForm('${a.id}')" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✎</button>
+        <button onclick="event.stopPropagation(); deleteArtistItem('${a.id}')" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✕</button>
+      </div>` : '';
+    return `<div class="artist-tile" id="tile-${a.id}" style="position:relative;" onclick="toggleArtistExpand('${a.id}', ${i})">
+      ${editControls}
       <div class="tile-img-wrap">
         ${a.tilePhoto
           ? `<img class="tile-img" id="tile-img-${a.id}" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="loadTileImgFallback('${a.id}')">`
@@ -3575,15 +3731,21 @@ function renderOtherFavGrid() {
   const el = document.getElementById('other-fav-grid');
   if (!el) return;
   const others = artists.slice(5);
-  el.innerHTML = others.map((a) =>
-    `<div class="other-fav-card" id="ofav-card-${a.id}" onclick="toggleOtherFavTile('${a.id}')" style="cursor:pointer;">
+  el.innerHTML = others.map((a) => {
+    const editControls = (musicEditMode && isOwnProfile) ? `
+      <div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:3;">
+        <button onclick="event.stopPropagation(); openArtistItemForm('${a.id}')" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✎</button>
+        <button onclick="event.stopPropagation(); deleteArtistItem('${a.id}')" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✕</button>
+      </div>` : '';
+    return `<div class="other-fav-card" id="ofav-card-${a.id}" onclick="toggleOtherFavTile('${a.id}')" style="cursor:pointer;position:relative;">
+      ${editControls}
       <div class="other-fav-card-img-wrap" id="ofav-img-${a.id}">
         <div class="other-fav-card-placeholder">${esc(a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>
       </div>
       <div class="other-fav-card-name">${esc(a.name)}</div>
       <div class="other-fav-card-genre">${esc(a.genre)}</div>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
   loadOtherFavTileImgsSequentially(others);
 }
 
@@ -7399,6 +7561,28 @@ renderTasteInfluences();
     <input id="friend-rec-art" type="text" placeholder="https://..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
 
     <button onclick="saveFriendRecForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+  </div>
+</div>
+
+<div id="artist-item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeArtistItemModal()">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
+    <button onclick="closeArtistItemModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+    <div id="artist-item-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add artist</div>
+    <div id="artist-item-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Artist name *</label>
+    <input id="artist-item-name" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Genre</label>
+    <input id="artist-item-genre" type="text" placeholder="e.g. Indie Rock" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Why they're influential to you</label>
+    <textarea id="artist-item-why" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;resize:vertical;"></textarea>
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Photo URL <span style="opacity:.7;">(optional — we'll look one up automatically if left blank)</span></label>
+    <input id="artist-item-photo" type="text" placeholder="https://..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
+
+    <button id="artist-item-save-btn" onclick="saveArtistItemForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
   </div>
 </div>
 
