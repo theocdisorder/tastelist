@@ -1218,7 +1218,10 @@
           <div id="profile-card-name" style="font-size:22px;font-weight:700;color:var(--text);line-height:1.2;">Sreya S.</div>
           <button id="edit-name-btn" onclick="editDisplayName()" style="display:none;box-sizing:border-box;width:24px;height:24px;padding:0;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:11px;line-height:1;cursor:pointer;flex-shrink:0;">✎</button>
         </div>
-        <div style="font-size:14px;color:var(--muted);margin-top:4px;">San Francisco, CA</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <div id="profile-card-location" style="font-size:14px;color:var(--muted);">San Francisco, CA</div>
+          <button id="edit-location-btn" onclick="editBio()" style="display:none;box-sizing:border-box;width:20px;height:20px;padding:0;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:10px;line-height:1;cursor:pointer;flex-shrink:0;">✎</button>
+        </div>
       </div>
     </div>
     <div id="profile-link-banner"></div>
@@ -1226,7 +1229,10 @@
 
     <!-- Taste in a sentence -->
     <div style="border-radius:14px;padding:24px 28px;background:linear-gradient(135deg,rgba(192,132,252,0.08),rgba(34,197,94,0.06));border:1px solid rgba(255,255,255,0.08);margin-bottom:2rem;">
-      <div style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:10px;">Taste in a sentence</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);">Taste in a sentence</div>
+        <button id="edit-sentence-btn" onclick="editTasteSentence()" style="display:none;box-sizing:border-box;width:20px;height:20px;padding:0;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:10px;line-height:1;cursor:pointer;flex-shrink:0;">✎</button>
+      </div>
       <div id="profile-sentence" style="font-size:18px;font-weight:500;line-height:1.5;color:var(--text);"></div>
     </div>
 
@@ -2453,7 +2459,7 @@ async function resolveViewedProfile() {
   if (usernameParam && sb) {
     try {
       const { data } = await sb.from('profiles')
-        .select('id, username, display_name')
+        .select('id, username, display_name, bio, taste_sentence')
         .eq('username', usernameParam)
         .maybeSingle();
       if (data) {
@@ -2469,7 +2475,7 @@ async function resolveViewedProfile() {
   }
 
   if (currentUser) {
-    viewedProfile = { id: currentUser.id, username: currentProfile?.username, display_name: currentProfile?.display_name };
+    viewedProfile = { id: currentUser.id, username: currentProfile?.username, display_name: currentProfile?.display_name, bio: currentProfile?.bio, taste_sentence: currentProfile?.taste_sentence };
     isOwnProfile = true;
   } else {
     viewedProfile = null;
@@ -2484,6 +2490,27 @@ function updateProfileHeaderAndBanner() {
   }
   const editBtn = document.getElementById('edit-name-btn');
   if (editBtn) editBtn.style.display = isOwnProfile ? 'inline-flex' : 'none';
+
+  const locationEl = document.getElementById('profile-card-location');
+  if (locationEl && viewedProfile) {
+    if (viewedProfile.bio) locationEl.textContent = viewedProfile.bio;
+    else if (isOwnProfile) locationEl.textContent = 'Add your location';
+    else locationEl.textContent = '';
+  }
+  const locationBtn = document.getElementById('edit-location-btn');
+  if (locationBtn) locationBtn.style.display = isOwnProfile ? 'inline-flex' : 'none';
+
+  // The auto-generated "Taste in a sentence" (computed elsewhere from favorite artists/movies/
+  // shows/books) only applies for the default account while nobody has written their own — a
+  // stored value always wins, and other accounts never show Sreya's version at all.
+  const sentenceEl = document.getElementById('profile-sentence');
+  if (sentenceEl && viewedProfile) {
+    if (viewedProfile.taste_sentence) sentenceEl.textContent = viewedProfile.taste_sentence;
+    else if (isOwnProfile) sentenceEl.textContent = 'Click ✎ to write your taste in a sentence.';
+    else sentenceEl.textContent = "Hasn't written one yet.";
+  }
+  const sentenceBtn = document.getElementById('edit-sentence-btn');
+  if (sentenceBtn) sentenceBtn.style.display = isOwnProfile ? 'inline-flex' : 'none';
   const banner = document.getElementById('profile-link-banner');
   if (!banner) return;
   if (isOwnProfile && viewedProfile?.username) {
@@ -2501,6 +2528,40 @@ function updateProfileHeaderAndBanner() {
       </div>`;
   } else {
     banner.innerHTML = '';
+  }
+}
+
+async function editBio() {
+  if (!isOwnProfile || !currentUser || !sb) return;
+  const current = viewedProfile?.bio || '';
+  const input = prompt('Enter your location or short bio line (e.g. "San Francisco, CA"):', current);
+  if (input === null) return;
+  const trimmed = input.trim();
+  try {
+    const { error } = await sb.from('profiles').update({ bio: trimmed || null }).eq('id', currentUser.id);
+    if (error) throw error;
+    viewedProfile.bio = trimmed;
+    if (currentProfile) currentProfile.bio = trimmed;
+    updateProfileHeaderAndBanner();
+  } catch (e) {
+    alert('Failed to update: ' + (e.message || 'unknown error'));
+  }
+}
+
+async function editTasteSentence() {
+  if (!isOwnProfile || !currentUser || !sb) return;
+  const current = viewedProfile?.taste_sentence || '';
+  const input = prompt('Describe your taste in one sentence:', current);
+  if (input === null) return;
+  const trimmed = input.trim();
+  try {
+    const { error } = await sb.from('profiles').update({ taste_sentence: trimmed || null }).eq('id', currentUser.id);
+    if (error) throw error;
+    viewedProfile.taste_sentence = trimmed;
+    if (currentProfile) currentProfile.taste_sentence = trimmed;
+    updateProfileHeaderAndBanner();
+  } catch (e) {
+    alert('Failed to update: ' + (e.message || 'unknown error'));
   }
 }
 
