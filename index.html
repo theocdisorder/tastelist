@@ -2603,11 +2603,45 @@ function updateAuthGate() {
   shell.style.display = showLanding ? 'none' : '';
 }
 
+async function loadFavoriteArtistsFromSupabase(userId) {
+  if (!sb || !userId) return false;
+  try {
+    const { data, error } = await sb.from('favorite_artists')
+      .select('*')
+      .eq('user_id', userId)
+      .order('sort_order', { ascending: true });
+    if (error || !data) return false;
+
+    if (data.length === 0) {
+      artists = [];
+    } else {
+      artists = data.map(row => ({
+        id: row.id, // Supabase UUID — every place that reads a.id already treats it as an opaque key
+        name: row.name,
+        genre: row.genre || '',
+        bandPhoto: row.band_photo || '',
+        tilePhoto: row.tile_photo || '',
+        heroPosition: row.hero_position || '',
+        bio: row.bio || '',
+        whyInfluential: row.why_influential || '',
+        songs: Array.isArray(row.songs) ? row.songs : [],
+      }));
+    }
+    renderGrid();
+    updateMusicProfile();
+    return true;
+  } catch (e) {
+    console.error('Failed to load favorite artists from Supabase, keeping hardcoded fallback:', e);
+    return false;
+  }
+}
+
 async function loadViewedProfileData() {
   if (!viewedProfile) return;
   await loadTasteListFromSupabase(viewedProfile.id);
   await loadFriendRecsFromSupabase(viewedProfile.id);
   await loadActivityFeedFromSupabase(viewedProfile.id);
+  await loadFavoriteArtistsFromSupabase(viewedProfile.id);
 }
 
 async function initAuth() {
@@ -3081,10 +3115,10 @@ let expandedArtistId = null;
 function renderGrid() {
   const grid = document.getElementById('artist-grid');
   grid.innerHTML = artists.slice(0, 5).map((a, i) => {
-    return `<div class="artist-tile" id="tile-${a.id}" onclick="toggleArtistExpand(${a.id}, ${i})">
+    return `<div class="artist-tile" id="tile-${a.id}" onclick="toggleArtistExpand('${a.id}', ${i})">
       <div class="tile-img-wrap">
         ${a.tilePhoto
-          ? `<img class="tile-img" id="tile-img-${a.id}" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="loadTileImgFallback(${a.id})">`
+          ? `<img class="tile-img" id="tile-img-${a.id}" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="loadTileImgFallback('${a.id}')">`
           : `<div class="tile-placeholder" id="tile-ph-${a.id}" style="aspect-ratio:4/3;height:auto">
               <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
             </div>`}
@@ -3138,19 +3172,19 @@ function toggleArtistExpand(artistId, tileIdx) {
   panel.innerHTML = `
     <div class="expand-header">
       <div class="expand-hero-wrap">
-        ${a.bandPhoto ? `<img class="expand-hero" src="${esc(a.bandPhoto)}" alt="${esc(a.name)}" style="object-position:${HERO_POS[a.id]||'center 20%'}" onerror="this.style.display='none'">` : ''}
+        ${a.bandPhoto ? `<img class="expand-hero" src="${esc(a.bandPhoto)}" alt="${esc(a.name)}" style="object-position:${a.heroPosition || HERO_POS[a.id] || 'center 20%'}" onerror="this.style.display='none'">` : ''}
         <div class="expand-hero-overlay">
           <div class="expand-hero-name">${esc(a.name)}</div>
           ${a.genre ? `<div class="expand-hero-genre">${esc(a.genre)}</div>` : ''}
         </div>
       </div>
       <div class="expand-actions">
-        <button class="expand-close" onclick="toggleArtistExpand(${artistId},${tileIdx})">✕</button>
+        <button class="expand-close" onclick="toggleArtistExpand('${artistId}',${tileIdx})">✕</button>
       </div>
     </div>
-    ${ARTIST_WHY_INFLUENTIAL[a.id] ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
+    ${(a.whyInfluential || ARTIST_WHY_INFLUENTIAL[a.id]) ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
       <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
-      ${renderMentions(ARTIST_WHY_INFLUENTIAL[a.id])}
+      ${renderMentions(a.whyInfluential || ARTIST_WHY_INFLUENTIAL[a.id])}
     </div>` : ''}
     ${songs.length ? `<table class="songs-table">
       <thead><tr><th>#</th><th>Song</th><th>Album</th><th>Listen</th></tr></thead>
