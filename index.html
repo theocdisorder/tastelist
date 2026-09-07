@@ -1214,7 +1214,10 @@
            alt="Sreya S."
            style="width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:center top;border:2px solid rgba(255,255,255,0.12);flex-shrink:0;">
       <div>
-        <div id="profile-card-name" style="font-size:22px;font-weight:700;color:var(--text);line-height:1.2;">Sreya S.</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div id="profile-card-name" style="font-size:22px;font-weight:700;color:var(--text);line-height:1.2;">Sreya S.</div>
+          <button id="edit-name-btn" onclick="editDisplayName()" style="display:none;width:24px;height:24px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:11px;cursor:pointer;">✎</button>
+        </div>
         <div style="font-size:14px;color:var(--muted);margin-top:4px;">San Francisco, CA</div>
       </div>
     </div>
@@ -2479,6 +2482,8 @@ function updateProfileHeaderAndBanner() {
   if (nameEl && viewedProfile) {
     nameEl.textContent = viewedProfile.display_name || viewedProfile.username || 'Sreya S.';
   }
+  const editBtn = document.getElementById('edit-name-btn');
+  if (editBtn) editBtn.style.display = isOwnProfile ? 'inline-flex' : 'none';
   const banner = document.getElementById('profile-link-banner');
   if (!banner) return;
   if (isOwnProfile && viewedProfile?.username) {
@@ -2496,6 +2501,25 @@ function updateProfileHeaderAndBanner() {
       </div>`;
   } else {
     banner.innerHTML = '';
+  }
+}
+
+async function editDisplayName() {
+  if (!isOwnProfile || !currentUser || !sb) return;
+  const current = viewedProfile?.display_name || '';
+  const input = prompt('Enter your display name (e.g. "Sreya S."):', current);
+  if (input === null) return; // cancelled
+  const trimmed = input.trim();
+  if (!trimmed) return;
+  try {
+    const { error } = await sb.from('profiles').update({ display_name: trimmed }).eq('id', currentUser.id);
+    if (error) throw error;
+    viewedProfile.display_name = trimmed;
+    if (currentProfile) currentProfile.display_name = trimmed;
+    updateProfileHeaderAndBanner();
+    refreshActivityFeeds(); // "posted by" attribution on activity cards also uses display_name
+  } catch (e) {
+    alert('Failed to update name: ' + (e.message || 'unknown error'));
   }
 }
 
