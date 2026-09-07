@@ -1142,7 +1142,10 @@
     <!-- What's New feed + Recommendations -->
     <div class="whatsnew-rec-grid">
       <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);">
-        <div style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:18px;">What's New</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px;">
+          <div style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);">What's New</div>
+          <div id="activity-feed-controls"></div>
+        </div>
         <div id="profile-feed" style="display:flex;flex-direction:column;gap:16px;max-height:640px;overflow-y:auto;padding-right:6px;"></div>
       </div>
 
@@ -2277,6 +2280,13 @@ async function initAuth() {
       await loadTasteListFromSupabase(currentUser.id);
       await loadFriendRecsFromSupabase(currentUser.id);
       await loadActivityFeedFromSupabase(currentUser.id);
+    } else {
+      editMode = false;
+      friendRecsEditMode = false;
+      activityEditMode = false;
+      renderTripPlaylist();
+      renderFriendRecs();
+      refreshActivityFeeds();
     }
   });
 }
@@ -5990,17 +6000,19 @@ function renderActivityFeed(containerId, filterFn) {
   const el = document.getElementById(containerId);
   if (!el) return;
   const items = filterFn ? ACTIVITY_FEED_ITEMS.filter(filterFn) : ACTIVITY_FEED_ITEMS;
-  const cardsHtml = items.map(item => activityCardHtml(item, ACTIVITY_FEED_ITEMS.indexOf(item))).join('');
-  if (containerId === 'profile-feed' && currentUser) {
-    const toggleHtml = `
-      <button onclick="toggleActivityEditMode()" style="align-self:flex-start;font-size:11px;font-weight:600;background:${activityEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${activityEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
-        ${activityEditMode ? '✓ Done editing' : '✎ Edit'}
-      </button>`;
-    const addHtml = activityEditMode ? `
-      <button onclick="openActivityItemForm()" style="font-size:12.5px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:10px;padding:10px;cursor:pointer;font-family:inherit;">+ Add update</button>` : '';
-    el.innerHTML = toggleHtml + cardsHtml + addHtml;
-  } else {
-    el.innerHTML = cardsHtml;
+  el.innerHTML = items.map(item => activityCardHtml(item, ACTIVITY_FEED_ITEMS.indexOf(item))).join('');
+
+  if (containerId === 'profile-feed') {
+    const controlsEl = document.getElementById('activity-feed-controls');
+    if (controlsEl) {
+      controlsEl.innerHTML = currentUser ? `
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${activityEditMode ? `<button onclick="openActivityItemForm()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add update</button>` : ''}
+          <button onclick="toggleActivityEditMode()" style="font-size:11px;font-weight:600;background:${activityEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${activityEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+            ${activityEditMode ? '✓ Done editing' : '✎ Edit'}
+          </button>
+        </div>` : '';
+    }
   }
 }
 
