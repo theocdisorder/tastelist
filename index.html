@@ -1754,6 +1754,184 @@ let currentProfile = null;
 let authMode = 'signin'; // or 'signup'
 let editMode = false;
 let currentTasteListId = null;
+let friendRecsEditMode = false;
+let activityEditMode = false;
+
+function toggleFriendRecsEditMode() {
+  friendRecsEditMode = !friendRecsEditMode;
+  renderFriendRecs();
+}
+
+let friendRecFormState = { id: null };
+
+function openFriendRecForm(idx) {
+  friendRecFormState = { id: null };
+  document.getElementById('friend-rec-modal-error').style.display = 'none';
+  document.getElementById('friend-rec-title').value = '';
+  document.getElementById('friend-rec-type').value = 'film';
+  document.getElementById('friend-rec-from').value = '';
+  document.getElementById('friend-rec-art').value = '';
+  document.getElementById('friend-rec-modal-title').textContent = 'Add recommendation';
+
+  if (idx !== undefined) {
+    const item = FRIEND_RECOMMENDATIONS[idx];
+    if (item) {
+      friendRecFormState.id = item.id;
+      document.getElementById('friend-rec-modal-title').textContent = 'Edit recommendation';
+      document.getElementById('friend-rec-title').value = item.title || '';
+      document.getElementById('friend-rec-type').value = item.type || 'film';
+      document.getElementById('friend-rec-from').value = item.from || '';
+      document.getElementById('friend-rec-art').value = item.art || '';
+    }
+  }
+  document.getElementById('friend-rec-modal').style.display = 'flex';
+}
+
+function closeFriendRecModal() {
+  document.getElementById('friend-rec-modal').style.display = 'none';
+}
+
+async function saveFriendRecForm() {
+  const title = document.getElementById('friend-rec-title').value.trim();
+  const type = document.getElementById('friend-rec-type').value;
+  const from = document.getElementById('friend-rec-from').value.trim();
+  const art = document.getElementById('friend-rec-art').value.trim();
+  const errEl = document.getElementById('friend-rec-modal-error');
+  errEl.style.display = 'none';
+
+  if (!title) {
+    errEl.textContent = 'Title is required.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!sb || !currentUser) {
+    errEl.textContent = 'Not signed in — try refreshing the page.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const row = { title, type, from_name: from || null, art_url: art || null };
+
+  try {
+    if (friendRecFormState.id) {
+      const { error } = await sb.from('friend_recs').update(row).eq('id', friendRecFormState.id);
+      if (error) throw error;
+    } else {
+      row.user_id = currentUser.id;
+      const { error } = await sb.from('friend_recs').insert(row);
+      if (error) throw error;
+    }
+    closeFriendRecModal();
+    await loadFriendRecsFromSupabase(currentUser.id);
+  } catch (e) {
+    errEl.textContent = e.message || 'Something went wrong saving this.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function deleteFriendRec(idx) {
+  const item = FRIEND_RECOMMENDATIONS[idx];
+  if (!item || !item.id) return;
+  if (!confirm(`Remove "${item.title}"?`)) return;
+  try {
+    const { error } = await sb.from('friend_recs').delete().eq('id', item.id);
+    if (error) throw error;
+    await loadFriendRecsFromSupabase(currentUser.id);
+  } catch (e) {
+    alert('Failed to delete: ' + (e.message || 'unknown error'));
+  }
+}
+function toggleActivityEditMode() {
+  activityEditMode = !activityEditMode;
+  refreshActivityFeeds();
+}
+
+let activityItemFormState = { id: null };
+
+function openActivityItemForm(globalIndex) {
+  activityItemFormState = { id: null };
+  document.getElementById('activity-item-modal-error').style.display = 'none';
+  document.getElementById('activity-item-label').value = '';
+  document.getElementById('activity-item-type').value = 'movie';
+  document.getElementById('activity-item-sub').value = '';
+  document.getElementById('activity-item-note').value = '';
+  document.getElementById('activity-item-art').value = '';
+  document.getElementById('activity-item-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('activity-item-modal-title').textContent = 'Add update';
+
+  if (globalIndex !== undefined) {
+    const item = ACTIVITY_FEED_ITEMS[globalIndex];
+    if (item) {
+      activityItemFormState.id = item.id;
+      document.getElementById('activity-item-modal-title').textContent = 'Edit update';
+      document.getElementById('activity-item-label').value = item.label || '';
+      document.getElementById('activity-item-type').value = item.type || 'movie';
+      document.getElementById('activity-item-sub').value = item.sub || '';
+      document.getElementById('activity-item-note').value = item.note || '';
+      document.getElementById('activity-item-art').value = item.art || '';
+      document.getElementById('activity-item-date').value = item.rawDate || new Date().toISOString().slice(0, 10);
+    }
+  }
+  document.getElementById('activity-item-modal').style.display = 'flex';
+}
+
+function closeActivityItemModal() {
+  document.getElementById('activity-item-modal').style.display = 'none';
+}
+
+async function saveActivityItemForm() {
+  const label = document.getElementById('activity-item-label').value.trim();
+  const type = document.getElementById('activity-item-type').value;
+  const sub = document.getElementById('activity-item-sub').value.trim();
+  const note = document.getElementById('activity-item-note').value.trim();
+  const date = document.getElementById('activity-item-date').value;
+  const art = document.getElementById('activity-item-art').value.trim();
+  const errEl = document.getElementById('activity-item-modal-error');
+  errEl.style.display = 'none';
+
+  if (!label || !date) {
+    errEl.textContent = 'Title and date are required.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!sb || !currentUser) {
+    errEl.textContent = 'Not signed in — try refreshing the page.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const row = { label, type, sub: sub || null, note: note || null, activity_date: date, art_url: art || null };
+
+  try {
+    if (activityItemFormState.id) {
+      const { error } = await sb.from('activity_feed').update(row).eq('id', activityItemFormState.id);
+      if (error) throw error;
+    } else {
+      row.user_id = currentUser.id;
+      const { error } = await sb.from('activity_feed').insert(row);
+      if (error) throw error;
+    }
+    closeActivityItemModal();
+    activityFeedArtFetched = false;
+    await loadActivityFeedFromSupabase(currentUser.id);
+  } catch (e) {
+    errEl.textContent = e.message || 'Something went wrong saving this.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function deleteActivityItem(globalIndex) {
+  const item = ACTIVITY_FEED_ITEMS[globalIndex];
+  if (!item || !item.id) return;
+  if (!confirm(`Remove "${item.label}"?`)) return;
+  try {
+    const { error } = await sb.from('activity_feed').delete().eq('id', item.id);
+    if (error) throw error;
+    await loadActivityFeedFromSupabase(currentUser.id);
+  } catch (e) {
+    alert('Failed to delete: ' + (e.message || 'unknown error'));
+  }
+}
 
 function toggleEditMode() {
   editMode = !editMode;
@@ -1999,6 +2177,7 @@ async function loadFriendRecsFromSupabase(userId) {
     FRIEND_RECOMMENDATIONS.length = 0;
     data.forEach(row => {
       FRIEND_RECOMMENDATIONS.push({
+        id: row.id,
         title: row.title,
         type: row.type,
         from: row.from_name || undefined,
@@ -2046,6 +2225,7 @@ async function loadActivityFeedFromSupabase(userId) {
     data.forEach(row => {
       const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
       const item = {
+        id: row.id,
         label: row.label,
         sub: row.sub || '',
         color: meta.color,
@@ -2054,11 +2234,16 @@ async function loadActivityFeedFromSupabase(userId) {
         type: row.type,
         note: row.note || '',
         timestamp: formatActivityDate(row.activity_date),
+        rawDate: row.activity_date,
         art: row.art_url || '',
       };
       if (row.tmdb_id) {
         if (row.type === 'tv') item.tmdbTvId = row.tmdb_id;
         else item.tmdbId = row.tmdb_id;
+      } else if (row.type === 'tv') {
+        item.tmdbTvQuery = row.label;
+      } else if (row.type === 'movie') {
+        item.tmdbQuery = row.label;
       }
       ACTIVITY_FEED_ITEMS.push(item);
     });
@@ -5771,7 +5956,13 @@ function activityCardHtml(item, globalIndex) {
     : (item.art
       ? `<img src="${item.art}" class="activity-card-art-img" style="display:block;object-fit:cover;" onerror="this.style.display='none'; handleActivityArtError(${globalIndex})">`
       : `<div class="activity-card-art-img" style="background:${iconColor}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(iconType,42)}</div>`);
-  return `<div class="activity-card" onclick="openActivitySummary(${globalIndex})" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);" onmouseover="this.style.borderColor='${iconColor}55'" onmouseout="this.style.borderColor='var(--border)'">
+  const editControls = activityEditMode ? `
+    <div style="position:absolute;top:8px;right:8px;display:flex;gap:5px;z-index:3;">
+      <button onclick="event.stopPropagation(); openActivityItemForm(${globalIndex})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✎</button>
+      <button onclick="event.stopPropagation(); deleteActivityItem(${globalIndex})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✕</button>
+    </div>` : '';
+  return `<div class="activity-card" style="position:relative;cursor:pointer;background:var(--surface2);border:1px solid var(--border);" onclick="${activityEditMode ? '' : `openActivitySummary(${globalIndex})`}" onmouseover="this.style.borderColor='${iconColor}55'" onmouseout="this.style.borderColor='var(--border)'">
+    ${editControls}
     <div class="activity-card-art">
       ${art}
     </div>
@@ -5792,12 +5983,25 @@ function activityCardHtml(item, globalIndex) {
 
 // Renders into any container by id, optionally filtered (e.g. only music items). Uses each item's
 // index in the master ACTIVITY_FEED_ITEMS array (not the filtered position) so the summary modal
-// always opens the right item regardless of which feed it was clicked from.
+// always opens the right item regardless of which feed it was clicked from. Edit controls (toggle +
+// add button) only render on the main 'profile-feed' container, not the smaller per-tab feeds that
+// share the same underlying data, to avoid duplicate controls scattered across the site.
 function renderActivityFeed(containerId, filterFn) {
   const el = document.getElementById(containerId);
   if (!el) return;
   const items = filterFn ? ACTIVITY_FEED_ITEMS.filter(filterFn) : ACTIVITY_FEED_ITEMS;
-  el.innerHTML = items.map(item => activityCardHtml(item, ACTIVITY_FEED_ITEMS.indexOf(item))).join('');
+  const cardsHtml = items.map(item => activityCardHtml(item, ACTIVITY_FEED_ITEMS.indexOf(item))).join('');
+  if (containerId === 'profile-feed' && currentUser) {
+    const toggleHtml = `
+      <button onclick="toggleActivityEditMode()" style="align-self:flex-start;font-size:11px;font-weight:600;background:${activityEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${activityEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+        ${activityEditMode ? '✓ Done editing' : '✎ Edit'}
+      </button>`;
+    const addHtml = activityEditMode ? `
+      <button onclick="openActivityItemForm()" style="font-size:12.5px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:10px;padding:10px;cursor:pointer;font-family:inherit;">+ Add update</button>` : '';
+    el.innerHTML = toggleHtml + cardsHtml + addHtml;
+  } else {
+    el.innerHTML = cardsHtml;
+  }
 }
 
 // Quick "what is this?" summary popup for an activity feed item — fetched lazily on first click
@@ -5983,8 +6187,14 @@ function refreshActivityFeeds() {
 function renderFriendRecs() {
   const el = document.getElementById('friend-recs');
   if (!el) return;
+  const editToggleHtml = currentUser ? `
+    <button onclick="toggleFriendRecsEditMode()" style="font-size:11px;font-weight:600;background:${friendRecsEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${friendRecsEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;margin-bottom:10px;">
+      ${friendRecsEditMode ? '✓ Done editing' : '✎ Edit'}
+    </button>` : '';
+  const addBtnHtml = friendRecsEditMode ? `
+    <button onclick="openFriendRecForm()" style="font-size:12.5px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:10px;padding:10px;cursor:pointer;font-family:inherit;">+ Add recommendation</button>` : '';
   if (!FRIEND_RECOMMENDATIONS.length) {
-    el.innerHTML = `<div style="font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">Nothing here yet — recommendations from friends will show up in this list.</div>`;
+    el.innerHTML = editToggleHtml + `<div style="font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">Nothing here yet — recommendations from friends will show up in this list.</div>` + addBtnHtml;
     return;
   }
   const typeLabels = { film: 'Movies', tv: 'TV Shows', book: 'Books', song: 'Music', album: 'Music' };
@@ -5994,7 +6204,7 @@ function renderFriendRecs() {
     const t = MEDIA_ICONS[r.type] ? r.type : 'song';
     (groups[t] = groups[t] || []).push(r);
   });
-  el.innerHTML = order.filter(t => groups[t]).map(t => {
+  el.innerHTML = editToggleHtml + order.filter(t => groups[t]).map(t => {
     const iconColor = (MEDIA_ICONS[t] || MEDIA_ICONS.music).color;
     const items = groups[t].map(r => {
       const idx = FRIEND_RECOMMENDATIONS.indexOf(r);
@@ -6004,6 +6214,11 @@ function renderFriendRecs() {
              <img src="${r.art}" style="position:relative;width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">
            </div>`
         : `<span style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;background:${iconColor}18;color:${iconColor};flex-shrink:0;">${badgeIcon(t,17)}</span>`;
+      const editControls = friendRecsEditMode ? `
+        <div style="display:flex;gap:5px;flex-shrink:0;">
+          <button onclick="openFriendRecForm(${idx})" style="width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);font-size:11px;cursor:pointer;">✎</button>
+          <button onclick="deleteFriendRec(${idx})" style="width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);font-size:11px;cursor:pointer;">✕</button>
+        </div>` : '';
       return `
       <div style="padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,${iconColor}14,${iconColor}08);border:1px solid ${iconColor}2a;display:flex;align-items:center;gap:12px;">
         ${thumb}
@@ -6012,13 +6227,14 @@ function renderFriendRecs() {
           ${r.from ? `<div style="font-size:11px;color:var(--muted);margin-top:3px;">Rec'd by ${esc(abbreviateName(r.from))}</div>` : ''}
           ${r.note ? `<div style="font-size:11.5px;color:var(--text);opacity:.8;line-height:1.4;margin-top:3px;">${esc(r.note)}</div>` : ''}
         </div>
+        ${editControls}
       </div>`;
     }).join('');
     return `<div>
       <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${iconColor};opacity:.75;margin-bottom:8px;">${typeLabels[t]}</div>
       <div style="display:flex;flex-direction:column;gap:10px;">${items}</div>
     </div>`;
-  }).join('<div style="height:6px;"></div>');
+  }).join('<div style="height:6px;"></div>') + (addBtnHtml ? `<div style="margin-top:6px;">${addBtnHtml}</div>` : '');
 }
 
 // Fetches poster/cover art for each recommendation that doesn't already have a static one —
@@ -6027,8 +6243,16 @@ async function loadFriendRecArt() {
   for (const r of FRIEND_RECOMMENDATIONS) {
     if (r.art) continue;
     try {
-      if (r.tmdbId) {
-        const detail = r.type === 'tv' ? await fetchTVDetail(r.tmdbId) : await fetchMovieDetail(r.tmdbId);
+      if (r.type === 'film' || r.type === 'tv') {
+        let tmdbId = r.tmdbId;
+        if (!tmdbId) {
+          const endpoint = r.type === 'tv' ? 'tv' : 'movie';
+          const res = await tmdbFetch(`/search/${endpoint}?query=${encodeURIComponent(r.title)}&page=1`);
+          const data = await res.json();
+          tmdbId = data.results?.[0]?.id;
+        }
+        if (!tmdbId) continue;
+        const detail = r.type === 'tv' ? await fetchTVDetail(tmdbId) : await fetchMovieDetail(tmdbId);
         if (detail.poster) {
           r.art = `${TMDB_IMG}${detail.poster}`;
           renderFriendRecs();
@@ -6709,6 +6933,65 @@ renderTasteInfluences();
 </script>
 
 <!-- Activity Feed item summary modal -->
+<div id="activity-item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeActivityItemModal()">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
+    <button onclick="closeActivityItemModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+    <div id="activity-item-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add update</div>
+    <div id="activity-item-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Title *</label>
+    <input id="activity-item-label" type="text" placeholder="e.g. The Odyssey" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Type *</label>
+    <select id="activity-item-type" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+      <option value="movie">Movie</option>
+      <option value="tv">TV Show</option>
+      <option value="book">Book</option>
+      <option value="song">Song</option>
+    </select>
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Subtitle <span style="opacity:.7;">(e.g. "Watched", "Author · Finished reading")</span></label>
+    <input id="activity-item-sub" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Your note</label>
+    <textarea id="activity-item-note" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;resize:vertical;"></textarea>
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Date *</label>
+    <input id="activity-item-date" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Cover / poster / art URL <span style="opacity:.7;">(optional for movies & TV — will try to auto-resolve if left blank; books/songs won't auto-fetch, paste a direct link)</span></label>
+    <input id="activity-item-art" type="text" placeholder="https://..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
+
+    <button onclick="saveActivityItemForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+  </div>
+</div>
+
+<div id="friend-rec-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeFriendRecModal()">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:400px;width:100%;padding:24px;position:relative;">
+    <button onclick="closeFriendRecModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+    <div id="friend-rec-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add recommendation</div>
+    <div id="friend-rec-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Title *</label>
+    <input id="friend-rec-title" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Type *</label>
+    <select id="friend-rec-type" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+      <option value="film">Movie</option>
+      <option value="tv">TV Show</option>
+      <option value="book">Book</option>
+    </select>
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Recommended by</label>
+    <input id="friend-rec-from" type="text" placeholder="e.g. Subha" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Cover / poster URL <span style="opacity:.7;">(optional — movies/TV can auto-resolve if left blank)</span></label>
+    <input id="friend-rec-art" type="text" placeholder="https://..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
+
+    <button onclick="saveFriendRecForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+  </div>
+</div>
+
 <div id="taste-item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeTasteItemModal()">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:400px;width:100%;padding:24px;position:relative;">
     <button onclick="closeTasteItemModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
