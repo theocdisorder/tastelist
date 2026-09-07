@@ -1214,10 +1214,11 @@
            alt="Sreya S."
            style="width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:center top;border:2px solid rgba(255,255,255,0.12);flex-shrink:0;">
       <div>
-        <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1.2;">Sreya S.</div>
+        <div id="profile-card-name" style="font-size:22px;font-weight:700;color:var(--text);line-height:1.2;">Sreya S.</div>
         <div style="font-size:14px;color:var(--muted);margin-top:4px;">San Francisco, CA</div>
       </div>
     </div>
+    <div id="profile-link-banner"></div>
 
 
     <!-- Taste in a sentence -->
@@ -1854,6 +1855,8 @@ let editMode = false;
 let currentTasteListId = null;
 let friendRecsEditMode = false;
 let activityEditMode = false;
+let viewedProfile = null; // the profile whose content is currently displayed (self or someone else)
+let isOwnProfile = false; // whether the signed-in user can edit what's shown (viewing their own profile)
 
 function toggleFriendRecsEditMode() {
   friendRecsEditMode = !friendRecsEditMode;
@@ -2438,15 +2441,88 @@ async function loadLandingMovieTiles() {
   }
 }
 
+// Determines whose profile content should be displayed: someone specific via ?u=username in
+// the URL (works whether the viewer is signed in or not), or the signed-in user's own profile
+// as the default, or nothing (landing page shows) if signed out with no ?u= param.
+async function resolveViewedProfile() {
+  const usernameParam = new URLSearchParams(window.location.search).get('u');
+
+  if (usernameParam && sb) {
+    try {
+      const { data } = await sb.from('profiles')
+        .select('id, username, display_name')
+        .eq('username', usernameParam)
+        .maybeSingle();
+      if (data) {
+        viewedProfile = data;
+        isOwnProfile = !!(currentUser && currentUser.id === data.id);
+        return;
+      }
+      console.warn('No profile found for username:', usernameParam);
+    } catch (e) {
+      console.error('Failed to look up profile by username:', e);
+    }
+    // Falls through to default behavior below if the lookup failed or the username doesn't exist
+  }
+
+  if (currentUser) {
+    viewedProfile = { id: currentUser.id, username: currentProfile?.username, display_name: currentProfile?.display_name };
+    isOwnProfile = true;
+  } else {
+    viewedProfile = null;
+    isOwnProfile = false;
+  }
+}
+
+function updateProfileHeaderAndBanner() {
+  const nameEl = document.getElementById('profile-card-name');
+  if (nameEl && viewedProfile) {
+    nameEl.textContent = viewedProfile.display_name || viewedProfile.username || 'Sreya S.';
+  }
+  const banner = document.getElementById('profile-link-banner');
+  if (!banner) return;
+  if (isOwnProfile && viewedProfile?.username) {
+    const link = `${window.location.origin}${window.location.pathname}?u=${encodeURIComponent(viewedProfile.username)}`;
+    banner.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:-8px 0 20px;">
+        <span style="font-size:12px;color:var(--muted);">Your public profile:</span>
+        <code style="font-size:12px;color:var(--text);background:var(--surface2);padding:3px 8px;border-radius:6px;">${esc(link)}</code>
+        <button onclick="copyProfileLink(this, '${link}')" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;">Copy link</button>
+      </div>`;
+  } else if (!isOwnProfile && viewedProfile) {
+    banner.innerHTML = `
+      <div style="font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin:-8px 0 20px;display:inline-block;">
+        👀 You're viewing ${esc(viewedProfile.display_name || viewedProfile.username || 'this')}'s public profile
+      </div>`;
+  } else {
+    banner.innerHTML = '';
+  }
+}
+
+function copyProfileLink(btn, link) {
+  navigator.clipboard.writeText(link).then(() => {
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  });
+}
+
 function updateAuthGate() {
   const landing = document.getElementById('landing-page');
   const shell = document.getElementById('app-content');
   if (!landing || !shell) return;
-  // If Supabase isn't configured, don't gate anything — fall back to showing the full site
-  // (matches how the rest of the app degrades gracefully when auth isn't set up).
-  const showLanding = supabaseConfigured && !currentUser;
+  // Show the app whenever there's a profile to display — either the signed-in user's own
+  // (default), or someone else's public profile via ?u=username (works even signed out).
+  const showLanding = supabaseConfigured && !viewedProfile;
   landing.style.display = showLanding ? 'block' : 'none';
   shell.style.display = showLanding ? 'none' : '';
+}
+
+async function loadViewedProfileData() {
+  if (!viewedProfile) return;
+  await loadTasteListFromSupabase(viewedProfile.id);
+  await loadFriendRecsFromSupabase(viewedProfile.id);
+  await loadActivityFeedFromSupabase(viewedProfile.id);
 }
 
 async function initAuth() {
@@ -2462,23 +2538,21 @@ async function initAuth() {
     currentUser = null;
     console.error('Auth check failed, treating as signed out:', e);
   }
+  await resolveViewedProfile();
   renderAuthWidget();
   updateAuthGate();
-  if (currentUser) {
-    await loadTasteListFromSupabase(currentUser.id);
-    await loadFriendRecsFromSupabase(currentUser.id);
-    await loadActivityFeedFromSupabase(currentUser.id);
-  }
+  updateProfileHeaderAndBanner();
+  await loadViewedProfileData();
 
   sb.auth.onAuthStateChange(async (event, session) => {
     currentUser = session?.user || null;
     await loadCurrentProfile();
+    await resolveViewedProfile();
     renderAuthWidget();
     updateAuthGate();
-    if (currentUser) {
-      await loadTasteListFromSupabase(currentUser.id);
-      await loadFriendRecsFromSupabase(currentUser.id);
-      await loadActivityFeedFromSupabase(currentUser.id);
+    updateProfileHeaderAndBanner();
+    if (viewedProfile) {
+      await loadViewedProfileData();
     } else {
       editMode = false;
       friendRecsEditMode = false;
@@ -5941,7 +6015,7 @@ function renderTripPlaylist() {
   // Varying tile heights, deterministic per position, for a Pinterest-style waterfall within each section
   const heights = [230, 165, 270, 190, 245, 205, 255, 175, 215, 235, 190, 225];
 
-  const editToggleHtml = currentUser ? `
+  const editToggleHtml = isOwnProfile ? `
     <button onclick="toggleEditMode()" style="font-size:11.5px;font-weight:600;background:${editMode ? 'var(--accent)' : 'var(--surface2)'};color:${editMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;margin-bottom:16px;">
       ${editMode ? '✓ Done editing' : '✎ Edit list'}
     </button>` : '';
@@ -5949,7 +6023,7 @@ function renderTripPlaylist() {
   let globalIndex = 0;
   const isEmpty = TRIP_PLAYLIST_CATEGORIES.every(c => TRIP_PLAYLIST_ITEMS[c.key].length === 0);
   if (isEmpty && !editMode) {
-    el.innerHTML = editToggleHtml + `<div style="font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">Nothing published here yet.${currentUser ? ' Click "Edit list" above to add your first item.' : ''}</div>`;
+    el.innerHTML = editToggleHtml + `<div style="font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">Nothing published here yet.${isOwnProfile ? ' Click "Edit list" above to add your first item.' : ''}</div>`;
     return;
   }
   el.innerHTML = editToggleHtml + TRIP_PLAYLIST_CATEGORIES.map(c => {
@@ -5962,7 +6036,7 @@ function renderTripPlaylist() {
         ? `background-image:url('${item.art}');`
         : `background:${cat.color}20;display:flex;align-items:center;justify-content:center;`;
       const placeholder = !item.art ? `<span style="font-size:10px;font-weight:600;letter-spacing:.08em;color:${cat.color};opacity:.7;">${cat.label.toUpperCase()}</span>` : '';
-      const editControls = editMode ? `
+      const editControls = (editMode && isOwnProfile) ? `
           <div style="position:absolute;top:8px;right:8px;display:flex;gap:5px;z-index:3;">
             <button onclick="event.stopPropagation(); openTasteItemForm('${c.key}', ${idx})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✎</button>
             <button onclick="event.stopPropagation(); deleteTasteItem(${idx})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✕</button>
@@ -5979,7 +6053,7 @@ function renderTripPlaylist() {
           </div>
         </div>`;
     }).join('');
-    const addTile = editMode ? `
+    const addTile = (editMode && isOwnProfile) ? `
         <div class="collage-card" onclick="openTasteItemForm('${c.key}')" role="button" tabindex="0" style="display:flex;align-items:center;justify-content:center;min-height:120px;border:1.5px dashed var(--border);background:transparent;">
           <span style="font-size:13px;color:var(--muted);font-weight:600;">+ Add ${cat.singular}</span>
         </div>` : '';
@@ -6170,7 +6244,7 @@ function activityCardHtml(item, globalIndex) {
     : (item.art
       ? `<img src="${item.art}" class="activity-card-art-img" style="display:block;object-fit:cover;" onerror="this.style.display='none'; handleActivityArtError(${globalIndex})">`
       : `<div class="activity-card-art-img" style="background:${iconColor}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(iconType,42)}</div>`);
-  const editControls = activityEditMode ? `
+  const editControls = (activityEditMode && isOwnProfile) ? `
     <div style="position:absolute;top:8px;right:8px;display:flex;gap:5px;z-index:3;">
       <button onclick="event.stopPropagation(); openActivityItemForm(${globalIndex})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✎</button>
       <button onclick="event.stopPropagation(); deleteActivityItem(${globalIndex})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✕</button>
@@ -6209,7 +6283,7 @@ function renderActivityFeed(containerId, filterFn) {
   if (containerId === 'profile-feed') {
     const controlsEl = document.getElementById('activity-feed-controls');
     if (controlsEl) {
-      controlsEl.innerHTML = currentUser ? `
+      controlsEl.innerHTML = isOwnProfile ? `
         <div style="display:flex;align-items:center;gap:8px;">
           ${activityEditMode ? `<button onclick="openActivityItemForm()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add update</button>` : ''}
           <button onclick="toggleActivityEditMode()" style="font-size:11px;font-weight:600;background:${activityEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${activityEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
@@ -6403,11 +6477,11 @@ function refreshActivityFeeds() {
 function renderFriendRecs() {
   const el = document.getElementById('friend-recs');
   if (!el) return;
-  const editToggleHtml = currentUser ? `
+  const editToggleHtml = isOwnProfile ? `
     <button onclick="toggleFriendRecsEditMode()" style="font-size:11px;font-weight:600;background:${friendRecsEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${friendRecsEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;margin-bottom:10px;">
       ${friendRecsEditMode ? '✓ Done editing' : '✎ Edit'}
     </button>` : '';
-  const addBtnHtml = friendRecsEditMode ? `
+  const addBtnHtml = (friendRecsEditMode && isOwnProfile) ? `
     <button onclick="openFriendRecForm()" style="font-size:12.5px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:10px;padding:10px;cursor:pointer;font-family:inherit;">+ Add recommendation</button>` : '';
   if (!FRIEND_RECOMMENDATIONS.length) {
     el.innerHTML = editToggleHtml + `<div style="font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">Nothing here yet — recommendations from friends will show up in this list.</div>` + addBtnHtml;
@@ -6430,7 +6504,7 @@ function renderFriendRecs() {
              <img src="${r.art}" style="position:relative;width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">
            </div>`
         : `<span style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;background:${iconColor}18;color:${iconColor};flex-shrink:0;">${badgeIcon(t,17)}</span>`;
-      const editControls = friendRecsEditMode ? `
+      const editControls = (friendRecsEditMode && isOwnProfile) ? `
         <div style="display:flex;gap:5px;flex-shrink:0;">
           <button onclick="openFriendRecForm(${idx})" style="width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);font-size:11px;cursor:pointer;">✎</button>
           <button onclick="deleteFriendRec(${idx})" style="width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);font-size:11px;cursor:pointer;">✕</button>
