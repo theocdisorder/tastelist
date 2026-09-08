@@ -3990,26 +3990,31 @@ function closeAlbumItemModal() {
 // edits), so it never overwrites a tracklist someone already has.
 async function fetchAlbumTracklist(name, artist, attempt = 1) {
   const artistFirstWord = artist.toLowerCase().split(' ')[0];
+  console.log(`[DEBUG fetchAlbumTracklist] attempt ${attempt} starting for "${name}" / "${artist}"`);
   try {
     const q = encodeURIComponent(`${name} ${artist}`);
     const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=album&limit=10`);
     const data = await res.json();
+    console.log(`[DEBUG fetchAlbumTracklist] attempt ${attempt} search result count:`, data.results?.length, data.results?.map(r=>r.collectionName));
     const hit = (data.results || []).find(r => isAlbumArtMatch(r, name, artistFirstWord));
     if (!hit?.collectionId) {
-      // iTunes' search API occasionally returns an empty result set for a query that works fine
-      // moments later — retry a couple of times with a short delay before giving up for real.
+      console.log(`[DEBUG fetchAlbumTracklist] attempt ${attempt} no match found`);
       if (attempt < 3) {
         await new Promise(resolve => setTimeout(resolve, 600));
         return fetchAlbumTracklist(name, artist, attempt + 1);
       }
+      console.log(`[DEBUG fetchAlbumTracklist] giving up after ${attempt} attempts`);
       return [];
     }
+    console.log(`[DEBUG fetchAlbumTracklist] attempt ${attempt} matched:`, hit.collectionName, hit.collectionId);
     const lookupRes = await fetch(`https://itunes.apple.com/lookup?id=${hit.collectionId}&entity=song`);
     const lookupData = await lookupRes.json();
+    console.log(`[DEBUG fetchAlbumTracklist] lookup returned`, lookupData.results?.length, 'items');
     return (lookupData.results || [])
       .filter(r => r.wrapperType === 'track')
       .map(r => ({ title: r.trackName, album: name, art: '', apple: r.trackViewUrl || '', spotify: '' }));
   } catch (e) {
+    console.log(`[DEBUG fetchAlbumTracklist] attempt ${attempt} threw an error:`, e);
     return [];
   }
 }
