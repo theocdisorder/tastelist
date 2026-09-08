@@ -1300,9 +1300,11 @@
         <button onclick="cancelTitleEdit()" class="editable-title-cancel">✕</button>
       </div>
     </div>
-    <div id="music-artist-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
-      <p class="section-label">Top 5 Most Influential</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <p class="section-label" style="margin:0;">Top 5 Most Influential</p>
+        <div id="music-artist-controls"></div>
+      </div>
       <p class="section-hint">Tap for my favorite songs →</p>
       <div class="artist-grid" id="artist-grid"></div>
       <div class="tile-search-panel" id="tile-search-panel" style="display:none;">
@@ -1327,6 +1329,7 @@
       <h2 class="music-section-title">Albums I ❤️</h2>
     </div>
     <section class="top5-section">
+      <div id="album-controls" style="margin-bottom:14px;"></div>
       <div class="artist-grid" id="album-grid"></div>
       <div class="tile-search-panel" id="album-tile-search-panel" style="display:none;">
         <div class="tile-search-inner">
@@ -2641,12 +2644,42 @@ async function loadFavoriteArtistsFromSupabase(userId) {
   }
 }
 
+async function loadFavoriteAlbumsFromSupabase(userId) {
+  if (!sb || !userId) return false;
+  try {
+    const { data, error } = await sb.from('favorite_albums')
+      .select('*')
+      .eq('user_id', userId)
+      .order('sort_order', { ascending: true });
+    if (error || !data) return false;
+
+    albums = data.map(row => ({
+      id: row.id,
+      name: row.name,
+      artist: row.artist,
+      year: row.year || '',
+      genre: row.genre || '',
+      iTunesId: row.itunes_id || '',
+      coverPhoto: row.cover_photo || '',
+      tilePhoto: row.tile_photo || '',
+      songs: Array.isArray(row.songs) ? row.songs : [],
+    }));
+    renderAlbumGrid();
+    renderAlbumControls();
+    return true;
+  } catch (e) {
+    console.error('Failed to load favorite albums from Supabase, keeping hardcoded fallback:', e);
+    return false;
+  }
+}
+
 async function loadViewedProfileData() {
   if (!viewedProfile) return;
   await loadTasteListFromSupabase(viewedProfile.id);
   await loadFriendRecsFromSupabase(viewedProfile.id);
   await loadActivityFeedFromSupabase(viewedProfile.id);
   await loadFavoriteArtistsFromSupabase(viewedProfile.id);
+  await loadFavoriteAlbumsFromSupabase(viewedProfile.id);
 }
 
 async function initAuth() {
@@ -3896,11 +3929,125 @@ async function loadMBArtistImg(artistId, imgEl) {
 // ── ALBUM GRID: click-to-expand ──
 let expandedAlbumId = null;
 
+let albumEditMode = false;
+function toggleAlbumEditMode() {
+  albumEditMode = !albumEditMode;
+  renderAlbumGrid();
+  renderAlbumControls();
+}
+
+function renderAlbumControls() {
+  const el = document.getElementById('album-controls');
+  if (!el) return;
+  if (!isOwnProfile) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${albumEditMode ? `<button onclick="openAlbumItemForm()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add album</button>` : ''}
+      <button onclick="toggleAlbumEditMode()" style="font-size:11px;font-weight:600;background:${albumEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${albumEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+        ${albumEditMode ? '✓ Done editing' : '✎ Edit albums'}
+      </button>
+    </div>`;
+}
+
+let albumItemFormState = { id: null };
+
+function openAlbumItemForm(albumId) {
+  if (!isOwnProfile) return;
+  albumItemFormState = { id: null };
+  document.getElementById('album-item-modal-error').style.display = 'none';
+  document.getElementById('album-item-name').value = '';
+  document.getElementById('album-item-artist').value = '';
+  document.getElementById('album-item-year').value = '';
+  document.getElementById('album-item-genre').value = '';
+  document.getElementById('album-item-modal-title').textContent = 'Add album';
+
+  if (albumId !== undefined) {
+    const a = albums.find(x => x.id === albumId);
+    if (a) {
+      albumItemFormState.id = a.id;
+      document.getElementById('album-item-modal-title').textContent = 'Edit album';
+      document.getElementById('album-item-name').value = a.name || '';
+      document.getElementById('album-item-artist').value = a.artist || '';
+      document.getElementById('album-item-year').value = a.year || '';
+      document.getElementById('album-item-genre').value = a.genre || '';
+    }
+  }
+  document.getElementById('album-item-modal').style.display = 'flex';
+}
+
+function closeAlbumItemModal() {
+  document.getElementById('album-item-modal').style.display = 'none';
+}
+
+async function saveAlbumItemForm() {
+  const name = document.getElementById('album-item-name').value.trim();
+  const artist = document.getElementById('album-item-artist').value.trim();
+  const year = document.getElementById('album-item-year').value.trim();
+  const genre = document.getElementById('album-item-genre').value.trim();
+  const errEl = document.getElementById('album-item-modal-error');
+  errEl.style.display = 'none';
+
+  if (!name || !artist) {
+    errEl.textContent = 'Album name and artist are required.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!(await requireFreshSession())) {
+    errEl.textContent = SESSION_EXPIRED_MESSAGE;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const row = { name, artist, year: year || null, genre: genre || null };
+
+  try {
+    if (albumItemFormState.id) {
+      const { error } = await sb.from('favorite_albums').update(row).eq('id', albumItemFormState.id);
+      if (error) throw error;
+    } else {
+      row.user_id = currentUser.id;
+      row.sort_order = albums.length;
+      const { error } = await sb.from('favorite_albums').insert(row);
+      if (error) throw error;
+    }
+    closeAlbumItemModal();
+    await loadFavoriteAlbumsFromSupabase(currentUser.id);
+  } catch (e) {
+    errEl.textContent = e.message || 'Something went wrong saving this album.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function deleteAlbumItem(albumId) {
+  if (!isOwnProfile) return;
+  const a = albums.find(x => x.id === albumId);
+  if (!a) return;
+  if (!confirm(`Remove "${a.name}" from your favorite albums?`)) return;
+  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  try {
+    const { error } = await sb.from('favorite_albums').delete().eq('id', albumId);
+    if (error) throw error;
+    await loadFavoriteAlbumsFromSupabase(currentUser.id);
+  } catch (e) {
+    alert('Failed to delete: ' + (e.message || 'unknown error'));
+  }
+}
+
 function renderAlbumGrid() {
   const grid = document.getElementById('album-grid');
   if (!grid) return;
+  if (albums.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">No favorite albums added yet.${isOwnProfile ? ' Click "Edit albums" above to add your first one.' : ''}</div>`;
+    return;
+  }
   grid.innerHTML = albums.map((a, i) => {
-    return `<div class="artist-tile" id="album-tile-${a.id}" onclick="toggleAlbumExpand(${a.id}, ${i})">
+    const editControls = (albumEditMode && isOwnProfile) ? `
+      <div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:3;">
+        <button onclick="event.stopPropagation(); openAlbumItemForm('${a.id}')" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✎</button>
+        <button onclick="event.stopPropagation(); deleteAlbumItem('${a.id}')" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✕</button>
+      </div>` : '';
+    return `<div class="artist-tile" id="album-tile-${a.id}" style="position:relative;" onclick="toggleAlbumExpand('${a.id}', ${i})">
+      ${editControls}
       <div class="tile-img-wrap">
         ${a.tilePhoto
           ? `<img class="tile-img" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="this.style.display='none'">`
@@ -4056,7 +4203,7 @@ function toggleAlbumExpand(albumId, tileIdx) {
         </div>
       </div>
       <div class="expand-actions">
-        <button class="expand-close" onclick="toggleAlbumExpand(${albumId},${tileIdx})">✕</button>
+        <button class="expand-close" onclick="toggleAlbumExpand('${albumId}',${tileIdx})">✕</button>
       </div>
     </div>
     ${songs.length ? `<table class="songs-table">
@@ -7591,6 +7738,30 @@ renderTasteInfluences();
     <input id="friend-rec-art" type="text" placeholder="https://..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
 
     <button onclick="saveFriendRecForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+  </div>
+</div>
+
+<div id="album-item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeAlbumItemModal()">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
+    <button onclick="closeAlbumItemModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+    <div id="album-item-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add album</div>
+    <div id="album-item-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Album name *</label>
+    <input id="album-item-name" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Artist *</label>
+    <input id="album-item-artist" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Year</label>
+    <input id="album-item-year" type="text" placeholder="e.g. 2003" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Genre</label>
+    <input id="album-item-genre" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
+
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.4;">Cover art resolves automatically from iTunes based on the album + artist name — no need to paste a URL.</div>
+
+    <button id="album-item-save-btn" onclick="saveAlbumItemForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
   </div>
 </div>
 
