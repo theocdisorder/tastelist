@@ -3994,14 +3994,18 @@ async function fetchAlbumTracklist(name, artist) {
     const q = encodeURIComponent(`${name} ${artist}`);
     const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=album&limit=10`);
     const data = await res.json();
+    console.log('[DEBUG fetchAlbumTracklist] search results:', data.results?.map(r => ({ collectionName: r.collectionName, artistName: r.artistName, collectionId: r.collectionId })));
     const hit = (data.results || []).find(r => isAlbumArtMatch(r, name, artistFirstWord));
+    console.log('[DEBUG fetchAlbumTracklist] matched hit:', hit);
     if (!hit?.collectionId) return [];
     const lookupRes = await fetch(`https://itunes.apple.com/lookup?id=${hit.collectionId}&entity=song`);
     const lookupData = await lookupRes.json();
+    console.log('[DEBUG fetchAlbumTracklist] lookup result count:', lookupData.results?.length, lookupData.results);
     return (lookupData.results || [])
       .filter(r => r.wrapperType === 'track')
       .map(r => ({ title: r.trackName, album: name, art: '', apple: r.trackViewUrl || '', spotify: '' }));
   } catch (e) {
+    console.log('[DEBUG fetchAlbumTracklist] ERROR:', e);
     return [];
   }
 }
