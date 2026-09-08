@@ -3988,24 +3988,28 @@ function closeAlbumItemModal() {
 // Fetches an album's full tracklist from iTunes, reusing the same artist+album matching logic
 // already proven reliable for cover art resolution — only used for newly-added albums (not
 // edits), so it never overwrites a tracklist someone already has.
-async function fetchAlbumTracklist(name, artist) {
+async function fetchAlbumTracklist(name, artist, attempt = 1) {
   const artistFirstWord = artist.toLowerCase().split(' ')[0];
   try {
     const q = encodeURIComponent(`${name} ${artist}`);
     const res = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=album&limit=10`);
     const data = await res.json();
-    console.log('[DEBUG fetchAlbumTracklist] search results:', data.results?.map(r => ({ collectionName: r.collectionName, artistName: r.artistName, collectionId: r.collectionId })));
     const hit = (data.results || []).find(r => isAlbumArtMatch(r, name, artistFirstWord));
-    console.log('[DEBUG fetchAlbumTracklist] matched hit:', hit);
-    if (!hit?.collectionId) return [];
+    if (!hit?.collectionId) {
+      // iTunes' search API occasionally returns an empty result set for a query that works fine
+      // moments later — retry a couple of times with a short delay before giving up for real.
+      if (attempt < 3) {
+        await new Promise(resolve => setTimeout(resolve, 600));
+        return fetchAlbumTracklist(name, artist, attempt + 1);
+      }
+      return [];
+    }
     const lookupRes = await fetch(`https://itunes.apple.com/lookup?id=${hit.collectionId}&entity=song`);
     const lookupData = await lookupRes.json();
-    console.log('[DEBUG fetchAlbumTracklist] lookup result count:', lookupData.results?.length, lookupData.results);
     return (lookupData.results || [])
       .filter(r => r.wrapperType === 'track')
       .map(r => ({ title: r.trackName, album: name, art: '', apple: r.trackViewUrl || '', spotify: '' }));
   } catch (e) {
-    console.log('[DEBUG fetchAlbumTracklist] ERROR:', e);
     return [];
   }
 }
