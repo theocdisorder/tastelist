@@ -1474,6 +1474,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Favorite Directors</h2>
     </div>
+    <div id="director-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="other-fav-grid" id="directors-grid"></div>
       <div id="director-expand-panel" style="display:none;margin-top:16px;"></div>
@@ -2783,6 +2784,7 @@ async function loadFavoriteDirectorsFromSupabase(userId) {
       // interpolates it directly into onclick="toggleDirector(...)" and a UUID would break that.
       const dir = {
         id: i + 1,
+        rowId: row.id, // the actual Supabase UUID, kept separate from the display id above
         tmdbId: row.tmdb_id,
         name: row.name,
         known_for: row.known_for || '',
@@ -2797,6 +2799,7 @@ async function loadFavoriteDirectorsFromSupabase(userId) {
       dir.movies.forEach(m => posterQueue.push(m));
     });
     renderDirectorsList();
+    renderDirectorControls();
 
     // Same throttled, sequential approach as the original preloadDirectors() — a burst of
     // concurrent requests across a whole filmography is what silently rate-limits some posters.
@@ -6167,7 +6170,7 @@ function renderDirectorsList() {
           ${d.known_for ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(d.known_for)}</div>` : ''}
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;">
-          <button onclick="removeDirector(${d.id})" style="background:none;border:1px solid var(--border2);color:var(--apple);font-size:11px;font-weight:600;font-family:inherit;padding:5px 12px;border-radius:20px;cursor:pointer;">Remove</button>
+          ${(isOwnProfile && directorEditMode) ? `<button onclick="removeDirector(${d.id})" style="background:none;border:1px solid var(--border2);color:var(--apple);font-size:11px;font-weight:600;font-family:inherit;padding:5px 12px;border-radius:20px;cursor:pointer;">Remove</button>` : ''}
           <button onclick="toggleDirector(${d.id})" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:30px;height:30px;border-radius:50%;cursor:pointer;">✕</button>
         </div>
       </div>
@@ -6178,7 +6181,8 @@ function renderDirectorsList() {
       ${d.movies.length ? `
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:1.25rem 1.5rem;">
         ${d.movies.map((m, mi) => `
-        <div style="display:flex;flex-direction:column;gap:0;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <div style="display:flex;flex-direction:column;gap:0;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;">
+          ${(isOwnProfile && directorEditMode) ? `<button onclick="removeDirectorFilm(${d.id}, ${m.tmdbId})" style="position:absolute;top:5px;right:5px;z-index:2;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:9px;cursor:pointer;">✕</button>` : ''}
           <div style="aspect-ratio:2/3;overflow:hidden;background:var(--surface3);">
             ${m.poster
               ? `<img src="${TMDB_IMG}${m.poster}" style="width:100%;height:100%;object-fit:cover;display:block;">`
@@ -6190,6 +6194,17 @@ function renderDirectorsList() {
           </div>
         </div>`).join('')}
       </div>` : `<div style="padding:1.5rem;color:var(--faint);font-size:13px;">No films yet.</div>`}
+      ${(isOwnProfile && directorEditMode) ? `
+      <div style="padding:0 1.5rem 1.25rem;">
+        <button onclick="openDirectorMovieSearch(${d.id})" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;font-family:inherit;">+ Add film</button>
+        <div class="tile-search-panel" id="dir-movie-panel-${d.id}" style="display:none;margin-top:12px;">
+          <div class="tile-search-inner">
+            <input class="tile-search-input" id="dir-movie-input-${d.id}" placeholder="Search for a film…" autocomplete="off" oninput="onDirMovieInput(${d.id}, this.value)" />
+            <button onclick="closeDirMovieSearch(${d.id})" style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;">✕</button>
+          </div>
+          <div class="tile-search-results" id="dir-movie-results-${d.id}"><span class="tile-search-hint">Start typing…</span></div>
+        </div>
+      </div>` : ''}
     </div>`;
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
@@ -6199,13 +6214,74 @@ function toggleDirector(id) {
   renderDirectorsList();
 }
 
+let directorEditMode = false;
+function toggleDirectorEditMode() {
+  directorEditMode = !directorEditMode;
+  renderDirectorsList();
+  renderDirectorControls();
+}
+
+function renderDirectorControls() {
+  const el = document.getElementById('director-controls');
+  if (!el) return;
+  if (!isOwnProfile) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${directorEditMode ? `<button onclick="openDirectorSearch()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add director</button>` : ''}
+      <button onclick="toggleDirectorEditMode()" style="font-size:11px;font-weight:600;background:${directorEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${directorEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+        ${directorEditMode ? '✓ Done editing' : '✎ Edit directors'}
+      </button>
+    </div>`;
+}
+
+async function persistNewDirector(dir) {
+  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  try {
+    const { data, error } = await sb.from('favorite_directors').insert({
+      user_id: currentUser.id, tmdb_id: dir.tmdbId, name: dir.name, known_for: dir.known_for || null, movies: dir.movies || [], sort_order: directors.length - 1,
+    }).select().single();
+    if (error) throw error;
+    dir.rowId = data.id;
+  } catch (e) {
+    alert('Failed to save director: ' + (e.message || 'unknown error'));
+  }
+}
+
+async function persistDirectorMovies(dir) {
+  if (!dir.rowId) return; // not yet saved (shouldn't normally happen, but avoid a crash if it does
+  try {
+    await sb.from('favorite_directors').update({ movies: dir.movies }).eq('id', dir.rowId);
+  } catch (e) {
+    console.error('Failed to save director filmography update:', e);
+  }
+}
+
+async function removeDirectorFilm(dirId, tmdbId) {
+  if (!isOwnProfile) return;
+  const dir = directors.find(d => d.id === dirId);
+  if (!dir) return;
+  dir.movies = dir.movies.filter(m => m.tmdbId !== tmdbId);
+  renderDirectorsList();
+  await persistDirectorMovies(dir);
+}
+
 function removeDirector(id) {
+  if (!isOwnProfile) return;
+  const dir = directors.find(d => d.id === id);
   directors = directors.filter(d => d.id !== id);
   if (expandedDirectorId === id) expandedDirectorId = null;
   renderDirectorsList();
+  if (dir?.rowId) {
+    (async () => {
+      if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+      try { await sb.from('favorite_directors').delete().eq('id', dir.rowId); }
+      catch (e) { alert('Failed to delete: ' + (e.message || 'unknown error')); }
+    })();
+  }
 }
 
 function openDirectorSearch() {
+  if (!isOwnProfile) return;
   const p = document.getElementById('director-search-panel');
   p.classList.add('open');
   document.getElementById('director-search-input').focus();
@@ -6254,22 +6330,25 @@ async function runDirectorSearch(val) {
 }
 
 function selectDirector(idx) {
+  if (!isOwnProfile) return;
   const results = document.getElementById('director-search-results');
   const p = results._data?.[idx];
   if (!p) return;
   if (directors.find(d => d.tmdbId === p.id)) { showToast(`${p.name} is already added`); return; }
   const knownFor = (p.known_for || []).map(k => k.title || k.name).slice(0,2).join(', ');
-  directors.push({
+  const dir = {
     id: nextDirectorId++,
     tmdbId: p.id,
     name: p.name,
     photo: p.profile_path || '',
     known_for: knownFor,
     movies: []
-  });
+  };
+  directors.push(dir);
   closeDirectorSearch();
   renderDirectorsList();
   showToast(`Added ${p.name}`);
+  persistNewDirector(dir);
 }
 
 // Per-director film search
@@ -6319,6 +6398,7 @@ async function runDirMovieSearch(dirId, val) {
 }
 
 function selectDirMovie(dirId, idx) {
+  if (!isOwnProfile) return;
   const results = document.getElementById(`dir-movie-results-${dirId}`);
   const r = results._data?.[idx];
   if (!r) return;
@@ -6334,6 +6414,7 @@ function selectDirMovie(dirId, idx) {
   closeDirMovieSearch(dirId);
   renderDirectorsList();
   showToast(`Added "${r.title}"`);
+  persistDirectorMovies(dir);
 }
 
 // ── COMEDY GRID ──
