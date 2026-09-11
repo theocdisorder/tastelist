@@ -1429,6 +1429,15 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <section class="top5-section">
       <div class="artist-grid" id="movie-grid"></div>
       <div id="movie-expand-panel" style="display:none;margin-top:20px;"></div>
+      <div class="tile-search-panel" id="movie-search-panel" style="margin-top:16px;">
+        <div class="tile-search-inner">
+          <input class="tile-search-input" id="movie-search-input" placeholder="Search for a film…" autocomplete="off" oninput="onMovieSearchInput(this.value)" />
+          <button class="tile-search-close" onclick="closeMovieSearch()">✕</button>
+        </div>
+        <div class="tile-search-results" id="movie-search-results">
+          <span class="tile-search-hint">Start typing to search…</span>
+        </div>
+      </div>
     </section>
   </div>
 
@@ -5967,8 +5976,10 @@ function removeMovie(movieId) {
 function openMovieSearch() {
   if (!isOwnProfile) return;
   const p = document.getElementById('movie-search-panel');
+  if (!p) return;
   p.classList.add('open');
-  document.getElementById('movie-search-input').focus();
+  p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('movie-search-input')?.focus();
 }
 
 function closeMovieSearch() {
@@ -6337,8 +6348,10 @@ function removeDirector(id) {
 function openDirectorSearch() {
   if (!isOwnProfile) return;
   const p = document.getElementById('director-search-panel');
+  if (!p) return;
   p.classList.add('open');
-  document.getElementById('director-search-input').focus();
+  p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('director-search-input')?.focus();
 }
 
 function closeDirectorSearch() {
