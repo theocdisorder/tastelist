@@ -2767,6 +2767,50 @@ async function loadFavoriteMoviesFromSupabase(userId) {
   }
 }
 
+async function loadFavoriteDirectorsFromSupabase(userId) {
+  if (!sb || !userId) return false;
+  try {
+    const { data, error } = await sb.from('favorite_directors')
+      .select('*')
+      .eq('user_id', userId)
+      .order('sort_order', { ascending: true });
+    if (error || !data) return false;
+
+    directors = [];
+    const posterQueue = [];
+    data.forEach((row, i) => {
+      // id stays a plain sequential integer (not the Supabase row UUID) — existing code
+      // interpolates it directly into onclick="toggleDirector(...)" and a UUID would break that.
+      const dir = {
+        id: i + 1,
+        tmdbId: row.tmdb_id,
+        name: row.name,
+        known_for: row.known_for || '',
+        whyInfluential: row.why_influential || '',
+        photo: '',
+        movies: (Array.isArray(row.movies) ? row.movies : []).map(m => ({ ...m, poster: '' })),
+      };
+      directors.push(dir);
+      if (row.tmdb_id) {
+        tmdbFetch(`/person/${row.tmdb_id}`).then(r => r.json()).then(d => { dir.photo = d.profile_path || ''; renderDirectorsList(); }).catch(() => {});
+      }
+      dir.movies.forEach(m => posterQueue.push(m));
+    });
+    renderDirectorsList();
+
+    // Same throttled, sequential approach as the original preloadDirectors() — a burst of
+    // concurrent requests across a whole filmography is what silently rate-limits some posters.
+    for (const m of posterQueue) {
+      await loadDirectorMoviePoster(m);
+      await new Promise(res => setTimeout(res, 150));
+    }
+    return true;
+  } catch (e) {
+    console.error('Failed to load favorite directors from Supabase, keeping hardcoded fallback:', e);
+    return false;
+  }
+}
+
 async function loadViewedProfileData() {
   if (!viewedProfile) return;
   await loadTasteListFromSupabase(viewedProfile.id);
@@ -2778,6 +2822,7 @@ async function loadViewedProfileData() {
   await loadFavoriteMediaList(viewedProfile.id, 'dramas', dramaMovies, 'drama', 'drama-grid');
   await loadFavoriteMediaList(viewedProfile.id, 'thrillers', thrillerMovies, 'thriller', 'thriller-grid');
   await loadFavoriteMediaList(viewedProfile.id, 'comedies', comedyMovies, 'comedy', 'comedy-grid');
+  await loadFavoriteDirectorsFromSupabase(viewedProfile.id);
 }
 
 async function initAuth() {
@@ -6126,9 +6171,9 @@ function renderDirectorsList() {
           <button onclick="toggleDirector(${d.id})" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:30px;height:30px;border-radius:50%;cursor:pointer;">✕</button>
         </div>
       </div>
-      ${DIRECTOR_WHY_INFLUENTIAL[d.name] ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
+      ${(d.whyInfluential || DIRECTOR_WHY_INFLUENTIAL[d.name]) ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
-        ${renderMentions(DIRECTOR_WHY_INFLUENTIAL[d.name])}
+        ${renderMentions(d.whyInfluential || DIRECTOR_WHY_INFLUENTIAL[d.name])}
       </div>` : ''}
       ${d.movies.length ? `
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:1.25rem 1.5rem;">
