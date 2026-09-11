@@ -2679,6 +2679,85 @@ async function loadFavoriteAlbumsFromSupabase(userId) {
   }
 }
 
+// Generic loader for the simple "static grid" sections (Dramas, Thrillers, Comedies today;
+// same shape will work for the TV-tab equivalents later). Mutates `arr` in place (rather than
+// reassigning it) since it's a shared global array referenced elsewhere by name.
+async function loadFavoriteMediaList(userId, category, arr, idPrefix, gridId) {
+  if (!sb || !userId) return false;
+  try {
+    const { data, error } = await sb.from('favorite_media_lists')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('category', category)
+      .order('sort_order', { ascending: true });
+    if (error || !data) return false;
+
+    arr.length = 0;
+    data.forEach((row, i) => {
+      arr.push({ tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' });
+      fetchMovieDetail(row.tmdb_id).then(detail => { Object.assign(arr[i], detail); makeStaticGrid(arr, idPrefix, gridId); });
+    });
+    makeStaticGrid(arr, idPrefix, gridId);
+    return true;
+  } catch (e) {
+    console.error(`Failed to load favorite ${category} from Supabase, keeping hardcoded fallback:`, e);
+    return false;
+  }
+}
+
+async function loadFavoriteMoviesFromSupabase(userId) {
+  if (!sb || !userId) return false;
+  try {
+    const { data, error } = await sb.from('favorite_media_lists')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('category', 'movies')
+      .order('sort_order', { ascending: true });
+    if (error || !data) return false;
+
+    movies = [];
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      // Matches the exact shape/id-assignment the original preloadMovies() used — id stays a
+      // plain sequential integer (not the Supabase row UUID), since existing code interpolates
+      // it directly into onclick="toggleMovieExpand(...)" and a UUID would break that.
+      movies.push({ id: i + 1, tmdbId: row.tmdb_id, type: row.type, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' });
+      const idx = i;
+      // fetchMovieDetail() only covers /movie/ endpoints — 'Favorite Movies' can include TV
+      // items too (matches original preloadMovies() logic, not the movie-only helper).
+      (async () => {
+        try {
+          const isTV = row.type === 'tv';
+          const [detailRes, creditsRes] = await Promise.all([
+            tmdbFetch(isTV ? `/tv/${row.tmdb_id}` : `/movie/${row.tmdb_id}`),
+            tmdbFetch(isTV ? `/tv/${row.tmdb_id}/credits` : `/movie/${row.tmdb_id}/credits`)
+          ]);
+          const detail = await detailRes.json();
+          const credits = await creditsRes.json();
+          const director = isTV ? (detail.created_by?.[0]?.name || '') : (credits.crew?.find(c => c.job === 'Director')?.name || '');
+          Object.assign(movies[idx], {
+            title: row.title || detail.title || detail.name,
+            year: (detail.release_date || detail.first_air_date || row.year || '').slice(0, 4),
+            poster: detail.poster_path || '',
+            backdrop: detail.backdrop_path || '',
+            overview: detail.overview || '',
+            genres: detail.genres?.map(g => g.name) || [],
+            rating: detail.vote_average ? Math.round(detail.vote_average * 10) / 10 : null,
+            runtime: detail.runtime || (detail.episode_run_time?.[0] ? `${detail.episode_run_time[0]} min/ep` : null),
+            director,
+          });
+          renderMovieGrid();
+        } catch (e) {}
+      })();
+    }
+    renderMovieGrid();
+    return true;
+  } catch (e) {
+    console.error('Failed to load favorite movies from Supabase, keeping hardcoded fallback:', e);
+    return false;
+  }
+}
+
 async function loadViewedProfileData() {
   if (!viewedProfile) return;
   await loadTasteListFromSupabase(viewedProfile.id);
@@ -2686,6 +2765,10 @@ async function loadViewedProfileData() {
   await loadActivityFeedFromSupabase(viewedProfile.id);
   await loadFavoriteArtistsFromSupabase(viewedProfile.id);
   await loadFavoriteAlbumsFromSupabase(viewedProfile.id);
+  await loadFavoriteMoviesFromSupabase(viewedProfile.id);
+  await loadFavoriteMediaList(viewedProfile.id, 'dramas', dramaMovies, 'drama', 'drama-grid');
+  await loadFavoriteMediaList(viewedProfile.id, 'thrillers', thrillerMovies, 'thriller', 'thriller-grid');
+  await loadFavoriteMediaList(viewedProfile.id, 'comedies', comedyMovies, 'comedy', 'comedy-grid');
 }
 
 async function initAuth() {
