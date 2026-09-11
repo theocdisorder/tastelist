@@ -2693,11 +2693,18 @@ async function loadFavoriteMediaList(userId, category, arr, idPrefix, gridId) {
     if (error || !data) return false;
 
     arr.length = 0;
-    data.forEach((row, i) => {
-      arr.push({ tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' });
-      fetchMovieDetail(row.tmdb_id).then(detail => { Object.assign(arr[i], detail); makeStaticGrid(arr, idPrefix, gridId); });
-    });
+    data.forEach(row => arr.push({ tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' }));
     makeStaticGrid(arr, idPrefix, gridId);
+    // Fetch TMDB details one at a time rather than all at once — with 4 sections' worth of
+    // items all loading together, firing every request simultaneously risks tripping TMDB's
+    // rate limit, silently leaving some posters blank.
+    for (let i = 0; i < data.length; i++) {
+      try {
+        const detail = await fetchMovieDetail(data[i].tmdb_id);
+        Object.assign(arr[i], detail);
+        makeStaticGrid(arr, idPrefix, gridId);
+      } catch (e) {}
+    }
     return true;
   } catch (e) {
     console.error(`Failed to load favorite ${category} from Supabase, keeping hardcoded fallback:`, e);
@@ -2716,41 +2723,43 @@ async function loadFavoriteMoviesFromSupabase(userId) {
     if (error || !data) return false;
 
     movies = [];
-    for (let i = 0; i < data.length; i++) {
-      const row = data[i];
+    data.forEach((row, i) => {
       // Matches the exact shape/id-assignment the original preloadMovies() used — id stays a
       // plain sequential integer (not the Supabase row UUID), since existing code interpolates
       // it directly into onclick="toggleMovieExpand(...)" and a UUID would break that.
       movies.push({ id: i + 1, tmdbId: row.tmdb_id, type: row.type, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' });
-      const idx = i;
-      // fetchMovieDetail() only covers /movie/ endpoints — 'Favorite Movies' can include TV
-      // items too (matches original preloadMovies() logic, not the movie-only helper).
-      (async () => {
-        try {
-          const isTV = row.type === 'tv';
-          const [detailRes, creditsRes] = await Promise.all([
-            tmdbFetch(isTV ? `/tv/${row.tmdb_id}` : `/movie/${row.tmdb_id}`),
-            tmdbFetch(isTV ? `/tv/${row.tmdb_id}/credits` : `/movie/${row.tmdb_id}/credits`)
-          ]);
-          const detail = await detailRes.json();
-          const credits = await creditsRes.json();
-          const director = isTV ? (detail.created_by?.[0]?.name || '') : (credits.crew?.find(c => c.job === 'Director')?.name || '');
-          Object.assign(movies[idx], {
-            title: row.title || detail.title || detail.name,
-            year: (detail.release_date || detail.first_air_date || row.year || '').slice(0, 4),
-            poster: detail.poster_path || '',
-            backdrop: detail.backdrop_path || '',
-            overview: detail.overview || '',
-            genres: detail.genres?.map(g => g.name) || [],
-            rating: detail.vote_average ? Math.round(detail.vote_average * 10) / 10 : null,
-            runtime: detail.runtime || (detail.episode_run_time?.[0] ? `${detail.episode_run_time[0]} min/ep` : null),
-            director,
-          });
-          renderMovieGrid();
-        } catch (e) {}
-      })();
-    }
+    });
     renderMovieGrid();
+    // Fetch TMDB details one at a time — with several other sections' worth of items also
+    // loading around the same time, firing every request at once risks tripping TMDB's rate
+    // limit, silently leaving some posters blank.
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      try {
+        // fetchMovieDetail() only covers /movie/ endpoints — 'Favorite Movies' can include TV
+        // items too (matches original preloadMovies() logic, not the movie-only helper).
+        const isTV = row.type === 'tv';
+        const [detailRes, creditsRes] = await Promise.all([
+          tmdbFetch(isTV ? `/tv/${row.tmdb_id}` : `/movie/${row.tmdb_id}`),
+          tmdbFetch(isTV ? `/tv/${row.tmdb_id}/credits` : `/movie/${row.tmdb_id}/credits`)
+        ]);
+        const detail = await detailRes.json();
+        const credits = await creditsRes.json();
+        const director = isTV ? (detail.created_by?.[0]?.name || '') : (credits.crew?.find(c => c.job === 'Director')?.name || '');
+        Object.assign(movies[i], {
+          title: row.title || detail.title || detail.name,
+          year: (detail.release_date || detail.first_air_date || row.year || '').slice(0, 4),
+          poster: detail.poster_path || '',
+          backdrop: detail.backdrop_path || '',
+          overview: detail.overview || '',
+          genres: detail.genres?.map(g => g.name) || [],
+          rating: detail.vote_average ? Math.round(detail.vote_average * 10) / 10 : null,
+          runtime: detail.runtime || (detail.episode_run_time?.[0] ? `${detail.episode_run_time[0]} min/ep` : null),
+          director,
+        });
+        renderMovieGrid();
+      } catch (e) {}
+    }
     return true;
   } catch (e) {
     console.error('Failed to load favorite movies from Supabase, keeping hardcoded fallback:', e);
