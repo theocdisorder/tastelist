@@ -1547,6 +1547,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Favorite Comedies</h2>
     </div>
+    <div id="tv-comedy-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="tv-comedy-grid"></div>
     </section>
@@ -1559,6 +1560,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Favorite Dramas</h2>
     </div>
+    <div id="tv-drama-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="tv-drama-grid"></div>
     </section>
@@ -1571,6 +1573,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Other Favorites</h2>
     </div>
+    <div id="tv-other-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="tv-other-grid"></div>
     </section>
@@ -1583,6 +1586,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Shows That Were Good Until They Weren't</h2>
     </div>
+    <div id="tv-dropoff-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="tv-dropoff-grid"></div>
     </section>
@@ -2843,6 +2847,10 @@ async function loadViewedProfileData() {
   await loadFavoriteMediaList(viewedProfile.id, 'comedies', comedyMovies, 'comedy', 'comedy-grid');
   renderRichGridControls('comedy');
   await loadFavoriteDirectorsFromSupabase(viewedProfile.id);
+  await loadFavoriteTVList(viewedProfile.id, 'tv_comedy', 'tv-comedy', 'tv-comedy-grid');
+  await loadFavoriteTVList(viewedProfile.id, 'tv_drama', 'tv-drama', 'tv-drama-grid');
+  await loadFavoriteTVList(viewedProfile.id, 'tv_other', 'tv-other', 'tv-other-grid');
+  await loadFavoriteTVList(viewedProfile.id, 'tv_dropoff', 'tv-dropoff', 'tv-dropoff-grid');
 }
 
 async function initAuth() {
@@ -7826,13 +7834,50 @@ async function preloadTVGrid(preloadArr, moviesArr, idPrefix, gridId) {
   }
 }
 
+const TV_GRID_EDIT_STATE = { 'tv-comedy': false, 'tv-drama': false, 'tv-other': false, 'tv-dropoff': false };
+
+async function loadFavoriteTVList(userId, category, idPrefix, gridId) {
+  if (!sb || !userId) return false;
+  try {
+    const { data, error } = await sb.from('favorite_media_lists')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('category', category)
+      .order('sort_order', { ascending: true });
+    if (error || !data) return false;
+
+    const arr = [];
+    data.forEach(row => arr.push({ rowId: row.id, tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, seasons: null, creator: '' }));
+    TV_GRID_STORE[idPrefix] = { arr, gridId };
+    renderTVGrid(arr, idPrefix, gridId);
+    renderTVGridControls(idPrefix);
+    // Sequential, throttled — same lesson learned from the movie sections earlier tonight.
+    for (let i = 0; i < arr.length; i++) {
+      try {
+        const detail = await fetchTVDetail(arr[i].tmdbId);
+        Object.assign(arr[i], detail);
+        renderTVGrid(arr, idPrefix, gridId);
+      } catch (e) {}
+      await new Promise(res => setTimeout(res, 150));
+    }
+    return true;
+  } catch (e) {
+    console.error(`Failed to load favorite ${category} from Supabase, keeping hardcoded fallback:`, e);
+    return false;
+  }
+}
+
 function renderTVGrid(moviesArr, idPrefix, gridId) {
   const grid = document.getElementById(gridId);
   if (!grid) return;
   const expandedIdx = expandedTVTile[idPrefix] ?? null;
+  const editing = isOwnProfile && TV_GRID_EDIT_STATE[idPrefix];
   const tiles = moviesArr.map((m, i) => {
     const hasWhy = !!TV_WHY_INFLUENTIAL[m.title];
-    return `<div class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="${idPrefix}-tile-${i}" style="cursor:pointer;" onclick="toggleTVExpand('${idPrefix}', ${i})">
+    const editControls = editing ? `
+      <button onclick="event.stopPropagation(); removeTVGridItem('${idPrefix}', ${i})" style="position:absolute;top:6px;right:6px;z-index:3;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✕</button>` : '';
+    return `<div class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="${idPrefix}-tile-${i}" style="cursor:pointer;position:relative;" onclick="toggleTVExpand('${idPrefix}', ${i})">
+      ${editControls}
       <div class="tile-img-wrap" style="aspect-ratio:2/3;position:relative;">
         ${m.poster
           ? `<img class="tile-img" src="${TMDB_IMG}${m.poster}" alt="${esc(m.title)}" style="object-position:center top;">`
@@ -7849,6 +7894,127 @@ function renderTVGrid(moviesArr, idPrefix, gridId) {
   const m = expandedIdx != null ? moviesArr[expandedIdx] : null;
   const panelHtml = m ? `<div style="grid-column:1/-1;">${tvDetailPanelHTML(m, `toggleTVExpand('${idPrefix}', ${expandedIdx})`)}</div>` : null;
   grid.innerHTML = spliceGridWithPanel(grid, tiles, expandedIdx, panelHtml);
+}
+
+function toggleTVGridEditMode(idPrefix) {
+  TV_GRID_EDIT_STATE[idPrefix] = !TV_GRID_EDIT_STATE[idPrefix];
+  const store = TV_GRID_STORE[idPrefix];
+  if (store) renderTVGrid(store.arr, idPrefix, store.gridId);
+  renderTVGridControls(idPrefix);
+}
+
+const TV_GRID_CONTROLS_ID = { 'tv-comedy': 'tv-comedy-controls', 'tv-drama': 'tv-drama-controls', 'tv-other': 'tv-other-controls', 'tv-dropoff': 'tv-dropoff-controls' };
+const TV_GRID_CATEGORY = { 'tv-comedy': 'tv_comedy', 'tv-drama': 'tv_drama', 'tv-other': 'tv_other', 'tv-dropoff': 'tv_dropoff' };
+
+function renderTVGridControls(idPrefix) {
+  const el = document.getElementById(TV_GRID_CONTROLS_ID[idPrefix]);
+  if (!el) return;
+  if (!isOwnProfile) { el.innerHTML = ''; return; }
+  const editing = TV_GRID_EDIT_STATE[idPrefix];
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${editing ? `<button onclick="openTVGridModal('${idPrefix}')" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add show</button>` : ''}
+      <button onclick="toggleTVGridEditMode('${idPrefix}')" style="font-size:11px;font-weight:600;background:${editing ? 'var(--accent)' : 'var(--surface2)'};color:${editing ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+        ${editing ? '✓ Done editing' : '✎ Edit list'}
+      </button>
+    </div>`;
+}
+
+let tvGridModalPrefix = null;
+let tvGridSearchTimer = null;
+
+function openTVGridModal(idPrefix) {
+  if (!isOwnProfile) return;
+  tvGridModalPrefix = idPrefix;
+  document.getElementById('tv-grid-modal-title').textContent = 'Add show';
+  document.getElementById('tv-grid-search-input').value = '';
+  document.getElementById('tv-grid-search-results').innerHTML = '<span style="font-size:12.5px;color:var(--faint);">Start typing to search…</span>';
+  document.getElementById('tv-grid-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('tv-grid-search-input')?.focus(), 50);
+}
+
+function closeTVGridModal() {
+  document.getElementById('tv-grid-modal').style.display = 'none';
+  tvGridModalPrefix = null;
+}
+
+function onTVGridSearchInput(val) {
+  clearTimeout(tvGridSearchTimer);
+  const results = document.getElementById('tv-grid-search-results');
+  if (!val || val.length < 2) { results.innerHTML = '<span style="font-size:12.5px;color:var(--faint);">Start typing to search…</span>'; return; }
+  results.innerHTML = '<span style="font-size:12.5px;color:var(--faint);">Searching…</span>';
+  tvGridSearchTimer = setTimeout(() => runTVGridSearch(val), 350);
+}
+
+async function runTVGridSearch(val) {
+  const results = document.getElementById('tv-grid-search-results');
+  try {
+    const res = await tmdbFetch(`/search/tv?query=${encodeURIComponent(val)}&page=1`);
+    const data = await res.json();
+    if (!data.results?.length) { results.innerHTML = '<span style="font-size:12.5px;color:var(--faint);">No shows found</span>'; return; }
+    results._data = data.results;
+    results.innerHTML = data.results.slice(0, 8).map((r, i) => {
+      const year = r.first_air_date ? r.first_air_date.slice(0, 4) : '';
+      return `<div onclick="selectTVGridResult(${i})" style="display:flex;align-items:center;gap:10px;padding:6px;border-radius:8px;cursor:pointer;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+        ${r.poster_path
+          ? `<img src="https://image.tmdb.org/t/p/w92${r.poster_path}" style="width:36px;height:54px;object-fit:cover;border-radius:4px;flex-shrink:0;">`
+          : `<div style="width:36px;height:54px;border-radius:4px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📺</div>`}
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${esc(r.name)}</div>
+          <div style="font-size:11px;color:var(--muted);">${year}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    results.innerHTML = '<span style="font-size:12.5px;color:var(--faint);">Error — check connection</span>';
+  }
+}
+
+async function selectTVGridResult(idx) {
+  const idPrefix = tvGridModalPrefix;
+  if (!idPrefix || !isOwnProfile) return;
+  const results = document.getElementById('tv-grid-search-results');
+  const r = results._data?.[idx];
+  if (!r) return;
+  const store = TV_GRID_STORE[idPrefix];
+  if (!store) return;
+  if (store.arr.find(x => x.tmdbId === r.id)) { showToast('Already added'); closeTVGridModal(); return; }
+  closeTVGridModal();
+  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  const year = r.first_air_date ? r.first_air_date.slice(0, 4) : null;
+  try {
+    const { data, error } = await sb.from('favorite_media_lists').insert({
+      user_id: currentUser.id, category: TV_GRID_CATEGORY[idPrefix], tmdb_id: r.id, title: r.name, year, type: 'tv', sort_order: store.arr.length,
+    }).select().single();
+    if (error) throw error;
+    const item = { rowId: data.id, tmdbId: r.id, title: r.name, year, poster: r.poster_path || '', backdrop: '', overview: '', genres: [], rating: null, seasons: null, creator: '' };
+    store.arr.push(item);
+    renderTVGrid(store.arr, idPrefix, store.gridId);
+    const detail = await fetchTVDetail(r.id);
+    Object.assign(item, detail);
+    renderTVGrid(store.arr, idPrefix, store.gridId);
+    showToast(`Added "${r.name}"`);
+  } catch (e) {
+    alert('Failed to save: ' + (e.message || 'unknown error'));
+  }
+}
+
+async function removeTVGridItem(idPrefix, idx) {
+  if (!isOwnProfile) return;
+  const store = TV_GRID_STORE[idPrefix];
+  if (!store) return;
+  const item = store.arr[idx];
+  if (!item) return;
+  if (!confirm(`Remove "${item.title}"?`)) return;
+  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  try {
+    if (item.rowId) { const { error } = await sb.from('favorite_media_lists').delete().eq('id', item.rowId); if (error) throw error; }
+    store.arr.splice(idx, 1);
+    if (expandedTVTile[idPrefix] === idx) expandedTVTile[idPrefix] = null;
+    renderTVGrid(store.arr, idPrefix, store.gridId);
+  } catch (e) {
+    alert('Failed to delete: ' + (e.message || 'unknown error'));
+  }
 }
 
 preloadTVGrid(TV_COMEDY_PRELOAD, tvComedyShows, 'tv-comedy', 'tv-comedy-grid');
@@ -8242,6 +8408,15 @@ renderTasteInfluences();
     <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.4;">Cover art and the tracklist resolve automatically from iTunes based on the album + artist name. Saving is instant — the tracklist fills in quietly in the background afterward and may take up to a minute if iTunes is rate-limited.</div>
 
     <button id="album-item-save-btn" onclick="saveAlbumItemForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+  </div>
+</div>
+
+<div id="tv-grid-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeTVGridModal()">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
+    <button onclick="closeTVGridModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+    <div id="tv-grid-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add show</div>
+    <input id="tv-grid-search-input" type="text" placeholder="Search for a show…" autocomplete="off" oninput="onTVGridSearchInput(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:14px;box-sizing:border-box;">
+    <div id="tv-grid-search-results" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;"><span style="font-size:12.5px;color:var(--faint);">Start typing to search…</span></div>
   </div>
 </div>
 
