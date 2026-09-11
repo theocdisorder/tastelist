@@ -1330,7 +1330,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
       </div>
       <p class="section-hint">Tap for my favorite songs →</p>
       <div class="artist-grid" id="artist-grid"></div>
-      <div class="tile-search-panel" id="tile-search-panel" style="display:none;">
+      <div class="tile-search-panel" id="tile-search-panel" style="">
         <div class="tile-search-inner">
           <span class="tile-search-label" id="tile-search-label">Slot 1</span>
           <input class="tile-search-input" id="tile-search-input" placeholder="Search for an artist…" autocomplete="off" oninput="onTileSearchInput(this.value)" />
@@ -1354,7 +1354,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <section class="top5-section">
       <div id="album-controls" style="margin-bottom:14px;"></div>
       <div class="artist-grid" id="album-grid"></div>
-      <div class="tile-search-panel" id="album-tile-search-panel" style="display:none;">
+      <div class="tile-search-panel" id="album-tile-search-panel" style="">
         <div class="tile-search-inner">
           <span class="tile-search-label" id="album-tile-search-label">Slot 1</span>
           <input class="tile-search-input" id="album-tile-search-input" placeholder="Search for an album…" autocomplete="off" oninput="onAlbumTileSearchInput(this.value)" />
@@ -1491,7 +1491,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <section class="top5-section">
       <div class="other-fav-grid" id="directors-grid"></div>
       <div id="director-expand-panel" style="display:none;margin-top:16px;"></div>
-      <div class="tile-search-panel" id="director-search-panel" style="display:none;margin-top:16px;">
+      <div class="tile-search-panel" id="director-search-panel" style="margin-top:16px;">
         <div class="tile-search-inner">
           <input class="tile-search-input" id="director-search-input" placeholder="Search for a director…" autocomplete="off" oninput="onDirectorSearchInput(this.value)" />
           <button class="tile-search-close" onclick="closeDirectorSearch()">✕</button>
