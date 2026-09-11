@@ -1425,6 +1425,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Favorite Movies</h2>
     </div>
+    <div id="movie-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="movie-grid"></div>
       <div id="movie-expand-panel" style="display:none;margin-top:20px;"></div>
@@ -1438,6 +1439,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Favorite Dramas</h2>
     </div>
+    <div id="drama-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="drama-grid"></div>
     </section>
@@ -1450,6 +1452,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Favorite Thrillers</h2>
     </div>
+    <div id="thriller-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="thriller-grid"></div>
     </section>
@@ -1462,6 +1465,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Most Rewatchable Comedies</h2>
     </div>
+    <div id="comedy-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="comedy-grid"></div>
     </section>
@@ -2694,7 +2698,7 @@ async function loadFavoriteMediaList(userId, category, arr, idPrefix, gridId) {
     if (error || !data) return false;
 
     arr.length = 0;
-    data.forEach(row => arr.push({ tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' }));
+    data.forEach(row => arr.push({ rowId: row.id, tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' }));
     makeStaticGrid(arr, idPrefix, gridId);
     // Fetch TMDB details one at a time rather than all at once — with 4 sections' worth of
     // items all loading together, firing every request simultaneously risks tripping TMDB's
@@ -2728,7 +2732,7 @@ async function loadFavoriteMoviesFromSupabase(userId) {
       // Matches the exact shape/id-assignment the original preloadMovies() used — id stays a
       // plain sequential integer (not the Supabase row UUID), since existing code interpolates
       // it directly into onclick="toggleMovieExpand(...)" and a UUID would break that.
-      movies.push({ id: i + 1, tmdbId: row.tmdb_id, type: row.type, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' });
+      movies.push({ id: i + 1, rowId: row.id, tmdbId: row.tmdb_id, type: row.type, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' });
     });
     renderMovieGrid();
     // Fetch TMDB details one at a time — with several other sections' worth of items also
@@ -2761,6 +2765,7 @@ async function loadFavoriteMoviesFromSupabase(userId) {
         renderMovieGrid();
       } catch (e) {}
     }
+    renderMovieControls();
     return true;
   } catch (e) {
     console.error('Failed to load favorite movies from Supabase, keeping hardcoded fallback:', e);
@@ -2823,8 +2828,11 @@ async function loadViewedProfileData() {
   await loadFavoriteAlbumsFromSupabase(viewedProfile.id);
   await loadFavoriteMoviesFromSupabase(viewedProfile.id);
   await loadFavoriteMediaList(viewedProfile.id, 'dramas', dramaMovies, 'drama', 'drama-grid');
+  renderRichGridControls('drama');
   await loadFavoriteMediaList(viewedProfile.id, 'thrillers', thrillerMovies, 'thriller', 'thriller-grid');
+  renderRichGridControls('thriller');
   await loadFavoriteMediaList(viewedProfile.id, 'comedies', comedyMovies, 'comedy', 'comedy-grid');
+  renderRichGridControls('comedy');
   await loadFavoriteDirectorsFromSupabase(viewedProfile.id);
 }
 
@@ -5902,7 +5910,7 @@ function toggleMovieExpand(movieId) {
         </div>
         <div class="expand-actions">
           <button class="expand-close" onclick="toggleMovieExpand(${movieId})">✕</button>
-          <button onclick="removeMovie(${movieId})" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.25);color:var(--apple);font-size:11px;font-weight:600;font-family:inherit;padding:4px 10px;border-radius:20px;cursor:pointer;backdrop-filter:blur(4px);">Remove</button>
+          ${(isOwnProfile && movieEditMode) ? `<button onclick="removeMovie(${movieId})" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.25);color:var(--apple);font-size:11px;font-weight:600;font-family:inherit;padding:4px 10px;border-radius:20px;cursor:pointer;backdrop-filter:blur(4px);">Remove</button>` : ''}
         </div>
       </div>
       ${m.overview ? `<div class="artist-bio">${esc(m.overview)}</div>` : ''}
@@ -5919,15 +5927,45 @@ function toggleMovieExpand(movieId) {
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
+let movieEditMode = false;
+function toggleMovieEditMode() {
+  movieEditMode = !movieEditMode;
+  renderMovieGrid();
+  renderMovieControls();
+}
+
+function renderMovieControls() {
+  const el = document.getElementById('movie-controls');
+  if (!el) return;
+  if (!isOwnProfile) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${movieEditMode ? `<button onclick="openMovieSearch()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add movie</button>` : ''}
+      <button onclick="toggleMovieEditMode()" style="font-size:11px;font-weight:600;background:${movieEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${movieEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+        ${movieEditMode ? '✓ Done editing' : '✎ Edit movies'}
+      </button>
+    </div>`;
+}
+
 function removeMovie(movieId) {
+  if (!isOwnProfile) return;
+  const m = movies.find(x => x.id === movieId);
   movies = movies.filter(m => m.id !== movieId);
   const panel = document.getElementById('movie-expand-panel');
   panel.style.display = 'none'; panel.innerHTML = '';
   expandedMovieId = null;
   renderMovieGrid();
+  if (m?.rowId) {
+    (async () => {
+      if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+      try { await sb.from('favorite_media_lists').delete().eq('id', m.rowId); }
+      catch (e) { alert('Failed to delete: ' + (e.message || 'unknown error')); }
+    })();
+  }
 }
 
 function openMovieSearch() {
+  if (!isOwnProfile) return;
   const p = document.getElementById('movie-search-panel');
   p.classList.add('open');
   document.getElementById('movie-search-input').focus();
@@ -5978,9 +6016,23 @@ async function runMovieSearch(val) {
 }
 
 async function selectMovie(idx) {
+  if (!isOwnProfile) return;
   const results = document.getElementById('movie-search-results');
   const r = results._data?.[idx];
   if (!r) return;
+  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  const year = r.release_date ? r.release_date.slice(0,4) : '';
+  let insertedId = null;
+  try {
+    const { data, error } = await sb.from('favorite_media_lists').insert({
+      user_id: currentUser.id, category: 'movies', tmdb_id: r.id, title: r.title, year, type: 'movie', sort_order: movies.length,
+    }).select().single();
+    if (error) throw error;
+    insertedId = data.id;
+  } catch (e) {
+    alert('Failed to save: ' + (e.message || 'unknown error'));
+    return;
+  }
   // Fetch full details for genres, runtime, director, backdrop
   try {
     const [detailRes, creditsRes] = await Promise.all([
@@ -5992,9 +6044,10 @@ async function selectMovie(idx) {
     const director = credits.crew?.find(c => c.job === 'Director')?.name || '';
     movies.push({
       id: nextMovieId++,
+      rowId: insertedId,
       tmdbId: r.id,
       title: r.title,
-      year: r.release_date ? r.release_date.slice(0,4) : '',
+      year,
       poster: r.poster_path || '',
       backdrop: detail.backdrop_path || '',
       overview: detail.overview || '',
@@ -6007,9 +6060,10 @@ async function selectMovie(idx) {
     // Fallback with basic info
     movies.push({
       id: nextMovieId++,
+      rowId: insertedId,
       tmdbId: r.id,
       title: r.title,
-      year: r.release_date ? r.release_date.slice(0,4) : '',
+      year,
       poster: r.poster_path || '',
       backdrop: '',
       overview: r.overview || '',
@@ -6576,14 +6630,146 @@ const DRAMA_PRELOAD = [
 let thrillerMovies = [];
 let dramaMovies = [];
 
+const RICH_GRID_EDIT_STATE = { drama: false, thriller: false, comedy: false };
+const RICH_GRID_META = {
+  drama: { arr: () => dramaMovies, gridId: 'drama-grid', category: 'dramas', controlsId: 'drama-controls' },
+  thriller: { arr: () => thrillerMovies, gridId: 'thriller-grid', category: 'thrillers', controlsId: 'thriller-controls' },
+  comedy: { arr: () => comedyMovies, gridId: 'comedy-grid', category: 'comedies', controlsId: 'comedy-controls' },
+};
+
+function toggleRichGridEditMode(key) {
+  RICH_GRID_EDIT_STATE[key] = !RICH_GRID_EDIT_STATE[key];
+  const meta = RICH_GRID_META[key];
+  makeStaticGrid(meta.arr(), key, meta.gridId);
+  renderRichGridControls(key);
+}
+
+function renderRichGridControls(key) {
+  const meta = RICH_GRID_META[key];
+  const el = document.getElementById(meta.controlsId);
+  if (!el) return;
+  if (!isOwnProfile) { el.innerHTML = ''; return; }
+  const editing = RICH_GRID_EDIT_STATE[key];
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${editing ? `<button onclick="openRichGridModal('${key}')" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add film</button>` : ''}
+      <button onclick="toggleRichGridEditMode('${key}')" style="font-size:11px;font-weight:600;background:${editing ? 'var(--accent)' : 'var(--surface2)'};color:${editing ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+        ${editing ? '✓ Done editing' : '✎ Edit list'}
+      </button>
+    </div>`;
+}
+
+let richGridModalKey = null;
+let richGridSearchTimer = null;
+
+const RICH_GRID_LABELS = { drama: 'Dramas', thriller: 'Thrillers', comedy: 'Comedies' };
+
+function openRichGridModal(key) {
+  if (!isOwnProfile) return;
+  richGridModalKey = key;
+  document.getElementById('rich-grid-modal-title').textContent = `Add to ${RICH_GRID_LABELS[key] || key}`;
+  document.getElementById('rich-grid-search-input').value = '';
+  document.getElementById('rich-grid-search-results').innerHTML = '<span style="font-size:12.5px;color:var(--faint);">Start typing to search…</span>';
+  document.getElementById('rich-grid-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('rich-grid-search-input')?.focus(), 50);
+}
+
+function closeRichGridModal() {
+  document.getElementById('rich-grid-modal').style.display = 'none';
+  richGridModalKey = null;
+}
+
+function onRichGridSearchInput(val) {
+  clearTimeout(richGridSearchTimer);
+  const results = document.getElementById('rich-grid-search-results');
+  if (!val || val.length < 2) { results.innerHTML = '<span style="font-size:12.5px;color:var(--faint);">Start typing to search…</span>'; return; }
+  results.innerHTML = '<span style="font-size:12.5px;color:var(--faint);">Searching…</span>';
+  richGridSearchTimer = setTimeout(() => runRichGridSearch(val), 350);
+}
+
+async function runRichGridSearch(val) {
+  const results = document.getElementById('rich-grid-search-results');
+  try {
+    const res = await tmdbFetch(`/search/movie?query=${encodeURIComponent(val)}&page=1`);
+    const data = await res.json();
+    if (!data.results?.length) { results.innerHTML = '<span style="font-size:12.5px;color:var(--faint);">No films found</span>'; return; }
+    results._data = data.results;
+    results.innerHTML = data.results.slice(0, 8).map((r, i) => {
+      const year = r.release_date ? r.release_date.slice(0, 4) : '';
+      return `<div onclick="selectRichGridResult(${i})" style="display:flex;align-items:center;gap:10px;padding:6px;border-radius:8px;cursor:pointer;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+        ${r.poster_path
+          ? `<img src="https://image.tmdb.org/t/p/w92${r.poster_path}" style="width:36px;height:54px;object-fit:cover;border-radius:4px;flex-shrink:0;">`
+          : `<div style="width:36px;height:54px;border-radius:4px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎬</div>`}
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${esc(r.title)}</div>
+          <div style="font-size:11px;color:var(--muted);">${year}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    results.innerHTML = '<span style="font-size:12.5px;color:var(--faint);">Error — check connection</span>';
+  }
+}
+
+async function selectRichGridResult(idx) {
+  const key = richGridModalKey;
+  if (!key || !isOwnProfile) return;
+  const results = document.getElementById('rich-grid-search-results');
+  const r = results._data?.[idx];
+  if (!r) return;
+  const meta = RICH_GRID_META[key];
+  const arr = meta.arr();
+  if (arr.find(x => x.tmdbId === r.id)) { showToast('Already added'); closeRichGridModal(); return; }
+  closeRichGridModal();
+  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  try {
+    const { data, error } = await sb.from('favorite_media_lists').insert({
+      user_id: currentUser.id, category: meta.category, tmdb_id: r.id, title: r.title,
+      year: r.release_date ? r.release_date.slice(0, 4) : null, type: 'movie', sort_order: arr.length,
+    }).select().single();
+    if (error) throw error;
+    const item = { rowId: data.id, tmdbId: r.id, title: r.title, year: data.year, poster: r.poster_path || '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' };
+    arr.push(item);
+    makeStaticGrid(arr, key, meta.gridId);
+    const detail = await fetchMovieDetail(r.id);
+    Object.assign(item, detail);
+    makeStaticGrid(arr, key, meta.gridId);
+    showToast(`Added "${r.title}"`);
+  } catch (e) {
+    alert('Failed to save: ' + (e.message || 'unknown error'));
+  }
+}
+
+async function removeRichGridItem(key, idx) {
+  if (!isOwnProfile) return;
+  const meta = RICH_GRID_META[key];
+  const arr = meta.arr();
+  const item = arr[idx];
+  if (!item) return;
+  if (!confirm(`Remove "${item.title}"?`)) return;
+  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  try {
+    if (item.rowId) { const { error } = await sb.from('favorite_media_lists').delete().eq('id', item.rowId); if (error) throw error; }
+    arr.splice(idx, 1);
+    if (expandedRichTile[key] === idx) expandedRichTile[key] = null;
+    makeStaticGrid(arr, key, meta.gridId);
+  } catch (e) {
+    alert('Failed to delete: ' + (e.message || 'unknown error'));
+  }
+}
+
 function makeStaticGrid(movies, idPrefix, gridId) {
   const grid = document.getElementById(gridId);
   if (!grid) return;
   const arrName = RICH_GRID_ARRAY_NAMES[idPrefix];
   const expandedIdx = expandedRichTile[idPrefix] ?? null;
+  const editing = isOwnProfile && RICH_GRID_EDIT_STATE[idPrefix];
   const tiles = movies.map((m, i) => {
     const hasWhy = !!MOVIE_WHY_INFLUENTIAL[m.title];
-    return `<div class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="${idPrefix}-tile-${i}" style="cursor:pointer;" onclick="toggleRichExpand(${arrName}, '${idPrefix}', ${i})">
+    const editControls = editing ? `
+      <button onclick="event.stopPropagation(); removeRichGridItem('${idPrefix}', ${i})" style="position:absolute;top:6px;right:6px;z-index:3;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✕</button>` : '';
+    return `<div class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="${idPrefix}-tile-${i}" style="cursor:pointer;position:relative;" onclick="toggleRichExpand(${arrName}, '${idPrefix}', ${i})">
+      ${editControls}
       <div class="tile-img-wrap" style="aspect-ratio:2/3;position:relative;">
         ${m.poster
           ? `<img class="tile-img" src="${TMDB_IMG}${m.poster}" alt="${esc(m.title)}" style="object-position:center top;">`
@@ -8043,6 +8229,15 @@ renderTasteInfluences();
     <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.4;">Cover art and the tracklist resolve automatically from iTunes based on the album + artist name. Saving is instant — the tracklist fills in quietly in the background afterward and may take up to a minute if iTunes is rate-limited.</div>
 
     <button id="album-item-save-btn" onclick="saveAlbumItemForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+  </div>
+</div>
+
+<div id="rich-grid-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeRichGridModal()">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
+    <button onclick="closeRichGridModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+    <div id="rich-grid-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add film</div>
+    <input id="rich-grid-search-input" type="text" placeholder="Search for a film…" autocomplete="off" oninput="onRichGridSearchInput(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:14px;box-sizing:border-box;">
+    <div id="rich-grid-search-results" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;"><span style="font-size:12.5px;color:var(--faint);">Start typing to search…</span></div>
   </div>
 </div>
 
