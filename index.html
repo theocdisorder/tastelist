@@ -1632,6 +1632,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Books That Shaped Me</h2>
     </div>
+    <div id="books-shaped-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="books-shaped-grid"></div>
     </section>
@@ -1643,6 +1644,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Books I've Reread Too Many Times</h2>
     </div>
+    <div id="books-reread-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="books-reread-grid"></div>
     </section>
@@ -1654,6 +1656,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title">Recent Favorites</h2>
     </div>
+    <div id="books-recent-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
       <div class="artist-grid" id="books-recent-grid"></div>
     </section>
@@ -2851,6 +2854,9 @@ async function loadViewedProfileData() {
   await loadFavoriteTVList(viewedProfile.id, 'tv_drama', 'tv-drama', 'tv-drama-grid');
   await loadFavoriteTVList(viewedProfile.id, 'tv_other', 'tv-other', 'tv-other-grid');
   await loadFavoriteTVList(viewedProfile.id, 'tv_dropoff', 'tv-dropoff', 'tv-dropoff-grid');
+  await loadFavoriteBooksFromSupabase(viewedProfile.id, 'shaped', 'books-shaped-grid');
+  await loadFavoriteBooksFromSupabase(viewedProfile.id, 'reread', 'books-reread-grid');
+  await loadFavoriteBooksFromSupabase(viewedProfile.id, 'recent', 'books-recent-grid');
 }
 
 async function initAuth() {
@@ -8156,9 +8162,9 @@ function bookDetailPanelHTML(b, closeOnclick) {
       <div style="padding:1.25rem 1.5rem;font-size:13.5px;line-height:1.6;color:var(--text);min-height:20px;">
         ${b._description === undefined ? `<span style="color:var(--faint);">Loading summary…</span>` : (b._description ? esc(b._description) : `<span style="color:var(--faint);">No summary available.</span>`)}
       </div>
-      ${BOOK_WHY_INFLUENTIAL[b.title] ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
+      ${(b.whyInfluential || BOOK_WHY_INFLUENTIAL[b.title]) ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why It's Influential to Me</span>
-        ${renderMentions(BOOK_WHY_INFLUENTIAL[b.title])}
+        ${renderMentions(b.whyInfluential || BOOK_WHY_INFLUENTIAL[b.title])}
       </div>` : ''}
     </div>`;
 }
@@ -8215,6 +8221,34 @@ async function handleBookCoverError(gridId, index) {
   await bookCoverErrorQueue;
 }
 
+async function loadFavoriteBooksFromSupabase(userId, category, gridId) {
+  if (!sb || !userId) return false;
+  try {
+    const { data, error } = await sb.from('favorite_books')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('category', category)
+      .order('sort_order', { ascending: true });
+    if (error || !data) return false;
+
+    const arr = BOOK_ARRAYS[gridId];
+    arr.length = 0;
+    data.forEach(row => arr.push({ rowId: row.id, title: row.title, author: row.author, year: row.year || '', cover: row.cover_url || '', whyInfluential: row.why_influential || '' }));
+    renderBookGrid(arr, gridId);
+    renderBookGridControls(gridId);
+    for (let i = 0; i < arr.length; i++) {
+      if (arr[i].cover) continue; // already has a curated cover — no need to fetch
+      const cover = await fetchBookCover(arr[i].title, arr[i].author);
+      arr[i].cover = cover;
+      renderBookGrid(arr, gridId);
+    }
+    return true;
+  } catch (e) {
+    console.error(`Failed to load favorite books (${category}) from Supabase, keeping hardcoded fallback:`, e);
+    return false;
+  }
+}
+
 async function loadBooks(bookList, dataArr, gridId) {
   dataArr.length = 0;
   bookList.forEach(b => dataArr.push({ ...b })); // keep the curated cover URL already in the data
@@ -8227,13 +8261,21 @@ async function loadBooks(bookList, dataArr, gridId) {
   }
 }
 
+const BOOK_GRID_EDIT_STATE = { 'books-shaped-grid': false, 'books-reread-grid': false, 'books-recent-grid': false };
+const BOOK_GRID_CATEGORY = { 'books-shaped-grid': 'shaped', 'books-reread-grid': 'reread', 'books-recent-grid': 'recent' };
+const BOOK_GRID_CONTROLS_ID = { 'books-shaped-grid': 'books-shaped-controls', 'books-reread-grid': 'books-reread-controls', 'books-recent-grid': 'books-recent-controls' };
+
 function renderBookGrid(dataArr, gridId) {
   const grid = document.getElementById(gridId);
   if (!grid) return;
   const expandedIdx = expandedBookTile[gridId] ?? null;
+  const editing = isOwnProfile && BOOK_GRID_EDIT_STATE[gridId];
   const tiles = dataArr.map((b, i) => {
-    const hasWhy = !!BOOK_WHY_INFLUENTIAL[b.title];
-    return `<div class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="${gridId}-tile-${i}" style="cursor:pointer;" onclick="toggleBookExpand('${gridId}', ${i})">
+    const hasWhy = !!(b.whyInfluential || BOOK_WHY_INFLUENTIAL[b.title]);
+    const editControls = editing ? `
+      <button onclick="event.stopPropagation(); removeBookGridItem('${gridId}', ${i})" style="position:absolute;top:6px;right:6px;z-index:3;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✕</button>` : '';
+    return `<div class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="${gridId}-tile-${i}" style="cursor:pointer;position:relative;" onclick="toggleBookExpand('${gridId}', ${i})">
+      ${editControls}
       <div class="tile-img-wrap" style="aspect-ratio:2/3;position:relative;">
         ${b.cover
           ? `<img class="tile-img" src="${b.cover}" alt="${esc(b.title)}" style="object-position:center top;" onerror="handleBookCoverError('${gridId}', ${i})">`
@@ -8250,6 +8292,87 @@ function renderBookGrid(dataArr, gridId) {
   const b = expandedIdx != null ? dataArr[expandedIdx] : null;
   const panelHtml = b ? `<div style="grid-column:1/-1;">${bookDetailPanelHTML(b, `toggleBookExpand('${gridId}', ${expandedIdx})`)}</div>` : null;
   grid.innerHTML = spliceGridWithPanel(grid, tiles, expandedIdx, panelHtml);
+}
+
+function toggleBookGridEditMode(gridId) {
+  BOOK_GRID_EDIT_STATE[gridId] = !BOOK_GRID_EDIT_STATE[gridId];
+  const arr = BOOK_ARRAYS[gridId];
+  if (arr) renderBookGrid(arr, gridId);
+  renderBookGridControls(gridId);
+}
+
+function renderBookGridControls(gridId) {
+  const el = document.getElementById(BOOK_GRID_CONTROLS_ID[gridId]);
+  if (!el) return;
+  if (!isOwnProfile) { el.innerHTML = ''; return; }
+  const editing = BOOK_GRID_EDIT_STATE[gridId];
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${editing ? `<button onclick="openBookGridModal('${gridId}')" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add book</button>` : ''}
+      <button onclick="toggleBookGridEditMode('${gridId}')" style="font-size:11px;font-weight:600;background:${editing ? 'var(--accent)' : 'var(--surface2)'};color:${editing ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
+        ${editing ? '✓ Done editing' : '✎ Edit list'}
+      </button>
+    </div>`;
+}
+
+let bookGridModalTarget = null;
+
+function openBookGridModal(gridId) {
+  if (!isOwnProfile) return;
+  bookGridModalTarget = gridId;
+  document.getElementById('book-grid-title').value = '';
+  document.getElementById('book-grid-author').value = '';
+  document.getElementById('book-grid-year').value = '';
+  document.getElementById('book-grid-modal').style.display = 'flex';
+}
+
+function closeBookGridModal() {
+  document.getElementById('book-grid-modal').style.display = 'none';
+  bookGridModalTarget = null;
+}
+
+async function saveBookGridForm() {
+  const gridId = bookGridModalTarget;
+  if (!gridId || !isOwnProfile) return;
+  const title = document.getElementById('book-grid-title').value.trim();
+  const author = document.getElementById('book-grid-author').value.trim();
+  const year = document.getElementById('book-grid-year').value.trim();
+  if (!title || !author) { alert('Title and author are required.'); return; }
+  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  const arr = BOOK_ARRAYS[gridId];
+  closeBookGridModal();
+  try {
+    const { data, error } = await sb.from('favorite_books').insert({
+      user_id: currentUser.id, category: BOOK_GRID_CATEGORY[gridId], title, author, year: year || null, sort_order: arr.length,
+    }).select().single();
+    if (error) throw error;
+    const book = { rowId: data.id, title, author, year: year || '', cover: '' };
+    arr.push(book);
+    renderBookGrid(arr, gridId);
+    const cover = await fetchBookCover(title, author);
+    book.cover = cover;
+    renderBookGrid(arr, gridId);
+    showToast(`Added "${title}"`);
+  } catch (e) {
+    alert('Failed to save: ' + (e.message || 'unknown error'));
+  }
+}
+
+async function removeBookGridItem(gridId, idx) {
+  if (!isOwnProfile) return;
+  const arr = BOOK_ARRAYS[gridId];
+  const item = arr?.[idx];
+  if (!item) return;
+  if (!confirm(`Remove "${item.title}"?`)) return;
+  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  try {
+    if (item.rowId) { const { error } = await sb.from('favorite_books').delete().eq('id', item.rowId); if (error) throw error; }
+    arr.splice(idx, 1);
+    if (expandedBookTile[gridId] === idx) expandedBookTile[gridId] = null;
+    renderBookGrid(arr, gridId);
+  } catch (e) {
+    alert('Failed to delete: ' + (e.message || 'unknown error'));
+  }
 }
 
 loadBooks(BOOKS_SHAPED, booksShapedData, 'books-shaped-grid');
@@ -8408,6 +8531,21 @@ renderTasteInfluences();
     <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.4;">Cover art and the tracklist resolve automatically from iTunes based on the album + artist name. Saving is instant — the tracklist fills in quietly in the background afterward and may take up to a minute if iTunes is rate-limited.</div>
 
     <button id="album-item-save-btn" onclick="saveAlbumItemForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+  </div>
+</div>
+
+<div id="book-grid-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeBookGridModal()">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
+    <button onclick="closeBookGridModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+    <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add book</div>
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Title *</label>
+    <input id="book-grid-title" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Author *</label>
+    <input id="book-grid-author" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Year</label>
+    <input id="book-grid-year" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.4;">Cover art resolves automatically from Open Library based on title + author.</div>
+    <button id="book-grid-save-btn" onclick="saveBookGridForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
   </div>
 </div>
 
