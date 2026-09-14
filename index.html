@@ -7508,61 +7508,58 @@ async function loadFriendRecArt() {
 }
 
 let activityFeedArtFetched = false;
-function initActivityFeedArt() {
+async function initActivityFeedArt() {
   if (activityFeedArtFetched) return;
   activityFeedArtFetched = true;
-  ACTIVITY_FEED_ITEMS.forEach(item => {
-    if (item.artQuery) {
-      fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=music&entity=song&limit=1`)
-        .then(r => r.json())
-        .then(d => {
-          const hit = d.results?.[0];
-          const art = hit?.artworkUrl100?.replace('100x100bb', '200x200bb');
-          if (art) item.art = art;
-          if (hit?.trackViewUrl) item.appleMusicUrl = hit.trackViewUrl;
-          item.spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(item.artQuery)}`;
-          if (art || hit) refreshActivityFeeds();
-        }).catch(() => {});
-    } else if (item.tmdbTvId || item.tmdbTvQuery) {
-      (async () => {
-        try {
-          let tvId = item.tmdbTvId;
-          if (!tvId) {
-            const r = await tmdbFetch(`/search/tv?query=${encodeURIComponent(item.tmdbTvQuery)}&page=1`);
-            const d = await r.json();
-            tvId = d.results?.[0]?.id;
-          }
-          if (!tvId) return;
+  // Sequential, throttled — firing every item's art lookup at once (movies/TV via TMDB, songs via
+  // iTunes, books via Open Library + Google Books) was bursting past Google Books' rate limit in
+  // particular, since it's much stricter than the others and some items need 2 searches each.
+  for (const item of ACTIVITY_FEED_ITEMS) {
+    try {
+      if (item.artQuery) {
+        const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=music&entity=song&limit=1`);
+        const d = await r.json();
+        const hit = d.results?.[0];
+        const art = hit?.artworkUrl100?.replace('100x100bb', '200x200bb');
+        if (art) item.art = art;
+        if (hit?.trackViewUrl) item.appleMusicUrl = hit.trackViewUrl;
+        item.spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(item.artQuery)}`;
+        if (art || hit) refreshActivityFeeds();
+      } else if (item.tmdbTvId || item.tmdbTvQuery) {
+        let tvId = item.tmdbTvId;
+        if (!tvId) {
+          const r = await tmdbFetch(`/search/tv?query=${encodeURIComponent(item.tmdbTvQuery)}&page=1`);
+          const d = await r.json();
+          tvId = d.results?.[0]?.id;
+        }
+        if (tvId) {
           const detail = await fetchTVDetail(tvId);
           if (detail.poster) item.art = `${TMDB_IMG}${detail.poster}`;
           if (detail.overview) item._summary = detail.overview;
           refreshActivityFeeds();
-        } catch (e) {}
-      })();
-    } else if (item.tmdbId || item.tmdbQuery) {
-      (async () => {
-        try {
-          let movieId = item.tmdbId;
-          if (!movieId) {
-            const r = await tmdbFetch(`/search/movie?query=${encodeURIComponent(item.tmdbQuery)}&page=1`);
-            const d = await r.json();
-            movieId = d.results?.[0]?.id;
-          }
-          if (!movieId) return;
+        }
+      } else if (item.tmdbId || item.tmdbQuery) {
+        let movieId = item.tmdbId;
+        if (!movieId) {
+          const r = await tmdbFetch(`/search/movie?query=${encodeURIComponent(item.tmdbQuery)}&page=1`);
+          const d = await r.json();
+          movieId = d.results?.[0]?.id;
+        }
+        if (movieId) {
           // Same helper used by Favorite Movies/Dramas/Thrillers/Comedies, so the Activity Feed
           // summary is pulled from the exact same source as those tabs.
           const detail = await fetchMovieDetail(movieId);
           if (detail.poster) item.art = `${TMDB_IMG}${detail.poster}`;
           if (detail.overview) item._summary = detail.overview;
           refreshActivityFeeds();
-        } catch (e) {}
-      })();
-    } else if (item.bookTitle) {
-      fetchBookCover(item.bookTitle, item.bookAuthor).then(art => {
+        }
+      } else if (item.bookTitle) {
+        const art = await fetchBookCover(item.bookTitle, item.bookAuthor);
         if (art) { item.art = art; refreshActivityFeeds(); }
-      }).catch(() => {});
-    }
-  });
+      }
+    } catch (e) {}
+    await new Promise(res => setTimeout(res, 200));
+  }
 }
 function renderProfileTab() {
   // Stats bar
