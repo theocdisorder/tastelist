@@ -1248,6 +1248,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
       </div>
     </div>
     <div id="profile-link-banner"></div>
+    <div id="follow-requests-panel"></div>
 
 
     <!-- Taste in a sentence -->
@@ -2491,7 +2492,7 @@ async function resolveViewedProfile() {
   if (usernameParam && sb) {
     try {
       const { data } = await sb.from('profiles')
-        .select('id, username, display_name, bio, taste_sentence')
+        .select('id, username, display_name, bio, taste_sentence, is_public')
         .eq('username', usernameParam)
         .maybeSingle();
       if (data) {
@@ -2507,11 +2508,113 @@ async function resolveViewedProfile() {
   }
 
   if (currentUser) {
-    viewedProfile = { id: currentUser.id, username: currentProfile?.username, display_name: currentProfile?.display_name, bio: currentProfile?.bio, taste_sentence: currentProfile?.taste_sentence };
+    viewedProfile = { id: currentUser.id, username: currentProfile?.username, display_name: currentProfile?.display_name, bio: currentProfile?.bio, taste_sentence: currentProfile?.taste_sentence, is_public: currentProfile?.is_public };
     isOwnProfile = true;
   } else {
     viewedProfile = null;
     isOwnProfile = false;
+  }
+}
+
+let followStatus = null; // null | 'pending' | 'accepted' — viewer's relationship to viewedProfile
+
+async function checkFollowStatus() {
+  followStatus = null;
+  if (!sb || !currentUser || !viewedProfile || isOwnProfile) return;
+  try {
+    const { data } = await sb.from('follows')
+      .select('status')
+      .eq('follower_id', currentUser.id)
+      .eq('followed_id', viewedProfile.id)
+      .maybeSingle();
+    followStatus = data?.status || null;
+  } catch (e) {}
+}
+
+async function toggleFollow() {
+  if (!currentUser || !viewedProfile || isOwnProfile) return;
+  const btn = document.getElementById('follow-btn');
+  if (btn) { btn.disabled = true; }
+  try {
+    if (followStatus === 'accepted' || followStatus === 'pending') {
+      // Unfollow, or cancel a pending request — same action either way.
+      const { error } = await sb.from('follows')
+        .delete()
+        .eq('follower_id', currentUser.id)
+        .eq('followed_id', viewedProfile.id);
+      if (error) throw error;
+      followStatus = null;
+    } else {
+      const newStatus = viewedProfile.is_public ? 'accepted' : 'pending';
+      const { error } = await sb.from('follows')
+        .insert({ follower_id: currentUser.id, followed_id: viewedProfile.id, status: newStatus });
+      if (error) throw error;
+      followStatus = newStatus;
+      if (newStatus === 'accepted') {
+        // Newly allowed to see this profile's content — load it now rather than
+        // waiting for a manual refresh.
+        loadViewedProfileData();
+      }
+    }
+    updateProfileHeaderAndBanner();
+  } catch (e) {
+    alert('Something went wrong: ' + (e.message || 'unknown error'));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function loadFollowRequests() {
+  const panel = document.getElementById('follow-requests-panel');
+  if (!panel) return;
+  if (!isOwnProfile || !currentUser || !sb) { panel.innerHTML = ''; return; }
+  try {
+    const { data, error } = await sb.from('follows')
+      .select('id, follower_id, profiles!follows_follower_id_fkey(username, display_name)')
+      .eq('followed_id', currentUser.id)
+      .eq('status', 'pending');
+    if (error || !data || data.length === 0) { panel.innerHTML = ''; return; }
+    panel.innerHTML = `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:-8px 0 20px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">Follow requests</div>
+        ${data.map(r => `
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 0;">
+            <span style="font-size:13.5px;color:var(--text);flex:1;">${esc(r.profiles?.display_name || r.profiles?.username || 'Someone')}</span>
+            <button onclick="respondToFollowRequest('${r.id}', true)" style="font-size:11px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:16px;padding:4px 12px;cursor:pointer;font-family:inherit;">Accept</button>
+            <button onclick="respondToFollowRequest('${r.id}', false)" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:16px;padding:4px 12px;cursor:pointer;font-family:inherit;">Decline</button>
+          </div>`).join('')}
+      </div>`;
+  } catch (e) {
+    panel.innerHTML = '';
+  }
+}
+
+async function respondToFollowRequest(requestId, accept) {
+  try {
+    if (accept) {
+      const { error } = await sb.from('follows').update({ status: 'accepted' }).eq('id', requestId);
+      if (error) throw error;
+    } else {
+      const { error } = await sb.from('follows').delete().eq('id', requestId);
+      if (error) throw error;
+    }
+    loadFollowRequests();
+  } catch (e) {
+    alert('Failed to respond to request: ' + (e.message || 'unknown error'));
+  }
+}
+
+async function toggleProfilePrivacy() {
+  if (!isOwnProfile || !currentUser || !sb) return;
+  const newValue = !(viewedProfile.is_public !== false);
+  try {
+    const { error } = await sb.from('profiles').update({ is_public: newValue }).eq('id', currentUser.id);
+    if (error) throw error;
+    viewedProfile.is_public = newValue;
+    if (currentProfile) currentProfile.is_public = newValue;
+    updateProfileHeaderAndBanner();
+  } catch (e) {
+    alert('Failed to update: ' + (e.message || 'unknown error'));
   }
 }
 
@@ -2547,16 +2650,29 @@ function updateProfileHeaderAndBanner() {
   if (!banner) return;
   if (isOwnProfile && viewedProfile?.username) {
     const link = `${window.location.origin}${window.location.pathname}?u=${encodeURIComponent(viewedProfile.username)}`;
+    const isPublic = viewedProfile.is_public !== false;
     banner.innerHTML = `
-      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:-8px 0 20px;">
-        <span style="font-size:12px;color:var(--muted);">Your public profile:</span>
-        <code style="font-size:12px;color:var(--text);background:var(--surface2);padding:3px 8px;border-radius:6px;">${esc(link)}</code>
-        <button onclick="copyProfileLink(this, '${link}')" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;">Copy link</button>
+      <div style="margin:-8px 0 20px;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+          <span style="font-size:12px;color:var(--muted);">Your profile:</span>
+          <code style="font-size:12px;color:var(--text);background:var(--surface2);padding:3px 8px;border-radius:6px;">${esc(link)}</code>
+          <button onclick="copyProfileLink(this, '${link}')" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;">Copy link</button>
+          <button onclick="toggleProfilePrivacy()" style="font-size:11px;font-weight:600;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;">${isPublic ? '🌐 Public — click to make private' : '🔒 Private — click to make public'}</button>
+        </div>
       </div>`;
   } else if (!isOwnProfile && viewedProfile) {
+    const followLabel = followStatus === 'accepted' ? '✓ Following' : followStatus === 'pending' ? 'Requested' : 'Follow';
+    const followBtn = currentUser ? `<button id="follow-btn" onclick="toggleFollow()" style="font-size:11.5px;font-weight:600;background:${followStatus === 'accepted' ? 'var(--surface2)' : 'var(--accent)'};color:${followStatus === 'accepted' ? 'var(--text)' : '#fff'};border:1px solid var(--border);border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;">${followLabel}</button>` : '';
+    const privacyNote = (!viewedProfile.is_public && followStatus !== 'accepted') ? `<div style="font-size:12px;color:var(--faint);margin-top:6px;">🔒 This profile is private — ${followStatus === 'pending' ? 'your follow request is pending.' : 'follow to see their taste profile.'}</div>` : '';
     banner.innerHTML = `
-      <div style="font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin:-8px 0 20px;display:inline-block;">
-        👀 You're viewing ${esc(viewedProfile.display_name || viewedProfile.username || 'this')}'s public profile
+      <div style="margin:-8px 0 20px;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+          <div style="font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:inline-block;">
+            👀 You're viewing ${esc(viewedProfile.display_name || viewedProfile.username || 'this')}'s profile
+          </div>
+          ${followBtn}
+        </div>
+        ${privacyNote}
       </div>`;
   } else {
     banner.innerHTML = '';
@@ -2873,18 +2989,22 @@ async function initAuth() {
     console.error('Auth check failed, treating as signed out:', e);
   }
   await resolveViewedProfile();
+  await checkFollowStatus();
   renderAuthWidget();
   updateAuthGate();
   updateProfileHeaderAndBanner();
+  loadFollowRequests();
   await loadViewedProfileData();
 
   sb.auth.onAuthStateChange(async (event, session) => {
     currentUser = session?.user || null;
     await loadCurrentProfile();
     await resolveViewedProfile();
+    await checkFollowStatus();
     renderAuthWidget();
     updateAuthGate();
     updateProfileHeaderAndBanner();
+    loadFollowRequests();
     if (viewedProfile) {
       await loadViewedProfileData();
     } else {
