@@ -8100,20 +8100,19 @@ async function fetchBookCoverCandidates(title, author) {
     (data.docs || []).forEach(d => { if (d.cover_i) candidates.push(`https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg`); });
   } catch (e) {}
 
-  // Fallback: Google Books
-  async function trySearch(q) {
-    try {
-      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&fields=items(volumeInfo(imageLinks))`);
-      const data = await res.json();
-      (data.items || []).forEach(it => {
-        const img = it.volumeInfo?.imageLinks;
-        const url = img && (img.thumbnail || img.smallThumbnail);
-        if (url) candidates.push(url.replace('http:', 'https:').replace('zoom=1', 'zoom=2'));
-      });
-    } catch (e) {}
-  }
-  await trySearch(`intitle:"${title}" inauthor:"${author}"`);
-  await trySearch(`${title} ${author}`);
+  // Google Books is a fallback only — skip it entirely if Open Library already found something,
+  // since Google's rate limit is much stricter than everything else this app calls, and calling
+  // it unconditionally (even on a successful Open Library hit) was needlessly tripping that limit.
+  if (candidates.length > 0) return candidates;
+  try {
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(`${title} ${author}`)}&maxResults=8&fields=items(volumeInfo(imageLinks))`);
+    const data = await res.json();
+    (data.items || []).forEach(it => {
+      const img = it.volumeInfo?.imageLinks;
+      const url = img && (img.thumbnail || img.smallThumbnail);
+      if (url) candidates.push(url.replace('http:', 'https:').replace('zoom=1', 'zoom=2'));
+    });
+  } catch (e) {}
   return candidates;
 }
 
@@ -8238,6 +8237,7 @@ async function loadFavoriteBooksFromSupabase(userId, category, gridId) {
       const cover = await fetchBookCover(arr[i].title, arr[i].author);
       arr[i].cover = cover;
       renderBookGrid(arr, gridId);
+      await new Promise(res => setTimeout(res, 400));
     }
     return true;
   } catch (e) {
@@ -8255,6 +8255,7 @@ async function loadBooks(bookList, dataArr, gridId) {
     const cover = await fetchBookCover(bookList[i].title, bookList[i].author);
     dataArr[i].cover = cover;
     renderBookGrid(dataArr, gridId);
+    await new Promise(res => setTimeout(res, 400));
   }
 }
 
