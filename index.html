@@ -6901,7 +6901,7 @@ const ACTIVITY_FEED_ITEMS = [
     art: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ef/03/66/ef036634-5956-38db-ba78-db6200adfdc4/886445635942.jpg/600x600bf-60.jpg', artQuery: 'Animals Pink Floyd' },
   { label: 'Yesteryear', sub: 'Caro Claire Burke · Finished reading', color: '#22C55E', icon: 'book', tab: 'books', type: 'book',
     note: "Very easy read, and I enjoyed the snarky narrator. The ending was pretty disappointing though relative to the promise of the premise.", timestamp: 'July 21, 2026',
-    art: 'https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1753932705i/238226942.jpg', bookTitle: 'Yesteryear', bookAuthor: 'Caro Claire Burke' },
+    art: 'https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1753932705l/238226942._SY475_.jpg', bookTitle: 'Yesteryear', bookAuthor: 'Caro Claire Burke' },
   { label: 'The Odyssey', sub: 'Watched', color: '#F97360', icon: 'film', tab: 'movies', type: 'movie',
     note: "Highly entertaining and great adaptation. Casting was weird though. I like Matt Damon, but he doesn't really have the gravitas that Russell Crowe had in Gladiator or even Sean Bean in GOT. It could also be the direction, but the emotional moments fell kind of flat to me.", timestamp: 'July 19, 2026',
     art: '', tmdbId: 1368337 },
@@ -7385,7 +7385,8 @@ async function handleActivityArtError(globalIndex) {
   const item = ACTIVITY_FEED_ITEMS[globalIndex];
   if (!item || item._artRetried) return;
   item._artRetried = true;
-  item.art = '';
+  const originalArt = item.art; // preserved in case the retry below finds nothing better —
+  item.art = '';                // a failed retry should never permanently erase a working value
   activityArtErrorQueue = activityArtErrorQueue.then(async () => {
     let newArt = '';
     try {
@@ -7409,7 +7410,8 @@ async function handleActivityArtError(globalIndex) {
         newArt = data.results?.[0]?.artworkUrl100?.replace('100x100bb', '200x200bb') || '';
       }
     } catch (e) {}
-    if (newArt) { item.art = newArt; refreshActivityFeeds(); }
+    item.art = newArt || originalArt; // fall back to the original rather than leaving it blank
+    refreshActivityFeeds();
     await new Promise(res => setTimeout(res, 200));
   });
   await activityArtErrorQueue;
