@@ -7369,7 +7369,7 @@ function activityCardHtml(item, globalIndex) {
     </div>
     <div class="activity-card-body">
       <table style="border-collapse:collapse;width:100%;"><tr><td style="vertical-align:middle;width:38px;padding:0;">${activityFeedAvatarHtml()}</td><td style="vertical-align:middle;padding:0 0 0 10px;">
-        <div style="font-size:13.5px;font-weight:600;color:var(--text);">${esc(currentProfile?.display_name || currentUser?.email?.split('@')[0] || 'Sreya S.')}</div>
+        <div style="font-size:13.5px;font-weight:600;color:var(--text);">${esc(viewedProfile?.display_name || viewedProfile?.username || 'Someone')}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);">${item.timestamp || ''}</div>
       </td></tr></table>
       <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.label)}</div>
@@ -7753,13 +7753,11 @@ function renderProfileTab() {
 
   // Taste in a sentence
   const top5 = artists.slice(0,5).map(a=>a.name).filter(Boolean);
-  const topFilm = typeof MOVIE_PRELOAD!=='undefined' ? MOVIE_PRELOAD[0]?.title : '';
-  const topBook = typeof BOOKS_SHAPED!=='undefined' ? BOOKS_SHAPED[0]?.title : '';
-  const topTV = typeof TV_DRAMA_PRELOAD!=='undefined' ? TV_DRAMA_PRELOAD[0]?.title : '';
-  const sentenceEl = document.getElementById('profile-sentence');
-  if (sentenceEl && top5.length) {
-    sentenceEl.textContent = `Drawn to art that earns its emotional weight — from ${top5[0]} and ${top5[1]}'s melodic precision to ${topFilm}'s edge-of-seat tension, ${topTV}'s moral complexity, and ${topBook}'s world-altering conviction. The writing always has to be there first.`;
-  }
+  // NOTE: this used to also overwrite #profile-sentence with an auto-generated bio built from
+  // top5/topFilm/topTV/topBook — removed. updateProfileHeaderAndBanner() already sets the
+  // correct text (the viewer's real stored taste_sentence, or an appropriate placeholder) and
+  // runs before this function; overwriting it here was clobbering real user-written sentences
+  // with Sreya's hardcoded demo bio for anyone who had at least two favorite artists loaded.
 
   // Defining picks — visual artwork cards
   const topArtist = artists[0];
