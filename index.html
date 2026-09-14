@@ -1202,7 +1202,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
 </header>
 
-<nav class="tab-nav">
+<nav class="tab-nav" id="tab-nav">
   <button class="tab-btn active" id="tab-btn-profile" onclick="switchTab('profile', this)">Profile</button>
   <button class="tab-btn" id="tab-btn-music" style="--tab-color:#7C4DFF;" onclick="switchTab('music', this)">Music</button>
   <button class="tab-btn" id="tab-btn-movies" style="--tab-color:#F97360;" onclick="switchTab('movies', this)">Movies</button>
@@ -1249,8 +1249,9 @@ async function landingArtistArtFallback(imgEl, artistName) {
     </div>
     <div id="profile-link-banner"></div>
     <div id="follow-requests-panel"></div>
+    <div id="profile-locked-message" style="display:none;"></div>
 
-
+    <div id="profile-content-sections">
     <!-- Taste in a sentence -->
     <div style="border-radius:14px;padding:24px 28px;background:linear-gradient(135deg,rgba(192,132,252,0.08),rgba(34,197,94,0.06));border:1px solid rgba(255,255,255,0.08);margin-bottom:2rem;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -1281,6 +1282,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
         <p class="site-sub" style="margin:-14px 0 16px;font-size:12px;">Things I want to check out</p>
         <div id="friend-recs" style="display:flex;flex-direction:column;gap:12px;max-height:640px;overflow-y:auto;padding-right:6px;"></div>
       </div>
+    </div>
     </div>
 
   </div>
@@ -2618,6 +2620,35 @@ async function toggleProfilePrivacy() {
   }
 }
 
+function isLockedProfile() {
+  return !!(viewedProfile && !isOwnProfile && viewedProfile.is_public === false && followStatus !== 'accepted');
+}
+
+function applyProfileLockState() {
+  const locked = isLockedProfile();
+  const nav = document.getElementById('tab-nav');
+  const sections = document.getElementById('profile-content-sections');
+  const lockMsg = document.getElementById('profile-locked-message');
+  if (nav) nav.style.display = locked ? 'none' : '';
+  if (sections) sections.style.display = locked ? 'none' : '';
+  if (lockMsg) {
+    if (!locked) { lockMsg.style.display = 'none'; lockMsg.innerHTML = ''; return; }
+    const name = esc(viewedProfile.display_name || viewedProfile.username || 'This person');
+    const followLabel = followStatus === 'pending' ? 'Requested' : 'Follow';
+    const followBtn = currentUser
+      ? `<button id="follow-btn" onclick="toggleFollow()" style="font-size:13px;font-weight:600;background:${followStatus === 'pending' ? 'var(--surface2)' : 'var(--accent)'};color:${followStatus === 'pending' ? 'var(--text)' : '#fff'};border:1px solid var(--border);border-radius:20px;padding:8px 20px;cursor:pointer;font-family:inherit;margin-top:14px;">${followLabel}</button>`
+      : `<div style="font-size:13px;color:var(--faint);margin-top:14px;">Sign in to follow ${name}.</div>`;
+    lockMsg.style.display = 'block';
+    lockMsg.innerHTML = `
+      <div style="text-align:center;border-radius:14px;padding:48px 24px;background:var(--surface);border:1px solid var(--border);margin:2rem 0;">
+        <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;">This profile is private</div>
+        <div style="font-size:13px;color:var(--muted);">${followStatus === 'pending' ? `Your follow request is waiting on ${name}'s approval.` : `Follow ${name} to see their taste profile.`}</div>
+        ${followBtn}
+      </div>`;
+  }
+}
+
 function updateProfileHeaderAndBanner() {
   const nameEl = document.getElementById('profile-card-name');
   if (nameEl && viewedProfile) {
@@ -2661,22 +2692,30 @@ function updateProfileHeaderAndBanner() {
         </div>
       </div>`;
   } else if (!isOwnProfile && viewedProfile) {
-    const followLabel = followStatus === 'accepted' ? '✓ Following' : followStatus === 'pending' ? 'Requested' : 'Follow';
-    const followBtn = currentUser ? `<button id="follow-btn" onclick="toggleFollow()" style="font-size:11.5px;font-weight:600;background:${followStatus === 'accepted' ? 'var(--surface2)' : 'var(--accent)'};color:${followStatus === 'accepted' ? 'var(--text)' : '#fff'};border:1px solid var(--border);border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;">${followLabel}</button>` : '';
-    const privacyNote = (!viewedProfile.is_public && followStatus !== 'accepted') ? `<div style="font-size:12px;color:var(--faint);margin-top:6px;">🔒 This profile is private — ${followStatus === 'pending' ? 'your follow request is pending.' : 'follow to see their taste profile.'}</div>` : '';
-    banner.innerHTML = `
-      <div style="margin:-8px 0 20px;">
-        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
-          <div style="font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:inline-block;">
-            👀 You're viewing ${esc(viewedProfile.display_name || viewedProfile.username || 'this')}'s profile
+    if (isLockedProfile()) {
+      // The big centered lock message below already shows the Follow button and
+      // explanation — no need to duplicate it in this small banner.
+      banner.innerHTML = `
+        <div style="font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin:-8px 0 20px;display:inline-block;">
+          👀 You're viewing ${esc(viewedProfile.display_name || viewedProfile.username || 'this')}'s profile
+        </div>`;
+    } else {
+      const followLabel = followStatus === 'accepted' ? '✓ Following' : followStatus === 'pending' ? 'Requested' : 'Follow';
+      const followBtn = currentUser ? `<button id="follow-btn" onclick="toggleFollow()" style="font-size:11.5px;font-weight:600;background:${followStatus === 'accepted' ? 'var(--surface2)' : 'var(--accent)'};color:${followStatus === 'accepted' ? 'var(--text)' : '#fff'};border:1px solid var(--border);border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;">${followLabel}</button>` : '';
+      banner.innerHTML = `
+        <div style="margin:-8px 0 20px;">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+            <div style="font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:inline-block;">
+              👀 You're viewing ${esc(viewedProfile.display_name || viewedProfile.username || 'this')}'s profile
+            </div>
+            ${followBtn}
           </div>
-          ${followBtn}
-        </div>
-        ${privacyNote}
-      </div>`;
+        </div>`;
+    }
   } else {
     banner.innerHTML = '';
   }
+  applyProfileLockState();
 }
 
 async function editBio() {
@@ -2995,6 +3034,7 @@ async function initAuth() {
   updateProfileHeaderAndBanner();
   loadFollowRequests();
   await loadViewedProfileData();
+  renderProfileTab();
 
   sb.auth.onAuthStateChange(async (event, session) => {
     currentUser = session?.user || null;
@@ -3015,6 +3055,7 @@ async function initAuth() {
       renderFriendRecs();
       refreshActivityFeeds();
     }
+    renderProfileTab();
   });
 }
 
@@ -7688,17 +7729,11 @@ function renderProfileTab() {
   // Stats bar
   const totalArtists = artists.length;
   const totalAlbums = albums.length;
-  const totalFilms = (typeof MOVIE_PRELOAD!=='undefined'?MOVIE_PRELOAD.length:0) +
-                     (typeof THRILLER_PRELOAD!=='undefined'?THRILLER_PRELOAD.length:0) +
-                     (typeof DRAMA_PRELOAD!=='undefined'?DRAMA_PRELOAD.length:0) +
-                     (typeof COMEDY_PRELOAD!=='undefined'?COMEDY_PRELOAD.length:0);
-  const totalTV = (typeof TV_COMEDY_PRELOAD!=='undefined'?TV_COMEDY_PRELOAD.length:0) +
-                  (typeof TV_DRAMA_PRELOAD!=='undefined'?TV_DRAMA_PRELOAD.length:0) +
-                  (typeof TV_OTHER_PRELOAD!=='undefined'?TV_OTHER_PRELOAD.length:0) +
-                  (typeof TV_DROPOFF_PRELOAD!=='undefined'?TV_DROPOFF_PRELOAD.length:0);
-  const totalBooks = (typeof BOOKS_SHAPED!=='undefined'?BOOKS_SHAPED.length:0) +
-                     (typeof BOOKS_REREAD!=='undefined'?BOOKS_REREAD.length:0) +
-                     (typeof BOOKS_RECENT!=='undefined'?BOOKS_RECENT.length:0);
+  const totalFilms = movies.length + thrillerMovies.length + dramaMovies.length + comedyMovies.length;
+  const totalTV = (TV_GRID_STORE['tv-comedy']?.arr.length || 0) + (TV_GRID_STORE['tv-drama']?.arr.length || 0) +
+                  (TV_GRID_STORE['tv-other']?.arr.length || 0) + (TV_GRID_STORE['tv-dropoff']?.arr.length || 0);
+  const totalBooks = (BOOK_ARRAYS['books-shaped-grid']?.length || 0) + (BOOK_ARRAYS['books-reread-grid']?.length || 0) +
+                     (BOOK_ARRAYS['books-recent-grid']?.length || 0);
 
   const stats = [
     { label: 'Artists', value: totalArtists, color: '#7C4DFF', tab: 'music' },
@@ -7728,9 +7763,9 @@ function renderProfileTab() {
 
   // Defining picks — visual artwork cards
   const topArtist = artists[0];
-  const topFilmObj = typeof MOVIE_PRELOAD!=='undefined' ? MOVIE_PRELOAD[0] : null;
-  const topTVObj = typeof TV_DRAMA_PRELOAD!=='undefined' ? TV_DRAMA_PRELOAD[0] : null;
-  const topBookObj = typeof BOOKS_SHAPED!=='undefined' ? BOOKS_SHAPED[0] : null;
+  const topFilmObj = movies[0];
+  const topTVObj = tvDramaShows[0];
+  const topBookObj = BOOK_ARRAYS['books-shaped-grid']?.[0];
 
   const picksEl = document.getElementById('profile-picks');
   if (!picksEl) return;
@@ -7740,7 +7775,7 @@ function renderProfileTab() {
     { id: 'pick-music', label: 'My Music Taste',     icon: 'music', name: topArtist?.name || '', sub: 'Most influential artist', color: '#7C4DFF', tab: 'music',  art: '', mosaic: artists.slice(0,4).map(a => a.tilePhoto).filter(Boolean) },
     { id: 'pick-film',  label: 'My Movie Taste',    icon: 'film',  name: topFilmObj?.title || '', sub: 'Top favorite film',    color: '#F97360', tab: 'movies', art: topFilmObj?.poster ? `https://image.tmdb.org/t/p/w185${topFilmObj.poster}` : '', mosaic: [] },
     { id: 'pick-tv',    label: 'My TV Taste',  icon: 'tv',    name: topTVObj?.title || '', sub: 'Favorite drama',         color: '#3B82F6', tab: 'tv',     art: topTVObj?.poster ? `https://image.tmdb.org/t/p/w185${topTVObj.poster}` : '', mosaic: [] },
-    { id: 'pick-book',  label: 'My Book Taste',     icon: 'books', name: topBookObj?.title || '', sub: 'Most formative book',  color: '#22C55E', tab: 'books',  art: topBookObj?.cover || '', mosaic: (typeof BOOKS_SHAPED!=='undefined' ? BOOKS_SHAPED.slice(0,4).map(b => b.cover).filter(Boolean) : []) },
+    { id: 'pick-book',  label: 'My Book Taste',     icon: 'books', name: topBookObj?.title || '', sub: 'Most formative book',  color: '#22C55E', tab: 'books',  art: topBookObj?.cover || '', mosaic: (BOOK_ARRAYS['books-shaped-grid'] || []).slice(0,4).map(b => b.cover).filter(Boolean) },
   ];
 
   function mosaicCell(src, color) {
