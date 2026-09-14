@@ -7890,11 +7890,20 @@ function renderProfileTab() {
   initTripPlaylistArt();
 }
 
-preloadMovies();
-preloadDirectors();
-preloadComedies();
-preloadStaticGrid(THRILLER_PRELOAD, thrillerMovies, 'thriller', 'thriller-grid');
-preloadStaticGrid(DRAMA_PRELOAD, dramaMovies, 'drama', 'drama-grid');
+// These populate movies/directors/etc. from the hardcoded demo data — only meant as a
+// fallback for when Supabase isn't configured at all. Running them unconditionally meant
+// they raced with loadViewedProfileData()'s real per-user Supabase load: the Supabase load
+// would correctly clear these arrays for a user with no data of their own, but these slower
+// preloads (each doing several sequential TMDB fetches) would then finish afterward and
+// silently repopulate the arrays with Sreya's original hardcoded movies/shows, regardless of
+// which account was actually signed in.
+if (!sb) {
+  preloadMovies();
+  preloadDirectors();
+  preloadComedies();
+  preloadStaticGrid(THRILLER_PRELOAD, thrillerMovies, 'thriller', 'thriller-grid');
+  preloadStaticGrid(DRAMA_PRELOAD, dramaMovies, 'drama', 'drama-grid');
+}
 renderDirectorsList();
 updateFilmProfile();
 
@@ -8178,8 +8187,10 @@ async function removeTVGridItem(idPrefix, idx) {
   }
 }
 
-preloadTVGrid(TV_COMEDY_PRELOAD, tvComedyShows, 'tv-comedy', 'tv-comedy-grid');
-preloadTVGrid(TV_DRAMA_PRELOAD, tvDramaShows, 'tv-drama', 'tv-drama-grid');
+if (!sb) {
+  preloadTVGrid(TV_COMEDY_PRELOAD, tvComedyShows, 'tv-comedy', 'tv-comedy-grid');
+  preloadTVGrid(TV_DRAMA_PRELOAD, tvDramaShows, 'tv-drama', 'tv-drama-grid');
+}
 
 const TV_OTHER_PRELOAD = [
   { tmdbId: 61222, title: 'BoJack Horseman',        year: '2014', type: 'tv' },
@@ -8200,8 +8211,10 @@ const TV_DROPOFF_PRELOAD = [
 let tvOtherShows = [];
 let tvDropoffShows = [];
 
-preloadTVGrid(TV_OTHER_PRELOAD, tvOtherShows, 'tv-other', 'tv-other-grid');
-preloadTVGrid(TV_DROPOFF_PRELOAD, tvDropoffShows, 'tv-dropoff', 'tv-dropoff-grid');
+if (!sb) {
+  preloadTVGrid(TV_OTHER_PRELOAD, tvOtherShows, 'tv-other', 'tv-other-grid');
+  preloadTVGrid(TV_DROPOFF_PRELOAD, tvDropoffShows, 'tv-dropoff', 'tv-dropoff-grid');
+}
 updateTVProfile();
 
 // ── BOOKS ──
