@@ -2308,8 +2308,26 @@ async function loadTasteListFromSupabase(userId) {
       .maybeSingle();
 
     if (!list) {
-      // Genuine empty state (new user, no list published yet) — not a fetch error, so clear the
-      // hardcoded fallback data rather than silently leaving it displayed as if it were theirs.
+      // Genuine empty state (new user, no list published yet). If this is the profile owner
+      // looking at their own page, provision a default list now — otherwise "add item" can
+      // never succeed, since nothing in this app ever creates a taste_lists row on its own.
+      // A visitor viewing someone else's still-empty profile just sees the empty state below.
+      if (isOwnProfile && currentUser && currentUser.id === userId) {
+        try {
+          const { data: newList, error: createError } = await sb.from('taste_lists')
+            .insert({ user_id: userId, title: 'My Taste List', subtitle: 'Click to explore my favorites' })
+            .select('id, title, subtitle')
+            .single();
+          if (!createError && newList) {
+            currentTasteListId = newList.id;
+            TRIP_PLAYLIST_ITEMS.books = [];
+            TRIP_PLAYLIST_ITEMS.movies = [];
+            TRIP_PLAYLIST_ITEMS.music = [];
+            renderTripPlaylist();
+            return true;
+          }
+        } catch (e) {}
+      }
       currentTasteListId = null;
       TRIP_PLAYLIST_ITEMS.books = [];
       TRIP_PLAYLIST_ITEMS.movies = [];
@@ -4038,13 +4056,13 @@ function updateMusicProfile() {
   const textEl = document.getElementById('music-bio-text');
   const tagsEl = document.getElementById('music-bio-tags');
   if (!textEl || !tagsEl) return;
-  const allNames = artists.map(a => a.name);
-  const topFiveNames = artists.slice(0, 5).map(a => a.name).filter(Boolean);
-  const otherNames = artists.slice(5).map(a => a.name).filter(Boolean).slice(0, 4);
+  const allNames = artists.map(a => esc(a.name));
+  const topFiveNames = artists.slice(0, 5).map(a => esc(a.name)).filter(Boolean);
+  const otherNames = artists.slice(5).map(a => esc(a.name)).filter(Boolean).slice(0, 4);
   const hasHeavy = allNames.some(n => ['Metallica','System of a Down','Muse'].includes(n));
   const hasGlobal = allNames.some(n => ['A.R. Rahman','BTS','ABBA'].includes(n));
   const albumList = (typeof albums !== 'undefined') ? albums : [];
-  const soundtrackNames = albumList.filter(a => a.genre === 'Soundtrack').map(a => a.name.replace(/\s*\(.*\)$/, ''));
+  const soundtrackNames = albumList.filter(a => a.genre === 'Soundtrack').map(a => esc(a.name.replace(/\s*\(.*\)$/, '')));
   let paras = [];
   paras.push(`The clearest thread across everything here is melody — not as decoration but as structure. These are songs built around a hook that earns its place, a chorus that actually arrives somewhere, a musical arc that gives you the feeling of going on a journey and coming back changed.`);
   if (topFiveNames.length) paras.push(`The five most influential — ${topFiveNames.join(', ')} — are all artists who understood that a big moment only works if you've built toward it. The Strokes' guitar lines, ABBA's harmonies, Pink Floyd's slow-burning crescendos, Nirvana's quiet-loud-quiet — the payoff is always earned.`);
@@ -4066,7 +4084,7 @@ function updateFilmProfile() {
   if (!textEl) return;
   const thrillerTitles = (typeof THRILLER_PRELOAD !== 'undefined') ? THRILLER_PRELOAD.map(m => m.title) : [];
   const dramaTitles = (typeof DRAMA_PRELOAD !== 'undefined') ? DRAMA_PRELOAD.map(m => m.title) : [];
-  const directorNames = (typeof directors !== 'undefined') ? directors.map(d => d.name).filter(Boolean) : [];
+  const directorNames = (typeof directors !== 'undefined') ? directors.map(d => esc(d.name)).filter(Boolean) : [];
   const hasClassics = dramaTitles.some(t => ['The Godfather','The Godfather Part II','The Shawshank Redemption'].includes(t));
   let paras = [];
   paras.push(`The films here share a quality that's harder to fake than it looks: genuine tension. Not action-movie tension, but the kind that comes from expert writing and performance — where you understand exactly what's at stake for every character and can't look away.`);
@@ -7160,9 +7178,9 @@ function renderTripPlaylist() {
           <div class="collage-card-art" style="height:${h}px;${artStyle}">${placeholder}</div>
           <span class="collage-card-tag" style="background:${cat.color}33;color:${cat.color};">${cat.label}</span>
           <div class="collage-card-body">
-            <div class="collage-card-title">${item.title}</div>
-            ${item.sub ? `<div class="collage-card-sub">${item.sub}</div>` : ''}
-            ${item.caption ? `<div class="collage-card-by">— ${item.caption}</div>` : (item.by ? `<div class="collage-card-by">— rec'd by ${item.by}</div>` : '')}
+            <div class="collage-card-title">${esc(item.title)}</div>
+            ${item.sub ? `<div class="collage-card-sub">${esc(item.sub)}</div>` : ''}
+            ${item.caption ? `<div class="collage-card-by">— ${esc(item.caption)}</div>` : (item.by ? `<div class="collage-card-by">— rec'd by ${esc(item.by)}</div>` : '')}
           </div>
         </div>`;
     }).join('');
