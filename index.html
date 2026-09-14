@@ -7515,6 +7515,7 @@ async function initActivityFeedArt() {
   // iTunes, books via Open Library + Google Books) was bursting past Google Books' rate limit in
   // particular, since it's much stricter than the others and some items need 2 searches each.
   for (const item of ACTIVITY_FEED_ITEMS) {
+    if (item.art) continue; // already has art (hardcoded or previously resolved) — nothing to do
     try {
       if (item.artQuery) {
         const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=music&entity=song&limit=1`);
