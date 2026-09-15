@@ -1263,7 +1263,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
     <!-- Defining picks -->
     <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);margin-bottom:2rem;">
-      <div style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:16px;">Sreya&rsquo;s Defining Picks &mdash; tap a box to explore that section</div>
+      <div id="defining-picks-header" style="font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:16px;">Sreya&rsquo;s Defining Picks &mdash; tap a box to explore that section</div>
       <div id="profile-picks"></div>
     </div>
 
@@ -7785,6 +7785,13 @@ function renderProfileTab() {
 
   const picksEl = document.getElementById('profile-picks');
   if (!picksEl) return;
+
+  const headerEl = document.getElementById('defining-picks-header');
+  if (headerEl) {
+    const rawName = (viewedProfile?.display_name || viewedProfile?.username || 'Your').trim();
+    const possessive = /s$/i.test(rawName) ? `${rawName}'` : `${rawName}'s`;
+    headerEl.textContent = `${isOwnProfile ? 'Your' : possessive} Defining Picks — tap a box to explore that section`;
+  }
 
   // Render placeholders immediately
   const picksData = [
