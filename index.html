@@ -2470,6 +2470,7 @@ async function loadActivityFeedFromSupabase(userId) {
     activityFeedArtFetched = false; // allow art resolution to run again against the new data
     refreshActivityFeeds();
     initActivityFeedArt();
+    initActivityEngagement();
     return true;
   } catch (e) {
     console.error('Failed to load activity feed from Supabase, keeping hardcoded fallback:', e);
@@ -7373,6 +7374,174 @@ function tripPlaylistMosaicHtml() {
   return `<div class="activity-card-art-img" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;">${cells}</div>`;
 }
 
+// ── LIKES & COMMENTS ──
+// Keyed by `${target_type}:${target_id}`. Populated in batches (see initActivityEngagement)
+// rather than one query per card, so a feed of N items costs a handful of queries, not N.
+const LIKE_CACHE = {};      // key -> { count, mine }
+const COMMENT_CACHE = {};   // key -> array of { id, user_id, body, created_at, author } | undefined until loaded
+
+function engagementKey(targetType, targetId) { return `${targetType}:${targetId}`; }
+
+// One batched round-trip for all currently-loaded activity feed items, instead of firing a
+// separate likes+comments query per card. Safe to call again after the feed reloads.
+async function initActivityEngagement() {
+  if (!sb) return;
+  const ids = ACTIVITY_FEED_ITEMS.map(i => i.id).filter(Boolean);
+  if (!ids.length) return;
+  try {
+    const { data: likeRows } = await sb.from('likes')
+      .select('target_id, user_id')
+      .eq('target_type', 'activity_feed')
+      .in('target_id', ids);
+    (likeRows || []).forEach(row => {
+      const key = engagementKey('activity_feed', row.target_id);
+      const state = LIKE_CACHE[key] || { count: 0, mine: false };
+      state.count += 1;
+      if (currentUser && row.user_id === currentUser.id) state.mine = true;
+      LIKE_CACHE[key] = state;
+    });
+    const { data: commentRows } = await sb.from('comments')
+      .select('target_id')
+      .eq('target_type', 'activity_feed')
+      .in('target_id', ids);
+    const counts = {};
+    (commentRows || []).forEach(row => { counts[row.target_id] = (counts[row.target_id] || 0) + 1; });
+    ids.forEach(id => {
+      const key = engagementKey('activity_feed', id);
+      // Only stash the count; the full comment list loads lazily when the modal opens.
+      if (!COMMENT_CACHE[key]) COMMENT_CACHE[key] = { count: counts[id] || 0, items: undefined };
+    });
+    refreshActivityFeeds();
+  } catch (e) { console.error('Failed to load likes/comments:', e); }
+}
+
+function engagementLineHtml(targetType, targetId) {
+  if (!targetId) return '';
+  const key = engagementKey(targetType, targetId);
+  const likeState = LIKE_CACHE[key] || { count: 0, mine: false };
+  const commentState = COMMENT_CACHE[key] || { count: 0 };
+  const likeCountTxt = likeState.count ? ` ${likeState.count}` : '';
+  const commentCountTxt = commentState.count ? ` ${commentState.count}` : '';
+  return `<div style="display:flex;align-items:center;gap:14px;margin-top:8px;font-size:12.5px;color:var(--muted);">
+    <span style="color:${likeState.mine ? '#F97360' : 'var(--muted)'};">${likeState.mine ? '♥' : '♡'}${likeCountTxt}</span>
+    <span>💬${commentCountTxt}</span>
+  </div>`;
+}
+
+async function toggleLike(targetType, targetId, onDone) {
+  if (!sb) return;
+  if (!currentUser) { alert('Sign in to like things.'); return; }
+  const key = engagementKey(targetType, targetId);
+  const state = LIKE_CACHE[key] || { count: 0, mine: false };
+  try {
+    if (state.mine) {
+      const { error } = await sb.from('likes').delete()
+        .eq('target_type', targetType).eq('target_id', targetId).eq('user_id', currentUser.id);
+      if (error) throw error;
+      LIKE_CACHE[key] = { count: Math.max(0, state.count - 1), mine: false };
+    } else {
+      const { error } = await sb.from('likes').insert({ target_type: targetType, target_id: targetId, user_id: currentUser.id });
+      if (error) throw error;
+      LIKE_CACHE[key] = { count: state.count + 1, mine: true };
+    }
+  } catch (e) {
+    alert('Failed to update like: ' + (e.message || 'unknown error'));
+    return;
+  }
+  refreshActivityFeeds();
+  if (onDone) onDone();
+}
+
+async function loadComments(targetType, targetId) {
+  if (!sb || !targetId) return [];
+  try {
+    const { data, error } = await sb.from('comments')
+      .select('id, user_id, body, created_at, profiles(username, display_name)')
+      .eq('target_type', targetType).eq('target_id', targetId)
+      .order('created_at', { ascending: true });
+    if (error || !data) return [];
+    const items = data.map(row => ({
+      id: row.id,
+      user_id: row.user_id,
+      body: row.body,
+      created_at: row.created_at,
+      author: row.profiles?.display_name || row.profiles?.username || 'Someone',
+    }));
+    COMMENT_CACHE[engagementKey(targetType, targetId)] = { count: items.length, items };
+    return items;
+  } catch (e) {
+    console.error('Failed to load comments:', e);
+    return [];
+  }
+}
+
+async function submitComment(targetType, targetId, inputEl, onDone) {
+  if (!sb) return;
+  if (!currentUser) { alert('Sign in to comment.'); return; }
+  const body = (inputEl?.value || '').trim();
+  if (!body) return;
+  try {
+    const { error } = await sb.from('comments').insert({ target_type: targetType, target_id: targetId, user_id: currentUser.id, body });
+    if (error) throw error;
+  } catch (e) {
+    alert('Failed to post comment: ' + (e.message || 'unknown error'));
+    return;
+  }
+  if (inputEl) inputEl.value = '';
+  await loadComments(targetType, targetId);
+  refreshActivityFeeds();
+  if (onDone) onDone();
+}
+
+async function deleteComment(commentId, targetType, targetId, onDone) {
+  if (!sb || !currentUser) return;
+  if (!confirm('Delete this comment?')) return;
+  try {
+    const { error } = await sb.from('comments').delete().eq('id', commentId).eq('user_id', currentUser.id);
+    if (error) throw error;
+  } catch (e) {
+    alert('Failed to delete comment: ' + (e.message || 'unknown error'));
+    return;
+  }
+  await loadComments(targetType, targetId);
+  refreshActivityFeeds();
+  if (onDone) onDone();
+}
+
+function commentsSectionHtml(targetType, targetId) {
+  if (!sb || !targetId) return '';
+  const key = engagementKey(targetType, targetId);
+  const cached = COMMENT_CACHE[key];
+  const items = cached?.items;
+  const list = items === undefined
+    ? `<div style="font-size:12.5px;color:var(--faint);padding:8px 0;">Loading comments…</div>`
+    : (items.length
+      ? items.map(c => `
+        <div style="padding:8px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;gap:8px;">
+            <span style="font-size:12.5px;font-weight:600;color:var(--text);">${esc(c.author)}</span>
+            ${currentUser && c.user_id === currentUser.id
+              ? `<button onclick="deleteComment('${c.id}','${targetType}','${targetId}', window.__refreshModalEngagement)" style="background:none;border:none;color:var(--faint);font-size:11px;cursor:pointer;font-family:inherit;">Delete</button>`
+              : ''}
+          </div>
+          <div style="font-size:13px;color:var(--text);margin-top:2px;line-height:1.4;">${esc(c.body)}</div>
+        </div>`).join('')
+      : `<div style="font-size:12.5px;color:var(--faint);padding:8px 0;">No comments yet.</div>`);
+  const composer = currentUser ? `
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <input id="comment-input-${targetType}-${targetId}" placeholder="Add a comment…" maxlength="1000"
+        style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;"
+        onkeydown="if(event.key==='Enter'){submitComment('${targetType}','${targetId}', this, window.__refreshModalEngagement)}">
+      <button onclick="submitComment('${targetType}','${targetId}', document.getElementById('comment-input-${targetType}-${targetId}'), window.__refreshModalEngagement)"
+        style="background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:600;font-family:inherit;padding:8px 14px;border-radius:8px;cursor:pointer;">Post</button>
+    </div>` : `<div style="font-size:12px;color:var(--faint);margin-top:10px;">Sign in to join the conversation.</div>`;
+  return `<div style="padding:14px 20px 20px;border-top:1px solid var(--border);">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Comments</div>
+    ${list}
+    ${composer}
+  </div>`;
+}
+
 function activityCardHtml(item, globalIndex) {
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
   const iconColor = (MEDIA_ICONS[iconType] || MEDIA_ICONS.music).color;
@@ -7405,6 +7574,15 @@ function activityCardHtml(item, globalIndex) {
         <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.sub)}</span>
       </div>
       ${note}
+      ${item.id ? `<div style="display:flex;align-items:center;gap:14px;margin-top:8px;" onclick="event.stopPropagation()">
+        <button onclick="toggleLike('activity_feed','${item.id}')" style="display:flex;align-items:center;gap:5px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;font-size:12.5px;color:${(LIKE_CACHE[engagementKey('activity_feed', item.id)] || {}).mine ? '#F97360' : 'var(--muted)'};">
+          <span>${(LIKE_CACHE[engagementKey('activity_feed', item.id)] || {}).mine ? '♥' : '♡'}</span>
+          <span>${(LIKE_CACHE[engagementKey('activity_feed', item.id)] || {}).count || ''}</span>
+        </button>
+        <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;" onclick="openActivitySummary(${globalIndex})">
+          <span>💬</span><span>${(COMMENT_CACHE[engagementKey('activity_feed', item.id)] || {}).count || ''}</span>
+        </span>
+      </div>` : ''}
     </div>
   </div>`;
 }
@@ -7544,6 +7722,7 @@ function activitySummaryHtml(item, summary, loading) {
       <div style="padding:0 20px 20px;">
         <button onclick="switchTab('${item.tab}', document.getElementById('tab-btn-${item.tab}')); closeActivitySummary();" style="width:100%;background:${iconColor}18;border:1px solid ${iconColor}33;color:${iconColor};font-size:13px;font-weight:600;font-family:inherit;padding:10px;border-radius:10px;cursor:pointer;">Go to ${tabLabel}</button>
       </div>
+      ${item.id ? commentsSectionHtml('activity_feed', item.id) : ''}
     </div>`;
 }
 
@@ -7555,6 +7734,26 @@ async function openActivitySummary(globalIndex) {
   if (!modal || !content) return;
   modal.style.display = 'flex';
   content.innerHTML = activitySummaryHtml(item, '', true);
+
+  // Re-render just this modal (used by the comment composer/delete buttons via
+  // window.__refreshModalEngagement) without re-running the summary fetch above.
+  window.__refreshModalEngagement = () => {
+    if (modal.style.display === 'flex') content.innerHTML = activitySummaryHtml(item, item._summary || '', false);
+  };
+
+  if (item.id && sb) {
+    if (!LIKE_CACHE[engagementKey('activity_feed', item.id)]) {
+      sb.from('likes').select('user_id').eq('target_type', 'activity_feed').eq('target_id', item.id)
+        .then(({ data }) => {
+          const count = (data || []).length;
+          const mine = !!(currentUser && (data || []).some(r => r.user_id === currentUser.id));
+          LIKE_CACHE[engagementKey('activity_feed', item.id)] = { count, mine };
+          window.__refreshModalEngagement();
+        }).catch(() => {});
+    }
+    loadComments('activity_feed', item.id).then(() => window.__refreshModalEngagement());
+  }
+
   const summary = await getActivitySummary(item);
   // Guard against the modal having been closed (or a different item opened) while the fetch was in flight
   if (modal.style.display === 'flex') content.innerHTML = activitySummaryHtml(item, summary, false);
