@@ -3011,26 +3011,41 @@ async function loadFavoriteDirectorsFromSupabase(userId) {
 
 async function loadViewedProfileData() {
   if (!viewedProfile) return;
-  await loadTasteListFromSupabase(viewedProfile.id);
-  await loadFriendRecsFromSupabase(viewedProfile.id);
-  await loadActivityFeedFromSupabase(viewedProfile.id);
-  await loadFavoriteArtistsFromSupabase(viewedProfile.id);
-  await loadFavoriteAlbumsFromSupabase(viewedProfile.id);
-  await loadFavoriteMoviesFromSupabase(viewedProfile.id);
-  await loadFavoriteMediaList(viewedProfile.id, 'dramas', dramaMovies, 'drama', 'drama-grid');
-  renderRichGridControls('drama');
-  await loadFavoriteMediaList(viewedProfile.id, 'thrillers', thrillerMovies, 'thriller', 'thriller-grid');
-  renderRichGridControls('thriller');
-  await loadFavoriteMediaList(viewedProfile.id, 'comedies', comedyMovies, 'comedy', 'comedy-grid');
-  renderRichGridControls('comedy');
-  await loadFavoriteDirectorsFromSupabase(viewedProfile.id);
-  await loadFavoriteTVList(viewedProfile.id, 'tv_comedy', 'tv-comedy', 'tv-comedy-grid');
-  await loadFavoriteTVList(viewedProfile.id, 'tv_drama', 'tv-drama', 'tv-drama-grid');
-  await loadFavoriteTVList(viewedProfile.id, 'tv_other', 'tv-other', 'tv-other-grid');
-  await loadFavoriteTVList(viewedProfile.id, 'tv_dropoff', 'tv-dropoff', 'tv-dropoff-grid');
-  await loadFavoriteBooksFromSupabase(viewedProfile.id, 'shaped', 'books-shaped-grid');
-  await loadFavoriteBooksFromSupabase(viewedProfile.id, 'reread', 'books-reread-grid');
-  await loadFavoriteBooksFromSupabase(viewedProfile.id, 'recent', 'books-recent-grid');
+  const id = viewedProfile.id;
+  // Each of these categories is independent (separate tables, separate arrays) and already
+  // throttles its own per-item art/detail fetches internally (the 150–400ms delays inside each
+  // loader's for-loop) — the only thing sequential awaiting bought us was extra wall-clock time,
+  // since e.g. TV never even started until every movie had finished loading. Running them
+  // concurrently instead brings total load time down to roughly the slowest single category
+  // rather than the sum of all of them.
+  await Promise.all([
+    loadTasteListFromSupabase(id),
+    loadFriendRecsFromSupabase(id),
+    loadActivityFeedFromSupabase(id),
+    loadFavoriteArtistsFromSupabase(id),
+    loadFavoriteAlbumsFromSupabase(id),
+    loadFavoriteMoviesFromSupabase(id),
+    (async () => {
+      await loadFavoriteMediaList(id, 'dramas', dramaMovies, 'drama', 'drama-grid');
+      renderRichGridControls('drama');
+    })(),
+    (async () => {
+      await loadFavoriteMediaList(id, 'thrillers', thrillerMovies, 'thriller', 'thriller-grid');
+      renderRichGridControls('thriller');
+    })(),
+    (async () => {
+      await loadFavoriteMediaList(id, 'comedies', comedyMovies, 'comedy', 'comedy-grid');
+      renderRichGridControls('comedy');
+    })(),
+    loadFavoriteDirectorsFromSupabase(id),
+    loadFavoriteTVList(id, 'tv_comedy', 'tv-comedy', 'tv-comedy-grid'),
+    loadFavoriteTVList(id, 'tv_drama', 'tv-drama', 'tv-drama-grid'),
+    loadFavoriteTVList(id, 'tv_other', 'tv-other', 'tv-other-grid'),
+    loadFavoriteTVList(id, 'tv_dropoff', 'tv-dropoff', 'tv-dropoff-grid'),
+    loadFavoriteBooksFromSupabase(id, 'shaped', 'books-shaped-grid'),
+    loadFavoriteBooksFromSupabase(id, 'reread', 'books-reread-grid'),
+    loadFavoriteBooksFromSupabase(id, 'recent', 'books-recent-grid'),
+  ]);
 }
 
 async function initAuth() {
