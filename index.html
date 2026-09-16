@@ -3765,6 +3765,7 @@ function toggleArtistExpand(artistId, tileIdx) {
         <button class="expand-close" onclick="toggleArtistExpand('${artistId}',${tileIdx})">✕</button>
       </div>
     </div>
+    ${inlineEngagementBlockHtml('artist', artistId)}
     ${(a.whyInfluential || ARTIST_WHY_INFLUENTIAL[a.id]) ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
       <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
       ${renderMentions(a.whyInfluential || ARTIST_WHY_INFLUENTIAL[a.id])}
@@ -3784,6 +3785,7 @@ function toggleArtistExpand(artistId, tileIdx) {
     </table>` : `<div style="padding:1.5rem;color:var(--muted);font-size:13px;">No songs yet.</div>`}
   `;
   loadArtForArtist(a);
+  loadInlineEngagement('artist', artistId);
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
@@ -4627,6 +4629,7 @@ function toggleAlbumExpand(albumId, tileIdx) {
         <button class="expand-close" onclick="toggleAlbumExpand('${albumId}',${tileIdx})">✕</button>
       </div>
     </div>
+    ${inlineEngagementBlockHtml('album', albumId)}
     ${songs.length ? `<table class="songs-table">
       <thead><tr><th>#</th><th>Song</th><th>Album</th><th>Listen</th></tr></thead>
       <tbody>${songs.map((s,si) => `
@@ -4642,6 +4645,7 @@ function toggleAlbumExpand(albumId, tileIdx) {
     </table>` : `<div style="padding:1.5rem;color:var(--muted);font-size:13px;">No tracks yet.</div>`}
   `;
   loadArtForAlbum(a);
+  loadInlineEngagement('album', albumId);
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
@@ -6125,6 +6129,7 @@ function toggleMovieExpand(movieId) {
           ${(isOwnProfile && movieEditMode) ? `<button onclick="removeMovie(${movieId})" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.25);color:var(--apple);font-size:11px;font-weight:600;font-family:inherit;padding:4px 10px;border-radius:20px;cursor:pointer;backdrop-filter:blur(4px);">Remove</button>` : ''}
         </div>
       </div>
+      ${inlineEngagementBlockHtml('movie', m.rowId)}
       ${m.overview ? `<div class="artist-bio">${esc(m.overview)}</div>` : ''}
       ${MOVIE_WHY_INFLUENTIAL[m.title] ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
@@ -6137,6 +6142,7 @@ function toggleMovieExpand(movieId) {
       </div>
     </div>`;
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+  loadInlineEngagement('movie', m.rowId);
 }
 
 let movieEditMode = false;
@@ -6745,6 +6751,7 @@ function movieDetailPanelHTML(m, closeOnclick) {
           <button class="expand-close" onclick="${closeOnclick}">✕</button>
         </div>
       </div>
+      ${inlineEngagementBlockHtml('movie', m.rowId)}
       ${m.overview ? `<div class="artist-bio">${esc(m.overview)}</div>` : ''}
       ${MOVIE_WHY_INFLUENTIAL[m.title] ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
@@ -6781,8 +6788,10 @@ const RICH_GRID_RENDERERS = {
   drama: () => makeStaticGrid(dramaMovies, 'drama', 'drama-grid'),
 };
 function toggleRichExpand(movies, idPrefix, index) {
-  expandedRichTile[idPrefix] = (expandedRichTile[idPrefix] === index) ? null : index;
+  const opening = expandedRichTile[idPrefix] !== index;
+  expandedRichTile[idPrefix] = opening ? index : null;
   RICH_GRID_RENDERERS[idPrefix]();
+  if (opening && movies[index]?.rowId) loadInlineEngagement('movie', movies[index].rowId);
   (window.requestAnimationFrame || window.setTimeout)(() => {
     document.getElementById(`${idPrefix}-tile-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });
@@ -7448,7 +7457,6 @@ async function toggleLike(targetType, targetId, onDone) {
     alert('Failed to update like: ' + (e.message || 'unknown error'));
     return;
   }
-  refreshActivityFeeds();
   if (onDone) onDone();
 }
 
@@ -7489,7 +7497,6 @@ async function submitComment(targetType, targetId, inputEl, onDone) {
   }
   if (inputEl) inputEl.value = '';
   await loadComments(targetType, targetId);
-  refreshActivityFeeds();
   if (onDone) onDone();
 }
 
@@ -7504,7 +7511,6 @@ async function deleteComment(commentId, targetType, targetId, onDone) {
     return;
   }
   await loadComments(targetType, targetId);
-  refreshActivityFeeds();
   if (onDone) onDone();
 }
 
@@ -7521,7 +7527,7 @@ function commentsSectionHtml(targetType, targetId) {
           <div style="display:flex;justify-content:space-between;gap:8px;">
             <span style="font-size:12.5px;font-weight:600;color:var(--text);">${esc(c.author)}</span>
             ${currentUser && c.user_id === currentUser.id
-              ? `<button onclick="deleteComment('${c.id}','${targetType}','${targetId}', window.__refreshModalEngagement)" style="background:none;border:none;color:var(--faint);font-size:11px;cursor:pointer;font-family:inherit;">Delete</button>`
+              ? `<button onclick="deleteComment('${c.id}','${targetType}','${targetId}', () => refreshEngagementUI('${targetType}','${targetId}'))" style="background:none;border:none;color:var(--faint);font-size:11px;cursor:pointer;font-family:inherit;">Delete</button>`
               : ''}
           </div>
           <div style="font-size:13px;color:var(--text);margin-top:2px;line-height:1.4;">${esc(c.body)}</div>
@@ -7531,8 +7537,8 @@ function commentsSectionHtml(targetType, targetId) {
     <div style="display:flex;gap:8px;margin-top:10px;">
       <input id="comment-input-${targetType}-${targetId}" placeholder="Add a comment…" maxlength="1000"
         style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;"
-        onkeydown="if(event.key==='Enter'){submitComment('${targetType}','${targetId}', this, window.__refreshModalEngagement)}">
-      <button onclick="submitComment('${targetType}','${targetId}', document.getElementById('comment-input-${targetType}-${targetId}'), window.__refreshModalEngagement)"
+        onkeydown="if(event.key==='Enter'){submitComment('${targetType}','${targetId}', this, () => refreshEngagementUI('${targetType}','${targetId}'))}">
+      <button onclick="submitComment('${targetType}','${targetId}', document.getElementById('comment-input-${targetType}-${targetId}'), () => refreshEngagementUI('${targetType}','${targetId}'))"
         style="background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:600;font-family:inherit;padding:8px 14px;border-radius:8px;cursor:pointer;">Post</button>
     </div>` : `<div style="font-size:12px;color:var(--faint);margin-top:10px;">Sign in to join the conversation.</div>`;
   return `<div style="padding:14px 20px 20px;border-top:1px solid var(--border);">
@@ -7540,6 +7546,81 @@ function commentsSectionHtml(targetType, targetId) {
     ${list}
     ${composer}
   </div>`;
+}
+
+// ── INLINE ENGAGEMENT (likes/comments embedded in expand panels for artists, albums, movies, TV, books) ──
+// Unlike the activity feed's modal, these panels are already inline in the page, so the like
+// badge + comments thread render directly inside them rather than in a popup.
+
+function inlineEngagementBadgeHtml(targetType, targetId) {
+  const key = engagementKey(targetType, targetId);
+  const like = LIKE_CACHE[key] || { count: 0, mine: false };
+  const comments = COMMENT_CACHE[key];
+  const commentCount = comments ? (comments.items ? comments.items.length : (comments.count || 0)) : '';
+  return `
+    <button onclick="toggleLike('${targetType}','${targetId}', () => refreshEngagementUI('${targetType}','${targetId}'))" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border2);border-radius:20px;padding:6px 14px;cursor:pointer;font-family:inherit;font-size:13px;color:${like.mine ? '#F97360' : 'var(--muted)'};">
+      <span>${like.mine ? '♥' : '♡'}</span><span>${like.count || 0}</span>
+    </button>
+    <button onclick="toggleInlineComments('${targetType}','${targetId}')" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border2);border-radius:20px;padding:6px 14px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--muted);">
+      <span>💬</span><span>${commentCount}</span>
+    </button>`;
+}
+
+// Embed this inside any expand-panel template. Returns '' when Supabase isn't configured or the
+// item has no real row id yet (e.g. a hardcoded fallback item never saved to the database).
+function inlineEngagementBlockHtml(targetType, targetId) {
+  if (!sb || !targetId) return '';
+  return `
+    <div id="inline-engage-${targetType}-${targetId}" style="display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);">
+      ${inlineEngagementBadgeHtml(targetType, targetId)}
+    </div>
+    <div id="inline-comments-${targetType}-${targetId}" style="display:none;"></div>`;
+}
+
+// Call once, right after a panel opens, to fetch real counts (cached afterward so re-opening the
+// same item doesn't re-fetch).
+async function loadInlineEngagement(targetType, targetId) {
+  if (!sb || !targetId) return;
+  const key = engagementKey(targetType, targetId);
+  try {
+    if (!LIKE_CACHE[key]) {
+      const { data } = await sb.from('likes').select('user_id').eq('target_type', targetType).eq('target_id', targetId);
+      const count = (data || []).length;
+      const mine = !!(currentUser && (data || []).some(r => r.user_id === currentUser.id));
+      LIKE_CACHE[key] = { count, mine };
+    }
+    if (!COMMENT_CACHE[key]) {
+      const { count } = await sb.from('comments').select('id', { count: 'exact', head: true }).eq('target_type', targetType).eq('target_id', targetId);
+      COMMENT_CACHE[key] = { count: count || 0, items: undefined };
+    }
+  } catch (e) { console.error('Failed to load engagement state:', e); }
+  const badgeEl = document.getElementById(`inline-engage-${targetType}-${targetId}`);
+  if (badgeEl) badgeEl.innerHTML = inlineEngagementBadgeHtml(targetType, targetId);
+}
+
+async function toggleInlineComments(targetType, targetId) {
+  const el = document.getElementById(`inline-comments-${targetType}-${targetId}`);
+  if (!el) return;
+  if (el.style.display === 'block') { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = commentsSectionHtml(targetType, targetId);
+  if (!COMMENT_CACHE[engagementKey(targetType, targetId)]?.items) {
+    await loadComments(targetType, targetId);
+    el.innerHTML = commentsSectionHtml(targetType, targetId);
+    const badgeEl = document.getElementById(`inline-engage-${targetType}-${targetId}`);
+    if (badgeEl) badgeEl.innerHTML = inlineEngagementBadgeHtml(targetType, targetId);
+  }
+}
+
+// Single place every like/comment action refreshes through, regardless of which surface it
+// happened on: the activity feed (cards + its modal) or an inline expand panel.
+function refreshEngagementUI(targetType, targetId) {
+  if (targetType === 'activity_feed') refreshActivityFeeds();
+  if (typeof window.__refreshModalEngagement === 'function') window.__refreshModalEngagement();
+  const badgeEl = document.getElementById(`inline-engage-${targetType}-${targetId}`);
+  if (badgeEl) badgeEl.innerHTML = inlineEngagementBadgeHtml(targetType, targetId);
+  const commentsEl = document.getElementById(`inline-comments-${targetType}-${targetId}`);
+  if (commentsEl && commentsEl.style.display !== 'none') commentsEl.innerHTML = commentsSectionHtml(targetType, targetId);
 }
 
 function activityCardHtml(item, globalIndex) {
@@ -7575,7 +7656,7 @@ function activityCardHtml(item, globalIndex) {
       </div>
       ${note}
       ${item.id ? `<div style="display:flex;align-items:center;gap:14px;margin-top:8px;" onclick="event.stopPropagation()">
-        <button onclick="toggleLike('activity_feed','${item.id}')" style="display:flex;align-items:center;gap:5px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;font-size:12.5px;color:${(LIKE_CACHE[engagementKey('activity_feed', item.id)] || {}).mine ? '#F97360' : 'var(--muted)'};">
+        <button onclick="toggleLike('activity_feed','${item.id}', () => refreshEngagementUI('activity_feed','${item.id}'))" style="display:flex;align-items:center;gap:5px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;font-size:12.5px;color:${(LIKE_CACHE[engagementKey('activity_feed', item.id)] || {}).mine ? '#F97360' : 'var(--muted)'};">
           <span>${(LIKE_CACHE[engagementKey('activity_feed', item.id)] || {}).mine ? '♥' : '♡'}</span>
           <span>${(LIKE_CACHE[engagementKey('activity_feed', item.id)] || {}).count || ''}</span>
         </button>
@@ -8186,6 +8267,7 @@ function tvDetailPanelHTML(m, closeOnclick) {
           <button class="expand-close" onclick="${closeOnclick}">✕</button>
         </div>
       </div>
+      ${inlineEngagementBlockHtml('tv', m.rowId)}
       ${m.overview ? `<div class="artist-bio">${esc(m.overview)}</div>` : ''}
       ${TV_WHY_INFLUENTIAL[m.title] ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
@@ -8202,9 +8284,11 @@ function tvDetailPanelHTML(m, closeOnclick) {
 let expandedTVTile = {}; // idPrefix -> currently expanded index (or null)
 const TV_GRID_STORE = {}; // idPrefix -> { arr, gridId }
 function toggleTVExpand(idPrefix, index) {
-  expandedTVTile[idPrefix] = (expandedTVTile[idPrefix] === index) ? null : index;
+  const opening = expandedTVTile[idPrefix] !== index;
+  expandedTVTile[idPrefix] = opening ? index : null;
   const store = TV_GRID_STORE[idPrefix];
   if (store) renderTVGrid(store.arr, idPrefix, store.gridId);
+  if (opening && store?.arr[index]?.rowId) loadInlineEngagement('tv', store.arr[index].rowId);
   (window.requestAnimationFrame || window.setTimeout)(() => {
     document.getElementById(`${idPrefix}-tile-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });
@@ -8548,6 +8632,7 @@ function bookDetailPanelHTML(b, closeOnclick) {
           <button class="expand-close" onclick="${closeOnclick}">✕</button>
         </div>
       </div>
+      ${inlineEngagementBlockHtml('book', b.rowId)}
       <div style="padding:1.25rem 1.5rem;font-size:13.5px;line-height:1.6;color:var(--text);min-height:20px;">
         ${b._description === undefined ? `<span style="color:var(--faint);">Loading summary…</span>` : (b._description ? esc(b._description) : `<span style="color:var(--faint);">No summary available.</span>`)}
       </div>
@@ -8575,6 +8660,7 @@ function toggleBookExpand(gridId, index) {
       if (expandedBookTile[gridId] === index) renderBookGrid(dataArr, gridId);
     });
   }
+  if (b && expandedBookTile[gridId] === index && b.rowId) loadInlineEngagement('book', b.rowId);
 }
 
 // A cover URL turned out to be broken (404, moved, etc.) — advance to the next candidate instead
