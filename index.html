@@ -7860,28 +7860,19 @@ function renderProfileTab() {
     }).catch(() => {});
   }
 
-  // Fetch mosaic thumbnails (top 4 per section) for Movies, TV, and Books
-  if (typeof MOVIE_PRELOAD !== 'undefined' && MOVIE_PRELOAD.length) {
-    Promise.all(MOVIE_PRELOAD.slice(0, 4).map(p => {
-      const endpoint = p.type === 'tv' ? `/tv/${p.tmdbId}` : `/movie/${p.tmdbId}`;
-      return tmdbFetch(endpoint).then(r => r.json())
-        .then(d => d.poster_path ? `${TMDB_IMG}${d.poster_path}` : null)
-        .catch(() => null);
-    })).then(arr => {
-      picksData[1].mosaic = arr.filter(Boolean);
-      renderPicks(picksData);
-    });
+  // Fetch mosaic thumbnails (top 4 per section) for Movies, TV, and Books.
+  // Uses the real per-user movies/tvDramaShows arrays (already loaded with posters by the
+  // time renderProfileTab() runs) — previously this pulled from the hardcoded MOVIE_PRELOAD /
+  // TV_DRAMA_PRELOAD demo constants unconditionally, so every account's mosaic showed Sreya's
+  // original picks regardless of what the signed-in user actually had saved.
+  if (movies.length) {
+    picksData[1].mosaic = movies.slice(0, 4).filter(m => m.poster).map(m => `${TMDB_IMG}${m.poster}`);
+    renderPicks(picksData);
   }
 
-  if (typeof TV_DRAMA_PRELOAD !== 'undefined' && TV_DRAMA_PRELOAD.length) {
-    Promise.all(TV_DRAMA_PRELOAD.slice(0, 4).map(p =>
-      tmdbFetch(`/tv/${p.tmdbId}`).then(r => r.json())
-        .then(d => d.poster_path ? `${TMDB_IMG}${d.poster_path}` : null)
-        .catch(() => null)
-    )).then(arr => {
-      picksData[2].mosaic = arr.filter(Boolean);
-      renderPicks(picksData);
-    });
+  if (tvDramaShows.length) {
+    picksData[2].mosaic = tvDramaShows.slice(0, 4).filter(t => t.poster).map(t => `${TMDB_IMG}${t.poster}`);
+    renderPicks(picksData);
   }
 
   // Throughlines
@@ -8567,9 +8558,15 @@ async function removeBookGridItem(gridId, idx) {
   }
 }
 
-loadBooks(BOOKS_SHAPED, booksShapedData, 'books-shaped-grid');
-loadBooks(BOOKS_REREAD, booksRereadData, 'books-reread-grid');
-loadBooks(BOOKS_RECENT, booksRecentData, 'books-recent-grid');
+// Same fix as the movies/directors/comedies/TV preloads above: only run this hardcoded demo
+// fallback when Supabase isn't configured at all — otherwise it races with
+// loadFavoriteBooksFromSupabase()'s real per-user load and can crash or silently repopulate
+// the arrays with Sreya's original hardcoded books.
+if (!sb) {
+  loadBooks(BOOKS_SHAPED, booksShapedData, 'books-shaped-grid');
+  loadBooks(BOOKS_REREAD, booksRereadData, 'books-reread-grid');
+  loadBooks(BOOKS_RECENT, booksRecentData, 'books-recent-grid');
+}
 updateBooksProfile();
 renderProfileTab();
 renderFriendRecs();
