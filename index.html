@@ -8862,7 +8862,11 @@ if (!sb) {
   loadBooks(BOOKS_RECENT, booksRecentData, 'books-recent-grid');
 }
 updateBooksProfile();
-renderProfileTab();
+// Note: renderProfileTab() is deliberately NOT called here. Doing so unconditionally, before
+// initAuth() has resolved who's being viewed, meant it ran with viewedProfile still null and
+// isOwnProfile still false — producing a visible flash of "Your's Defining Picks" (the 'Your'
+// fallback getting an incorrect possessive 's') with every pick empty. initAuth() below calls
+// renderProfileTab() itself once the real profile/data are actually loaded.
 renderFriendRecs();
 loadFriendRecArt();
 initAuth();
