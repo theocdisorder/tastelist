@@ -3186,7 +3186,7 @@ const ARTIST_WHY_INFLUENTIAL = {
   19: "Influenced by @Neil Sengupta, @Sri Das and @Moyna Ghosh.",
 };
 
-let artists = [
+const ARTISTS_DEMO = [
   {
     id: 1, name: "The Strokes", genre: "Indie Rock",
     bandPhoto: "https://lh3.googleusercontent.com/QdxnTbXnfk-f0uP-7x9q2uYEkwNDLvDsEd7ViMBxB1jEIudgCUkxI7YGnZlL_IPdVRlgbOa1Mc4r6w=w2880-h1200-p-l90-rj",
@@ -3407,6 +3407,13 @@ let artists = [
     ]
   },
 ];
+
+// Same fix as the movies/TV/books preloads: only start with the hardcoded demo artists when
+// Supabase isn't configured at all. Previously `artists` was assigned this demo data directly,
+// so it rendered once (visibly, since renderProfileTab() runs before Supabase auth resolves)
+// before the real per-user load overwrote it — a brief flash of Sreya's original picks on
+// every page load, even for accounts with no music of their own.
+let artists = sb ? [] : ARTISTS_DEMO;
 
 let editingId = null;
 let nextId = 20;
@@ -5221,7 +5228,7 @@ function switchTab(tab, btn) {
 }
 
 // ── ALBUMS DATA ──
-let albums = [
+const ALBUMS_DEMO = [
   { id: 101, name: "The Dark Side of the Moon", artist: "Pink Floyd", year: "1973", genre: "Progressive Rock", iTunesId: "1065973699", coverPhoto: "", tilePhoto: "", songs: [
     { title: "Speak to Me / Breathe", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/speak-to-me-breathe/1065973699?i=1065973954", spotify: "https://open.spotify.com/track/5AkBFlkTNJhqKOd2PZjnRO" },
     { title: "On the Run", album: "The Dark Side of the Moon", art: "", apple: "https://music.apple.com/us/album/on-the-run/1065973699?i=1065973956", spotify: "https://open.spotify.com/track/1dTGxBNVLTHABpHzJqCZNe" },
@@ -5512,6 +5519,8 @@ let albums = [
     { title: "Laila Laila (Reprise)", album: "Andhadhun", art: "", apple: "", spotify: "" }
   ]}
 ];
+// Same fix as `artists` above — don't show the demo albums even momentarily for a real account.
+let albums = sb ? [] : ALBUMS_DEMO;
 let nextAlbumId = 124;
 let editingAlbumId = null;
 let modalMode = 'artist'; // 'artist' or 'album'
