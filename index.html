@@ -8076,7 +8076,7 @@ function renderProfileTab() {
   // Defining picks — visual artwork cards
   const topArtist = artists[0];
   const topFilmObj = movies[0];
-  const topTVObj = tvDramaShows[0];
+  const topTVObj = TV_GRID_STORE['tv-drama']?.arr[0];
   const topBookObj = BOOK_ARRAYS['books-shaped-grid']?.[0];
 
   const picksEl = document.getElementById('profile-picks');
@@ -8166,8 +8166,9 @@ function renderProfileTab() {
     renderPicks(picksData);
   }
 
-  if (tvDramaShows.length) {
-    picksData[2].mosaic = tvDramaShows.slice(0, 4).filter(t => t.poster).map(t => `${TMDB_IMG}${t.poster}`);
+  const tvDramaArr = TV_GRID_STORE['tv-drama']?.arr || [];
+  if (tvDramaArr.length) {
+    picksData[2].mosaic = tvDramaArr.slice(0, 4).filter(t => t.poster).map(t => `${TMDB_IMG}${t.poster}`);
     renderPicks(picksData);
   }
 
