@@ -3052,6 +3052,12 @@ async function initAuth() {
   updateAuthGate();
   updateProfileHeaderAndBanner();
   loadFollowRequests();
+  // Render immediately with whatever's already known (correct header, empty picks) rather than
+  // leaving the section blank for however long the slow per-item art-fetching chain below takes —
+  // loadViewedProfileData() fetches poster/cover art for every single item sequentially (throttled
+  // to avoid tripping TMDB's rate limit), which for a large profile can take a while. The second
+  // call below fills the picks in with real data once that finishes.
+  renderProfileTab();
   await loadViewedProfileData();
   renderProfileTab();
 
@@ -3064,6 +3070,7 @@ async function initAuth() {
     updateAuthGate();
     updateProfileHeaderAndBanner();
     loadFollowRequests();
+    renderProfileTab();
     if (viewedProfile) {
       await loadViewedProfileData();
     } else {
