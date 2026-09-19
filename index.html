@@ -14,7 +14,7 @@
 <meta name="twitter:title" content="Sreya's Taste List">
 <meta name="twitter:description" content="The music that shaped me — favorite artists, albums, and songs.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -31,6 +31,8 @@
     --apple: #fc3c44;
     --spotify: #1DB954;
     --accent: #7C4DFF;
+    --font-display: 'Fraunces', Georgia, serif;
+    color-scheme: dark; /* native controls (selects, date pickers, scrollbars) render dark, not the OS default */
   }
 
   html { scroll-behavior: smooth; }
@@ -41,6 +43,94 @@
     color: var(--text);
     min-height: 100vh;
   }
+
+  /* ── MODAL FORM SYSTEM ──
+     Shared by every "Add X" modal so a required title field, an optional URL field, and a
+     multi-line note don't all read as the same weight of thing — and so the type dropdowns
+     stop rendering as an unstyled native control on top of everything else. */
+  .tl-modal-shell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    max-width: 420px;
+    width: 100%;
+    padding: 26px 24px 24px;
+    position: relative;
+  }
+  .tl-modal-title {
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: var(--text);
+    margin-bottom: 20px;
+    padding-right: 20px;
+  }
+  .tl-modal-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .tl-modal-close:hover { background: var(--surface2); color: var(--text); }
+  .tl-modal-error {
+    font-size: 12.5px; color: #F97360; background: rgba(249,115,96,0.1);
+    border-radius: 8px; padding: 8px 10px; margin-bottom: 14px;
+  }
+  .tl-field { margin-bottom: 14px; }
+  .tl-field:last-of-type { margin-bottom: 18px; }
+  .tl-label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .tl-required { color: var(--accent); margin-left: 2px; }
+  .tl-hint { color: var(--faint); font-weight: 400; }
+  .tl-input, .tl-textarea, .tl-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--text);
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+  }
+  .tl-input:focus, .tl-textarea:focus, .tl-select:focus { border-color: var(--accent); }
+  .tl-textarea { resize: vertical; line-height: 1.5; }
+  .tl-select {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%237a7876' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+  .tl-note {
+    font-size: 11.5px; color: var(--muted); margin-bottom: 14px; line-height: 1.5;
+  }
+  .tl-btn-primary {
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  .tl-btn-primary:hover { opacity: 0.88; }
+  .tl-btn-primary:disabled { opacity: 0.5; cursor: default; }
 
   /* ── HEADER ── */
   .page-shell {
@@ -884,6 +974,11 @@
   }
   #movie-grid .tile-img, #comedy-grid .tile-img, #thriller-grid .tile-img, #drama-grid .tile-img, #tv-comedy-grid .tile-img, #tv-drama-grid .tile-img, #tv-other-grid .tile-img, #tv-dropoff-grid .tile-img, #books-shaped-grid .tile-img, #books-reread-grid .tile-img, #books-recent-grid .tile-img {
     object-position: center top;
+  }
+  /* Album covers are natively square — sharing the artist section's people-photo 4:3 box was
+     cropping them top and bottom. Same tile width/grid as Artists, just its own art shape. */
+  #album-grid .tile-img-wrap {
+    aspect-ratio: 1/1;
   }
   .music-layout {
     display: flex;
@@ -3013,6 +3108,18 @@ async function loadFavoriteAlbumsFromSupabase(userId) {
 // Generic loader for the simple "static grid" sections (Dramas, Thrillers, Comedies today;
 // same shape will work for the TV-tab equivalents later). Mutates `arr` in place (rather than
 // reassigning it) since it's a shared global array referenced elsewhere by name.
+// Runs workFn(item, index) over items a few at a time instead of strictly one at a time, with a
+// short pause between batches — enough concurrency to load a profile's movies/TV noticeably
+// faster, while still staying well under TMDB's rate limit (unlike firing every request at once,
+// which is what caused the original one-at-a-time throttling in the first place).
+async function runInBatches(items, batchSize, delayMs, workFn) {
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    await Promise.all(batch.map((item, j) => workFn(item, i + j).catch(() => {})));
+    if (i + batchSize < items.length) await new Promise(res => setTimeout(res, delayMs));
+  }
+}
+
 async function loadFavoriteMediaList(userId, category, arr, idPrefix, gridId) {
   if (!sb || !userId) return false;
   try {
@@ -3026,16 +3133,14 @@ async function loadFavoriteMediaList(userId, category, arr, idPrefix, gridId) {
     arr.length = 0;
     data.forEach(row => arr.push({ rowId: row.id, tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' }));
     makeStaticGrid(arr, idPrefix, gridId);
-    // Fetch TMDB details one at a time rather than all at once — with 4 sections' worth of
-    // items all loading together, firing every request simultaneously risks tripping TMDB's
-    // rate limit, silently leaving some posters blank.
-    for (let i = 0; i < data.length; i++) {
-      try {
-        const detail = await fetchMovieDetail(data[i].tmdb_id);
-        Object.assign(arr[i], detail);
-        makeStaticGrid(arr, idPrefix, gridId);
-      } catch (e) {}
-    }
+    // A few at a time rather than all at once or strictly one at a time — with several
+    // sections' worth of items all loading together, firing every request simultaneously risks
+    // tripping TMDB's rate limit, but one-at-a-time was needlessly slow for larger lists.
+    await runInBatches(data, 3, 250, async (row, i) => {
+      const detail = await fetchMovieDetail(row.tmdb_id);
+      Object.assign(arr[i], detail);
+      makeStaticGrid(arr, idPrefix, gridId);
+    });
     return true;
   } catch (e) {
     console.error(`Failed to load favorite ${category} from Supabase, keeping hardcoded fallback:`, e);
@@ -3061,36 +3166,33 @@ async function loadFavoriteMoviesFromSupabase(userId) {
       movies.push({ id: i + 1, rowId: row.id, tmdbId: row.tmdb_id, type: row.type, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' });
     });
     renderMovieGrid();
-    // Fetch TMDB details one at a time — with several other sections' worth of items also
-    // loading around the same time, firing every request at once risks tripping TMDB's rate
-    // limit, silently leaving some posters blank.
-    for (let i = 0; i < data.length; i++) {
-      const row = data[i];
-      try {
-        // fetchMovieDetail() only covers /movie/ endpoints — 'Favorite Movies' can include TV
-        // items too (matches original preloadMovies() logic, not the movie-only helper).
-        const isTV = row.type === 'tv';
-        const [detailRes, creditsRes] = await Promise.all([
-          tmdbFetch(isTV ? `/tv/${row.tmdb_id}` : `/movie/${row.tmdb_id}`),
-          tmdbFetch(isTV ? `/tv/${row.tmdb_id}/credits` : `/movie/${row.tmdb_id}/credits`)
-        ]);
-        const detail = await detailRes.json();
-        const credits = await creditsRes.json();
-        const director = isTV ? (detail.created_by?.[0]?.name || '') : (credits.crew?.find(c => c.job === 'Director')?.name || '');
-        Object.assign(movies[i], {
-          title: row.title || detail.title || detail.name,
-          year: (detail.release_date || detail.first_air_date || row.year || '').slice(0, 4),
-          poster: detail.poster_path || '',
-          backdrop: detail.backdrop_path || '',
-          overview: detail.overview || '',
-          genres: detail.genres?.map(g => g.name) || [],
-          rating: detail.vote_average ? Math.round(detail.vote_average * 10) / 10 : null,
-          runtime: detail.runtime || (detail.episode_run_time?.[0] ? `${detail.episode_run_time[0]} min/ep` : null),
-          director,
-        });
-        renderMovieGrid();
-      } catch (e) {}
-    }
+    // A few at a time rather than all at once or strictly one at a time — with several other
+    // sections' worth of items also loading around the same time, firing every request at once
+    // risks tripping TMDB's rate limit, but one-at-a-time was needlessly slow for larger lists.
+    await runInBatches(data, 3, 250, async (row, i) => {
+      // fetchMovieDetail() only covers /movie/ endpoints — 'Favorite Movies' can include TV
+      // items too (matches original preloadMovies() logic, not the movie-only helper).
+      const isTV = row.type === 'tv';
+      const [detailRes, creditsRes] = await Promise.all([
+        tmdbFetch(isTV ? `/tv/${row.tmdb_id}` : `/movie/${row.tmdb_id}`),
+        tmdbFetch(isTV ? `/tv/${row.tmdb_id}/credits` : `/movie/${row.tmdb_id}/credits`)
+      ]);
+      const detail = await detailRes.json();
+      const credits = await creditsRes.json();
+      const director = isTV ? (detail.created_by?.[0]?.name || '') : (credits.crew?.find(c => c.job === 'Director')?.name || '');
+      Object.assign(movies[i], {
+        title: row.title || detail.title || detail.name,
+        year: (detail.release_date || detail.first_air_date || row.year || '').slice(0, 4),
+        poster: detail.poster_path || '',
+        backdrop: detail.backdrop_path || '',
+        overview: detail.overview || '',
+        genres: detail.genres?.map(g => g.name) || [],
+        rating: detail.vote_average ? Math.round(detail.vote_average * 10) / 10 : null,
+        runtime: detail.runtime || (detail.episode_run_time?.[0] ? `${detail.episode_run_time[0]} min/ep` : null),
+        director,
+      });
+      renderMovieGrid();
+    });
     renderMovieControls();
     return true;
   } catch (e) {
@@ -3224,8 +3326,26 @@ async function initAuth() {
   renderProfileTab();
   decideInitialView();
 
+  // Tracks the signed-in user id across auth events so a refired SIGNED_IN for the SAME already-
+  // signed-in user (Supabase does this on things like the browser tab regaining focus) can be
+  // told apart from an actual sign-in. Without that distinction, every refocus was redoing the
+  // full profile reload and — since there's no ?u= param while on your own profile — force-
+  // redirecting back to Feed even if you were mid-browse on another tab.
+  let lastAuthUserId = currentUser?.id || null;
+
   sb.auth.onAuthStateChange(async (event, session) => {
+    const newUserId = session?.user?.id || null;
+    const isRealUserChange = newUserId !== lastAuthUserId;
+    lastAuthUserId = newUserId;
     currentUser = session?.user || null;
+
+    if (!isRealUserChange && event !== 'SIGNED_OUT') {
+      // Nothing actually changed about who's signed in — just keep the displayed name current
+      // and stop. Reloading everything and re-deciding the view here is what caused the bug.
+      renderAuthWidget();
+      return;
+    }
+
     await loadCurrentProfile();
     await resolveViewedProfile();
     await checkFollowStatus();
@@ -9010,15 +9130,12 @@ async function loadFavoriteTVList(userId, category, idPrefix, gridId) {
     TV_GRID_STORE[idPrefix] = { arr, gridId };
     renderTVGrid(arr, idPrefix, gridId);
     renderTVGridControls(idPrefix);
-    // Sequential, throttled — same lesson learned from the movie sections earlier tonight.
-    for (let i = 0; i < arr.length; i++) {
-      try {
-        const detail = await fetchTVDetail(arr[i].tmdbId);
-        Object.assign(arr[i], detail);
-        renderTVGrid(arr, idPrefix, gridId);
-      } catch (e) {}
-      await new Promise(res => setTimeout(res, 150));
-    }
+    // A few at a time rather than strictly one at a time — same reasoning as the movie loaders.
+    await runInBatches(arr, 3, 200, async (item, i) => {
+      const detail = await fetchTVDetail(item.tmdbId);
+      Object.assign(arr[i], detail);
+      renderTVGrid(arr, idPrefix, gridId);
+    });
     return true;
   } catch (e) {
     console.error(`Failed to load favorite ${category} from Supabase, keeping hardcoded fallback:`, e);
@@ -9622,177 +9739,232 @@ renderTasteInfluences();
 
 <!-- Activity Feed item summary modal -->
 <div id="activity-item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeActivityItemModal()">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
-    <button onclick="closeActivityItemModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
-    <div id="activity-item-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add update</div>
-    <div id="activity-item-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+  <div class="tl-modal-shell" style="margin:20px 0;">
+    <button class="tl-modal-close" onclick="closeActivityItemModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="activity-item-modal-title" class="tl-modal-title">Add update</div>
+    <div id="activity-item-modal-error" class="tl-modal-error" style="display:none;"></div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Title *</label>
-    <input id="activity-item-label" type="text" placeholder="e.g. The Odyssey" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Title<span class="tl-required">*</span></label>
+      <input id="activity-item-label" class="tl-input" type="text" placeholder="The Odyssey">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Type *</label>
-    <select id="activity-item-type" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
-      <option value="movie">Movie</option>
-      <option value="tv">TV Show</option>
-      <option value="book">Book</option>
-      <option value="song">Song</option>
-    </select>
+    <div class="tl-field">
+      <label class="tl-label">Type<span class="tl-required">*</span></label>
+      <select id="activity-item-type" class="tl-select">
+        <option value="movie">Movie</option>
+        <option value="tv">TV Show</option>
+        <option value="book">Book</option>
+        <option value="song">Song</option>
+      </select>
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Subtitle <span style="opacity:.7;">(e.g. "Watched", "Author · Finished reading")</span></label>
-    <input id="activity-item-sub" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Subtitle <span class="tl-hint">what you did with it — "Watched," "Finished reading"</span></label>
+      <input id="activity-item-sub" class="tl-input" type="text">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Your note</label>
-    <textarea id="activity-item-note" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;resize:vertical;"></textarea>
+    <div class="tl-field">
+      <label class="tl-label">Your note</label>
+      <textarea id="activity-item-note" class="tl-textarea" rows="3"></textarea>
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Date *</label>
-    <input id="activity-item-date" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Date<span class="tl-required">*</span></label>
+      <input id="activity-item-date" class="tl-input" type="date">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Cover / poster / art URL <span style="opacity:.7;">(optional for movies & TV — will try to auto-resolve if left blank; books/songs won't auto-fetch, paste a direct link)</span></label>
-    <input id="activity-item-art" type="text" placeholder="https://..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Cover / poster / art URL <span class="tl-hint">optional</span></label>
+      <input id="activity-item-art" class="tl-input" type="text" placeholder="https://…">
+      <div class="tl-note">Movies & TV will try to auto-resolve art if left blank. Books and songs won't — paste a direct link.</div>
+    </div>
 
-    <button onclick="saveActivityItemForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+    <button class="tl-btn-primary" onclick="saveActivityItemForm()">Save</button>
   </div>
 </div>
 
 <div id="friend-rec-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeFriendRecModal()">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:400px;width:100%;padding:24px;position:relative;">
-    <button onclick="closeFriendRecModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
-    <div id="friend-rec-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add recommendation</div>
-    <div id="friend-rec-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+  <div class="tl-modal-shell" style="max-width:400px;">
+    <button class="tl-modal-close" onclick="closeFriendRecModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="friend-rec-modal-title" class="tl-modal-title">Add recommendation</div>
+    <div id="friend-rec-modal-error" class="tl-modal-error" style="display:none;"></div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Title *</label>
-    <input id="friend-rec-title" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Title<span class="tl-required">*</span></label>
+      <input id="friend-rec-title" class="tl-input" type="text">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Type *</label>
-    <select id="friend-rec-type" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
-      <option value="film">Movie</option>
-      <option value="tv">TV Show</option>
-      <option value="book">Book</option>
-    </select>
+    <div class="tl-field">
+      <label class="tl-label">Type<span class="tl-required">*</span></label>
+      <select id="friend-rec-type" class="tl-select">
+        <option value="film">Movie</option>
+        <option value="tv">TV Show</option>
+        <option value="book">Book</option>
+      </select>
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Recommended by</label>
-    <input id="friend-rec-from" type="text" placeholder="e.g. Subha" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Recommended by</label>
+      <input id="friend-rec-from" class="tl-input" type="text" placeholder="Subha">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Cover / poster URL <span style="opacity:.7;">(optional — movies/TV can auto-resolve if left blank)</span></label>
-    <input id="friend-rec-art" type="text" placeholder="https://..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Cover / poster URL <span class="tl-hint">optional</span></label>
+      <input id="friend-rec-art" class="tl-input" type="text" placeholder="https://…">
+      <div class="tl-note">Movies and TV can auto-resolve art if left blank.</div>
+    </div>
 
-    <button onclick="saveFriendRecForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+    <button class="tl-btn-primary" onclick="saveFriendRecForm()">Save</button>
   </div>
 </div>
 
 <div id="album-item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeAlbumItemModal()">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
-    <button onclick="closeAlbumItemModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
-    <div id="album-item-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add album</div>
-    <div id="album-item-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+  <div class="tl-modal-shell" style="margin:20px 0;">
+    <button class="tl-modal-close" onclick="closeAlbumItemModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="album-item-modal-title" class="tl-modal-title">Add album</div>
+    <div id="album-item-modal-error" class="tl-modal-error" style="display:none;"></div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Album name *</label>
-    <input id="album-item-name" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Album name<span class="tl-required">*</span></label>
+      <input id="album-item-name" class="tl-input" type="text">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Artist *</label>
-    <input id="album-item-artist" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Artist<span class="tl-required">*</span></label>
+      <input id="album-item-artist" class="tl-input" type="text">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Year</label>
-    <input id="album-item-year" type="text" placeholder="e.g. 2003" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Year</label>
+      <input id="album-item-year" class="tl-input" type="text" placeholder="2003">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Genre</label>
-    <input id="album-item-genre" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Genre</label>
+      <input id="album-item-genre" class="tl-input" type="text">
+    </div>
 
-    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.4;">Cover art and the tracklist resolve automatically from iTunes based on the album + artist name. Saving is instant — the tracklist fills in quietly in the background afterward and may take up to a minute if iTunes is rate-limited.</div>
+    <div class="tl-note">Cover art and the tracklist resolve automatically from iTunes based on the album and artist name. Saving is instant — the tracklist fills in quietly afterward and may take a minute if iTunes is rate-limited.</div>
 
-    <button id="album-item-save-btn" onclick="saveAlbumItemForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+    <button id="album-item-save-btn" class="tl-btn-primary" onclick="saveAlbumItemForm()">Save</button>
   </div>
 </div>
 
 <div id="book-grid-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeBookGridModal()">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
-    <button onclick="closeBookGridModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
-    <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add book</div>
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Title *</label>
-    <input id="book-grid-title" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Author *</label>
-    <input id="book-grid-author" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Year</label>
-    <input id="book-grid-year" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
-    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.4;">Cover art resolves automatically from Open Library based on title + author.</div>
-    <button id="book-grid-save-btn" onclick="saveBookGridForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+  <div class="tl-modal-shell" style="margin:20px 0;">
+    <button class="tl-modal-close" onclick="closeBookGridModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div class="tl-modal-title">Add book</div>
+    <div class="tl-field">
+      <label class="tl-label">Title<span class="tl-required">*</span></label>
+      <input id="book-grid-title" class="tl-input" type="text">
+    </div>
+    <div class="tl-field">
+      <label class="tl-label">Author<span class="tl-required">*</span></label>
+      <input id="book-grid-author" class="tl-input" type="text">
+    </div>
+    <div class="tl-field">
+      <label class="tl-label">Year</label>
+      <input id="book-grid-year" class="tl-input" type="text">
+    </div>
+    <div class="tl-note">Cover art resolves automatically from Open Library based on title and author.</div>
+    <button id="book-grid-save-btn" class="tl-btn-primary" onclick="saveBookGridForm()">Save</button>
   </div>
 </div>
 
 <div id="tv-grid-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeTVGridModal()">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
-    <button onclick="closeTVGridModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
-    <div id="tv-grid-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add show</div>
-    <input id="tv-grid-search-input" type="text" placeholder="Search for a show…" autocomplete="off" oninput="onTVGridSearchInput(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:14px;box-sizing:border-box;">
+  <div class="tl-modal-shell" style="margin:20px 0;">
+    <button class="tl-modal-close" onclick="closeTVGridModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="tv-grid-modal-title" class="tl-modal-title">Add show</div>
+    <input id="tv-grid-search-input" class="tl-input" type="text" placeholder="Search for a show…" autocomplete="off" oninput="onTVGridSearchInput(this.value)" style="margin-bottom:14px;">
     <div id="tv-grid-search-results" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;"><span style="font-size:12.5px;color:var(--faint);">Start typing to search…</span></div>
   </div>
 </div>
 
 <div id="rich-grid-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeRichGridModal()">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
-    <button onclick="closeRichGridModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
-    <div id="rich-grid-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add film</div>
-    <input id="rich-grid-search-input" type="text" placeholder="Search for a film…" autocomplete="off" oninput="onRichGridSearchInput(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:14px;box-sizing:border-box;">
+  <div class="tl-modal-shell" style="margin:20px 0;">
+    <button class="tl-modal-close" onclick="closeRichGridModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="rich-grid-modal-title" class="tl-modal-title">Add film</div>
+    <input id="rich-grid-search-input" class="tl-input" type="text" placeholder="Search for a film…" autocomplete="off" oninput="onRichGridSearchInput(this.value)" style="margin-bottom:14px;">
     <div id="rich-grid-search-results" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;"><span style="font-size:12.5px;color:var(--faint);">Start typing to search…</span></div>
   </div>
 </div>
 
 <div id="artist-item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;" onclick="if(event.target===this) closeArtistItemModal()">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;padding:24px;position:relative;margin:20px 0;">
-    <button onclick="closeArtistItemModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
-    <div id="artist-item-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add artist</div>
-    <div id="artist-item-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+  <div class="tl-modal-shell" style="margin:20px 0;">
+    <button class="tl-modal-close" onclick="closeArtistItemModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="artist-item-modal-title" class="tl-modal-title">Add artist</div>
+    <div id="artist-item-modal-error" class="tl-modal-error" style="display:none;"></div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Artist name *</label>
-    <input id="artist-item-name" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Artist name<span class="tl-required">*</span></label>
+      <input id="artist-item-name" class="tl-input" type="text">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Genre</label>
-    <input id="artist-item-genre" type="text" placeholder="e.g. Indie Rock" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Genre</label>
+      <input id="artist-item-genre" class="tl-input" type="text" placeholder="Indie Rock">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Why they're influential to you</label>
-    <textarea id="artist-item-why" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;resize:vertical;"></textarea>
+    <div class="tl-field">
+      <label class="tl-label">Why they're influential to you</label>
+      <textarea id="artist-item-why" class="tl-textarea" rows="3"></textarea>
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Photo URL <span style="opacity:.7;">(optional — we'll look one up automatically if left blank)</span></label>
-    <input id="artist-item-photo" type="text" placeholder="https://..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Photo URL <span class="tl-hint">optional</span></label>
+      <input id="artist-item-photo" class="tl-input" type="text" placeholder="https://…">
+      <div class="tl-note">We'll look one up automatically if left blank.</div>
+    </div>
 
-    <button id="artist-item-save-btn" onclick="saveArtistItemForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+    <button id="artist-item-save-btn" class="tl-btn-primary" onclick="saveArtistItemForm()">Save</button>
   </div>
 </div>
 
 <div id="taste-item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeTasteItemModal()">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:400px;width:100%;padding:24px;position:relative;">
-    <button onclick="closeTasteItemModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
-    <div id="taste-item-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:18px;">Add item</div>
-    <div id="taste-item-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+  <div class="tl-modal-shell" style="max-width:400px;">
+    <button class="tl-modal-close" onclick="closeTasteItemModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="taste-item-modal-title" class="tl-modal-title">Add item</div>
+    <div id="taste-item-modal-error" class="tl-modal-error" style="display:none;"></div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Title *</label>
-    <input id="taste-item-title" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Title<span class="tl-required">*</span></label>
+      <input id="taste-item-title" class="tl-input" type="text">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Author / Artist</label>
-    <input id="taste-item-sub" type="text" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Author / Artist</label>
+      <input id="taste-item-sub" class="tl-input" type="text">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Recommended by</label>
-    <input id="taste-item-by" type="text" placeholder="e.g. Ritu" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Recommended by</label>
+      <input id="taste-item-by" class="tl-input" type="text" placeholder="Ritu">
+    </div>
 
-    <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;">Cover / poster / art URL <span style="opacity:.7;">(optional for movies & books — will try to auto-resolve if left blank; recommended for music, which won't auto-fetch)</span></label>
-    <input id="taste-item-art" type="text" placeholder="https://..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:18px;box-sizing:border-box;">
+    <div class="tl-field">
+      <label class="tl-label">Cover / poster / art URL <span class="tl-hint">optional</span></label>
+      <input id="taste-item-art" class="tl-input" type="text" placeholder="https://…">
+      <div class="tl-note">Movies and books will try to auto-resolve if left blank. Music won't — a link's worth adding.</div>
+    </div>
 
-    <button id="taste-item-save-btn" onclick="saveTasteItemForm()" style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;">Save</button>
+    <button id="taste-item-save-btn" class="tl-btn-primary" onclick="saveTasteItemForm()">Save</button>
   </div>
 </div>
 
 <div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeAuthModal()">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:360px;width:100%;padding:24px;position:relative;">
-    <button onclick="closeAuthModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
-    <div id="auth-modal-title" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">Sign in</div>
+  <div class="tl-modal-shell" style="max-width:360px;">
+    <button class="tl-modal-close" onclick="closeAuthModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="auth-modal-title" class="tl-modal-title" style="margin-bottom:4px;">Sign in</div>
     <div id="auth-modal-sub" style="font-size:13px;color:var(--muted);margin-bottom:18px;">Welcome back.</div>
-    <div id="auth-modal-error" style="display:none;font-size:12.5px;color:#F97360;background:rgba(249,115,96,0.1);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
-    <input id="auth-email" type="email" placeholder="Email" autocomplete="email"
-      style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:10px;box-sizing:border-box;">
-    <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password"
-      style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;margin-bottom:16px;box-sizing:border-box;">
-    <button id="auth-submit-btn" onclick="submitAuthForm()"
-      style="width:100%;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:600;font-family:inherit;padding:11px;border-radius:10px;cursor:pointer;margin-bottom:12px;">Sign in</button>
+    <div id="auth-modal-error" class="tl-modal-error" style="display:none;"></div>
+    <div class="tl-field">
+      <input id="auth-email" class="tl-input" type="email" placeholder="Email" autocomplete="email">
+    </div>
+    <div class="tl-field">
+      <input id="auth-password" class="tl-input" type="password" placeholder="Password" autocomplete="current-password">
+    </div>
+    <button id="auth-submit-btn" class="tl-btn-primary" onclick="submitAuthForm()" style="margin-bottom:12px;">Sign in</button>
     <div style="text-align:center;font-size:13px;color:var(--muted);">
       <span id="auth-toggle-text">Don't have an account?</span>
       <a href="javascript:void(0)" onclick="toggleAuthMode()" style="color:var(--accent);text-decoration:none;font-weight:600;">
