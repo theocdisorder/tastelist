@@ -2070,7 +2070,7 @@ function renderActivityNote(note) {
 }
 function renderActivityTypes() {
   const value=document.getElementById('activity-item-type').value;
-  document.getElementById('activity-type-options').innerHTML=[['movie','Film'],['tv','TV'],['book','Book'],['song','Music'],['podcast','Podcast'],['article','Article'],['other','Other']].map(([key,label])=>`<button type="button" aria-pressed="${key===value}" onclick="document.getElementById('activity-item-type').value='${key}';renderActivityTypes()">${label}</button>`).join('');
+  document.getElementById('activity-type-options').innerHTML=[['movie','Film'],['tv','TV'],['book','Book'],['song','Music'],['artist','Artist'],['podcast','Podcast'],['article','Article'],['other','Other']].map(([key,label])=>`<button type="button" aria-pressed="${key===value}" onclick="document.getElementById('activity-item-type').value='${key}';renderActivityTypes()">${label}</button>`).join('');
 }
 function renderActivityTags() {
   document.getElementById('activity-tag-chips').innerHTML=activityTagState.selected.map((p,i)=>`<button type="button" aria-label="Remove ${esc(p.username)}" onclick="activityTagState.selected.splice(${i},1);renderActivityTags()">@${esc(p.username)} ×</button>`).join('');
@@ -2806,6 +2806,10 @@ async function loadActivityFeedFromSupabase(userId) {
         item.tmdbTvQuery = row.label;
       } else if (row.type === 'movie') {
         item.tmdbQuery = row.label;
+      } else if (row.type === 'podcast') {
+        item.podcastQuery = row.label;
+      } else if (row.type === 'artist') {
+        item.artistQuery = row.label;
       }
       ACTIVITY_FEED_ITEMS.push(item);
     });
@@ -10339,8 +10343,8 @@ function renderFriendRecs() {
     el.innerHTML = editToggleHtml + `<div style="font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">Nothing here yet — recommendations from friends will show up in this list.</div>` + addBtnHtml;
     return;
   }
-  const typeLabels = { film: 'Movies', tv: 'TV Shows', book: 'Books', song: 'Music', album: 'Music' };
-  const order = ['film', 'tv', 'book', 'song', 'album'];
+  const typeLabels = { film: 'Movies', tv: 'TV Shows', book: 'Books', song: 'Music', album: 'Music', artist: 'Music', podcast: 'Podcasts', article: 'Articles', other: 'Other' };
+  const order = ['film', 'tv', 'book', 'song', 'album', 'artist', 'podcast', 'article', 'other'];
   const groups = {};
   FRIEND_RECOMMENDATIONS.forEach(r => {
     const t = MEDIA_ICONS[r.type] ? r.type : 'song';
@@ -10402,6 +10406,14 @@ async function loadFriendRecArt() {
       } else if (r.type === 'book') {
         const art = await fetchBookCoverArt(r.title);
         if (art) { r.art = art; renderFriendRecs(); }
+      } else if (r.type === 'podcast') {
+        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(r.title)}&media=podcast&entity=podcast&limit=1`);
+        const data = await res.json();
+        const art = data.results?.[0]?.artworkUrl600 || data.results?.[0]?.artworkUrl100;
+        if (art) { r.art = art; renderFriendRecs(); }
+      } else if (r.type === 'artist') {
+        const art = await lookupArtistArt(r.title);
+        if (art?.tilePhoto || art?.bandPhoto) { r.art = art.tilePhoto || art.bandPhoto; renderFriendRecs(); }
       }
     } catch (e) {}
   }
@@ -10426,6 +10438,15 @@ async function initActivityFeedArt() {
         if (hit?.trackViewUrl) item.appleMusicUrl = hit.trackViewUrl;
         item.spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(item.artQuery)}`;
         if (art || hit) refreshActivityFeeds();
+      } else if (item.podcastQuery) {
+        const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.podcastQuery)}&media=podcast&entity=podcast&limit=1`);
+        const d = await r.json();
+        const hit = d.results?.[0];
+        const art = hit?.artworkUrl600 || hit?.artworkUrl100;
+        if (art) { item.art = art; refreshActivityFeeds(); }
+      } else if (item.artistQuery) {
+        const art = await lookupArtistArt(item.artistQuery);
+        if (art?.tilePhoto) { item.art = art.tilePhoto; refreshActivityFeeds(); }
       } else if (item.tmdbTvId || item.tmdbTvQuery) {
         let tvId = item.tmdbTvId;
         if (!tvId) {
@@ -11426,7 +11447,7 @@ renderTasteInfluences();
     <header class="update-composer-header"><div><span class="update-eyebrow">YOUR CULTURE, LATELY</span><h2 id="activity-item-modal-title">Add update</h2></div><button type="button" class="update-close" aria-label="Close" onclick="closeActivityItemModal()">×</button></header>
     <div id="activity-item-modal-error" class="tl-modal-error" role="alert" style="display:none;"></div>
     <div class="update-types" id="activity-type-options" aria-label="Update type"></div>
-    <select id="activity-item-type" hidden><option value="movie">Movie</option><option value="tv">TV Show</option><option value="book">Book</option><option value="song">Song</option><option value="podcast">Podcast</option><option value="article">Article</option><option value="other">Other</option></select>
+    <select id="activity-item-type" hidden><option value="movie">Movie</option><option value="tv">TV Show</option><option value="book">Book</option><option value="song">Song</option><option value="artist">Artist</option><option value="podcast">Podcast</option><option value="article">Article</option><option value="other">Other</option></select>
     <label class="update-sr" for="activity-item-label">Title</label><input id="activity-item-label" class="update-title" placeholder="What’s caught your attention?" maxlength="300">
     <label class="update-sr" for="activity-item-note">Your note</label><textarea id="activity-item-note" class="update-note" rows="4" placeholder="The scene that stuck with you. The song on repeat. Tell us about it."></textarea>
     <div class="update-tag-area"><label for="activity-tag-search">With / recommended by</label><div id="activity-tag-chips"></div><input id="activity-tag-search" autocomplete="off" placeholder="Tag someone…" oninput="searchActivityTags(this.value)"><div id="activity-tag-results" aria-live="polite"></div></div>
@@ -11452,6 +11473,11 @@ renderTasteInfluences();
         <option value="film">Movie</option>
         <option value="tv">TV Show</option>
         <option value="book">Book</option>
+        <option value="song">Song</option>
+        <option value="artist">Artist</option>
+        <option value="podcast">Podcast</option>
+        <option value="article">Article</option>
+        <option value="other">Other</option>
       </select>
     </div>
 
