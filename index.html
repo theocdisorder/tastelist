@@ -1631,12 +1631,23 @@ async function landingArtistArtFallback(imgEl, artistName) {
   <div id="taste-constellation" hidden>
   <div class="music-section-divider"></div>
   <div style="max-width:1100px;margin:0 auto;padding:1.5rem 2rem 0;">
-    <button id="taste-graph-toggle-btn" onclick="toggleTasteGraphSection()" style="font-size:13px;font-weight:600;color:var(--accent);background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:9px 18px;cursor:pointer;font-family:inherit;">View my Taste Constellation ↓</button>
+    <div id="taste-insights-cta" onclick="toggleTasteGraphSection()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')toggleTasteGraphSection()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;border-radius:16px;background:linear-gradient(135deg,#7C4DFF17,#7C4DFF06);border:1px solid #7C4DFF3d;transition:border-color .15s,transform .15s;" onmouseover="this.style.borderColor='#7C4DFF80';this.style.transform='translateY(-1px)'" onmouseout="this.style.borderColor='#7C4DFF3d';this.style.transform=''">
+      <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+        <div style="width:42px;height:42px;border-radius:12px;background:#7C4DFF22;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3.2"/></svg>
+        </div>
+        <div style="min-width:0;">
+          <div style="font-size:15px;font-weight:700;color:var(--text);">Taste Insights</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">See what actually connects your favorites — writing, tone, performance</div>
+        </div>
+      </div>
+      <span id="taste-graph-toggle-label" style="font-size:13px;font-weight:600;color:var(--accent);flex-shrink:0;">View ↓</span>
+    </div>
   </div>
   <div id="profile-taste-graph-section" style="display:none;">
   <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 1rem;">
-    <h2 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:0.25rem;">Taste Constellation</h2>
-    <p style="font-size:14px;color:var(--muted);margin-bottom:2rem;">The throughlines that run across everything — music, film, TV, and books.</p>
+    <h2 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:0.25rem;">Taste Insights</h2>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:2rem;">What actually connects your favorites — in writing, tone, performance, and style — across music, film, TV, and books.</p>
     <!-- Taste Influences -->
     <div id="taste-influences-section" style="margin-bottom:2.5rem;">
       <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:14px;display:flex;align-items:center;gap:10px;">Taste Influences <span style="flex:1;height:1px;background:var(--border);"></span></div>
@@ -3284,26 +3295,67 @@ function computeTasteSentenceCandidate() {
   if (topBook) picks.push(topBook);
   if (!picks.length) return '';
 
+  // A few different phrasings per pick-count, chosen at random each time someone generates —
+  // still just string interpolation (no API call), but avoids the same sentence shape every time.
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
   let sentence;
   if (picks.length === 1) {
-    sentence = `Into ${picks[0]} right now.`;
+    sentence = pick([
+      `Into ${picks[0]} right now.`,
+      `Currently obsessed with ${picks[0]}.`,
+      `Can't stop thinking about ${picks[0]}.`,
+      `${picks[0]} has my full attention lately.`,
+    ]);
   } else if (picks.length === 2) {
-    sentence = `${picks[0]} and ${picks[1]} — pretty much on repeat.`;
+    const [a, b] = picks;
+    sentence = pick([
+      `${a} and ${b} — pretty much on repeat.`,
+      `${a} and ${b} are running the show right now.`,
+      `Somewhere between ${a} and ${b} at any given moment.`,
+      `${a} by day, ${b} by night.`,
+      `Can't put down ${a} or ${b} lately.`,
+    ]);
   } else {
-    const last = picks[picks.length - 1];
-    sentence = `${picks.slice(0, -1).join(', ')}, and ${last} — that's the taste.`;
+    const [a, b, c] = picks;
+    sentence = pick([
+      `${a}, ${b}, and ${c} — that's the taste.`,
+      `${a}, ${b}, ${c}: the current rotation.`,
+      `Living in the world of ${a}, ${b}, and ${c} right now.`,
+      `${a}, ${b}, and ${c} — hard to pick a favorite among them.`,
+    ]);
   }
 
   const genreCounts = {};
   [...allMovies.flatMap(m => m.genres || []), ...allTV.flatMap(t => t.genres || [])].forEach(g => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
-  const topGenre = Object.entries(genreCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-  if (topGenre) sentence += ` Mostly ${topGenre.toLowerCase()}.`;
+  let topGenre = Object.entries(genreCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+  if (!topGenre && artists[0]?.genre) topGenre = artists[0].genre;
+  if (topGenre) {
+    sentence += ' ' + pick([
+      `Mostly ${topGenre.toLowerCase()}.`,
+      `Heavy ${topGenre.toLowerCase()} energy.`,
+      `There's a real ${topGenre.toLowerCase()} thread running through it.`,
+      `If there's a pattern, it's ${topGenre.toLowerCase()}.`,
+    ]);
+  }
   return sentence;
+}
+
+// If Taste Insights has already been analyzed this session (someone opened it, or it
+// loaded from cache), its connections are real, specific, AI-written criticism — not a template.
+// Pulling the first sentence of its top connection into "Taste in a Sentence" costs nothing
+// further, since that analysis was already generated. Returns null if nothing's ready yet.
+function sentenceFromAnalysis() {
+  const state = tasteAnalysisState();
+  if (state.status !== 'ready' || !state.result?.connections?.length) return null;
+  const body = (state.result.connections[0].body || '').trim();
+  const firstSentence = body.match(/^.*?[.!?](?:\s|$)/)?.[0]?.trim();
+  return firstSentence || state.result.connections[0].title || null;
 }
 
 async function generateTasteSentence() {
   if (!isOwnProfile || !currentUser || !sb) return;
-  const sentence = computeTasteSentenceCandidate();
+  const analyzed = sentenceFromAnalysis();
+  const sentence = analyzed || computeTasteSentenceCandidate();
   if (!sentence) { alert("Add a few favorites first — there's nothing to generate a sentence from yet."); return; }
   if (viewedProfile?.taste_sentence && !confirm('Replace your current sentence with a freshly generated one? This can\'t be undone, though you can always edit or regenerate again after.')) return;
   try {
@@ -3312,6 +3364,7 @@ async function generateTasteSentence() {
     viewedProfile.taste_sentence = sentence;
     if (currentProfile) currentProfile.taste_sentence = sentence;
     updateProfileHeaderAndBanner();
+    if (!analyzed) showToast?.('Generated from your favorites — open Taste Insights below for a more analytical one.');
   } catch (e) {
     alert('Failed to generate: ' + (e.message || 'unknown error'));
   }
@@ -3320,7 +3373,7 @@ async function generateTasteSentence() {
 async function editTasteSentence() {
   if (!isOwnProfile || !currentUser || !sb) return;
   const current = viewedProfile?.taste_sentence || '';
-  const input = prompt('Describe your taste in one sentence:', current || computeTasteSentenceCandidate());
+  const input = prompt('Describe your taste in one sentence:', current || sentenceFromAnalysis() || computeTasteSentenceCandidate());
   if (input === null) return;
   const trimmed = input.trim();
   try {
@@ -3953,7 +4006,7 @@ async function removeCustomListItem(tab, cat, idx) {
 // streaming-link search, bio, why-influential, influenced-by) that used to live in the old fixed
 // Top-5/Albums/Other-Favorites structure -- only the grouping changed, not that content. `artists`
 // and `albums` are kept as flat caches (rebuilt from CUSTOM_LISTS.music/.albums on every load) so
-// the rest of the app -- Taste Constellation, Defining Picks, the artist/album detail panels
+// the rest of the app -- Taste Insights, Defining Picks, the artist/album detail panels
 // themselves -- can keep addressing an item by its real database id without knowing which list it
 // lives in, exactly like before. --
 
@@ -6732,11 +6785,11 @@ function toggleTasteGraphSection() {
   scheduleTasteConstellation();
   renderTasteInfluences();
   const section = document.getElementById('profile-taste-graph-section');
-  const btn = document.getElementById('taste-graph-toggle-btn');
+  const label = document.getElementById('taste-graph-toggle-label');
   if (!section) return;
   const opening = section.style.display === 'none';
   section.style.display = opening ? '' : 'none';
-  if (btn) btn.textContent = opening ? 'Hide Taste Constellation ↑' : 'View my Taste Constellation ↓';
+  if (label) label.textContent = opening ? 'Hide ↑' : 'View ↓';
   if (opening) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -8813,8 +8866,8 @@ function clearTasteConstellation(reset = true) {
   if (cards) cards.innerHTML = '';
   if (influences) influences.innerHTML = '';
   if (section) section.style.display = 'none';
-  const btn = document.getElementById('taste-graph-toggle-btn');
-  if (btn) btn.textContent = 'View my Taste Constellation ↓';
+  const label = document.getElementById('taste-graph-toggle-label');
+  if (label) label.textContent = 'View ↓';
 }
 function scheduleTasteConstellation() {
   const state = constellationState();
