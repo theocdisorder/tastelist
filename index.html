@@ -3726,7 +3726,16 @@ async function searchExtraCatalog(kind,query){
  }
  if(kind==='comedian'){
   const data=await constellationTMDB(`/search/person?query=${encodeURIComponent(query)}`);
-  return (data.results||[]).filter(p=>p.known_for_department==='Acting').slice(0,12).map(p=>({kind,id:'tmdb-person:'+p.id,title:p.name,art:p.profile_path?'https://image.tmdb.org/t/p/w342'+p.profile_path:'',label:'Comedian / performer'}));
+  const people=(data.results||[]).filter(p=>p.known_for_department==='Acting').slice(0,12).map(p=>({kind,id:'tmdb-person:'+p.id,title:p.name,art:p.profile_path?'https://image.tmdb.org/t/p/w342'+p.profile_path:'',label:'Comedian / performer'}));
+  // TMDB is a film/TV credit database — someone known mainly for stand-up specials and podcasts,
+  // with little on-screen work, often has no photo there at all. lookupArtistArt() already solves
+  // this exact "a person's photo, given just a name" problem elsewhere in the app (TheAudioDB
+  // first, a Wikipedia infobox photo as the fallback) — reuse it here instead of a new lookup.
+  await Promise.all(people.filter(p=>!p.art).map(async p=>{
+    const found=await lookupArtistArt(p.title);
+    if(found?.tilePhoto)p.art=found.tilePhoto;
+  }));
+  return people;
  }
  const data=await constellationTMDB(`/search/multi?query=${encodeURIComponent(query)}`);
  return (data.results||[]).filter(r=>['movie','tv'].includes(r.media_type)&&(r.genre_ids||[]).includes(35)).map(r=>({kind:'special',id:'tmdb:'+r.media_type+':'+r.id,title:r.title||r.name,tmdbId:r.id,mediaType:r.media_type,poster:r.poster_path||'',year:(r.release_date||r.first_air_date||'').slice(0,4),label:r.media_type==='tv'?'Comedy · TV':'Comedy · Film',genre:'Comedy'}));
