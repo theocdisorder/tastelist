@@ -1339,6 +1339,18 @@ input::placeholder, textarea::placeholder {
 .update-composer-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:24px}.update-composer-footer>span{font-size:11px;color:#888}.update-composer-footer button{border:0;border-radius:999px;background:#dac4f6;color:#23192d;font-weight:600;padding:11px 20px;cursor:pointer}.update-composer-footer button span{margin-left:12px}.update-composer-footer button:disabled{opacity:.5;cursor:wait}.update-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 .activity-people{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:12px;align-items:center;color:var(--muted)}.activity-people button{border:0;border-radius:20px;background:#cbb0f414;color:#dac4f6;padding:5px 9px;cursor:pointer}
 @media(max-width:600px){#activity-item-modal{padding:12px}.update-composer{padding:22px;max-height:calc(100dvh - 24px);border-radius:20px}.update-title{font-size:20px}.update-composer-footer>span{display:none}}
+</style><style>
+/* Hidden sections must win over legacy flex/grid display rules. */
+.music-section[hidden],.music-section-divider[hidden]{display:none!important}
+.music-section:has(#music-feed:empty),.music-section:has(#movies-feed:empty),.music-section:has(#tv-feed:empty),.music-section:has(#books-feed:empty),.music-section:has(#movie-grid:empty),.music-section:has(#directors-grid:empty){display:none!important}
+.music-section:has(#music-feed:empty)+.music-section-divider,.music-section:has(#movies-feed:empty)+.music-section-divider,.music-section:has(#tv-feed:empty)+.music-section-divider,.music-section:has(#books-feed:empty)+.music-section-divider,.music-section:has(#movie-grid:empty)+.music-section-divider,.music-section:has(#directors-grid:empty)+.music-section-divider{display:none!important}
+</style><style>
+.extra-more{position:relative}.extra-more summary{list-style:none;cursor:pointer}.extra-more>div{position:absolute;top:calc(100% + 8px);left:0;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;z-index:30;min-width:150px}.extra-more button{display:block;width:100%;text-align:left;border:0;border-radius:6px;padding:10px;background:transparent;color:var(--text);cursor:pointer}.extra-category{max-width:1100px;margin:0 auto;padding:32px}.extra-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px}.extra-heading h2,.extra-heading h3{margin:0}.extra-list{padding:24px 0;border-top:1px solid var(--border)}.extra-muted{color:var(--muted);font-size:13px;line-height:1.6}.extra-list .ob-pick-grid{grid-template-columns:repeat(auto-fill,minmax(140px,200px))}#extra-picker{width:min(600px,calc(100% - 24px));max-height:85dvh;overflow:auto;margin:auto;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:20px;padding:26px}#extra-picker::backdrop{background:#000a;backdrop-filter:blur(8px)}#extra-picker input,#extra-picker select{display:block;width:100%;padding:12px;margin:10px 0;border:1px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text)}.extra-result{display:flex;align-items:center;width:100%;text-align:left;gap:14px;padding:12px;border:0;border-bottom:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer}.extra-result .ob-art{width:55px;flex-shrink:0}.extra-result small{display:block;color:var(--muted);margin-top:5px}.extra-result>span:last-child{margin-left:auto;font-size:22px;color:#cbb0f4}
+</style><style>
+#taste-constellation-cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))!important}
+.taste-essay{padding:28px;border:1px solid #cbb0f425;border-radius:18px;background:linear-gradient(140deg,#cbb0f408,transparent)}.taste-essay-label{font-size:10px;letter-spacing:.12em;color:#bba2db}.taste-essay h3{font-size:24px;letter-spacing:-.5px;line-height:1.2;margin:14px 0}.taste-essay p{font-size:14px;line-height:1.8;color:#c4c0c9;margin:0 0 20px}.taste-essay-picks{display:flex;flex-wrap:wrap;gap:6px}.taste-essay-picks span{font-size:11px;padding:5px 10px;border-radius:20px;background:#cbb0f410;color:#dfd4ea}.taste-essay details{margin-top:20px;font-size:12px;color:var(--muted)}.taste-essay summary{cursor:pointer;margin-bottom:14px}.taste-essay details p{font-size:12px}.taste-analysis-status{grid-column:1/-1;font-size:13px;line-height:1.7;color:var(--muted)}
+</style><style>
+.list-start{margin:24px 0;padding:28px;border:1px solid #cbb0f424;border-radius:18px;background:#ffffff03;display:flex;align-items:center;justify-content:space-between;gap:24px}.list-start h3{margin:0 0 8px;font-size:21px;letter-spacing:-.4px}.list-start p{margin:0;font-size:14px;color:var(--muted);line-height:1.6}.list-start button{flex-shrink:0}.list-create-row{padding:20px 0 28px;text-align:left}.extra-more summary.selected{background:var(--accent);color:#fff}#new-list-dialog{margin:auto;width:min(470px,calc(100% - 32px));max-height:85dvh;overflow:auto;border:1px solid var(--border2);border-radius:20px;padding:28px;background:var(--surface);color:var(--text)}#new-list-dialog::backdrop{background:#0009;backdrop-filter:blur(8px)}#new-list-dialog h2{font-size:24px;letter-spacing:-.5px}#new-list-dialog label{display:block;font-size:13px;color:var(--muted)}#new-list-dialog label[hidden]{display:none}#new-list-dialog input,#new-list-dialog select{width:100%;padding:12px;margin:8px 0 18px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px}#new-list-ideas{display:flex;flex-wrap:wrap;gap:8px}#new-list-ideas button{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;cursor:pointer}.new-list-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:28px}@media(max-width:600px){.list-start{align-items:flex-start;flex-direction:column;padding:24px}.list-start button{width:100%}}
 </style></head>
 <body>
 <div id="app-startup-status" role="status" aria-live="polite">Loading…</div>
@@ -1463,6 +1475,8 @@ async function landingArtistArtFallback(imgEl, artistName) {
   </form>
 </dialog>
 
+<dialog id="extra-picker" aria-labelledby="extra-picker-title"><div class="extra-heading"><h2 id="extra-picker-title">Add picks</h2><button class="profile-control" onclick="extraPicker.request++;clearTimeout(extraPicker.timer);document.getElementById('extra-picker').close()">Close</button></div><label>Look for<select id="extra-picker-kind" onchange="queueExtraSearch()"></select></label><label class="update-sr" for="extra-picker-query">Search</label><input id="extra-picker-query" type="search" placeholder="Search by name or title…" oninput="queueExtraSearch()"><p class="extra-muted">Choose the matching person, show, episode, or special.</p><div id="extra-picker-results" aria-live="polite"></div></dialog>
+<dialog id="new-list-dialog" aria-labelledby="new-list-title"><form onsubmit="submitNewList(event)"><div class="extra-heading"><h2 id="new-list-title">Create a list</h2><button type="button" class="update-close" aria-label="Close" onclick="document.getElementById('new-list-dialog').close()">×</button></div><label id="new-list-kind-wrap">What goes in this list?<select id="new-list-kind" onchange="renderNewListIdeas()"><option value="music">Artists</option><option value="albums">Albums</option></select></label><label for="new-list-name">List name</label><input id="new-list-name" required maxlength="120" placeholder="e.g. All-time favorites" autofocus><p class="extra-muted">Need an idea? Pick a name below and make it yours.</p><div id="new-list-ideas"></div><div class="new-list-footer"><button type="button" class="profile-control" onclick="document.getElementById('new-list-dialog').close()">Cancel</button><button class="ob-button ob-primary" type="submit">Continue →</button></div></form></dialog>
 <div id="app-content">
 
 <!-- Persistent global bar — visible in both Feed and Profile views, LinkedIn-style -->
@@ -1638,13 +1652,14 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
 <div class="tab-panel" id="tab-favorites">
   <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 0;display:flex;gap:8px;flex-wrap:wrap;">
-    <button class="fav-chip" id="fav-chip-all" onclick="switchFavoritesFilter('all')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--accent);color:#fff;">All</button>
     <button class="fav-chip" id="fav-chip-music" onclick="switchFavoritesFilter('music')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Music</button>
     <button class="fav-chip" id="fav-chip-movies" onclick="switchFavoritesFilter('movies')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Movies</button>
     <button class="fav-chip" id="fav-chip-tv" onclick="switchFavoritesFilter('tv')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">TV</button>
-    <button class="fav-chip" id="fav-chip-books" onclick="switchFavoritesFilter('books')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Books</button>
+    <button class="fav-chip" id="fav-chip-books" onclick="switchFavoritesFilter('books')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Books</button><details class="extra-more" id="favorites-more"><summary class="profile-control">More</summary><div><button id="fav-chip-comedy" onclick="switchFavoritesFilter('comedy');document.getElementById('favorites-more').open=false">Comedy</button><button id="fav-chip-podcasts" onclick="switchFavoritesFilter('podcasts');document.getElementById('favorites-more').open=false">Podcasts</button></div></details>
   </div>
 
+<div style="display:none" id="favorites-section-comedy" class="extra-category"><div id="extra-comedy"></div></div>
+<div style="display:none" id="favorites-section-podcasts" class="extra-category"><div id="extra-podcasts"></div></div>
 <div id="favorites-section-music">
 <div class="music-layout">
 
@@ -1682,7 +1697,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 </div><!-- /#favorites-section-music -->
 
 <!-- TAB: My Movies -->
-<div id="favorites-section-movies">
+<div style="display:none" id="favorites-section-movies">
 <div class="music-layout">
 
 <!-- MOVIE BIO SIDEBAR -->
@@ -1710,7 +1725,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
   <div class="music-section">
     <div class="music-section-header">
-      <h2 class="music-section-title">Favorite Movies &amp; Shows</h2>
+      <h2 class="music-section-title">Favorite Movies</h2>
     </div>
     <div id="movie-controls" style="margin-bottom:14px;"></div>
     <section class="top5-section">
@@ -1738,7 +1753,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
   <div class="music-section-divider"></div>
 
-  <div id="movie-lists-container"></div>
+  <div id="movie-lists-container"></div><div id="extra-specials-movie"></div>
 
   <div class="music-section-divider"></div>
 
@@ -1770,7 +1785,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 </div><!-- /.music-main -->
 </div><!-- /.music-layout -->
 </div><!-- /#favorites-section-movies -->
-<div id="favorites-section-tv">
+<div style="display:none" id="favorites-section-tv">
 <div class="music-layout">
 
 <!-- TV BIO SIDEBAR -->
@@ -1796,12 +1811,12 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
   <div class="music-section-divider"></div>
 
-  <div id="tv-lists-container"></div>
+  <div id="tv-lists-container"></div><div id="extra-specials-tv"></div>
 
 </div><!-- /.music-main -->
 </div><!-- /.music-layout -->
 </div><!-- /#favorites-section-tv -->
-<div id="favorites-section-books">
+<div style="display:none" id="favorites-section-books">
 <div class="music-layout">
 
 <!-- BOOKS BIO SIDEBAR -->
@@ -3246,8 +3261,15 @@ async function editBio() {
 // Builds a real sentence from whatever favorites actually exist — never invents a title, genre,
 // or name that isn't genuinely in the person's own data, and returns '' if there's nothing yet
 // to build one from (an empty account has no basis for a sentence, generated or otherwise).
+// Shared by the taste-sentence generator and the Defining Picks card — a "top movie" always
+// means the same thing in both places, whether it comes from the fixed Favorite Movies & Shows
+// anchor or one of the freeform custom lists.
+function allFavoriteMovies() {
+  return [...movies, ...Object.values(CUSTOM_LISTS.movies).flat()];
+}
+
 function computeTasteSentenceCandidate() {
-  const allMovies = [...movies, ...Object.values(CUSTOM_LISTS.movies).flat()];
+  const allMovies = allFavoriteMovies();
   const allTV = Object.values(CUSTOM_LISTS.tv).flat();
   const allBooks = Object.values(CUSTOM_LISTS.books).flat();
   const topArtist = artists[0]?.name;
@@ -3537,6 +3559,7 @@ async function loadFavoriteMoviesFromSupabase(userId) {
       .select('*')
       .eq('user_id', userId)
       .eq('category', 'movies')
+      .eq('type', 'movie')
       .order('sort_order', { ascending: true });
     if (error || !data) return false;
 
@@ -3596,7 +3619,69 @@ const LEGACY_LIST_LABELS = {
   tv: { tv_comedy: 'Favorite Comedies', tv_drama: 'Favorite Dramas', tv_other: 'Other Favorites', tv_dropoff: "Shows That Were Good Until They Weren't" },
   books: { shaped: 'Books That Shaped Me', reread: "Books I've Reread Too Many Times", recent: 'Recent Favorites' },
 };
-function customListLabel(tab, cat) { return (LEGACY_LIST_LABELS[tab] && LEGACY_LIST_LABELS[tab][cat]) || cat; }
+function customListLabel(tab, cat) { if(tab==='tv'&&cat==='movies')return 'Favorites'; return (LEGACY_LIST_LABELS[tab] && LEGACY_LIST_LABELS[tab][cat]) || cat; }
+
+let extraLists=[],extraLoadError='',extraBusy=false;
+let extraPicker={listId:null,category:null,results:[],request:0,timer:null};
+function extraCategory(kind){return ['comedian','special'].includes(kind)?'comedy':'podcasts';}
+function extraItems(){return extraLists.flatMap(list=>(list.items||[]).map(item=>({...item,medium:list.category==='comedy'?'Comedy':'Podcasts'})));}
+async function loadExtraLists(userId){
+  extraLists=[];extraLoadError='';
+  try{const {data,error}=await sb.from('taste_extra_lists').select('*').eq('user_id',userId).order('created_at');if(error)throw error;if(viewedProfile?.id!==userId)return;extraLists=data||[];}
+  catch(_){if(viewedProfile?.id!==userId)return;extraLoadError='These lists couldn’t load. Please try again.';}
+  renderExtraLists();scheduleTasteConstellation();
+}
+function renderExtraLists(){
+ for(const type of ['movie','tv']){
+   const el=document.getElementById('extra-specials-'+type);if(!el)continue;
+   const picks=extraItems().filter(i=>i.kind==='special'&&i.mediaType===type);
+   el.innerHTML=picks.length?`<section class="extra-list"><h3>Comedy specials</h3><div class="ob-pick-grid">${picks.map(i=>`<div class="ob-pick-card">${onboardingArtwork(i)}<strong>${esc(i.title)}</strong><small>${esc(i.year||'')}</small></div>`).join('')}</div></section>`:'';
+ }
+ for(const category of ['comedy','podcasts']){
+  const el=document.getElementById('extra-'+category);if(!el)continue;
+  const lists=extraLists.filter(l=>l.category===category);
+  el.innerHTML=`<div class="extra-heading"><h2>${category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button class="profile-control" onclick="promptNewCustomList('${category}')">+ Create a list</button>`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
+   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div><button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">Rename</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">Delete list</button></div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile?`<button class="ob-text-link" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">Remove</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button class="ob-button ob-primary" onclick="promptNewCustomList('${category}')">Create a list →</button></section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
+ }
+}
+async function createExtraList(category, suppliedTitle){
+ if(!isOwnProfile||extraBusy)return;const title=suppliedTitle??prompt('Name your list');if(!title?.trim())return;
+ extraBusy=true;
+ try{if(!await requireFreshSession())throw Error('Please sign in again.');const userId=currentUser.id;const {data,error}=await sb.from('taste_extra_lists').insert({user_id:userId,category,title:title.trim().slice(0,120),items:[]}).select().single();if(error)throw error;if(viewedProfile?.id!==userId)return;extraLists.push(data);renderExtraLists();openExtraPicker(data.id);}
+ catch(_){alert('Could not create the list. Make sure the Comedy & Podcasts database setup has been applied, then retry.');}finally{extraBusy=false;}
+}
+async function updateExtraList(list,changes){
+ if(!isOwnProfile||list.user_id!==currentUser?.id)throw Error('You can only edit your own lists.');
+ const {data,error}=await sb.from('taste_extra_lists').update({...changes,revision:list.revision+1}).eq('id',list.id).eq('user_id',currentUser.id).eq('revision',list.revision).select().single();
+ if(error||!data)throw Error('Could not save. Reload your lists and try again.');
+ if(viewedProfile?.id===list.user_id){Object.assign(list,data);renderExtraLists();scheduleTasteConstellation();renderProfileTab();}return data;
+}
+async function renameExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;const title=prompt('Rename list',list.title);if(!title?.trim())return;extraBusy=true;try{await updateExtraList(list,{title:title.trim().slice(0,120)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
+async function removeExtraItem(id,index){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;extraBusy=true;try{await updateExtraList(list,{items:list.items.filter((_,i)=>i!==index)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
+async function deleteExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile||extraBusy||!confirm('Delete this list and its picks?'))return;extraBusy=true;try{const {error}=await sb.from('taste_extra_lists').delete().eq('id',id).eq('user_id',currentUser.id);if(error)throw error;extraLists=extraLists.filter(l=>l.id!==id);renderExtraLists();scheduleTasteConstellation();renderProfileTab();}catch(_){alert('Could not delete the list.');}finally{extraBusy=false;}}
+function openExtraPicker(id){const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile)return;extraPicker.request++;extraPicker.listId=id;extraPicker.category=list.category;extraPicker.results=[];document.getElementById('extra-picker-query').value='';document.getElementById('extra-picker-results').innerHTML='';document.getElementById('extra-picker-title').textContent='Add to '+list.title;document.getElementById('extra-picker-kind').innerHTML=(list.category==='comedy'?[['comedian','Comedians / performers'],['special','Stand-up specials']]:[['podcast','Podcast shows'],['episode','Podcast episodes']]).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');document.getElementById('extra-picker').showModal();}
+function queueExtraSearch(){clearTimeout(extraPicker.timer);extraPicker.request++;extraPicker.timer=setTimeout(runExtraSearch,350);}
+async function runExtraSearch(){const request=++extraPicker.request,el=document.getElementById('extra-picker-results'),query=document.getElementById('extra-picker-query').value.trim(),kind=document.getElementById('extra-picker-kind').value;if(!query){el.innerHTML='';return;}el.innerHTML='<p>Searching…</p>';try{const items=await searchExtraCatalog(kind,query);if(request!==extraPicker.request)return;extraPicker.results=items;el.innerHTML=items.length?items.map((item,i)=>`<button class="extra-result" onclick="addExtraResult(${i})">${onboardingArtwork(item)}<span><strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.artist?' · '+esc(item.artist):''}</small></span><span>+</span></button>`).join(''):'<p>No matching results.</p>';}catch(_){if(request===extraPicker.request)el.innerHTML='<p>Search couldn’t load. Please try again.</p>';}}
+async function searchExtraCatalog(kind,query){
+ if(kind==='podcast'||kind==='episode'){
+  const data=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=podcast&entity=${kind==='podcast'?'podcast':'podcastEpisode'}&limit=12`);
+  return (data.results||[]).filter(r=>r.trackName||r.collectionName).map(r=>({kind,id:'apple:'+r.trackId,title:r.trackName||r.collectionName,artist:r.artistName||r.collectionName||'',art:(r.artworkUrl600||r.artworkUrl100||''),label:kind==='podcast'?'Podcast':'Episode',genres:(r.genres||[]).filter(g=>typeof g==='string'),year:r.releaseDate?.slice(0,4)||''}));
+ }
+ if(kind==='comedian'){
+  const data=await constellationTMDB(`/search/person?query=${encodeURIComponent(query)}`);
+  return (data.results||[]).filter(p=>p.known_for_department==='Acting').slice(0,12).map(p=>({kind,id:'tmdb-person:'+p.id,title:p.name,art:p.profile_path?'https://image.tmdb.org/t/p/w342'+p.profile_path:'',label:'Comedian / performer'}));
+ }
+ const data=await constellationTMDB(`/search/multi?query=${encodeURIComponent(query)}`);
+ return (data.results||[]).filter(r=>['movie','tv'].includes(r.media_type)&&(r.genre_ids||[]).includes(35)).map(r=>({kind:'special',id:'tmdb:'+r.media_type+':'+r.id,title:r.title||r.name,tmdbId:r.id,mediaType:r.media_type,poster:r.poster_path||'',year:(r.release_date||r.first_air_date||'').slice(0,4),label:r.media_type==='tv'?'Comedy · TV':'Comedy · Film',genre:'Comedy'}));
+}
+async function saveExtraPick(item,category){
+ const userId=currentUser?.id;if(!userId||!isOwnProfile)throw Error('Sign in to save.');
+ const group=extraCategory(item.kind);let list=extraLists.find(l=>l.category===group&&l.title===category);
+ if(!list){const {data,error}=await sb.from('taste_extra_lists').insert({user_id:userId,category:group,title:category,items:[]}).select().single();if(error)throw Error('Could not save this category. Please check the database setup.');if(viewedProfile?.id!==userId)throw Error('Profile changed.');list=data;extraLists.push(list);}
+ if(list.items.some(p=>p.id===item.id))throw Error('Already in this list.');
+ await updateExtraList(list,{items:[...list.items,item]});
+}
+async function addExtraResult(index){const item=extraPicker.results[index],list=extraLists.find(l=>l.id===extraPicker.listId);if(!item||!list||extraBusy)return;extraBusy=true;try{await saveExtraPick(item,list.title);document.getElementById('extra-picker').close();}catch(e){alert(e.message);}finally{extraBusy=false;}}
 
 let CUSTOM_LISTS = { movies: {}, tv: {}, books: {}, music: {}, albums: {} };         // tab -> { category: [items] }
 let CUSTOM_LIST_EDIT = { movies: {}, tv: {}, books: {}, music: {}, albums: {} };     // tab -> { category: bool }
@@ -3649,11 +3734,13 @@ async function loadCustomLists(userId, tab) {
 // one-click way to fill in something familiar. Clicking "+ New list" instead always lets someone
 // type their own name; these never appear once at least one list already exists.
 const STARTER_LIST_SUGGESTIONS = {
-  movies: ['Favorite Dramas', 'Favorite Thrillers', 'Most Rewatchable Comedies'],
-  tv: ['Favorite Comedies', 'Favorite Dramas', "Shows That Were Good Until They Weren't"],
-  books: ['Books That Shaped Me', "Books I've Reread Too Many Times"],
-  music: ['Artists That Shaped Me', 'New Discoveries'],
-  albums: ['Albums I ❤️'],
+  movies: ['All-time favorites', 'Worth a rewatch', 'My watchlist'],
+  tv: ['Watching lately', 'Comfort shows', 'Next up'],
+  books: ['Books I love', 'On my reading list', 'Recent reads'],
+  music: ['On repeat', 'All-time favorites', 'New discoveries'],
+  albums: ['Albums I love', 'On repeat', 'No skips'],
+  comedy: ['Always makes me laugh', 'Favorite specials'],
+  podcasts: ['My regular listens', 'Episodes worth sharing'],
 };
 
 // Opens whichever "add an item to this list" flow fits the tab — a search modal for
@@ -3678,32 +3765,15 @@ function renderCustomLists(tab) {
   scheduleTasteConstellation();
   const container = document.getElementById(CUSTOM_LIST_CONTAINER[tab]);
   if (!container) return;
-  const categories = Object.keys(CUSTOM_LISTS[tab]);
+  const categories = Object.keys(CUSTOM_LISTS[tab]).filter(cat=>CUSTOM_LISTS[tab][cat].length);
   const buildSection = tab === 'music' ? musicListSectionHtml : tab === 'albums' ? albumListSectionHtml : (cat) => customListSectionHtml(tab, cat);
   const sectionsHtml = categories.map(cat => buildSection(cat)).join('<div class="music-section-divider"></div>');
-  let addListHtml = '';
-  if (isOwnProfile) {
-    if (!categories.length) {
-      // Nothing here yet — offer a couple of familiar starting points as one-click prompts,
-      // alongside the option to just name your own list instead.
-      const suggestions = (STARTER_LIST_SUGGESTIONS[tab] || []).map(name =>
-        `<button onclick="${esc(`createSuggestedList('${jsStr(tab)}','${jsStr(name)}')`)}" style="font-size:12.5px;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:8px 18px;cursor:pointer;font-family:inherit;">+ ${esc(name)}</button>`
-      ).join('');
-      addListHtml = `
-        <div class="music-section" style="text-align:center;padding:0 0 12px;">
-          <p style="font-size:12.5px;color:var(--faint);margin-bottom:14px;">Start with one of these, or make your own:</p>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-            ${suggestions}
-            <button onclick="promptNewCustomList('${tab}')" style="font-size:12.5px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border2);border-radius:20px;padding:8px 18px;cursor:pointer;font-family:inherit;">+ New list</button>
-          </div>
-        </div>`;
-    } else {
-      addListHtml = `
-        <div class="music-section-divider"></div>
-        <div class="music-section" style="text-align:center;padding:4px 0 12px;">
-          <button onclick="promptNewCustomList('${tab}')" style="font-size:12.5px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border2);border-radius:20px;padding:8px 20px;cursor:pointer;font-family:inherit;">+ New list</button>
-        </div>`;
-    }
+  let addListHtml='';
+  if(isOwnProfile && tab!=='albums'){
+    const hasLists=categories.length || (tab==='music'&&Object.values(CUSTOM_LISTS.albums).some(items=>items.length));
+    const noun={music:'music',movies:'movie',tv:'TV',books:'book'}[tab];
+    addListHtml=hasLists?`<div class="list-create-row"><button class="profile-control" onclick="promptNewCustomList('${tab}')">+ Create a list</button></div>`:
+      `<section class="list-start"><div><h3>Your ${noun} favorites start here</h3><p>Give your list a name, then add a few things you love.</p></div><button class="ob-button ob-primary" onclick="promptNewCustomList('${tab}')">Create a list <span aria-hidden="true">→</span></button></section>`;
   }
   container.innerHTML = sectionsHtml + addListHtml;
 }
@@ -3800,15 +3870,27 @@ function toggleCustomListEditMode(tab, cat) {
   renderCustomLists(tab);
 }
 
+let newListCategory='music';
 function promptNewCustomList(tab) {
-  if (!isOwnProfile) return;
-  const name = (prompt('Name this list:') || '').trim();
-  if (!name) return;
-  if (CUSTOM_LISTS[tab][name]) { openListAddFlow(tab, name); return; }
-  CUSTOM_LISTS[tab][name] = [];
-  CUSTOM_LIST_EDIT[tab][name] = true;
-  renderCustomLists(tab);
-  openListAddFlow(tab, name);
+  if(!isOwnProfile)return;
+  newListCategory=tab;
+  document.getElementById('new-list-name').value='';
+  document.getElementById('new-list-kind-wrap').hidden=!['music','albums'].includes(tab);
+  document.getElementById('new-list-kind').value=tab==='albums'?'albums':'music';
+  renderNewListIdeas();
+  document.getElementById('new-list-dialog').showModal();
+}
+function renderNewListIdeas(){
+  const category=['music','albums'].includes(newListCategory)?document.getElementById('new-list-kind').value:newListCategory;
+  document.getElementById('new-list-ideas').innerHTML=(STARTER_LIST_SUGGESTIONS[category]||[]).map(name=>`<button type="button" data-name="${esc(name)}" onclick="document.getElementById('new-list-name').value=this.dataset.name;document.getElementById('new-list-name').focus()">${esc(name)}</button>`).join('');
+}
+async function submitNewList(event){
+ event.preventDefault();if(!isOwnProfile)return;
+ const name=document.getElementById('new-list-name').value.trim();if(!name)return;
+ const category=['music','albums'].includes(newListCategory)?document.getElementById('new-list-kind').value:newListCategory;
+ document.getElementById('new-list-dialog').close();
+ if(['comedy','podcasts'].includes(category)){await createExtraList(category,name);return;}
+ createSuggestedList(category,name);
 }
 
 async function renameCustomList(tab, cat) {
@@ -4178,7 +4260,7 @@ async function loadViewedProfileData() {
   // A failed category load must not leave another profile's data in the constellation.
   artists = []; albums = []; movies = []; directors = [];
   CUSTOM_LISTS = { movies: {}, tv: {}, books: {}, music: {}, albums: {} };
-  allTasteLists = [];
+  allTasteLists = [];extraLists=[];renderExtraLists();
   const id = viewedProfile.id;
   // Each of these categories is independent (separate tables, separate arrays) and already
   // throttles its own per-item art/detail fetches internally (the 150–400ms delays inside each
@@ -4187,6 +4269,7 @@ async function loadViewedProfileData() {
   // concurrently instead brings total load time down to roughly the slowest single category
   // rather than the sum of all of them.
   await Promise.all([
+    loadExtraLists(id),
     loadTasteListFromSupabase(id),
     loadAllTasteLists(id),
     loadFriendRecsFromSupabase(id),
@@ -4266,6 +4349,7 @@ async function resolveOnboardingProgress() {
     // Album-only and director-only profiles count too. An empty auto-created list does not.
     const queries = ['favorite_artists','favorite_albums','favorite_media_lists','favorite_books','favorite_directors','activity_feed']
       .map(table => sb.from(table).select('id', { count:'exact', head:true }).eq('user_id', id));
+    queries.push(sb.from('taste_extra_lists').select('id', {count:'exact',head:true}).eq('user_id',id));
     queries.push(sb.from('taste_list_items').select('id,taste_lists!inner(user_id)', { count:'exact', head:true }).eq('taste_lists.user_id', id));
     const results = await Promise.all(queries);
     if (currentUser?.id !== id) return;
@@ -4289,6 +4373,7 @@ const ONBOARDING_QUESTIONS = [
   'What would you recommend to a friend?',
   'What won’t you shut up about?',
   'What’s an all-time favorite?',
+  'What’s your comfort watch?',
 ];
 function cycleOnboardingQuestion() {
   const heading = document.getElementById('onboarding-title');
@@ -4336,7 +4421,7 @@ function renderOnboardingJourney() {
   } else if (step === 0) {
     body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1" aria-live="polite" aria-atomic="true">${esc(ONBOARDING_QUESTIONS[state.questionIndex || 0])}</h1><button id="ob-question-switch" type="button" class="ob-question-switch" onclick="cycleOnboardingQuestion()">Try another question <span aria-hidden="true">↻</span></button><p>Search the artists, albums, movies, shows, and books you love.</p></div>
       <label class="ob-search"><span aria-hidden="true">⌕</span><input id="ob-search" type="search" aria-label="Search for something you love" placeholder="Search for something you love…" value="${esc(state.query)}" oninput="onOnboardingSearch(this.value)" ${!ready?'disabled':''}><button type="button" aria-label="Clear search" onclick="clearOnboardingSearch()">×</button></label>
-      <div class="ob-filters" aria-label="Search categories">${[['all','All'],['artist','Artists'],['album','Albums'],['movie','Movies'],['tv','TV shows'],['book','Books']].map(([key,label])=>`<button type="button" data-ob-filter="${key}" aria-pressed="${state.filter===key}" onclick="filterOnboardingSearch('${key}')">${label}</button>`).join('')}</div>
+      <div class="ob-filters" aria-label="Search categories">${[['all','All'],['artist','Artists'],['album','Albums'],['movie','Movies'],['tv','TV shows'],['book','Books'],['comedian','Comedy'],['special','Specials'],['podcast','Podcasts'],['episode','Episodes']].map(([key,label])=>`<button type="button" data-ob-filter="${key}" aria-pressed="${state.filter===key}" onclick="filterOnboardingSearch('${key}')">${label}</button>`).join('')}</div>
       <p class="ob-multiselect-hint">Select as many as you like. Your selections stay here as you search.</p><div id="ob-pending" class="ob-pending" aria-live="polite"></div><div id="ob-results" aria-live="polite"></div>
       <div id="ob-search-ideas" class="ob-ideas" ${state.query?'hidden':''}><p>Try something like…</p><div>${['The Strokes','The Bear','Pride and Prejudice','Normal People','Sabrina Carpenter','Dune'].map(q=>`<button type="button" onclick="suggestOnboardingSearch('${q}')" ${!ready?'disabled':''}>${q}</button>`).join('')}</div></div>
       <div id="ob-feedback" class="ob-feedback" role="status">${!ready?'Loading your favorites…':''}</div>`;
@@ -4399,10 +4484,11 @@ async function searchOnboardingArtists(query) {
 async function runOnboardingSearch() {
   const state=onboardingVisualState(), request=++state.request, userId=currentUser?.id;
   const q=state.query.trim();if(!q)return;
-  const kinds=state.filter==='all'?['artist','album','movie','tv','book']:[state.filter];
+  const kinds=state.filter==='all'?['artist','album','movie','tv','book','comedian','podcast']:[state.filter];
   state.loading=true;state.error='';state.searchFailed=false;renderOnboardingSearchResults();
   const results=await Promise.allSettled(kinds.map(async kind=>{
     let data;
+    if(['comedian','special','podcast','episode'].includes(kind))return searchExtraCatalog(kind,q);
     if(kind==='artist')return searchOnboardingArtists(q);
     if(kind==='album') {
       const response=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=${kind==='artist'?'musicArtist':'album'}&limit=6`);
@@ -4455,7 +4541,7 @@ function selectOnboardingResult(index) {
   const state=onboardingVisualState(),item=state.results[index];
   if(state.saving||!item)return;
   const key=onboardingSelectionKey(item),existing=state.pending.findIndex(p=>onboardingSelectionKey(p)===key);
-  if(existing>=0)state.pending.splice(existing,1);else state.pending.push(item);
+  if(existing>=0)state.pending.splice(existing,1);else state.pending.push({...item,category:ONBOARDING_QUESTIONS[state.questionIndex||0]});
   renderOnboardingSearchResults();
 }
 function removeOnboardingSelection(index) {
@@ -4494,35 +4580,37 @@ async function saveOnboardingItem(item,userId) {
     const state=onboardingVisualState();
     const picks=onboardingPicks();
     if(picks.some(p=>p.kind===item.kind && (p.title||p.name).toLowerCase()===item.title.toLowerCase() && (item.kind!=='album'||(p.artist||'').toLowerCase()===(item.artist||'').toLowerCase()) && (item.kind!=='book'||(p.author||'').toLowerCase()===(item.author||'').toLowerCase())))throw new Error('This is already in your favorites. Choose another pick.');
+    const category=item.category||ONBOARDING_QUESTIONS[state.questionIndex||0];
+    if(['comedian','special','podcast','episode'].includes(item.kind)){await saveExtraPick(item,category);return;}
     let table,row,local;
     if(item.kind==='artist') {
-      table='favorite_artists';row={user_id:userId,category:'Favorites',name:item.title,genre:item.genre||null,band_photo:item.art||null,tile_photo:item.art||null,sort_order:(CUSTOM_LISTS.music.Favorites||[]).length};
+      table='favorite_artists';row={user_id:userId,category,name:item.title,genre:item.genre||null,band_photo:item.art||null,tile_photo:item.art||null,sort_order:(CUSTOM_LISTS.music[category]||[]).length};
       local={name:item.title,genre:item.genre||'',bandPhoto:item.art||'',tilePhoto:item.art||'',songs:[]};
     } else if(item.kind==='album') {
-      table='favorite_albums';row={user_id:userId,category:'Favorites',name:item.title,artist:item.artist,genre:item.genre||null,year:item.year||null,sort_order:(CUSTOM_LISTS.albums.Favorites||[]).length,songs:[]};
+      table='favorite_albums';row={user_id:userId,category,name:item.title,artist:item.artist,genre:item.genre||null,year:item.year||null,sort_order:(CUSTOM_LISTS.albums[category]||[]).length,songs:[]};
       local={name:item.title,artist:item.artist,genre:item.genre||'',year:item.year||'',coverPhoto:item.art,tilePhoto:item.art,songs:[]};
     } else if(item.kind==='book') {
-      table='favorite_books';row={user_id:userId,category:'Favorites',title:item.title,author:item.author,year:item.year||null,cover_url:item.art||null,sort_order:(CUSTOM_LISTS.books.Favorites||[]).length};
+      table='favorite_books';row={user_id:userId,category,title:item.title,author:item.author,year:item.year||null,cover_url:item.art||null,sort_order:(CUSTOM_LISTS.books[category]||[]).length};
       local={title:item.title,author:item.author,year:item.year,cover:item.art};
     } else {
       table='favorite_media_lists';const tab=item.kind==='tv'?'tv':'movies';
-      row={user_id:userId,category:'Favorites',tmdb_id:item.id,title:item.title,year:item.year||null,type:item.kind,sort_order:(CUSTOM_LISTS[tab].Favorites||[]).length};
+      row={user_id:userId,category,tmdb_id:item.id,title:item.title,year:item.year||null,type:item.kind,sort_order:(CUSTOM_LISTS[tab][category]||[]).length};
       local={title:item.title,tmdbId:item.id,type:item.kind,year:item.year,poster:item.poster,genres:[]};
     }
     const {data,error}=await sb.from(table).insert(row).select().single();if(error)throw error;
     if(currentUser?.id!==userId||viewedProfile?.id!==userId)return;
     if(item.kind==='artist'){
       local.id=data.id;local.rowId=data.id;
-      (CUSTOM_LISTS.music.Favorites||(CUSTOM_LISTS.music.Favorites=[])).push(local);
+      (CUSTOM_LISTS.music[category]||(CUSTOM_LISTS.music[category]=[])).push(local);
       artists=Object.values(CUSTOM_LISTS.music).flat();
       renderCustomLists('music');
     } else if(item.kind==='album'){
       local.id=data.id;local.rowId=data.id;
-      (CUSTOM_LISTS.albums.Favorites||(CUSTOM_LISTS.albums.Favorites=[])).push(local);
+      (CUSTOM_LISTS.albums[category]||(CUSTOM_LISTS.albums[category]=[])).push(local);
       albums=Object.values(CUSTOM_LISTS.albums).flat();
       renderCustomLists('albums');
     }
-    else{local.rowId=data.id;const tab=item.kind==='book'?'books':item.kind==='tv'?'tv':'movies';(CUSTOM_LISTS[tab].Favorites||(CUSTOM_LISTS[tab].Favorites=[])).push(local);renderCustomLists(tab);}
+    else{local.rowId=data.id;const tab=item.kind==='book'?'books':item.kind==='tv'?'tv':'movies';(CUSTOM_LISTS[tab][category]||(CUSTOM_LISTS[tab][category]=[])).push(local);renderCustomLists(tab);}
 
     // Enrich artwork/metadata after the successful save so the confirmation is immediate.
     if(item.kind==='album')fetchAlbumTracklist(item.title,item.artist).then(async songs=>{
@@ -5617,7 +5705,7 @@ function updateFilmProfile() {
   const textEl = document.getElementById('film-bio-text');
   const tagsEl = document.getElementById('movie-bio-tags');
   if (!textEl || !tagsEl) return;
-  const allMovies = [...movies, ...Object.values(CUSTOM_LISTS.movies).flat()];
+  const allMovies = allFavoriteMovies();
   if (!allMovies.length) { textEl.innerHTML = ''; tagsEl.innerHTML = ''; return; }
   const genres = [...new Set(allMovies.flatMap(m => m.genres || []))].slice(0, 8);
   tagsEl.innerHTML = genres.map(g => `<span class="bio-tag">${esc(g)}</span>`).join('');
@@ -6620,24 +6708,24 @@ function switchTab(tab, btn) {
 // Music/Movies/TV/Books used to each be their own top-level tab — collapsed into one Favorites
 // tab with filter chips instead, since with freeform lists there's much less reason each media
 // type needs its own destination. "all" shows every section stacked; picking one hides the rest.
-let favoritesFilter = 'all';
+let favoritesFilter = 'music';
 function switchFavoritesFilter(filter) {
+  if(!['music','movies','tv','books','comedy','podcasts'].includes(filter))filter='music';
   favoritesFilter = filter;
-  ['music', 'movies', 'tv', 'books'].forEach(k => {
+  ['music', 'movies', 'tv', 'books', 'comedy', 'podcasts'].forEach(k => {
     const section = document.getElementById('favorites-section-' + k);
-    if (section) section.style.display = (filter === 'all' || filter === k) ? '' : 'none';
+    if (section) section.style.display = filter === k ? '' : 'none';
     const chip = document.getElementById('fav-chip-' + k);
     if (chip) { chip.style.background = filter === k ? 'var(--accent)' : 'var(--surface2)'; chip.style.color = filter === k ? '#fff' : 'var(--muted)'; }
   });
-  const allChip = document.getElementById('fav-chip-all');
-  if (allChip) { allChip.style.background = filter === 'all' ? 'var(--accent)' : 'var(--surface2)'; allChip.style.color = filter === 'all' ? '#fff' : 'var(--muted)'; }
+  const more=document.querySelector('#favorites-more summary');if(more){more.textContent=filter==='comedy'?'Comedy':filter==='podcasts'?'Podcasts':'More';more.classList.toggle('selected',['comedy','podcasts'].includes(filter));}
 }
 
 // Jumps straight to Favorites with one filter pre-applied — used by the stats bar and anywhere
 // else that used to link to Music/Movies/TV/Books as their own tab.
 function goToFavorites(filter) {
   switchTab('favorites');
-  switchFavoritesFilter(filter || 'all');
+  switchFavoritesFilter(filter || favoritesFilter);
 }
 
 function toggleTasteGraphSection() {
@@ -7522,9 +7610,10 @@ const TMDB_KEY = 'c685dcf202d23bfd35ff2e96a637cb22';
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
 const TMDB_IMG_FULL = 'https://image.tmdb.org/t/p/w780';
 
-function tmdbFetch(path) {
+function tmdbFetch(path, options = {}) {
   const sep = path.includes('?') ? '&' : '?';
   return fetch(`https://api.themoviedb.org/3${path}${sep}language=en-US`, {
+    signal: options.signal,
     headers: {
       'Authorization': `Bearer ${TMDB_TOKEN}`,
       'Accept': 'application/json'
@@ -7581,10 +7670,18 @@ async function preloadMovies() {
   }
 }
 
+function setFavoriteSectionVisibility(element, visible) {
+  const section=element.closest('.music-section');
+  if(!section)return;
+  section.hidden=!visible;
+  if(section.nextElementSibling?.classList.contains('music-section-divider'))section.nextElementSibling.hidden=!visible;
+}
+
 function renderMovieGrid() {
   scheduleTasteConstellation();
   const grid = document.getElementById('movie-grid');
   if (!grid) return;
+  setFavoriteSectionVisibility(grid, movies.length > 0);
   if (!movies.length) {
     grid.innerHTML = emptyGridHtml('movies', 'toggleMovieEditMode()');
     return;
@@ -7777,13 +7874,20 @@ async function selectMovie(idx) {
   let insertedId = null;
   try {
     const { data, error } = await sb.from('favorite_media_lists').insert({
-      user_id: currentUser.id, category: 'movies', tmdb_id: r.id, title, year, type: isTV ? 'tv' : 'movie', influenced_by_user_id: influencedByUserId, sort_order: movies.length,
+      user_id: currentUser.id, category: isTV ? 'Favorites' : 'movies', tmdb_id: r.id, title, year, type: isTV ? 'tv' : 'movie', influenced_by_user_id: influencedByUserId, sort_order: movies.length,
     }).select().single();
     if (error) throw error;
     insertedId = data.id;
   } catch (e) {
     alert('Failed to save: ' + (e.message || 'unknown error'));
     return;
+  }
+  if(isTV) {
+    const item={rowId:insertedId,tmdbId:r.id,type:'tv',title,year,poster:r.poster_path||'',genres:[]};
+    (CUSTOM_LISTS.tv.Favorites||(CUSTOM_LISTS.tv.Favorites=[])).push(item);
+    closeMovieSearch();renderCustomLists('tv');switchFavoritesFilter('tv');
+    Object.assign(item,await fetchTVDetail(r.id));renderCustomLists('tv');
+    showToast(`Added "${title}" to TV`);return;
   }
   // Fetch full details for genres, runtime/seasons, director/creator, backdrop — mapped into the
   // same field names either way (director holds the creator's name for a TV show, runtime holds
@@ -7949,6 +8053,7 @@ function renderDirectorsList() {
   // Tile grid
   const grid = document.getElementById('directors-grid');
   if (!grid) return;
+  setFavoriteSectionVisibility(grid, directors.length > 0);
   if (!directors.length) {
     grid.innerHTML = emptyGridHtml('directors', 'toggleDirectorEditMode()');
     return;
@@ -8593,40 +8698,99 @@ async function preloadStaticGrid(preloadArr, moviesArr, idPrefix, gridId) {
 
 // ── TASTE GRAPH ──
 // Constellation is derived from current saved data, never from demo themes.
+function constellationIdentity(item) {
+  const norm=v=>String(v||'').normalize('NFKC').trim().toLowerCase();
+  return JSON.stringify([item.kind,norm(item.title||item.name),norm(item.author||item.artist),String(item.year||'')]);
+}
 function buildTasteConstellation(sourceItems) {
-  const unique = new Map();
-  const clean = value => String(value || '').trim();
-  for (const item of sourceItems) {
-    const title = clean(item.title || item.name);
-    if (!title) continue;
-    const key = [item.kind, title.toLowerCase(), clean(item.author || item.artist).toLowerCase()].join('|');
-    const genres = [...new Set([...(Array.isArray(item.genres) ? item.genres : []), item.genre].map(g => clean(typeof g === 'object' ? g.name : g)).filter(Boolean))];
-    const previous = unique.get(key);
-    if (previous) { previous.genres = [...new Set([...previous.genres, ...genres])]; continue; }
-    unique.set(key, { ...item, title, genres });
+  const clean=v=>String(v||'').trim(), names=v=>(Array.isArray(v)?v:[v]).flatMap(x=>typeof x==='string'?x.split(/,\s*/):x?.name||[]).map(clean).filter(Boolean);
+  const unique=new Map();
+  for(const item of sourceItems) {
+    const title=clean(item.title||item.name);if(!title)continue;
+    const key=constellationIdentity(item),previous=unique.get(key);
+    const merged={...previous,...item,title};
+    for(const field of ['genres','subjects','keywords','cast','creators'])merged[field]=[...new Set([...names(previous?.[field]),...names(item[field]),...(field==='genres'?names(item.genre):[])])];
+    unique.set(key,merged);
   }
-  const items = [...unique.values()];
-  const groups = new Map();
-  const add = (type, label, item) => {
-    if (!label) return;
-    const key = type + ':' + label.toLowerCase();
-    if (!groups.has(key)) groups.set(key, { type, label, items: [] });
-    if (!groups.get(key).items.includes(item)) groups.get(key).items.push(item);
-  };
-  items.forEach(item => {
-    item.genres.forEach(genre => add('genre', genre, item));
-    [item.artist, item.author, item.director, item.creator, item.kind === 'artist' || item.kind === 'director' ? item.title : '']
-      .map(clean).filter(Boolean).forEach(name => add('creator', name, item));
+  const items=[...unique.values()],groups=new Map();
+  function add(type,label,item,evidence) {
+    label=clean(label);if(!label)return;
+    const key=type+':'+label.toLowerCase();
+    if(!groups.has(key))groups.set(key,{type,label,items:[],evidence:[]});
+    const group=groups.get(key);if(!group.items.includes(item)){group.items.push(item);group.evidence.push({title:item.title,text:evidence});}
+  }
+  const themes=[['Coming of age',/\b(coming.of.age|adolescen\w*|growing up)\b/i],['Family & belonging',/\b(family relationships|family conflict|belonging|estranged family)\b/i],['Identity & reinvention',/\b(identity|self.discovery|reinvent\w*)\b/i],['Power & corruption',/\b(corruption|abuse of power|political power)\b/i],['Memory & nostalgia',/\b(memories|nostalgia|reminisc\w*)\b/i],['Love & relationships',/\b(romance|romantic|love affair|romantic relationships)\b/i],['Rebellion',/\b(rebellion|rebellious|counterculture)\b/i],['Grief & loss',/\b(grief|bereavement|mourning)\b/i]];
+  for(const item of items) {
+    item.genres.forEach(v=>add('genre',v,item,'Genre: '+v));
+    [...item.creators,...names(item.artist),...names(item.author),...names(item.director),...names(item.creator),...(['artist','director','comedian'].includes(item.kind)?[item.title]:[])].forEach(v=>add('creator',v,item,'Creator: '+v));
+    item.cast.slice(0,8).forEach(v=>add('cast',v,item,'Cast: '+v));
+    [...item.subjects,...item.keywords].filter(v=>!['fiction','general','literature','accessible book','protected daisy','in library','bestseller'].includes(v.toLowerCase())).forEach(v=>add('subject',v,item,'Subject / keyword: '+v));
+    const year=Number(String(item.year||'').slice(0,4));if(!['artist','director','comedian'].includes(item.kind)&&year>=1000&&year<=new Date().getFullYear()+2)add('era',Math.floor(year/10)*10+'s',item,'Released / published: '+year);
+    const signals=[...item.subjects,...item.keywords,...item.genres,item.overview||'',item.description||''];
+    for(const [label,re] of themes){const signal=signals.find(v=>re.test(v));if(signal)add('theme',label,item,'Possible theme from metadata: '+signal.slice(0,180));}
+  }
+  const connections=[...groups.values()].filter(g=>g.items.length>1).sort((a,b)=>{
+    const score=g=>new Set(g.items.map(i=>i.medium)).size*10+g.items.length+({creator:6,cast:5,subject:4,theme:2,genre:1,era:0}[g.type]);
+    return score(b)-score(a)||a.label.localeCompare(b.label);
   });
-  const connections = [...groups.values()].filter(g => g.items.length > 1)
-    .sort((a, b) => b.items.length - a.items.length || a.label.localeCompare(b.label));
-  return { items, connections };
+  return {items,connections};
+}
+function constellationMetadataCache(){return constellationMetadataCache.value||(constellationMetadataCache.value=new Map());}
+async function constellationTMDB(path) {
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);
+  try {const response=await tmdbFetch(path,{signal:controller.signal});if(!response.ok)throw Error('Metadata unavailable');return await response.json();}
+  finally {clearTimeout(timer);}
+}
+async function fetchConstellationMetadata(item) {
+  const norm=v=>String(v||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+  const title=item.title||item.name;
+  if(item.kind==='special')return fetchConstellationMetadata({...item,kind:item.mediaType});
+  if(item.kind==='movie'||item.kind==='tv') {
+    let id=item.tmdbId;
+    if(!id){const d=await constellationTMDB(`/search/${item.kind}?query=${encodeURIComponent(title)}`);const matches=(d.results||[]).filter(x=>norm(x.title||x.name)===norm(title)&&(!item.year||(x.release_date||x.first_air_date||'').startsWith(String(item.year))));if(matches.length!==1)return {};id=matches[0].id;}
+    const d=await constellationTMDB(`/${item.kind}/${id}?append_to_response=credits,keywords`);
+    return {genres:(d.genres||[]).map(g=>g.name),keywords:(d.keywords?.keywords||d.keywords?.results||[]).map(k=>k.name),cast:(d.credits?.cast||[]).slice(0,8).map(p=>p.name),creators:[...(d.created_by||[]).map(p=>p.name),...(d.credits?.crew||[]).filter(p=>p.job==='Director'||p.job==='Screenplay').map(p=>p.name)],overview:d.overview||'',year:(d.release_date||d.first_air_date||'').slice(0,4)};
+  }
+  if(item.kind==='book') {
+    const d=await onboardingSearchJSON(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}${item.author?'&author='+encodeURIComponent(item.author):''}&limit=5&fields=key,title,author_name,subject,first_publish_year`);
+    const matches=(d.docs||[]).filter(x=>norm(x.title)===norm(title)&&(!item.author||(x.author_name||[]).some(a=>norm(a)===norm(item.author))));if(matches.length!==1)return {};
+    const hit=matches[0];return {creators:hit.author_name||[],subjects:(hit.subject||[]).slice(0,60),year:String(hit.first_publish_year||'')};
+  }
+  if(item.kind==='artist') {
+    const d=await onboardingSearchJSON(`https://www.theaudiodb.com/api/v1/json/123/search.php?s=${encodeURIComponent(title)}`);
+    const hit=(d.artists||[]).find(a=>norm(a.strArtist)===norm(title));return hit?{genres:[hit.strGenre].filter(Boolean)}:{};
+  }
+  if(item.kind==='album'||item.kind==='song') {
+    const d=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(title+' '+(item.artist||''))}&media=music&entity=${item.kind}&limit=8`);
+    const matches=(d.results||[]).filter(x=>norm(item.kind==='album'?x.collectionName:x.trackName)===norm(title)&&(!item.artist||norm(x.artistName)===norm(item.artist)));
+    if(matches.length!==1)return {};const hit=matches[0];return {creators:[hit.artistName],genres:[hit.primaryGenreName].filter(Boolean),year:(hit.releaseDate||'').slice(0,4)};
+  }
+  return {};
+}
+function enrichConstellationItems(items) {
+  const cache=constellationMetadataCache();
+  const state=constellationState();state.enrichmentWanted=items.map(item=>({key:constellationIdentity(item),item}));
+  if(state.enrichmentRunning)return;
+  state.enrichmentRunning=true;
+  async function worker(){
+    while(true){
+      const job=(state.enrichmentWanted||[]).find(({key})=>{const c=cache.get(key);return !c||(!c.loading&&c.expires<Date.now());});
+      if(!job)break;
+      cache.set(job.key,{loading:true,data:{},expires:Infinity});
+      try{const data=await fetchConstellationMetadata(job.item);cache.set(job.key,{data,expires:Date.now()+1800000});}
+      catch(_){cache.set(job.key,{data:{},expires:Date.now()+60000});}
+      // Rebuild from current membership, never from the request's stale snapshot.
+      if(profileFavoritesLoaded&&viewedProfile?.id===state.profileId&&!isLockedProfile())renderTasteConstellation(state.rows);
+    }
+  }
+  Promise.allSettled([worker(),worker(),worker()]).finally(()=>{state.enrichmentRunning=false;});
 }
 
 function collectConstellationFavorites() {
   const tagged = (arr, kind, medium) => (arr || []).map(item => ({ ...item, kind, medium }));
   const media = arr => (arr || []).map(item => ({ ...item, kind: item.type === 'tv' ? 'tv' : 'movie', medium: item.type === 'tv' ? 'TV' : 'Movies' }));
   return [
+    ...extraItems(),
     ...tagged(artists, 'artist', 'Music'), ...tagged(albums, 'album', 'Music'),
     ...media(movies), ...tagged(directors, 'director', 'Movies'),
     ...media(Object.values(CUSTOM_LISTS.movies).flat()),
@@ -8640,7 +8804,7 @@ function constellationState() {
 }
 function clearTasteConstellation(reset = true) {
   const state = constellationState();
-  if (reset) { state.influenceKey = null; state.profileId = null; state.key = null; state.rows = []; state.revision++; }
+  if (reset) { state.influenceKey = null; state.profileId = null; state.key = null; state.rows = []; state.enrichmentWanted=[]; state.revision++; }
   const shell = document.getElementById('taste-constellation');
   const cards = document.getElementById('taste-constellation-cards');
   const section = document.getElementById('profile-taste-graph-section');
@@ -8700,6 +8864,55 @@ async function refreshTasteConstellation() {
   }
   renderTasteConstellation(state.rows);
 }
+function tasteAnalysisState(){return tasteAnalysisState.value||(tasteAnalysisState.value={key:null,status:'idle',result:null,items:[],version:0});}
+function renderInterpretiveConstellation(items) {
+ const el=document.getElementById('taste-constellation-cards');if(!el)return;
+ const state=tasteAnalysisState();
+ const key=JSON.stringify([viewedProfile?.id,items.map(constellationIdentity).sort()]);
+ if(state.key!==key){state.key=key;state.version++;state.status='idle';state.result=null;}
+ state.items=items;
+ if(items.length<2){el.innerHTML='<p class="taste-analysis-status">Add another pick to start finding connections.</p>';return;}
+ if(items.length>100){el.innerHTML='<p class="taste-analysis-status">This collection is larger than the current analysis limit of 100 picks.</p>';return;}
+ if(state.status==='ready'){
+  const byId=new Map(items.map(i=>[constellationIdentity(i),i]));
+  const connections=(state.result?.connections||[]).filter(c=>Array.isArray(c.evidence)&&new Set(c.evidence.map(e=>e.item_id)).size>=2&&c.evidence.every(e=>byId.has(e.item_id)));
+  el.innerHTML=connections.length?connections.map(c=>`<article class="taste-essay"><div class="taste-essay-label">A THREAD IN YOUR TASTE</div><h3>${esc(c.title)}</h3><p>${esc(c.body)}</p><div class="taste-essay-picks">${c.evidence.map(e=>`<span>${esc(byId.get(e.item_id).title)}</span>`).join('')}</div><details><summary>How each pick fits</summary>${c.evidence.map(e=>`<p><strong>${esc(byId.get(e.item_id).title)}</strong> — ${esc(e.explanation)}</p>`).join('')}</details></article>`).join(''):'<p class="taste-analysis-status">There isn’t enough information for a strong connection yet.</p>';
+  if(state.result?.limitations)el.innerHTML+=`<p class="taste-analysis-status">${esc(state.result.limitations)}</p>`;
+  return;
+ }
+ if(state.status==='error'){el.innerHTML='<div class="taste-analysis-status">Thoughtful connections aren’t available right now.<br><button class="ob-text-link" onclick="retryTasteAnalysis()">Try again</button></div>';return;}
+ if(state.status==='unpublished'){el.innerHTML='<p class="taste-analysis-status">This profile doesn’t have an analysis of these picks yet.</p>';return;}
+ el.innerHTML='<p class="taste-analysis-status">Looking for connections in the writing, performances, humor, and emotional tone…</p>';
+ if(state.status==='idle'&&document.getElementById('profile-taste-graph-section')?.style.display!=='none'){
+  state.status='waiting';const version=state.version;
+  setTimeout(()=>{if(state.version===version)requestTasteAnalysis();},1400);
+ }
+}
+function retryTasteAnalysis(){const state=tasteAnalysisState();state.status='idle';state.version++;renderInterpretiveConstellation(state.items);}
+async function requestTasteAnalysis(){
+ const state=tasteAnalysisState(),version=state.version,profileId=viewedProfile?.id;
+ if(!profileId||isLockedProfile())return;
+ state.status='loading';
+ try {
+  const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(state.key));
+  const fingerprint=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
+  const {data:cached,error:cacheError}=await sb.from('taste_analysis_cache').select('fingerprint,result').eq('user_id',profileId).maybeSingle();
+  if(state.version!==version||viewedProfile?.id!==profileId)return;
+  let result=cached?.fingerprint===fingerprint?cached.result:null;
+  if(!result){
+   if(!isOwnProfile){state.status='unpublished';renderInterpretiveConstellation(state.items);return;}
+   if(cacheError)throw cacheError;
+   const items=state.items.map(i=>({id:constellationIdentity(i),title:i.title,kind:i.kind,year:i.year||'',creator:[i.author,i.artist,i.director,i.creator,...(i.creators||[])].filter(Boolean).join(', '),description:i.overview||i.description||'',genres:i.genres||[]}));
+   const {data,error}=await sb.functions.invoke('taste-analysis',{body:{profileId,fingerprint,items}});
+   if(error||data?.error)throw Error('Analysis unavailable');result=data;
+  }
+  if(state.version!==version||viewedProfile?.id!==profileId)return;
+  if(!Array.isArray(result?.connections))throw Error('Invalid analysis');
+  state.result=result;state.status='ready';
+ }catch(_){if(state.version===version&&viewedProfile?.id===profileId)state.status='error';}
+ if(state.version===version&&viewedProfile?.id===profileId)renderInterpretiveConstellation(state.items);
+}
+
 function renderTasteConstellation(savedRows) {
   const shell = document.getElementById('taste-constellation');
   const cards = document.getElementById('taste-constellation-cards');
@@ -8708,37 +8921,25 @@ function renderTasteConstellation(savedRows) {
   // Current local items take precedence immediately, including deletion of the last item.
   const rows = savedRows.filter(row => !activeBelongsToProfile || row.list_id !== currentTasteListId);
   if (activeBelongsToProfile) Object.entries(TRIP_PLAYLIST_ITEMS).forEach(([category, items]) => items.forEach(item => rows.push({ ...item, category })));
-  const categories = { books: ['book', 'Books'], movies: ['movie', 'Movies'], music: ['song', 'Music'] };
+  const categories = { books:['book','Books'], movies:['movie','Movies'], tv:['tv','TV'], music:['song','Music'], albums:['album','Music'] };
   const listItems = rows.filter(row => categories[row.category]).map(row => {
     const [kind, medium] = categories[row.category];
     // List subtitles are free text, so don't mistake them for verified creator metadata.
-    return { title: row.title, kind, medium };
+    return { title:row.title, kind, medium };
   });
-  const model = buildTasteConstellation([...collectConstellationFavorites(), ...listItems]);
+  const source=[...collectConstellationFavorites(),...listItems];
+  const cache=constellationMetadataCache();
+  const enriched=source.map(item=>{
+    const metadata=cache.get(constellationIdentity(item))?.data||{};
+    const merged={...item,...metadata,year:item.year||metadata.year};
+    for(const field of ['genres','subjects','keywords','cast','creators'])merged[field]=[...(item[field]||[]),...(metadata[field]||[])];
+    return merged;
+  });
+  const model = buildTasteConstellation(enriched);
+  enrichConstellationItems(source);
   if (!model.items.length) { clearTasteConstellation(false); return; }
   shell.hidden = false;
-  const colors = { Music:'#7C4DFF', Movies:'#F97360', TV:'#3B82F6', Books:'#22C55E' };
-  const groups = model.connections.map(g => ({
-    label: g.label,
-    description: `${g.items.length} saved items ${g.type === 'genre' ? 'share this genre' : 'connect to this creator'}.`,
-    items: g.items,
-  }));
-  // Show actual picks even when there is not yet enough metadata for a repeated connection.
-  const connected = new Set(model.connections.flatMap(g => g.items));
-  for (const medium of Object.keys(colors)) {
-    const items = model.items.filter(item => item.medium === medium && !connected.has(item));
-    if (items.length) groups.push({ label: medium, description: `${items.length} saved ${items.length === 1 ? 'pick' : 'picks'}.`, items });
-  }
-  cards.innerHTML = groups.map(group => {
-    const media = [...new Set(group.items.map(item => item.medium))];
-    const color = media.length > 1 ? '#c084fc' : colors[media[0]];
-    return `<div style="border-radius:12px;padding:20px 22px;background:${color}0f;border:1px solid ${color}33;min-width:0;">
-      <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${color};margin-bottom:8px;">${esc(media.join(' · '))}</div>
-      <div style="font-size:20px;font-weight:600;color:var(--text);margin-bottom:10px;line-height:1.2;overflow-wrap:anywhere;">${esc(group.label)}</div>
-      <div style="font-size:12px;line-height:1.65;color:var(--muted);margin-bottom:16px;">${esc(group.description)}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;">${group.items.map(item => `<span style="font-size:11px;padding:3px 10px;border-radius:12px;background:${color}18;color:var(--text);border:1px solid ${color}33;overflow-wrap:anywhere;">${esc(item.title)}</span>`).join('')}</div>
-    </div>`;
-  }).join('');
+  renderInterpretiveConstellation(model.items);
 }
 
 
@@ -9532,6 +9733,10 @@ function renderActivityFeed(containerId, filterFn) {
   const el = document.getElementById(containerId);
   if (!el) return;
   const items = filterFn ? ACTIVITY_FEED_ITEMS.filter(filterFn) : ACTIVITY_FEED_ITEMS;
+  if(containerId!=='profile-feed'){
+    const section=el.closest('.music-section');
+    if(section){section.hidden=!items.length;if(section.nextElementSibling?.classList.contains('music-section-divider'))section.nextElementSibling.hidden=!items.length;}
+  }
   el.innerHTML = items.map(item => activityCardHtml(item, ACTIVITY_FEED_ITEMS.indexOf(item))).join('');
 
   if (containerId === 'profile-feed') {
@@ -10233,7 +10438,7 @@ function renderProfileTab() {
       welcomeEl.style.display = 'none';
       sectionsEl.style.display = 'none';
     } else {
-      const showWelcome = isOwnProfile && profileFavoritesLoaded && (totalArtists + totalAlbums + totalFilms + totalTV + totalBooks + directors.length) === 0;
+      const showWelcome = isOwnProfile && profileFavoritesLoaded && (totalArtists + totalAlbums + totalFilms + totalTV + totalBooks + directors.length + extraItems().length) === 0;
       document.getElementById('tab-nav')?.classList.toggle('empty-profile-nav', showWelcome);
       loadingEl.style.display = 'none';
       welcomeEl.style.display = showWelcome ? '' : 'none';
@@ -10262,6 +10467,8 @@ function renderProfileTab() {
     { label: 'Films',   value: totalFilms,   color: '#f59e0b', tab: 'movies' },
     { label: 'TV Shows',value: totalTV,      color: '#3B82F6', tab: 'tv' },
     { label: 'Books',   value: totalBooks,   color: '#22C55E', tab: 'books' },
+    { label: 'Comedy', value:extraItems().filter(i=>i.medium==='Comedy').length,color:'#F59E0B',tab:'comedy' },
+    { label: 'Podcasts', value:extraItems().filter(i=>i.medium==='Podcasts').length,color:'#38BDF8',tab:'podcasts' },
   ];
 
   const statsEl = document.getElementById('profile-stats');
@@ -10282,7 +10489,7 @@ function renderProfileTab() {
 
   // Defining picks — visual artwork cards
   const topArtist = artists[0];
-  const topFilmObj = movies[0];
+  const topFilmObj = allFavoriteMovies()[0];
   const allTVPicks = Object.values(CUSTOM_LISTS.tv).flat();
   const allBookPicks = Object.values(CUSTOM_LISTS.books).flat();
   const topTVObj = allTVPicks[0];
