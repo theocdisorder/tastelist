@@ -9150,6 +9150,11 @@ const TRIP_PLAYLIST_CATEGORIES = [
   { key: 'music',  label: 'Music',  color: '#7C4DFF' },
 ];
 let tripPlaylistArtFetched = false;
+// Per-category view mode ('grid' | 'calendar') and which item is currently featured in the
+// calendar carousel for that category — independent per category since someone might want the
+// calendar view for Books but the regular grid for Music.
+let tripPlaylistViewMode = { books: 'grid', movies: 'grid', music: 'grid' };
+let tripPlaylistCarouselIndex = { books: null, movies: null, music: null };
 let tripPlaylistFlatItems = []; // rebuilt on every render; click handlers reference items by index into this array
 
 // A small torn-calendar-page badge for items with a date attached — shows month + day when the
@@ -9171,6 +9176,70 @@ function calendarBadgeHtml(dateStr) {
       ${isMonthYearOnly ? `<div style="font-size:10.5px;font-weight:800;line-height:1;">${parsed.getUTCFullYear()}</div>` : `<div style="font-size:15px;font-weight:800;line-height:1;">${parsed.getUTCDate()}</div>`}
     </div>
   </div>`;
+}
+
+// A "Reading Now" / "Up Next" carousel for dated items — an alternate view to the grid, for
+// when a list has a real schedule to it (like a book club's monthly picks) rather than just
+// being a loose collection. Items without a parseable date can't be placed on a timeline, so
+// they're left out of this view entirely (they still show normally in the grid view).
+function tripPlaylistCarouselHtml(catKey, dated, cat) {
+  if (!dated.length) {
+    return `<div style="font-size:12.5px;color:var(--faint);padding:12px 2px;">No dated items yet — add a date to a ${cat.singular} to see it on the calendar.</div>`;
+  }
+  const today = new Date();
+  let naturalIndex = dated.findIndex(d => new Date(d.item.eventDate) >= today);
+  if (naturalIndex === -1) naturalIndex = dated.length - 1; // everything's already in the past — show the most recent
+  const current = tripPlaylistCarouselIndex[catKey] ?? naturalIndex;
+  const safeIndex = Math.max(0, Math.min(current, dated.length - 1));
+  const featured = dated[safeIndex];
+  const upNext = dated.slice(safeIndex + 1, safeIndex + 4);
+
+  tripPlaylistCarouselIndex[catKey] = safeIndex; // keep state in sync with what's actually shown, so the next shift is relative to this, not to a stale/absent value
+  const featuredDate = new Date(featured.item.eventDate);
+  const monthLabel = isNaN(featuredDate.getTime()) ? '' : featuredDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const statusLabel = safeIndex <= naturalIndex ? (safeIndex === naturalIndex && naturalIndex < dated.length - 1 && new Date(featured.item.eventDate) >= today ? 'Up next' : 'Now') : 'Coming up';
+
+  return `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:${cat.color};text-transform:uppercase;margin-bottom:12px;">${monthLabel}</div>
+      <div style="display:flex;gap:16px;align-items:center;">
+        <button onclick="shiftTripPlaylistCarousel('${catKey}', -1)" ${safeIndex === 0 ? 'disabled style="opacity:.3;cursor:default;background:none;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;color:var(--text);flex-shrink:0;"' : `style="background:none;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;color:var(--text);cursor:pointer;flex-shrink:0;"`}>‹</button>
+        <div onclick="openTripPlaylistSummary(${featured.idx})" style="cursor:pointer;display:flex;gap:16px;align-items:center;flex:1;min-width:0;">
+          <div style="width:76px;height:106px;border-radius:8px;flex-shrink:0;background-size:cover;background-position:center;background-color:${cat.color}20;${featured.item.art ? `background-image:url('${esc(featured.item.art)}');` : ''}"></div>
+          <div style="min-width:0;">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">${statusLabel}</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text);line-height:1.25;">${esc(featured.item.title)}</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:2px;">${esc(featured.item.sub || '')}</div>
+          </div>
+        </div>
+        <button onclick="shiftTripPlaylistCarousel('${catKey}', 1)" ${safeIndex === dated.length - 1 ? 'disabled style="opacity:.3;cursor:default;background:none;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;color:var(--text);flex-shrink:0;"' : `style="background:none;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;color:var(--text);cursor:pointer;flex-shrink:0;"`}>›</button>
+      </div>
+      ${upNext.length ? `
+      <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;margin-bottom:10px;">Up next</div>
+        <div style="display:flex;gap:14px;">
+          ${upNext.map(d => {
+            const dDate = new Date(d.item.eventDate);
+            const mo = isNaN(dDate.getTime()) ? '' : dDate.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
+            return `<div onclick="openTripPlaylistSummary(${d.idx})" style="cursor:pointer;text-align:center;width:60px;">
+              <div style="width:56px;height:78px;border-radius:6px;background-size:cover;background-position:center;background-color:${cat.color}20;${d.item.art ? `background-image:url('${esc(d.item.art)}');` : ''}margin-bottom:6px;"></div>
+              <div style="font-size:9.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;">${mo}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
+    </div>`;
+}
+
+function shiftTripPlaylistCarousel(catKey, delta) {
+  tripPlaylistCarouselIndex[catKey] = (tripPlaylistCarouselIndex[catKey] ?? 0) + delta;
+  renderTripPlaylist();
+}
+
+function toggleTripPlaylistViewMode(catKey) {
+  tripPlaylistViewMode[catKey] = tripPlaylistViewMode[catKey] === 'grid' ? 'calendar' : 'grid';
+  tripPlaylistCarouselIndex[catKey] = null; // recompute the natural "current" position on switching in
+  renderTripPlaylist();
 }
 
 function renderTripPlaylist() {
@@ -9204,8 +9273,10 @@ function renderTripPlaylist() {
   el.innerHTML = editToggleHtml + TRIP_PLAYLIST_CATEGORIES.filter(c => TRIP_PLAYLIST_ITEMS[c.key].length > 0 || editMode).map(c => {
     const cat = catMeta[c.key];
     const items = TRIP_PLAYLIST_ITEMS[c.key];
+    const dated = []; // items with a parseable date, for the calendar carousel view
     const cards = items.map((item, i) => {
       const idx = globalIndex++;
+      if (item.eventDate && !isNaN(new Date(item.eventDate).getTime())) dated.push({ item, idx });
       const h = heights[i % heights.length];
       const artStyle = item.art
         ? `background-image:url('${item.art}');`
@@ -9228,14 +9299,25 @@ function renderTripPlaylist() {
           </div>
         </div>`;
     }).join('');
+    dated.sort((a, b) => new Date(a.item.eventDate) - new Date(b.item.eventDate));
+    const viewMode = tripPlaylistViewMode[c.key];
     const addTile = (editMode && canEditTasteList) ? `
         <div class="collage-card" onclick="openTasteItemForm('${c.key}')" role="button" tabindex="0" style="display:flex;align-items:center;justify-content:center;min-height:120px;border:1.5px dashed var(--border);background:transparent;">
           <span style="font-size:13px;color:var(--muted);font-weight:600;">+ Add ${cat.singular}</span>
         </div>` : '';
+    const viewToggle = dated.length ? `
+        <button onclick="toggleTripPlaylistViewMode('${c.key}')" style="font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:3px 10px;cursor:pointer;font-family:inherit;">
+          ${viewMode === 'calendar' ? '▦ Grid' : '📅 Calendar'}
+        </button>` : '';
     return `
       <div style="margin-bottom:28px;">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${cat.color};opacity:.85;margin-bottom:12px;">${cat.label}</div>
-        <div class="collage-grid">${cards}${addTile}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${cat.color};opacity:.85;">${cat.label}</div>
+          ${viewToggle}
+        </div>
+        ${viewMode === 'calendar'
+          ? tripPlaylistCarouselHtml(c.key, dated, cat) + (editMode && canEditTasteList ? `<div class="collage-grid" style="margin-top:14px;">${addTile}</div>` : '')
+          : `<div class="collage-grid">${cards}${addTile}</div>`}
       </div>`;
   }).join('');
 }
@@ -9261,6 +9343,17 @@ async function fetchBookCoverArt(title, author) {
   return null;
 }
 
+// Resolved art (movie posters, book covers, song artwork) used to live only in memory — fetched
+// fresh every time the list was opened, and never found by the Shared Lists picker's own query
+// for preview art, since that query only looks at what's actually saved in the database. Saving
+// it here means it persists across sessions and shows up in the picker mosaic too.
+async function persistTasteItemArt(itemId, artUrl) {
+  if (!sb || !itemId || !artUrl) return;
+  try {
+    await sb.from('taste_list_items').update({ art_url: artUrl }).eq('id', itemId);
+  } catch (e) { console.error('Failed to save resolved art:', e); }
+}
+
 function initTripPlaylistArt() {
   if (tripPlaylistArtFetched) return;
   tripPlaylistArtFetched = true;
@@ -9276,7 +9369,7 @@ function initTripPlaylistArt() {
         }
         if (!movieId) return;
         const detail = await fetchMovieDetail(movieId);
-        if (detail.poster) { item.art = `${TMDB_IMG}${detail.poster}`; renderTripPlaylist(); refreshActivityFeeds(); }
+        if (detail.poster) { item.art = `${TMDB_IMG}${detail.poster}`; persistTasteItemArt(item.id, item.art); renderTripPlaylist(); refreshActivityFeeds(); }
       } catch (e) {}
     })();
   });
@@ -9285,7 +9378,7 @@ function initTripPlaylistArt() {
     if (item.art) return;
     (async () => {
       const art = await fetchBookCoverArt(item.title, item.sub);
-      if (art) { item.art = art; renderTripPlaylist(); refreshActivityFeeds(); }
+      if (art) { item.art = art; persistTasteItemArt(item.id, art); renderTripPlaylist(); refreshActivityFeeds(); }
     })();
   });
   TRIP_PLAYLIST_ITEMS.music.forEach(item => {
@@ -9300,7 +9393,7 @@ function initTripPlaylistArt() {
         let hit = await search(item.artQuery);
         if (!hit && item.artQueryFallback) hit = await search(item.artQueryFallback);
         const art = hit?.artworkUrl100?.replace('100x100bb', '400x400bb');
-        if (art) { item.art = art; renderTripPlaylist(); refreshActivityFeeds(); }
+        if (art) { item.art = art; persistTasteItemArt(item.id, art); renderTripPlaylist(); refreshActivityFeeds(); }
       } catch (e) {}
     })();
   });
@@ -9321,7 +9414,7 @@ async function getTripPlaylistSummary(item) {
       if (movieId) {
         const detail = await fetchMovieDetail(movieId);
         summary = detail.overview || '';
-        if (detail.poster && !item.art) item.art = `${TMDB_IMG}${detail.poster}`;
+        if (detail.poster && !item.art) { item.art = `${TMDB_IMG}${detail.poster}`; persistTasteItemArt(item.id, item.art); }
       }
     } else if (item.cat === 'books') {
       const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(item.bookQuery || item.title)}&maxResults=3&fields=items(volumeInfo(description))`);
