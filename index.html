@@ -9157,27 +9157,6 @@ let tripPlaylistViewMode = { books: 'grid', movies: 'grid', music: 'grid' };
 let tripPlaylistCarouselIndex = { books: null, movies: null, music: null };
 let tripPlaylistFlatItems = []; // rebuilt on every render; click handlers reference items by index into this array
 
-// A small torn-calendar-page badge for items with a date attached — shows month + day when the
-// text parses as a specific date, or just month + year when it's a bare "Month Year" (our most
-// common case, since these are usually loose reading/watch schedules, not exact dates). Falls
-// back to a plain text pill for anything that doesn't parse as a date at all, rather than forcing
-// a calendar graphic onto text it can't actually represent.
-function calendarBadgeHtml(dateStr) {
-  if (!dateStr) return '';
-  const isMonthYearOnly = /^[A-Za-z]+\s+\d{4}$/.test(dateStr.trim());
-  const parsed = new Date(dateStr);
-  if (isNaN(parsed.getTime())) {
-    return `<div style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);backdrop-filter:blur(3px);border-radius:8px;padding:4px 9px;font-size:10.5px;font-weight:600;color:#fff;z-index:2;max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(dateStr)}</div>`;
-  }
-  const month = parsed.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
-  return `<div style="position:absolute;bottom:8px;right:8px;width:38px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.45);z-index:2;">
-    <div style="background:#F97360;color:#fff;font-size:8px;font-weight:700;letter-spacing:.04em;text-align:center;padding:2px 0;">${month}</div>
-    <div style="background:#fff;color:#18181b;text-align:center;padding:${isMonthYearOnly ? '4px 0' : '2px 0'};">
-      ${isMonthYearOnly ? `<div style="font-size:10.5px;font-weight:800;line-height:1;">${parsed.getUTCFullYear()}</div>` : `<div style="font-size:15px;font-weight:800;line-height:1;">${parsed.getUTCDate()}</div>`}
-    </div>
-  </div>`;
-}
-
 // A "Reading Now" / "Up Next" carousel for dated items — an alternate view to the grid, for
 // when a list has a real schedule to it (like a book club's monthly picks) rather than just
 // being a loose collection. Items without a parseable date can't be placed on a timeline, so
@@ -9191,48 +9170,54 @@ function tripPlaylistCarouselHtml(catKey, dated, cat) {
   if (naturalIndex === -1) naturalIndex = dated.length - 1; // everything's already in the past — show the most recent
   const current = tripPlaylistCarouselIndex[catKey] ?? naturalIndex;
   const safeIndex = Math.max(0, Math.min(current, dated.length - 1));
-  const featured = dated[safeIndex];
-  const upNext = dated.slice(safeIndex + 1, safeIndex + 4);
+  tripPlaylistCarouselIndex[catKey] = safeIndex; // keep state in sync with what's actually shown, so the next shift/select is relative to this, not a stale value
 
-  tripPlaylistCarouselIndex[catKey] = safeIndex; // keep state in sync with what's actually shown, so the next shift is relative to this, not to a stale/absent value
-  const featuredDate = new Date(featured.item.eventDate);
-  const monthLabel = isNaN(featuredDate.getTime()) ? '' : featuredDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  const statusLabel = safeIndex <= naturalIndex ? (safeIndex === naturalIndex && naturalIndex < dated.length - 1 && new Date(featured.item.eventDate) >= today ? 'Up next' : 'Now') : 'Coming up';
+  // A horizontal filmstrip, centered as much as possible on the current item, which renders
+  // larger than its neighbors — clicking a neighbor brings it to the center; clicking the
+  // already-centered item opens its full detail view.
+  const windowSize = Math.min(5, dated.length);
+  let start = safeIndex - Math.floor(windowSize / 2);
+  start = Math.max(0, Math.min(start, dated.length - windowSize));
+  const windowItems = dated.slice(start, start + windowSize);
+
+  const cells = windowItems.map((d, i) => {
+    const realIdx = start + i;
+    const isCurrent = realIdx === safeIndex;
+    const date = new Date(d.item.eventDate);
+    const month = isNaN(date.getTime()) ? '' : date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
+    const w = isCurrent ? 108 : 82, h = isCurrent ? 152 : 116;
+    const clickAction = isCurrent ? `openTripPlaylistSummary(${d.idx})` : `selectTripPlaylistCarouselItem('${catKey}', ${realIdx})`;
+    return `<div onclick="${esc(clickAction)}" role="button" tabindex="0" style="cursor:pointer;text-align:center;flex-shrink:0;transition:transform .15s;${isCurrent ? 'transform:translateY(-10px);' : ''}">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:${isCurrent ? cat.color : 'var(--faint)'};margin-bottom:6px;">${month}</div>
+      <div style="width:${w}px;height:${h}px;border-radius:8px;background-size:cover;background-position:center;background-color:${cat.color}20;${d.item.art ? `background-image:url('${esc(d.item.art)}');` : ''}box-shadow:${isCurrent ? '0 10px 28px rgba(0,0,0,0.55)' : '0 2px 8px rgba(0,0,0,0.3)'};margin:0 auto;"></div>
+      ${isCurrent
+        ? `<div style="font-size:12px;font-weight:700;color:var(--text);margin-top:8px;max-width:120px;">${esc(d.item.title)}</div><div style="font-size:10.5px;color:var(--muted);margin-top:1px;">${esc(d.item.sub || '')}</div>`
+        : `<div style="font-size:10px;color:var(--muted);margin-top:6px;max-width:88px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(d.item.title)}</div>`}
+    </div>`;
+  }).join('');
+
+  const leftDisabled = safeIndex === 0, rightDisabled = safeIndex === dated.length - 1;
+  const arrowStyle = disabled => `background:none;border:1px solid var(--border);border-radius:50%;width:30px;height:30px;color:var(--text);flex-shrink:0;align-self:center;opacity:${disabled ? '.25' : '1'};cursor:${disabled ? 'default' : 'pointer'};`;
+  const dots = dated.map((_, i) => `<span style="width:6px;height:6px;border-radius:50%;background:${i === safeIndex ? cat.color : 'var(--border2)'};display:inline-block;"></span>`).join('');
 
   return `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:${cat.color};text-transform:uppercase;margin-bottom:12px;">${monthLabel}</div>
-      <div style="display:flex;gap:16px;align-items:center;">
-        <button onclick="shiftTripPlaylistCarousel('${catKey}', -1)" ${safeIndex === 0 ? 'disabled style="opacity:.3;cursor:default;background:none;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;color:var(--text);flex-shrink:0;"' : `style="background:none;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;color:var(--text);cursor:pointer;flex-shrink:0;"`}>‹</button>
-        <div onclick="openTripPlaylistSummary(${featured.idx})" style="cursor:pointer;display:flex;gap:16px;align-items:center;flex:1;min-width:0;">
-          <div style="width:76px;height:106px;border-radius:8px;flex-shrink:0;background-size:cover;background-position:center;background-color:${cat.color}20;${featured.item.art ? `background-image:url('${esc(featured.item.art)}');` : ''}"></div>
-          <div style="min-width:0;">
-            <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">${statusLabel}</div>
-            <div style="font-size:18px;font-weight:700;color:var(--text);line-height:1.25;">${esc(featured.item.title)}</div>
-            <div style="font-size:13px;color:var(--muted);margin-top:2px;">${esc(featured.item.sub || '')}</div>
-          </div>
-        </div>
-        <button onclick="shiftTripPlaylistCarousel('${catKey}', 1)" ${safeIndex === dated.length - 1 ? 'disabled style="opacity:.3;cursor:default;background:none;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;color:var(--text);flex-shrink:0;"' : `style="background:none;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;color:var(--text);cursor:pointer;flex-shrink:0;"`}>›</button>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 20px 18px;">
+      <div style="display:flex;align-items:flex-end;gap:12px;justify-content:center;overflow-x:auto;padding:0 4px 4px;">
+        <button onclick="shiftTripPlaylistCarousel('${catKey}', -1)" ${leftDisabled ? 'disabled' : ''} style="${arrowStyle(leftDisabled)}">‹</button>
+        ${cells}
+        <button onclick="shiftTripPlaylistCarousel('${catKey}', 1)" ${rightDisabled ? 'disabled' : ''} style="${arrowStyle(rightDisabled)}">›</button>
       </div>
-      ${upNext.length ? `
-      <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;margin-bottom:10px;">Up next</div>
-        <div style="display:flex;gap:14px;">
-          ${upNext.map(d => {
-            const dDate = new Date(d.item.eventDate);
-            const mo = isNaN(dDate.getTime()) ? '' : dDate.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
-            return `<div onclick="openTripPlaylistSummary(${d.idx})" style="cursor:pointer;text-align:center;width:60px;">
-              <div style="width:56px;height:78px;border-radius:6px;background-size:cover;background-position:center;background-color:${cat.color}20;${d.item.art ? `background-image:url('${esc(d.item.art)}');` : ''}margin-bottom:6px;"></div>
-              <div style="font-size:9.5px;font-weight:700;color:var(--faint);letter-spacing:.04em;">${mo}</div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>` : ''}
+      <div style="display:flex;gap:5px;justify-content:center;margin-top:16px;">${dots}</div>
     </div>`;
 }
 
 function shiftTripPlaylistCarousel(catKey, delta) {
   tripPlaylistCarouselIndex[catKey] = (tripPlaylistCarouselIndex[catKey] ?? 0) + delta;
+  renderTripPlaylist();
+}
+
+function selectTripPlaylistCarouselItem(catKey, idx) {
+  tripPlaylistCarouselIndex[catKey] = idx;
   renderTripPlaylist();
 }
 
@@ -9290,7 +9275,7 @@ function renderTripPlaylist() {
       return `
         <div class="collage-card" style="position:relative;" onclick="${editMode ? '' : `openTripPlaylistSummary(${idx})`}" role="button" tabindex="0">
           ${editControls}
-          <div class="collage-card-art" style="height:${h}px;${artStyle}">${placeholder}${calendarBadgeHtml(item.eventDate)}</div>
+          <div class="collage-card-art" style="height:${h}px;${artStyle}">${placeholder}</div>
           <span class="collage-card-tag" style="background:${cat.color}33;color:${cat.color};">${cat.label}</span>
           <div class="collage-card-body">
             <div class="collage-card-title">${esc(item.title)}</div>
