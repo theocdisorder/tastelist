@@ -2212,6 +2212,7 @@ function openTasteItemForm(category, flatIdx) {
   document.getElementById('taste-item-modal-error').style.display = 'none';
   document.getElementById('taste-item-title').value = '';
   document.getElementById('taste-item-sub').value = '';
+  document.getElementById('taste-item-date').value = '';
   document.getElementById('taste-item-by').value = '';
   document.getElementById('taste-item-art').value = '';
   document.getElementById('taste-item-modal-title').textContent = 'Add item';
@@ -2223,6 +2224,7 @@ function openTasteItemForm(category, flatIdx) {
       document.getElementById('taste-item-modal-title').textContent = 'Edit item';
       document.getElementById('taste-item-title').value = item.title || '';
       document.getElementById('taste-item-sub').value = item.sub || '';
+      document.getElementById('taste-item-date').value = item.eventDate || '';
       document.getElementById('taste-item-by').value = item.by || '';
       document.getElementById('taste-item-art').value = item.art || '';
     }
@@ -2245,6 +2247,7 @@ async function reloadCurrentTasteListItems() {
     (items || []).forEach(row => {
       grouped[row.category]?.push({
         id: row.id, title: row.title, sub: row.sub || '', by: row.recommended_by || '',
+        eventDate: row.event_date || '',
         caption: row.caption || undefined, art: row.art_url || '', tmdbId: row.tmdb_id || undefined,
         bookQuery: row.category === 'books' ? `${row.title} ${row.sub || ''}`.trim() : undefined,
         tmdbQuery: row.category === 'movies' && !row.tmdb_id ? row.title : undefined,
@@ -2421,6 +2424,7 @@ async function removeCollaborator(listId, userId) {
 async function saveTasteItemForm() {
   const title = document.getElementById('taste-item-title').value.trim();
   const sub = document.getElementById('taste-item-sub').value.trim();
+  const eventDate = document.getElementById('taste-item-date').value.trim();
   const by = document.getElementById('taste-item-by').value.trim();
   const art = document.getElementById('taste-item-art').value.trim();
   const errEl = document.getElementById('taste-item-modal-error');
@@ -2446,6 +2450,7 @@ async function saveTasteItemForm() {
     category: tasteItemFormState.category,
     title,
     sub: sub || null,
+    event_date: eventDate || null,
     recommended_by: by || null,
     art_url: art || null,
   };
@@ -2695,6 +2700,7 @@ async function loadTasteListFromSupabase(userId) {
         title: row.title,
         sub: row.sub || '',
         by: row.recommended_by || '',
+        eventDate: row.event_date || '',
         caption: row.caption || undefined,
         art: row.art_url || '',
         tmdbId: row.tmdb_id || undefined,
@@ -9146,6 +9152,27 @@ const TRIP_PLAYLIST_CATEGORIES = [
 let tripPlaylistArtFetched = false;
 let tripPlaylistFlatItems = []; // rebuilt on every render; click handlers reference items by index into this array
 
+// A small torn-calendar-page badge for items with a date attached — shows month + day when the
+// text parses as a specific date, or just month + year when it's a bare "Month Year" (our most
+// common case, since these are usually loose reading/watch schedules, not exact dates). Falls
+// back to a plain text pill for anything that doesn't parse as a date at all, rather than forcing
+// a calendar graphic onto text it can't actually represent.
+function calendarBadgeHtml(dateStr) {
+  if (!dateStr) return '';
+  const isMonthYearOnly = /^[A-Za-z]+\s+\d{4}$/.test(dateStr.trim());
+  const parsed = new Date(dateStr);
+  if (isNaN(parsed.getTime())) {
+    return `<div style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);backdrop-filter:blur(3px);border-radius:8px;padding:4px 9px;font-size:10.5px;font-weight:600;color:#fff;z-index:2;max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(dateStr)}</div>`;
+  }
+  const month = parsed.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
+  return `<div style="position:absolute;bottom:8px;right:8px;width:38px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.45);z-index:2;">
+    <div style="background:#F97360;color:#fff;font-size:8px;font-weight:700;letter-spacing:.04em;text-align:center;padding:2px 0;">${month}</div>
+    <div style="background:#fff;color:#18181b;text-align:center;padding:${isMonthYearOnly ? '4px 0' : '2px 0'};">
+      ${isMonthYearOnly ? `<div style="font-size:10.5px;font-weight:800;line-height:1;">${parsed.getUTCFullYear()}</div>` : `<div style="font-size:15px;font-weight:800;line-height:1;">${parsed.getUTCDate()}</div>`}
+    </div>
+  </div>`;
+}
+
 function renderTripPlaylist() {
   scheduleTasteConstellation();
   const el = document.getElementById('trip-playlist-list');
@@ -9170,7 +9197,11 @@ function renderTripPlaylist() {
     el.innerHTML = editToggleHtml + `<div style="font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">Nothing published here yet.${canEditTasteList ? ' Click "Edit list" above to add your first item.' : ''}</div>`;
     return;
   }
-  el.innerHTML = editToggleHtml + TRIP_PLAYLIST_CATEGORIES.map(c => {
+  // A category with zero items just shows as a bare header with nothing under it (exactly the
+  // "MOVIES" / "MUSIC" with blank space beneath, seen when a list is really only about one
+  // category) — skip it entirely unless editing, where it's still useful to see as a place to
+  // start adding something.
+  el.innerHTML = editToggleHtml + TRIP_PLAYLIST_CATEGORIES.filter(c => TRIP_PLAYLIST_ITEMS[c.key].length > 0 || editMode).map(c => {
     const cat = catMeta[c.key];
     const items = TRIP_PLAYLIST_ITEMS[c.key];
     const cards = items.map((item, i) => {
@@ -9188,7 +9219,7 @@ function renderTripPlaylist() {
       return `
         <div class="collage-card" style="position:relative;" onclick="${editMode ? '' : `openTripPlaylistSummary(${idx})`}" role="button" tabindex="0">
           ${editControls}
-          <div class="collage-card-art" style="height:${h}px;${artStyle}">${placeholder}</div>
+          <div class="collage-card-art" style="height:${h}px;${artStyle}">${placeholder}${calendarBadgeHtml(item.eventDate)}</div>
           <span class="collage-card-tag" style="background:${cat.color}33;color:${cat.color};">${cat.label}</span>
           <div class="collage-card-body">
             <div class="collage-card-title">${esc(item.title)}</div>
@@ -9328,6 +9359,7 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
         <div style="min-width:0;">
           <div style="font-size:17px;font-weight:700;color:var(--text);">${esc(item.title)}</div>
           <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(item.sub || '')}</div>
+          ${item.eventDate ? `<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">📅 ${esc(item.eventDate)}</div>` : ''}
           ${item.caption ? `<div style="font-size:11.5px;color:${color};margin-top:4px;font-style:italic;">— ${esc(item.caption)}</div>` : (item.by ? `<div style="font-size:11.5px;color:${color};margin-top:4px;font-style:italic;">— recommended by ${esc(item.by)}</div>` : '')}
         </div>
       </div>
@@ -11662,6 +11694,11 @@ renderTasteInfluences();
     <div class="tl-field">
       <label class="tl-label">Author / Artist</label>
       <input id="taste-item-sub" class="tl-input" type="text">
+    </div>
+
+    <div class="tl-field">
+      <label class="tl-label">Date <span class="tl-hint">optional — e.g. "March 2026" or a specific date</span></label>
+      <input id="taste-item-date" class="tl-input" type="text" placeholder="March 2026">
     </div>
 
     <div class="tl-field">
