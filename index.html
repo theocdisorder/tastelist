@@ -2375,7 +2375,7 @@ async function createNewTasteList() {
   try {
     const { data, error } = await sb.from('taste_lists').insert({ user_id: currentUser.id, title, subtitle: '' }).select('id, title, subtitle, created_at').single();
     if (error) throw error;
-    allTasteLists.unshift({ ...data, isOwner: true, collaborators: [], itemCount: 0 });
+    allTasteLists.unshift({ ...data, isOwner: true, collaborators: [], previewArt: [], itemCount: 0 });
     renderTasteListsPicker();
     openTasteList(data.id);
   } catch (e) {
@@ -9153,7 +9153,8 @@ let tripPlaylistArtFetched = false;
 // Per-category view mode ('grid' | 'calendar') and which item is currently featured in the
 // calendar carousel for that category — independent per category since someone might want the
 // calendar view for Books but the regular grid for Music.
-let tripPlaylistViewMode = { books: 'grid', movies: 'grid', music: 'grid' };
+let tripPlaylistViewMode = {};
+let tripPlaylistViewList = null;
 let tripPlaylistCarouselIndex = { books: null, movies: null, music: null };
 let tripPlaylistFlatItems = []; // rebuilt on every render; click handlers reference items by index into this array
 
@@ -9165,8 +9166,8 @@ function tripPlaylistCarouselHtml(catKey, dated, cat) {
   if (!dated.length) {
     return `<div style="font-size:12.5px;color:var(--faint);padding:12px 2px;">No dated items yet — add a date to a ${cat.singular} to see it on the calendar.</div>`;
   }
-  const today = new Date();
-  let naturalIndex = dated.findIndex(d => new Date(d.item.eventDate) >= today);
+  const today = new Date(); today.setHours(0,0,0,0);
+  let naturalIndex = dated.findIndex(d => sharedItemDate(d.item) >= today);
   if (naturalIndex === -1) naturalIndex = dated.length - 1; // everything's already in the past — show the most recent
   const current = tripPlaylistCarouselIndex[catKey] ?? naturalIndex;
   const safeIndex = Math.max(0, Math.min(current, dated.length - 1));
@@ -9183,11 +9184,11 @@ function tripPlaylistCarouselHtml(catKey, dated, cat) {
   const cells = windowItems.map((d, i) => {
     const realIdx = start + i;
     const isCurrent = realIdx === safeIndex;
-    const date = new Date(d.item.eventDate);
-    const month = isNaN(date.getTime()) ? '' : date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
+    const date = sharedItemDate(d.item);
+    const month = sharedDateLabel(d.item).toUpperCase();
     const w = isCurrent ? 108 : 82, h = isCurrent ? 152 : 116;
-    const clickAction = isCurrent ? `openTripPlaylistSummary(${d.idx})` : `selectTripPlaylistCarouselItem('${catKey}', ${realIdx})`;
-    return `<div onclick="${esc(clickAction)}" role="button" tabindex="0" style="cursor:pointer;text-align:center;flex-shrink:0;transition:transform .15s;${isCurrent ? 'transform:translateY(-10px);' : ''}">
+    const clickAction = `openTripPlaylistSummary(${d.idx})`;
+    return `<div onclick="${esc(clickAction)}" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" style="cursor:pointer;text-align:center;flex-shrink:0;transition:transform .15s;${isCurrent ? 'transform:translateY(-10px);' : ''}">
       <div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:${isCurrent ? cat.color : 'var(--faint)'};margin-bottom:6px;">${month}</div>
       <div style="width:${w}px;height:${h}px;border-radius:8px;background-size:cover;background-position:center;background-color:${cat.color}20;${d.item.art ? `background-image:url('${esc(d.item.art)}');` : ''}box-shadow:${isCurrent ? '0 10px 28px rgba(0,0,0,0.55)' : '0 2px 8px rgba(0,0,0,0.3)'};margin:0 auto;"></div>
       ${isCurrent
@@ -9222,12 +9223,14 @@ function selectTripPlaylistCarouselItem(catKey, idx) {
 }
 
 function toggleTripPlaylistViewMode(catKey) {
-  tripPlaylistViewMode[catKey] = tripPlaylistViewMode[catKey] === 'grid' ? 'calendar' : 'grid';
+  const current = tripPlaylistViewMode[catKey] || (TRIP_PLAYLIST_ITEMS[catKey].some(i => sharedItemDate(i)) ? 'calendar' : 'grid');
+  tripPlaylistViewMode[catKey] = current === 'grid' ? 'calendar' : 'grid';
   tripPlaylistCarouselIndex[catKey] = null; // recompute the natural "current" position on switching in
   renderTripPlaylist();
 }
 
 function renderTripPlaylist() {
+  if (tripPlaylistViewList !== currentTasteListId) { tripPlaylistViewList = currentTasteListId; tripPlaylistViewMode = {}; tripPlaylistCarouselIndex = {books:null,movies:null,music:null}; }
   scheduleTasteConstellation();
   const el = document.getElementById('trip-playlist-list');
   if (!el) return;
@@ -9258,10 +9261,11 @@ function renderTripPlaylist() {
   el.innerHTML = editToggleHtml + TRIP_PLAYLIST_CATEGORIES.filter(c => TRIP_PLAYLIST_ITEMS[c.key].length > 0 || editMode).map(c => {
     const cat = catMeta[c.key];
     const items = TRIP_PLAYLIST_ITEMS[c.key];
-    const dated = []; // items with a parseable date, for the calendar carousel view
+    const dated = [];
+    const undatedCards = [];
     const cards = items.map((item, i) => {
       const idx = globalIndex++;
-      if (item.eventDate && !isNaN(new Date(item.eventDate).getTime())) dated.push({ item, idx });
+      if (sharedItemDate(item)) dated.push({ item, idx });
       const h = heights[i % heights.length];
       const artStyle = item.art
         ? `background-image:url('${item.art}');`
@@ -9272,20 +9276,23 @@ function renderTripPlaylist() {
             <button onclick="event.stopPropagation(); openTasteItemForm('${c.key}', ${idx})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✎</button>
             <button onclick="event.stopPropagation(); deleteTasteItem(${idx})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✕</button>
           </div>` : '';
-      return `
-        <div class="collage-card" style="position:relative;" onclick="${editMode ? '' : `openTripPlaylistSummary(${idx})`}" role="button" tabindex="0">
+      const card = `
+        <div class="collage-card" style="position:relative;" onclick="${editMode ? '' : `openTripPlaylistSummary(${idx})`}" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
           ${editControls}
           <div class="collage-card-art" style="height:${h}px;${artStyle}">${placeholder}</div>
           <span class="collage-card-tag" style="background:${cat.color}33;color:${cat.color};">${cat.label}</span>
           <div class="collage-card-body">
             <div class="collage-card-title">${esc(item.title)}</div>
             ${item.sub ? `<div class="collage-card-sub">${esc(item.sub)}</div>` : ''}
+            ${sharedItemDate(item) ? `<div class="collage-card-by">${esc(sharedDateLabel(item))}</div>` : ''}
             ${item.caption ? `<div class="collage-card-by">— ${esc(item.caption)}</div>` : (item.by ? `<div class="collage-card-by">— rec'd by ${esc(item.by)}</div>` : '')}
           </div>
         </div>`;
+      if (!sharedItemDate(item)) undatedCards.push(card);
+      return card;
     }).join('');
-    dated.sort((a, b) => new Date(a.item.eventDate) - new Date(b.item.eventDate));
-    const viewMode = tripPlaylistViewMode[c.key];
+    dated.sort((a, b) => sharedItemDate(a.item) - sharedItemDate(b.item));
+    const viewMode = editMode || !dated.length ? 'grid' : (tripPlaylistViewMode[c.key] || 'calendar');
     const addTile = (editMode && canEditTasteList) ? `
         <div class="collage-card" onclick="openTasteItemForm('${c.key}')" role="button" tabindex="0" style="display:flex;align-items:center;justify-content:center;min-height:120px;border:1.5px dashed var(--border);background:transparent;">
           <span style="font-size:13px;color:var(--muted);font-weight:600;">+ Add ${cat.singular}</span>
@@ -9301,7 +9308,7 @@ function renderTripPlaylist() {
           ${viewToggle}
         </div>
         ${viewMode === 'calendar'
-          ? tripPlaylistCarouselHtml(c.key, dated, cat) + (editMode && canEditTasteList ? `<div class="collage-grid" style="margin-top:14px;">${addTile}</div>` : '')
+          ? tripPlaylistCarouselHtml(c.key, dated, cat) + (undatedCards.length ? `<h4 style="margin:20px 0 12px;color:var(--muted);">No date yet</h4><div class="collage-grid">${undatedCards.join('')}</div>` : '') + (editMode && canEditTasteList ? `<div class="collage-grid" style="margin-top:14px;">${addTile}</div>` : '')
           : `<div class="collage-grid">${cards}${addTile}</div>`}
       </div>`;
   }).join('');
@@ -9311,21 +9318,64 @@ function renderTripPlaylist() {
 // already used successfully elsewhere in this app for book covers), then falls back to Google
 // Books' volume search if Open Library has no cover indexed — Open Library is crowdsourced and
 // often missing covers for less mainstream editions; Google Books has much broader coverage.
+function sharedItemDate(item) {
+  const value = String(item.eventDate || '').trim();
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+function sharedDateLabel(item) {
+  const date = sharedItemDate(item);
+  return date ? date.toLocaleDateString('en-US',{month:'short',year:'numeric',timeZone:'UTC'}) : '';
+}
+function sharedBookAuthor(value) {
+  return String(value || '').split(/\s+[·|]\s+/)[0].trim();
+}
+function sharedBookKey(value) {
+  return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+}
+function sharedBookMatches(title, author, foundTitle, foundAuthors) {
+  const key = sharedBookKey(title), actual = sharedBookKey(String(foundTitle || '').split(':')[0]);
+  return key === actual && (!author || (foundAuthors || []).some(a => sharedBookKey(a) === sharedBookKey(author)));
+}
+const SHARED_BOOK_FALLBACKS = {
+  sooldsoyoung: {author:'Grant Ginder', art:'https://d28hgpri8am2if.cloudfront.net/book_images/onix/cvr9781668051771/so-old-so-young-9781668051771_lg.jpg', summary:'Six college friends reunite at five parties over twenty years. As careers, relationships, and family life change, their friendships are tested by distance, disappointment, and the effort of growing older together.', source:'https://www.simonandschuster.com/books/So-Old-So-Young/Grant-Ginder/9781668051771'}
+};
+function sharedBookFallback(title, author) {
+  const hit = SHARED_BOOK_FALLBACKS[sharedBookKey(title)];
+  return hit && (!author || sharedBookKey(author) === sharedBookKey(hit.author)) ? hit : null;
+}
+async function sharedCatalogJSON(url) {
+  const r = await fetch(url,{signal:AbortSignal.timeout(10000)});
+  if (!r.ok) throw Error('Catalog unavailable');
+  return r.json();
+}
+async function sharedBookMetadata(title, rawAuthor) {
+  const author = sharedBookAuthor(rawAuthor), fallback = sharedBookFallback(title, author);
+  if (fallback) return fallback;
+  const result = {art:'',summary:'',source:''};
+  try {
+    const q = `intitle:"${title}"${author ? ` inauthor:"${author}"` : ''}`;
+    const data = await sharedCatalogJSON(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8`);
+    const hit = (data.items || []).map(i=>i.volumeInfo).find(i=>sharedBookMatches(title,author,i.title,i.authors));
+    if (hit) { result.art=(hit.imageLinks?.thumbnail || hit.imageLinks?.smallThumbnail || '').replace('http:','https:'); result.summary=hit.description || ''; result.source=hit.infoLink || ''; }
+  } catch (_) {}
+  if (!result.art || !result.summary) try {
+    const data = await sharedCatalogJSON(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=8&fields=key,title,author_name,cover_i`);
+    const hit = (data.docs || []).find(i=>sharedBookMatches(title,author,i.title,i.author_name));
+    if (hit) {
+      if (!result.art && hit.cover_i) result.art=`https://covers.openlibrary.org/b/id/${hit.cover_i}-L.jpg?default=false`;
+      if (!result.summary && /^\/works\/OL\d+W$/.test(hit.key || '')) {const work=await sharedCatalogJSON(`https://openlibrary.org${hit.key}.json`); result.summary=typeof work.description==='string'?work.description:work.description?.value || '';result.source=`https://openlibrary.org${hit.key}`;}
+    }
+  } catch (_) {}
+  return result;
+}
 async function fetchBookCoverArt(title, author) {
-  try {
-    const r = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}${author ? '&author=' + encodeURIComponent(author) : ''}&limit=1&fields=cover_i`);
-    const d = await r.json();
-    const coverId = d.docs?.[0]?.cover_i;
-    if (coverId) return `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
-  } catch (e) { console.error('Open Library cover lookup failed:', e); }
-  try {
-    const q = author ? `intitle:${title} inauthor:${author}` : title;
-    const gr = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=1&fields=items(volumeInfo(imageLinks))`);
-    const gd = await gr.json();
-    const thumb = gd.items?.[0]?.volumeInfo?.imageLinks?.thumbnail || gd.items?.[0]?.volumeInfo?.imageLinks?.smallThumbnail;
-    if (thumb) return thumb.replace('http://', 'https://');
-  } catch (e) { console.error('Google Books cover lookup failed:', e); }
-  return null;
+  return (await sharedBookMetadata(title,author)).art || null;
+}
+async function sharedImageWorks(url) {
+  if (!/^https?:\/\//.test(url || '')) return false;
+  return new Promise(resolve=>{const img=new Image();const timer=setTimeout(()=>resolve(false),7000);img.onload=()=>{clearTimeout(timer);resolve(img.naturalWidth>5)};img.onerror=()=>{clearTimeout(timer);resolve(false)};img.src=url;});
 }
 
 // Resolved art (movie posters, book covers, song artwork) used to live only in memory — fetched
@@ -9360,10 +9410,10 @@ function initTripPlaylistArt() {
   });
 
   TRIP_PLAYLIST_ITEMS.books.forEach(item => {
-    if (item.art) return;
     (async () => {
+      if (item.art && await sharedImageWorks(item.art)) return;
       const art = await fetchBookCoverArt(item.title, item.sub);
-      if (art) { item.art = art; persistTasteItemArt(item.id, art); renderTripPlaylist(); refreshActivityFeeds(); }
+      if (art && await sharedImageWorks(art)) { item.art = art; persistTasteItemArt(item.id, art); renderTripPlaylist(); refreshActivityFeeds(); }
     })();
   });
   TRIP_PLAYLIST_ITEMS.music.forEach(item => {
@@ -9402,11 +9452,12 @@ async function getTripPlaylistSummary(item) {
         if (detail.poster && !item.art) { item.art = `${TMDB_IMG}${detail.poster}`; persistTasteItemArt(item.id, item.art); }
       }
     } else if (item.cat === 'books') {
-      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(item.bookQuery || item.title)}&maxResults=3&fields=items(volumeInfo(description))`);
-      const data = await res.json();
-      summary = (data.items || []).find(it => it.volumeInfo?.description)?.volumeInfo?.description || '';
+      const metadata = await sharedBookMetadata(item.title, item.sub);
+      summary = metadata.summary;
+      item.summarySource = metadata.source;
+      if (metadata.art && !item.art) { item.art=metadata.art; persistTasteItemArt(item.id,item.art); }
     } else if (item.cat === 'music') {
-      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=music&entity=song&limit=1`);
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery || [item.title,item.sub].filter(Boolean).join(' '))}&media=music&entity=song&limit=1`);
       const data = await res.json();
       const hit = data.results?.[0];
       if (hit) {
@@ -9419,7 +9470,9 @@ async function getTripPlaylistSummary(item) {
       if (!item.spotifyUrl) item.spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(item.artQuery)}`;
     }
   } catch (e) {}
-  if (!summary) summary = item.sub ? `${item.sub}.` : 'No summary available.';
+  if (!summary) return 'A summary isn’t available for this title yet.';
+  const plain = summary.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+  const words=plain.split(' '); summary=words.slice(0,90).join(' ')+(words.length>90?'…':'');
   item._summary = summary;
   return summary;
 }
@@ -9437,13 +9490,15 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
         <div style="min-width:0;">
           <div style="font-size:17px;font-weight:700;color:var(--text);">${esc(item.title)}</div>
           <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(item.sub || '')}</div>
-          ${item.eventDate ? `<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">📅 ${esc(item.eventDate)}</div>` : ''}
+          ${item.eventDate ? `<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">📅 ${esc(sharedDateLabel(item))}</div>` : ''}
           ${item.caption ? `<div style="font-size:11.5px;color:${color};margin-top:4px;font-style:italic;">— ${esc(item.caption)}</div>` : (item.by ? `<div style="font-size:11.5px;color:${color};margin-top:4px;font-style:italic;">— recommended by ${esc(item.by)}</div>` : '')}
         </div>
       </div>
       <div style="padding:14px 20px 20px;border-top:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);min-height:20px;">
         ${loading ? `<span style="color:var(--faint);">Loading summary…</span>` : (summary ? esc(summary) : `<span style="color:var(--faint);">No summary available.</span>`)}
       </div>
+      ${item.summarySource && /^https?:\/\//.test(item.summarySource) ? `<a href="${esc(item.summarySource)}" target="_blank" rel="noopener" style="display:block;padding:0 20px 16px;color:var(--muted);font-size:12px;">Read more about this title ↗</a>` : ''}
+      ${item.id ? inlineEngagementBlockHtml('taste_list_item', item.id) : ''}
       ${item.cat === 'music' && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
       <div style="padding:0 20px 20px;display:flex;gap:8px;">
         ${item.appleMusicUrl ? `<a href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
@@ -9452,16 +9507,23 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
     </div>`;
 }
 
+let sharedSummaryRequest = 0;
 async function openTripPlaylistSummary(idx) {
   const item = tripPlaylistFlatItems[idx];
   if (!item) return;
   const modal = document.getElementById('activity-summary-modal');
   const content = document.getElementById('activity-summary-content');
   if (!modal || !content) return;
-  modal.style.display = 'flex';
-  content.innerHTML = tripPlaylistSummaryHtml(item, '', true);
-  const summary = await getTripPlaylistSummary(item);
-  if (modal.style.display === 'flex') content.innerHTML = tripPlaylistSummaryHtml(item, summary, false);
+  const request=++sharedSummaryRequest;
+  let summary='',loading=true;
+  modal.dataset.sharedRequest=String(request);
+  modal.style.display='flex';
+  const active=()=>modal.style.display==='flex' && modal.dataset.sharedRequest===String(request);
+  const refresh=()=>{if(!active())return; const input=content.querySelector('input[id^="comment-input-"]');const draft=input?.value;const thread=content.querySelector('[id^="inline-comments-"]');const expanded=thread?.style.display==='block';content.innerHTML=tripPlaylistSummaryHtml(item,summary,loading);if(expanded){const next=content.querySelector('[id^="inline-comments-"]');if(next){next.style.display='block';next.innerHTML=commentsSectionHtml('taste_list_item',item.id);if(draft){const field=next.querySelector('input');if(field)field.value=draft;}}}};
+  window.__refreshModalEngagement=refresh;
+  refresh();
+  if(item.id) loadInlineEngagement('taste_list_item',item.id);
+  summary=await getTripPlaylistSummary(item);loading=false;refresh();
 }
 
 function activityFeedAvatarHtml() {
@@ -10310,7 +10372,7 @@ async function getActivitySummary(item) {
         if (detail.poster && !item.art) { item.art = `${TMDB_IMG}${detail.poster}`; refreshActivityFeeds(); }
       }
     } else if (item.type === 'song' && item.artQuery) {
-      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=music&entity=song&limit=1`);
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery || [item.title,item.sub].filter(Boolean).join(' '))}&media=music&entity=song&limit=1`);
       const data = await res.json();
       const hit = data.results?.[0];
       if (hit) {
@@ -10377,6 +10439,7 @@ function activitySummaryHtml(item, summary, loading) {
 }
 
 async function openActivitySummary(globalIndex) {
+  const sharedModal=document.getElementById('activity-summary-modal');if(sharedModal)delete sharedModal.dataset.sharedRequest;
   const item = ACTIVITY_FEED_ITEMS[globalIndex];
   if (!item) return;
   const modal = document.getElementById('activity-summary-modal');
@@ -10409,6 +10472,8 @@ async function openActivitySummary(globalIndex) {
 }
 
 function closeActivitySummary() {
+  window.__refreshModalEngagement=null;
+  const sharedModal=document.getElementById('activity-summary-modal');if(sharedModal)delete sharedModal.dataset.sharedRequest;
   const modal = document.getElementById('activity-summary-modal');
   if (modal) modal.style.display = 'none';
 }
@@ -10441,7 +10506,7 @@ async function handleActivityArtError(globalIndex) {
           if (detail.poster) newArt = `${TMDB_IMG}${detail.poster}`;
         }
       } else if (item.type === 'song' && item.artQuery) {
-        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=music&entity=song&limit=1`);
+        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery || [item.title,item.sub].filter(Boolean).join(' '))}&media=music&entity=song&limit=1`);
         const data = await res.json();
         newArt = data.results?.[0]?.artworkUrl100?.replace('100x100bb', '200x200bb') || '';
       }
@@ -10573,7 +10638,7 @@ async function initActivityFeedArt() {
     if (item.art) continue; // already has art (hardcoded or previously resolved) — nothing to do
     try {
       if (item.artQuery) {
-        const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=music&entity=song&limit=1`);
+        const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery || [item.title,item.sub].filter(Boolean).join(' '))}&media=music&entity=song&limit=1`);
         const d = await r.json();
         const hit = d.results?.[0];
         const art = hit?.artworkUrl100?.replace('100x100bb', '200x200bb');
