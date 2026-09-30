@@ -8,7 +8,7 @@
 <meta property="og:title" content="Sreya's Taste List">
 <meta property="og:description" content="The music that shaped me — favorite artists, albums, and songs.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://tastelist.ai">
+<meta property="og:url" content="https://tastelist.app">
 <meta name="twitter:card" content="summary">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <meta name="twitter:title" content="Sreya's Taste List">
@@ -1609,8 +1609,8 @@ async function landingArtistArtFallback(imgEl, artistName) {
 <div id="view-feed-container" style="display:none;">
   <div style="max-width:1100px;margin:0 auto;padding:0.5rem 2rem 4rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <div style="font-size:22px;font-weight:700;color:var(--text);">What's New</div>
-      <div style="font-size:12px;color:var(--muted);">From people you follow and around TasteList</div>
+      <div id="feed-heading" style="font-size:22px;font-weight:700;color:var(--text);">What's New</div>
+      <div id="feed-context" style="font-size:12px;color:var(--muted);">From people you follow</div>
     </div>
     <div id="onboarding-checklist" style="display:none;"></div>
     <div id="public-feed-items" style="display:flex;flex-direction:column;gap:16px;">
@@ -1726,7 +1726,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
         </div>
         <div style="min-width:0;">
           <div style="font-size:15px;font-weight:700;color:var(--text);">Taste Insights</div>
-          <div style="font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">See what actually connects your favorites — writing, tone, performance</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">The threads running through your music, film & TV, and books</div>
         </div>
       </div>
       <span id="taste-graph-toggle-label" style="font-size:13px;font-weight:600;color:var(--accent);flex-shrink:0;">View ↓</span>
@@ -1735,7 +1735,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
   <div id="profile-taste-graph-section" style="display:none;">
   <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 1rem;">
     <h2 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:0.25rem;">Taste Insights</h2>
-    <p style="font-size:14px;color:var(--muted);margin-bottom:2rem;">What actually connects your favorites — in writing, tone, performance, and style — across music, film, TV, and books.</p>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:2rem;">What connects your favorites within each part of your taste — the sound of your music, the writing and performances in your film & TV, the voice of your books.</p>
     <!-- Taste Influences -->
     <div id="taste-influences-section" style="margin-bottom:2.5rem;">
       <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:14px;display:flex;align-items:center;gap:10px;">Taste Influences <span style="flex:1;height:1px;background:var(--border);"></span></div>
@@ -2318,11 +2318,40 @@ function toggleEditMode() {
 // State for whichever item is currently being added/edited in the modal
 let tasteItemFormState = { category: null, id: null };
 
+function renderTasteTypeChips() {
+  const el = document.getElementById('taste-item-type-chips');
+  if (!el) return;
+  const current = document.getElementById('taste-item-category').value;
+  const isCustom = current.startsWith('custom:') || current === '__other';
+  const chip = (key, label, color, active) => `<button type="button" onclick="setTasteItemType('${key}')" aria-pressed="${active}" style="font:inherit;font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;cursor:pointer;border:1px solid ${active ? color : 'var(--border)'};background:${active ? color + '26' : 'transparent'};color:${active ? color : 'var(--muted)'};">${label}</button>`;
+  el.innerHTML = TASTE_ITEM_TYPES.map(t => chip(t.key, t.chip, t.color, current === t.key)).join('')
+    + chip('__other', '+ Something else', '#A8A29E', isCustom);
+  const customInput = document.getElementById('taste-item-custom-type');
+  customInput.style.display = isCustom ? 'block' : 'none';
+  document.getElementById('taste-item-sub-label').textContent = isCustom ? 'Creator / details' : tasteTypeMeta(current).subLabel;
+}
+function setTasteItemType(key) {
+  document.getElementById('taste-item-category').value = key;
+  renderTasteTypeChips();
+  if (key === '__other') document.getElementById('taste-item-custom-type').focus();
+}
+function readTasteItemType() {
+  const v = document.getElementById('taste-item-category').value;
+  if (v !== '__other' && !v.startsWith('custom:')) return v;
+  const label = document.getElementById('taste-item-custom-type').value.replace(/['"`\\<>]/g, '').trim().replace(/\s+/g, ' ');
+  if (!label) return '';
+  // Typing a built-in name ("movie", "Podcasts") maps onto that type instead of a duplicate section.
+  const lower = label.toLowerCase();
+  const builtIn = TASTE_ITEM_TYPES.find(t => [t.key, t.label.toLowerCase(), t.singular, t.chip.toLowerCase()].includes(lower));
+  return builtIn ? builtIn.key : 'custom:' + label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 function openTasteItemForm(category, flatIdx) {
   tasteItemFormState = { category: category || 'books', id: null };
   document.getElementById('taste-item-modal-error').style.display = 'none';
   document.getElementById('taste-item-title').value = '';
   document.getElementById('taste-item-category').value = category || 'books';
+  document.getElementById('taste-item-custom-type').value = '';
   document.getElementById('taste-item-sub').value = '';
   document.getElementById('taste-item-date').value = '';
   document.getElementById('taste-item-by').value = '';
@@ -2336,13 +2365,16 @@ function openTasteItemForm(category, flatIdx) {
       document.getElementById('taste-item-modal-title').textContent = 'Edit item';
       document.getElementById('taste-item-title').value = item.title || '';
       document.getElementById('taste-item-category').value = item.cat || category || 'books';
+      document.getElementById('taste-item-custom-type').value = String(item.cat || '').startsWith('custom:') ? item.cat.slice(7) : '';
       document.getElementById('taste-item-sub').value = item.sub || '';
       document.getElementById('taste-item-date').value = item.eventDate || '';
       document.getElementById('taste-item-by').value = item.by || '';
       document.getElementById('taste-item-art').value = item.art || '';
     }
   }
+  renderTasteTypeChips();
   document.getElementById('taste-item-modal').style.display = 'flex';
+  if (document.getElementById('taste-item-category').value === '__other') document.getElementById('taste-item-custom-type').focus();
 }
 
 function closeTasteItemModal() {
@@ -2356,19 +2388,7 @@ async function reloadCurrentTasteListItems() {
   if (!sb || !currentTasteListId) return;
   try {
     const { data: items } = await sb.from('taste_list_items').select('*').eq('list_id', currentTasteListId).order('sort_order', { ascending: true });
-    const grouped = { books: [], movies: [], music: [] };
-    (items || []).forEach(row => {
-      grouped[row.category]?.push({
-        id: row.id, title: row.title, sub: row.sub || '', by: row.recommended_by || '',
-        eventDate: row.event_date || '',
-        caption: row.caption || undefined, art: row.art_url || '', tmdbId: row.tmdb_id || undefined,
-        bookQuery: row.category === 'books' ? `${row.title} ${row.sub || ''}`.trim() : undefined,
-        tmdbQuery: row.category === 'movies' && !row.tmdb_id ? row.title : undefined,
-      });
-    });
-    TRIP_PLAYLIST_ITEMS.books = grouped.books;
-    TRIP_PLAYLIST_ITEMS.movies = grouped.movies;
-    TRIP_PLAYLIST_ITEMS.music = grouped.music;
+    setTripPlaylistItemsFromRows(items);
     tripPlaylistArtFetched = false;
     renderTripPlaylist();
     initTripPlaylistArt();
@@ -2708,13 +2728,18 @@ async function removeCollaborator(listId, userId) {
 
 async function saveTasteItemForm() {
   const title = document.getElementById('taste-item-title').value.trim();
-  const category = document.getElementById('taste-item-category').value;
+  const category = readTasteItemType();
   const sub = document.getElementById('taste-item-sub').value.trim();
   const eventDate = document.getElementById('taste-item-date').value.trim();
   const by = document.getElementById('taste-item-by').value.trim();
   const art = document.getElementById('taste-item-art').value.trim();
   const errEl = document.getElementById('taste-item-modal-error');
   errEl.style.display = 'none';
+  if (!category) {
+    errEl.textContent = 'Tell us what kind of thing this is.';
+    errEl.style.display = 'block';
+    return;
+  }
 
   if (!title) {
     errEl.textContent = 'Title is required.';
@@ -2950,18 +2975,14 @@ async function loadTasteListFromSupabase(userId) {
             .single();
           if (!createError && newList) {
             currentTasteListId = newList.id;
-            TRIP_PLAYLIST_ITEMS.books = [];
-            TRIP_PLAYLIST_ITEMS.movies = [];
-            TRIP_PLAYLIST_ITEMS.music = [];
+            clearTripPlaylistItems();
             renderTripPlaylist();
             return true;
           }
         } catch (e) {}
       }
       currentTasteListId = null;
-      TRIP_PLAYLIST_ITEMS.books = [];
-      TRIP_PLAYLIST_ITEMS.movies = [];
-      TRIP_PLAYLIST_ITEMS.music = [];
+      clearTripPlaylistItems();
       const titleEl = document.getElementById('taste-list-title');
       const subEl = document.getElementById('taste-list-subtitle');
       if (titleEl) titleEl.childNodes[0].textContent = 'Your Taste List ';
@@ -2977,29 +2998,7 @@ async function loadTasteListFromSupabase(userId) {
       .order('sort_order', { ascending: true });
     if (!items) return false;
 
-    // Reshape DB rows back into the {books:[], movies:[], music:[]} structure
-    // renderTripPlaylist already knows how to render.
-    const grouped = { books: [], movies: [], music: [] };
-    items.forEach(row => {
-      grouped[row.category]?.push({
-        id: row.id,
-        title: row.title,
-        sub: row.sub || '',
-        by: row.recommended_by || '',
-        eventDate: row.event_date || '',
-        caption: row.caption || undefined,
-        art: row.art_url || '',
-        tmdbId: row.tmdb_id || undefined,
-        // These aren't stored columns — reconstructed from title/sub so the
-        // live fallback search (Open Library / Google Books / TMDB) always has
-        // a real query to work with, never undefined.
-        bookQuery: row.category === 'books' ? `${row.title} ${row.sub || ''}`.trim() : undefined,
-        tmdbQuery: row.category === 'movies' && !row.tmdb_id ? row.title : undefined,
-      });
-    });
-    TRIP_PLAYLIST_ITEMS.books = grouped.books;
-    TRIP_PLAYLIST_ITEMS.movies = grouped.movies;
-    TRIP_PLAYLIST_ITEMS.music = grouped.music;
+    setTripPlaylistItemsFromRows(items);
 
     const titleEl = document.getElementById('taste-list-title');
     const subEl = document.getElementById('taste-list-subtitle');
@@ -3066,6 +3065,12 @@ function formatActivityDate(dateStr) {
   // Parse the YYYY-MM-DD components directly rather than `new Date(dateStr)`,
   // which treats bare date strings as UTC midnight and can roll back a day in
   // negative-UTC-offset timezones.
+  if (!dateStr) return '';
+  if (dateStr.length > 10) {
+    // Full timestamp (e.g. notifications.created_at) — real instant, so parse normally.
+    const dt = new Date(dateStr);
+    return isNaN(dt) ? '' : dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
   const [y, m, d] = dateStr.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
@@ -3255,8 +3260,9 @@ async function loadFollowRequests() {
 async function respondToFollowRequest(requestId, accept) {
   try {
     if (accept) {
-      const { error } = await sb.from('follows').update({ status: 'accepted' }).eq('id', requestId);
+      const { data: updated, error } = await sb.from('follows').update({ status: 'accepted' }).eq('id', requestId).select('id');
       if (error) throw error;
+      if (!updated || !updated.length) throw new Error('That request no longer exists.');
     } else {
       const { error } = await sb.from('follows').delete().eq('id', requestId);
       if (error) throw error;
@@ -3322,6 +3328,13 @@ async function loadNotifications() {
       .order('created_at', { ascending: false })
       .limit(20);
     if (error) throw error;
+    const reqIds = (data || []).filter(n => n.type === 'follow_request' && n.target_id).map(n => n.target_id);
+    let followStatusById = {};
+    if (reqIds.length) {
+      const { data: fr } = await sb.from('follows').select('id, status').in('id', reqIds);
+      (fr || []).forEach(f => { followStatusById[f.id] = f.status; });
+    }
+    (data || []).forEach(n => { if (n.type === 'follow_request') n.requestStatus = followStatusById[n.target_id] || 'gone'; });
     renderNotificationsDropdown(data || []);
     const unreadIds = (data || []).filter(n => !n.read).map(n => n.id);
     if (unreadIds.length) {
@@ -3360,7 +3373,9 @@ function renderNotificationsDropdown(rows) {
       return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);${n.read ? '' : 'background:rgba(124,77,255,0.08);'}display:flex;flex-direction:column;gap:6px;${isRequest ? '' : 'cursor:pointer;'}" ${isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`}>
         <div style="font-size:13px;color:var(--text);line-height:1.4;">${text}</div>
         <div style="font-size:11px;color:var(--faint);">${formatActivityDate(n.created_at)}</div>
-        ${isRequest ? `<div style="display:flex;gap:6px;margin-top:2px;">
+        ${isRequest && n.requestStatus === 'accepted' ? `<div style="font-size:11.5px;color:var(--accent);font-weight:600;">✓ Accepted — they now follow you</div>` : ''}
+        ${isRequest && n.requestStatus === 'gone' ? `<div style="font-size:11.5px;color:var(--muted);">Request declined or withdrawn</div>` : ''}
+        ${isRequest && n.requestStatus === 'pending' ? `<div style="display:flex;gap:6px;margin-top:2px;">
           <button onclick="event.stopPropagation(); respondToFollowRequestFromNotif('${n.target_id}', true)" style="font-size:11px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:16px;padding:5px 12px;cursor:pointer;font-family:inherit;">Accept</button>
           <button onclick="event.stopPropagation(); respondToFollowRequestFromNotif('${n.target_id}', false)" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:16px;padding:5px 12px;cursor:pointer;font-family:inherit;">Decline</button>
         </div>` : ''}
@@ -6435,14 +6450,14 @@ async function loadMBArtistImg(artistId, imgEl) {
     // Search MusicBrainz for the artist
     const q = encodeURIComponent(`artist:"${artistId}"`);
     const res = await fetch(`https://musicbrainz.org/ws/2/artist/?query=${q}&limit=1&fmt=json`, {
-      headers: { 'User-Agent': 'tastelist.ai/1.0 (tastelist.ai)' }
+      headers: { 'User-Agent': 'tastelist.app/1.0 (tastelist.app)' }
     });
     const data = await res.json();
     const artist = data.artists?.[0];
     if (!artist?.id) return;
     // Get their most popular release for cover art
     const res2 = await fetch(`https://musicbrainz.org/ws/2/release-group/?artist=${artist.id}&type=album&limit=1&fmt=json`, {
-      headers: { 'User-Agent': 'tastelist.ai/1.0 (tastelist.ai)' }
+      headers: { 'User-Agent': 'tastelist.app/1.0 (tastelist.app)' }
     });
     const data2 = await res2.json();
     const rg = data2['release-groups']?.[0];
@@ -9447,11 +9462,29 @@ async function refreshTasteConstellation() {
   renderTasteConstellation([]);
 }
 
+// Taste threads are found within one area of taste at a time, never across areas.
+const TASTE_DOMAINS=[
+ {key:'music',label:'Music',color:'#7C4DFF',label2:'your music taste'},
+ {key:'screen',label:'Film & TV',color:'#F97360',label2:'your film & TV taste'},
+ {key:'books',label:'Books',color:'#22C55E',label2:'your reading'},
+ {key:'comedy',label:'Comedy',color:'#FB7185',label2:'your sense of humor'},
+ {key:'podcasts',label:'Podcasts',color:'#F59E0B',label2:'your listening'},
+];
+function tasteDomainOf(item){
+ const k=item.kind,m=item.medium;
+ if(['artist','album','song'].includes(k)||m==='Music')return 'music';
+ if(['movie','tv','director'].includes(k)||m==='Movies'||m==='TV')return 'screen';
+ if(k==='book'||m==='Books')return 'books';
+ if(['comedian','special'].includes(k)||m==='Comedy')return 'comedy';
+ if(['podcast','episode'].includes(k)||m==='Podcasts')return 'podcasts';
+ return 'screen';
+}
+function selectTasteDomain(key){const state=tasteAnalysisState();state.domain=key;renderInterpretiveConstellation(state.items);}
 function tasteAnalysisState(){return tasteAnalysisState.value||(tasteAnalysisState.value={key:null,status:'idle',result:null,items:[],version:0});}
 function renderInterpretiveConstellation(items) {
  const el=document.getElementById('taste-constellation-cards');if(!el)return;
  const state=tasteAnalysisState();
- const key=JSON.stringify([viewedProfile?.id,items.map(constellationIdentity).sort()]);
+ const key=JSON.stringify(['by-domain-v1',viewedProfile?.id,items.map(constellationIdentity).sort()]);
  if(state.key!==key){state.key=key;state.version++;state.status='idle';state.result=null;}
  state.items=items;
  if(items.length<2){el.innerHTML='<p class="taste-analysis-status">Add another pick to a Favorites or Shaped Me list to start finding connections.</p>';return;}
@@ -9459,7 +9492,13 @@ function renderInterpretiveConstellation(items) {
  if(state.status==='ready'){
   const byId=new Map(items.map(i=>[constellationIdentity(i),i]));
   const connections=(state.result?.connections||[]).filter(c=>Array.isArray(c.evidence)&&new Set(c.evidence.map(e=>e.item_id)).size>=2&&c.evidence.every(e=>byId.has(e.item_id)));
-  el.innerHTML=connections.length?connections.map(c=>`<article class="taste-essay"><div class="taste-essay-label">A THREAD IN YOUR TASTE</div><h3>${esc(c.title)}</h3><p>${esc(c.body)}</p><div class="taste-essay-picks">${c.evidence.map(e=>`<span>${esc(byId.get(e.item_id).title)}</span>`).join('')}</div><details><summary>How each pick fits</summary>${c.evidence.map(e=>`<p><strong>${esc(byId.get(e.item_id).title)}</strong> — ${esc(e.explanation)}</p>`).join('')}</details></article>`).join(''):'<p class="taste-analysis-status">There isn’t enough information for a strong connection yet.</p>';
+  const withDomain=connections.map(c=>({...c,domain:c.domain||tasteDomainOf(byId.get(c.evidence[0].item_id))}));
+  const available=TASTE_DOMAINS.filter(d=>withDomain.some(c=>c.domain===d.key));
+  if(!available.some(d=>d.key===state.domain))state.domain=available[0]?.key;
+  const active=TASTE_DOMAINS.find(d=>d.key===state.domain);
+  const shown=withDomain.filter(c=>c.domain===state.domain);
+  const tabs=available.length>1?`<div role="tablist" style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">${available.map(d=>{const on=d.key===state.domain;return `<button role="tab" aria-selected="${on}" onclick="selectTasteDomain('${d.key}')" style="font:inherit;font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;cursor:pointer;border:1px solid ${on?d.color:'var(--border)'};background:${on?d.color+'22':'transparent'};color:${on?d.color:'var(--muted)'};">${d.label} <span style="opacity:.6;font-weight:500;">${withDomain.filter(c=>c.domain===d.key).length}</span></button>`;}).join('')}</div>`:'';
+  el.innerHTML=shown.length?tabs+shown.map(c=>`<article class="taste-essay"><div class="taste-essay-label" style="color:${active.color}">A THREAD IN ${active.label2.toUpperCase()}</div><h3>${esc(c.title)}</h3><p>${esc(c.body)}</p><div class="taste-essay-picks">${c.evidence.map(e=>`<span>${esc(byId.get(e.item_id).title)}</span>`).join('')}</div><details><summary>How each pick fits</summary>${c.evidence.map(e=>`<p><strong>${esc(byId.get(e.item_id).title)}</strong> — ${esc(e.explanation)}</p>`).join('')}</details></article>`).join(''):'<p class="taste-analysis-status">There isn’t enough in any one area yet — add a couple more favorites in music, film & TV, or books to find what connects them.</p>';
   if(state.result?.limitations)el.innerHTML+=`<p class="taste-analysis-status">${esc(state.result.limitations)}</p>`;
   return;
  }
@@ -9485,7 +9524,7 @@ async function requestTasteAnalysis(){
   if(!result){
    if(!isOwnProfile){state.status='unpublished';renderInterpretiveConstellation(state.items);return;}
    if(cacheError)throw cacheError;
-   const items=state.items.map(i=>({id:constellationIdentity(i),title:i.title,kind:i.kind,year:i.year||'',creator:[i.author,i.artist,i.director,i.creator,...(i.creators||[])].filter(Boolean).join(', '),description:i.overview||i.description||'',genres:i.genres||[]}));
+   const items=state.items.map(i=>({id:constellationIdentity(i),title:i.title,kind:i.kind,domain:tasteDomainOf(i),year:i.year||'',creator:[i.author,i.artist,i.director,i.creator,...(i.creators||[])].filter(Boolean).join(', '),description:i.overview||i.description||'',genres:i.genres||[]}));
    const {data,error}=await sb.functions.invoke('taste-analysis',{body:{profileId,fingerprint,items}});
    if(error||data?.error)throw Error('Analysis unavailable');result=data;
   }
@@ -9643,11 +9682,56 @@ const TRIP_PLAYLIST_ITEMS = {
     { title: 'Back That Azz Up', sub: 'Juvenile', by: 'Rabeea', art: 'https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/0c/c9/2e/0cc92e6a-789e-3116-095e-5071f778bfee/06UMGIM04297.rgb.jpg/600x600bf-60.jpg', artQuery: 'Back That Azz Up Juvenile', artQueryFallback: 'Back That Azz Up' },
   ],
 };
-const TRIP_PLAYLIST_CATEGORIES = [
-  { key: 'books',  label: 'Books',  color: '#22C55E' },
-  { key: 'movies', label: 'Movies', color: '#F97360' },
-  { key: 'music',  label: 'Music',  color: '#7C4DFF' },
+// Built-in shared-list types (mirrors the onboarding search categories). Anything else a user
+// types in "Something else" is stored as `custom:<Label>` and gets its own section automatically.
+const TASTE_ITEM_TYPES = [
+  { key: 'books',    label: 'Books',     singular: 'book',     chip: 'Book',     subLabel: 'Author',             color: '#22C55E' },
+  { key: 'movies',   label: 'Movies',    singular: 'movie',    chip: 'Movie',    subLabel: 'Director',           color: '#F97360' },
+  { key: 'tv',       label: 'TV shows',  singular: 'TV show',  chip: 'TV show',  subLabel: 'Network / creator',  color: '#3B82F6' },
+  { key: 'music',    label: 'Songs',     singular: 'song',     chip: 'Song',     subLabel: 'Artist',             color: '#7C4DFF' },
+  { key: 'albums',   label: 'Albums',    singular: 'album',    chip: 'Album',    subLabel: 'Artist',             color: '#A78BFA' },
+  { key: 'podcasts', label: 'Podcasts',  singular: 'podcast',  chip: 'Podcast',  subLabel: 'Host',               color: '#F59E0B' },
+  { key: 'comedy',   label: 'Comedy',    singular: 'special',  chip: 'Comedy',   subLabel: 'Comedian',           color: '#FB7185' },
+  { key: 'articles', label: 'Articles',  singular: 'article',  chip: 'Article',  subLabel: 'Publication / author', color: '#64748B' },
+  { key: 'games',    label: 'Games',     singular: 'game',     chip: 'Game',     subLabel: 'Studio',             color: '#EC4899' },
 ];
+const CUSTOM_TYPE_COLORS = ['#14B8A6', '#EAB308', '#06B6D4', '#D946EF', '#84CC16', '#A8A29E'];
+function tasteTypeMeta(key) {
+  const builtIn = TASTE_ITEM_TYPES.find(t => t.key === key);
+  if (builtIn) return builtIn;
+  const label = String(key || '').replace(/^custom:/, '') || 'Other';
+  let h = 0; for (const ch of label.toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return { key, label, singular: label.toLowerCase(), chip: label, subLabel: 'Creator', color: CUSTOM_TYPE_COLORS[h % CUSTOM_TYPE_COLORS.length], custom: true };
+}
+// Sections actually rendered for the open list: built-ins in fixed order, then custom types.
+const TRIP_PLAYLIST_CATEGORIES = TASTE_ITEM_TYPES.map(t => ({ key: t.key, label: t.label, color: t.color }));
+TASTE_ITEM_TYPES.forEach(t => { if (!TRIP_PLAYLIST_ITEMS[t.key]) TRIP_PLAYLIST_ITEMS[t.key] = []; });
+function clearTripPlaylistItems() {
+  Object.keys(TRIP_PLAYLIST_ITEMS).forEach(k => delete TRIP_PLAYLIST_ITEMS[k]);
+  TASTE_ITEM_TYPES.forEach(t => { TRIP_PLAYLIST_ITEMS[t.key] = []; });
+  TRIP_PLAYLIST_CATEGORIES.length = 0;
+  TASTE_ITEM_TYPES.forEach(t => TRIP_PLAYLIST_CATEGORIES.push({ key: t.key, label: t.label, color: t.color }));
+}
+function setTripPlaylistItemsFromRows(rows) {
+  clearTripPlaylistItems();
+  (rows || []).forEach(row => {
+    const key = row.category;
+    if (!TRIP_PLAYLIST_ITEMS[key]) {
+      TRIP_PLAYLIST_ITEMS[key] = [];
+      const m = tasteTypeMeta(key);
+      TRIP_PLAYLIST_CATEGORIES.push({ key, label: m.label, color: m.color });
+    }
+    TRIP_PLAYLIST_ITEMS[key].push({
+      id: row.id, title: row.title, sub: row.sub || '', by: row.recommended_by || '',
+      eventDate: row.event_date || '',
+      caption: row.caption || undefined, art: row.art_url || '', tmdbId: row.tmdb_id || undefined,
+      // Not stored columns — rebuilt from title/sub so the live art/summary lookups have a query.
+      bookQuery: key === 'books' ? `${row.title} ${row.sub || ''}`.trim() : undefined,
+      tmdbQuery: (key === 'movies' || key === 'tv') && !row.tmdb_id ? row.title : undefined,
+      artQuery: ['music', 'albums', 'podcasts'].includes(key) ? `${row.title} ${row.sub || ''}`.trim() : undefined,
+    });
+  });
+}
 let tripPlaylistArtFetched = false;
 // Per-category view mode ('grid' | 'calendar') and which item is currently featured in the
 // calendar carousel for that category — independent per category since someone might want the
@@ -9729,11 +9813,11 @@ function toggleTripPlaylistViewMode(catKey) {
 }
 
 function renderTripPlaylist() {
-  if (tripPlaylistViewList !== currentTasteListId) { tripPlaylistViewList = currentTasteListId; tripPlaylistViewMode = {}; tripPlaylistCarouselIndex = {books:null,movies:null,music:null}; }
+  if (tripPlaylistViewList !== currentTasteListId) { tripPlaylistViewList = currentTasteListId; tripPlaylistViewMode = {}; tripPlaylistCarouselIndex = {}; }
   scheduleTasteConstellation();
   const el = document.getElementById('trip-playlist-list');
   if (!el) return;
-  const catMeta = { books: { label: 'Books', singular: 'book', color: '#22C55E' }, movies: { label: 'Movies', singular: 'movie', color: '#F97360' }, music: { label: 'Music', singular: 'song', color: '#7C4DFF' } };
+  const catMeta = new Proxy({}, { get: (_, key) => tasteTypeMeta(key) });
   // Flat index (across all categories, in category order) so click handlers can find the right
   // item regardless of which section's grid it was clicked from.
   const flat = [];
@@ -9748,16 +9832,26 @@ function renderTripPlaylist() {
     </button>` : '';
 
   let globalIndex = 0;
-  const isEmpty = TRIP_PLAYLIST_CATEGORIES.every(c => TRIP_PLAYLIST_ITEMS[c.key].length === 0);
-  if (isEmpty && !editMode) {
-    el.innerHTML = editToggleHtml + `<div style="font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">Nothing published here yet.${canEditTasteList ? ' Click "Edit list" above to add your first item.' : ''}</div>`;
+  const isEmpty = TRIP_PLAYLIST_CATEGORIES.every(c => (TRIP_PLAYLIST_ITEMS[c.key] || []).length === 0);
+  if (isEmpty) {
+    if (!canEditTasteList) {
+      el.innerHTML = `<div style="font-size:12.5px;color:var(--faint);line-height:1.5;padding:6px 2px;">Nothing here yet.</div>`;
+      return;
+    }
+    const addBtn = (key) => `<button onclick="openTasteItemForm('${key}')" style="display:flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:600;color:${catMeta[key].color};background:${catMeta[key].color}14;border:1px solid ${catMeta[key].color}55;border-radius:999px;padding:11px 20px;cursor:pointer;transition:background .15s,transform .15s;" onmouseover="this.style.background='${catMeta[key].color}26'" onmouseout="this.style.background='${catMeta[key].color}14'"><span style="font-size:17px;line-height:1;">+</span> Add a ${catMeta[key].singular}</button>`;
+    el.innerHTML = `
+      <div style="text-align:center;padding:56px 24px;border:1px solid var(--border);border-radius:20px;background:radial-gradient(ellipse at top, rgba(124,77,255,0.12), transparent 70%);margin-bottom:28px;">
+        <div style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.3px;margin-bottom:8px;">Kick off this list</div>
+        <div style="font-size:14px;color:var(--muted);line-height:1.6;max-width:380px;margin:0 auto 26px;">Add the first thing you want to share — everyone in the list can add theirs too.</div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;max-width:560px;margin:0 auto;">${['books','movies','tv','music','podcasts'].map(k => addBtn(k)).join('')}<button onclick="openTasteItemForm('__other')" style="display:flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border2, var(--border));border-radius:999px;padding:11px 20px;cursor:pointer;"><span style="font-size:17px;line-height:1;">+</span> Something else</button></div>
+      </div>`;
     return;
   }
   // A category with zero items just shows as a bare header with nothing under it (exactly the
   // "MOVIES" / "MUSIC" with blank space beneath, seen when a list is really only about one
   // category) — skip it entirely unless editing, where it's still useful to see as a place to
   // start adding something.
-  el.innerHTML = editToggleHtml + TRIP_PLAYLIST_CATEGORIES.filter(c => TRIP_PLAYLIST_ITEMS[c.key].length > 0 || editMode).map(c => {
+  el.innerHTML = editToggleHtml + TRIP_PLAYLIST_CATEGORIES.filter(c => (TRIP_PLAYLIST_ITEMS[c.key] || []).length > 0).map(c => {
     const cat = catMeta[c.key];
     const items = TRIP_PLAYLIST_ITEMS[c.key];
     const dated = [];
@@ -9807,9 +9901,7 @@ function renderTripPlaylist() {
           : `<div class="collage-grid">${cards}</div>`}
       </div>`;
   }).join('') + ((editMode && canEditTasteList) ? `
-      <div class="collage-card" onclick="openTasteItemForm()" role="button" tabindex="0" style="display:flex;align-items:center;justify-content:center;min-height:120px;border:1.5px dashed var(--border);background:transparent;margin-bottom:28px;">
-        <span style="font-size:13px;color:var(--muted);font-weight:600;">+ Add another item</span>
-      </div>` : '');
+      <button onclick="openTasteItemForm()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:18px;margin-bottom:28px;font:inherit;font-size:14px;font-weight:600;color:#fff;background:var(--accent);border:none;border-radius:14px;cursor:pointer;box-shadow:0 6px 24px rgba(124,77,255,0.3);transition:filter .15s;" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''"><span style="font-size:18px;line-height:1;">+</span> Add an item</button>` : '');
 }
 
 // Tries Open Library's search API first (structured title/author fields — the same pattern
@@ -9916,6 +10008,31 @@ function initTripPlaylistArt() {
       if (art && await sharedImageWorks(art)) { item.art = art; persistTasteItemArt(item.id, art); renderTripPlaylist(); refreshActivityFeeds(); }
     })();
   });
+  (TRIP_PLAYLIST_ITEMS.tv || []).forEach(item => {
+    if (item.art || !item.tmdbQuery) return;
+    (async () => {
+      try {
+        const r = await tmdbFetch(`/search/tv?query=${encodeURIComponent(item.tmdbQuery)}&page=1`);
+        const d = await r.json();
+        const poster = d.results?.[0]?.poster_path;
+        if (poster) { item.art = `${TMDB_IMG}${poster}`; persistTasteItemArt(item.id, item.art); renderTripPlaylist(); refreshActivityFeeds(); }
+      } catch (e) {}
+    })();
+  });
+  [['albums', 'music', 'album'], ['podcasts', 'podcast', 'podcast']].forEach(([key, media, entity]) => {
+    (TRIP_PLAYLIST_ITEMS[key] || []).forEach(item => {
+      if (item.art || !item.artQuery) return;
+      (async () => {
+        try {
+          const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=${media}&entity=${entity}&limit=1`);
+          const d = await r.json();
+          const hit = d.results?.[0];
+          const art = (hit?.artworkUrl600 || hit?.artworkUrl100?.replace('100x100bb', '600x600bb'));
+          if (art) { item.art = art; persistTasteItemArt(item.id, art); renderTripPlaylist(); refreshActivityFeeds(); }
+        } catch (e) {}
+      })();
+    });
+  });
   TRIP_PLAYLIST_ITEMS.music.forEach(item => {
     if (item.art || !item.artQuery) return;
     (async () => {
@@ -9978,8 +10095,7 @@ async function getTripPlaylistSummary(item) {
 }
 
 function tripPlaylistSummaryHtml(item, summary, loading) {
-  const catMeta = { books: { color: '#22C55E' }, movies: { color: '#F97360' }, music: { color: '#7C4DFF' } };
-  const color = catMeta[item.cat]?.color || '#7C4DFF';
+  const color = tasteTypeMeta(item.cat).color;
   return `
     <div style="position:relative;">
       <button onclick="closeActivitySummary()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:28px;height:28px;border-radius:50%;cursor:pointer;z-index:2;">✕</button>
@@ -10036,7 +10152,7 @@ function activityFeedAvatarHtml() {
 // Builds a 2x2 mosaic of real playlist thumbnails (one per category, plus a 4th pick) for the
 // "published a new list" What's New card, instead of a plain icon placeholder.
 function tripPlaylistMosaicHtml() {
-  const catColor = { books: '#22C55E', movies: '#F97360', music: '#7C4DFF' };
+  const catColor = new Proxy({}, { get: (_, key) => tasteTypeMeta(key).color });
   const picks = [];
   TRIP_PLAYLIST_CATEGORIES.forEach(c => {
     const items = TRIP_PLAYLIST_ITEMS[c.key] || [];
@@ -10581,12 +10697,13 @@ async function resolveFeedAudience() {
   if (!currentUser) return [];
   const ids = [currentUser.id];
   try {
-    const { data } = await sb.from('follows')
+    const { data, error } = await sb.from('follows')
       .select('followed_id')
       .eq('follower_id', currentUser.id)
       .eq('status', 'accepted');
+    if(error)throw error;
     (data || []).forEach(r => { if (!ids.includes(r.followed_id)) ids.push(r.followed_id); });
-  } catch (e) { console.error('Failed to resolve feed audience:', e); }
+  } catch (e) { console.error('Failed to resolve feed audience:', e); throw e; }
   return ids;
 }
 
@@ -10596,14 +10713,10 @@ async function resolveFeedAudience() {
 // Re-checked (cheaply, via count-only queries) every time the Feed loads, so it just quietly
 // disappears once all three are done — no separate "completed" flag to keep in sync.
 async function checkAndRenderOnboarding() {
-  const el = document.getElementById('onboarding-checklist');
-  if (!el) return;
-  el.style.display = shouldShowOnboarding() ? '' : 'none';
-  el.innerHTML = shouldShowOnboarding() ? `<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:16px;background:var(--surface2);border-radius:12px;margin-bottom:20px;">
-    <span style="color:var(--muted);font-size:13px;">Your setup is saved.</span>
-    <button class="onboarding-button" onclick="resumeOnboarding()">Continue setup</button>
-    <button class="onboarding-button" onclick="finishOnboarding('skipped')">Skip for now</button>
-  </div>` : '';
+ const el=document.getElementById('onboarding-checklist');if(!el)return;
+ const unfinished=currentUser && onboardingUserId===currentUser.id && ['pending','skipped'].includes(onboardingState?.status);
+ el.style.display=unfinished?'':'none';
+ el.innerHTML=unfinished?`<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 20px;border:1px solid var(--border);border-radius:12px;margin-bottom:24px;"><span style="color:var(--muted);font-size:13px;">Your picks are saved. Pick up where you left off.</span><button class="onboarding-button" onclick="resumeOnboarding()">Continue setting up your TasteList →</button></div>`:'';
 }
 
 async function onboardingGoAddFavorites() {
@@ -10646,6 +10759,7 @@ function renderWelcomeBanner() {
 // last time the Feed was open), then loads the first page. Called every time the Feed view is
 // entered — see setTopView().
 async function loadPublicFeed() {
+  ++peopleSuggestionsRevision;
   feedRows = [];
   feedOffset = 0;
   feedHasMore = true;
@@ -10669,22 +10783,19 @@ async function fetchFeedPage(isFirstPage) {
   if (isFirstPage) el.innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--muted);font-size:13px;">Loading feed…</div>';
   try {
     if (feedAudienceIds === null) feedAudienceIds = await resolveFeedAudience();
-    const following = feedAudienceIds.length > 1; // more than just yourself
+    const followedIds=feedAudienceIds.filter(id=>id!==currentUser?.id);
+    if(!followedIds.length){feedMode='suggestions';feedHasMore=false;await showPeopleToFollow();return;}
+    document.getElementById('feed-heading').textContent="What's New";
+    document.getElementById('feed-context').textContent='From people you follow';
     let query = sb.from('activity_feed')
       .select('id, label, sub, type, note, activity_date, art_url, tmdb_id, user_id, profiles!activity_feed_user_id_fkey(username, display_name, is_public)')
       .order('activity_date', { ascending: false })
       .range(feedOffset, feedOffset + FEED_PAGE_SIZE - 1);
-    if (following) query = query.in('user_id', feedAudienceIds);
+    query = query.in('user_id', followedIds);
     const { data, error } = await query;
     if (error || !data) throw error || new Error('No data');
-    // "Discover" mode deliberately shows public content only — even though RLS would also let an
-    // accepted-follow private account through, that's what "following" mode is for. "Following"
-    // mode needs no such filter: everything RLS returns there (self + accepted follows) is meant
-    // to show, private or not.
-    const pageRows = following
-      ? data.filter(row => row.profiles && row.profiles.username)
-      : data.filter(row => row.profiles && row.profiles.is_public !== false && row.profiles.username);
-    feedMode = following ? 'following' : 'discover';
+    const pageRows=data.filter(row=>row.profiles?.username && followedIds.includes(row.user_id));
+    feedMode='following';
     feedHasMore = data.length === FEED_PAGE_SIZE;
     feedOffset += data.length;
     feedRows = feedRows.concat(pageRows);
@@ -10697,6 +10808,46 @@ async function fetchFeedPage(isFirstPage) {
   } finally {
     publicFeedLoading = false;
   }
+}
+
+let peopleSuggestionsRevision=0;
+async function showPeopleToFollow() {
+ const el=document.getElementById('public-feed-items'),userId=currentUser?.id;
+ if(!el||!sb||!userId)return;
+ const revision=++peopleSuggestionsRevision;feedMode='suggestions';
+ document.getElementById('feed-heading').textContent='People to follow';
+ document.getElementById('feed-context').textContent='Find your people. Discover what they love.';
+ el.innerHTML='<p style="color:var(--muted)">Finding people…</p>';
+ try {
+  const [profiles,relationships]=await Promise.all([
+   sb.from('profiles').select('id,username,display_name,is_public').eq('is_public',true).neq('id',userId).order('username').limit(60),
+   sb.from('follows').select('followed_id,status').eq('follower_id',userId)
+  ]);
+  if(profiles.error||relationships.error)throw profiles.error||relationships.error;
+  const excluded=new Set((relationships.data||[]).map(r=>r.followed_id));
+  const people=(profiles.data||[]).filter(p=>p.username&&!excluded.has(p.id)).slice(0,8);
+  const ids=people.map(p=>p.id);
+  const previews=ids.length?await sb.from('favorite_artists').select('user_id,name,tile_photo,band_photo').in('user_id',ids).order('sort_order',{ascending:true}):{data:[]};
+  if(currentUser?.id!==userId||revision!==peopleSuggestionsRevision||feedMode!=='suggestions')return;
+  const cards=people.map(person=>{
+   const favorites=(previews.data||[]).filter(p=>p.user_id===person.id).slice(0,4);
+   const url='?u='+encodeURIComponent(person.username);
+   return `<article style="padding:24px;border:1px solid var(--border);border-radius:18px;background:var(--surface);min-width:0;"><a href="${esc(url)}" style="color:var(--text);text-decoration:none;display:block;"><strong style="font-size:19px;">${esc(person.display_name||person.username)}</strong><div style="color:var(--muted);font-size:12px;margin-top:4px;">@${esc(person.username)}</div>${favorites.length?`<div style="display:flex;gap:6px;margin:20px 0 12px;">${favorites.map(p=>`<div style="width:23%;aspect-ratio:1;background:var(--surface2);border-radius:6px;overflow:hidden;">${p.tile_photo||p.band_photo?`<img src="${esc(p.tile_photo||p.band_photo)}" alt="${esc(p.name)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`:''}</div>`).join('')}</div><p style="font-size:12px;color:var(--muted);line-height:1.6;">${esc(favorites.map(p=>p.name).join(' · '))}</p>`:'<p style="font-size:13px;color:var(--muted);margin:24px 0;">Explore their TasteList</p>'}</a><button class="onboarding-button" onclick="followSuggestedPerson('${jsStr(person.id)}',this)">Follow</button></article>`;
+  }).join('');
+  el.innerHTML=`<p style="color:var(--muted);margin:0 0 8px;">Follow people whose taste interests you. Their updates will appear here.</p>${people.length?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;">${cards}</div>`:'<p>No new public profiles to suggest right now. Find someone you know by name.</p>'}<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;"><button class="onboarding-button" onclick="focusPeopleSearch()">Find friends</button><button class="onboarding-button" onclick="loadPublicFeed()">View my feed →</button></div>`;
+ }catch(_){if(currentUser?.id===userId&&revision===peopleSuggestionsRevision)el.innerHTML='<p>Could not load suggestions.</p><button class="onboarding-button" onclick="showPeopleToFollow()">Try again</button>';}
+}
+async function followSuggestedPerson(id,button) {
+ if(!currentUser||button.disabled)return;
+ const userId=currentUser.id;button.disabled=true;
+ try{
+  const {data:person,error:readError}=await sb.from('profiles').select('is_public').eq('id',id).single();
+  if(readError)throw readError;
+  const status=person.is_public?'accepted':'pending';
+  const {error}=await sb.from('follows').insert({follower_id:userId,followed_id:id,status});
+  if(error)throw error;
+  button.textContent=status==='accepted'?'Following ✓':'Requested';feedAudienceIds=null;
+ }catch(_){button.disabled=false;showToast('Could not follow this person. Please try again.');}
 }
 
 function focusPeopleSearch() {
@@ -10862,20 +11013,15 @@ function toggleFeedComments(targetId) {
 function renderPublicFeed(rows, mode, hasMore) {
   const el = document.getElementById('public-feed-items');
   if (!el) return;
-  const discoverBanner = mode === 'discover'
-    ? `<div style="font-size:12.5px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">You're not following anyone yet, so here's what's public.</div>`
-    : '';
-  if (!rows.length) {
-    const emptyMsg = mode === 'following'
-      ? 'The people you follow haven\'t shared anything yet.'
-      : 'No public activity yet.';
-    el.innerHTML = discoverBanner + `<div style="padding:40px 0;text-align:center;color:var(--muted);font-size:13px;">${emptyMsg}</div>`;
-    return;
+  if(mode!=='following')return;
+  if(!rows.length){
+   el.innerHTML=`<div style="padding:40px 0;text-align:center;"><h3>It’s quiet here for now.</h3><p style="color:var(--muted);">New posts from people you follow will appear here.</p><button class="onboarding-button" onclick="showPeopleToFollow()">Find more people</button></div>`;
+   return;
   }
   const footer = hasMore
     ? `<button id="feed-load-more-btn" onclick="loadMoreFeed()" style="align-self:center;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:13px;font-weight:600;font-family:inherit;padding:9px 22px;border-radius:20px;cursor:pointer;">Load more</button>`
     : `<div style="text-align:center;color:var(--faint);font-size:12px;padding:8px 0;">You're all caught up</div>`;
-  el.innerHTML = discoverBanner + rows.map(publicActivityCardHtml).join('') + footer;
+  el.innerHTML = rows.map(publicActivityCardHtml).join('') + footer + `<button class="onboarding-button" style="align-self:center" onclick="showPeopleToFollow()">Find more people</button>`;
 }
 
 
@@ -11263,18 +11409,18 @@ function renderTastePoster() {
  const title=name==='Your'?'Your Taste List':possessiveName(name)+' Taste List';
  const groups=tastePosterGroups();
  if(!groups.some(g=>g.items.length)){el.innerHTML='';return;}
- el.innerHTML=`<article class="taste-poster" aria-label="${esc(title)}"><header class="taste-poster-heading"><h2>${esc(name==='Your'?'Your':possessiveName(name))}<br>Taste List</h2><p>You are what you love</p></header><div class="taste-poster-grid">${groups.map(g=>`<button type="button" class="taste-poster-category" onclick="goToFavorites('${g.tab}')" aria-label="Explore ${g.label}"><h3 style="color:${g.color}"><span style="background:${g.color}"></span>${g.label}</h3><div class="taste-poster-art">${g.items.map(p=>`<div>${p.art?`<img src="${esc(p.art)}" alt="${esc(p.title)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${esc(p.title)}</span>`:`<span>${esc(p.title)}</span>`}</div>`).join('')}</div><ul>${g.items.map(p=>`<li>${esc(p.title)}</li>`).join('')}</ul>${g.items.length?'':'<p class="taste-poster-empty">Still exploring</p>'}</button>`).join('')}</div><footer class="taste-poster-footer"><a class="taste-poster-logo" href="https://tastelist.ai/" aria-label="TasteList home">tastelist</a><a class="taste-poster-create" href="https://tastelist.ai/">Make yours at tastelist.ai <span aria-hidden="true">↗</span></a></footer></article><div class="taste-poster-share"><button class="ob-button ob-secondary" onclick="shareTastePoster()">Share ${isOwnProfile?'my':'this'} TasteList ↗</button><span id="taste-poster-share-status" role="status"></span></div>`;
+ el.innerHTML=`<article class="taste-poster" aria-label="${esc(title)}"><header class="taste-poster-heading"><h2>${esc(name==='Your'?'Your':possessiveName(name))}<br>Taste List</h2><p>You are what you love</p></header><div class="taste-poster-grid">${groups.map(g=>`<button type="button" class="taste-poster-category" onclick="goToFavorites('${g.tab}')" aria-label="Explore ${g.label}"><h3 style="color:${g.color}"><span style="background:${g.color}"></span>${g.label}</h3><div class="taste-poster-art">${g.items.map(p=>`<div>${p.art?`<img src="${esc(p.art)}" alt="${esc(p.title)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${esc(p.title)}</span>`:`<span>${esc(p.title)}</span>`}</div>`).join('')}</div><ul>${g.items.map(p=>`<li>${esc(p.title)}</li>`).join('')}</ul>${g.items.length?'':'<p class="taste-poster-empty">Still exploring</p>'}</button>`).join('')}</div><footer class="taste-poster-footer"><a class="taste-poster-logo" href="https://tastelist.app/" aria-label="TasteList home">tastelist</a><a class="taste-poster-create" href="https://tastelist.app/">Make yours at tastelist.app <span aria-hidden="true">↗</span></a></footer></article><div class="taste-poster-share"><button class="ob-button ob-secondary" onclick="shareTastePoster()">Share ${isOwnProfile?'my':'this'} TasteList ↗</button><span id="taste-poster-share-status" role="status"></span></div>`;
 }
 async function shareTastePoster() {
  const username=viewedProfile?.username;if(!username)return;
- const url='https://tastelist.ai/?u='+encodeURIComponent(username);
+ const url='https://tastelist.app/?u='+encodeURIComponent(username);
  const title=(firstNameOnly(viewedProfile.display_name)||username)+"’s Taste List";
  try{if(navigator.share)await navigator.share({title,text:'You are what you love.',url});else {await navigator.clipboard.writeText(url);document.getElementById('taste-poster-share-status').textContent='Profile link copied';}}
  catch(error){if(error.name!=='AbortError')document.getElementById('taste-poster-share-status').textContent='Could not share. Your profile link: '+url;}
 }
 
 let tasteShareAsset=null,tasteShareRevision=0;
-function tasteShareUrl(){return 'https://tastelist.ai/?u='+encodeURIComponent(viewedProfile?.username||'');}
+function tasteShareUrl(){return 'https://tastelist.app/?u='+encodeURIComponent(viewedProfile?.username||'');}
 function openTasteShare() {
  if(isLockedProfile()||!viewedProfile?.username)return;
  const host=document.getElementById('profile-picks');
@@ -11284,12 +11430,13 @@ function openTasteShare() {
  document.getElementById('taste-share-preview').innerHTML=card?card.outerHTML:'<p>Add some favorites to create your card.</p>';
  host.innerHTML=original;if(heading)heading.hidden=wasHidden;
  const url=tasteShareUrl();
- document.getElementById('taste-share-sms').href='sms:?body='+encodeURIComponent('Here’s my TasteList: '+url);
- document.getElementById('taste-share-whatsapp').href='https://wa.me/?text='+encodeURIComponent('Here’s my TasteList: '+url);
+ const hasNativeShare=!!navigator.share;
+ document.getElementById('taste-share-native').textContent=hasNativeShare?'Share':'Copy link';
+ document.getElementById('taste-share-copy-link').hidden=!hasNativeShare; // on desktop the primary button already copies
  document.querySelectorAll('#taste-share-preview button').forEach(button=>{button.removeAttribute('onclick');button.tabIndex=-1;});
  document.getElementById('taste-share-dialog').showModal();
- tasteShareAsset=null;document.getElementById('taste-share-native').disabled=true;document.getElementById('taste-share-download').disabled=true;
- document.getElementById('taste-share-status').textContent='Preparing your share image…';
+ tasteShareAsset=null;document.getElementById('taste-share-download').disabled=true;document.getElementById('taste-share-download').hidden=false;
+ document.getElementById('taste-share-status').textContent='';
  prepareTasteShareImage(++tasteShareRevision);
 }
 function closeTasteShare(){++tasteShareRevision;tasteShareAsset=null;document.getElementById('taste-share-dialog').close();}
@@ -11321,22 +11468,26 @@ async function prepareTasteShareImage(revision) {
  });
  ctx.fillStyle='#d0cec9';ctx.font=`400 20px ${fontFamily}`;g.items.forEach((p,j)=>textLine(p.title,x,y+525+j*28,370));
  });
- ctx.fillStyle='#f5f1e9';ctx.textAlign='center';ctx.font=`700 54px ${fontFamily}`;ctx.fillText('tastelist',450,1730);ctx.font=`400 17px ${fontFamily}`;ctx.fillText('MAKE YOURS AT TASTELIST.AI',450,1770);
+ ctx.fillStyle='#f5f1e9';ctx.textAlign='center';ctx.font=`700 54px ${fontFamily}`;ctx.fillText('tastelist',450,1730);ctx.font=`400 17px ${fontFamily}`;ctx.fillText('MAKE YOURS AT TASTELIST.APP',450,1770);
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Image export unavailable');
  if(revision!==tasteShareRevision)return;
  tasteShareAsset={file:new File([blob],'my-tastelist.png',{type:'image/png'}),url};
  document.getElementById('taste-share-native').disabled=false;document.getElementById('taste-share-download').disabled=false;
- document.getElementById('taste-share-status').textContent=missing?'Your image is ready. Some artwork could not be included; title labels are preserved.':'Ready to share. For Instagram, save the image and upload it to a Story or post.';
- }catch(error){if(revision!==tasteShareRevision)return;document.getElementById('taste-share-native').disabled=false;document.getElementById('taste-share-status').textContent='Image export isn’t available. You can still share your profile link.';}
+ document.getElementById('taste-share-status').textContent='';
+ }catch(error){if(revision!==tasteShareRevision)return;document.getElementById('taste-share-native').disabled=false;document.getElementById('taste-share-download').hidden=true;}
 }
 async function nativeTasteShare(){
  const url=tasteShareAsset?.url||tasteShareUrl();
  try{
  if(navigator.share){const data={title:'My TasteList',text:'You are what you love.',url};if(tasteShareAsset&&navigator.canShare?.({files:[tasteShareAsset.file]}))data.files=[tasteShareAsset.file];await navigator.share(data);}
  else await copyTasteShareLink();
- }catch(error){if(error.name!=='AbortError')document.getElementById('taste-share-status').textContent='Could not open sharing. Try Copy link or Save image.';}
+ }catch(error){if(error.name!=='AbortError')document.getElementById('taste-share-status').textContent='Couldn’t open sharing — try Copy link instead.';}
 }
-async function copyTasteShareLink(){try{await navigator.clipboard.writeText(tasteShareAsset?.url||tasteShareUrl());document.getElementById('taste-share-status').textContent='Profile link copied.';}catch(_){document.getElementById('taste-share-status').textContent=tasteShareUrl();}}
+async function copyTasteShareLink(){
+ const status=document.getElementById('taste-share-status');
+ try{await navigator.clipboard.writeText(tasteShareAsset?.url||tasteShareUrl());status.textContent='✓ Link copied';setTimeout(()=>{if(status.textContent==='✓ Link copied')status.textContent='';},2000);}
+ catch(_){status.textContent=tasteShareUrl();}
+}
 function downloadTasteShareImage(){if(!tasteShareAsset)return;const url=URL.createObjectURL(tasteShareAsset.file),a=document.createElement('a');a.href=url;a.download='my-tastelist.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 
 function renderProfileTab() {
@@ -12541,15 +12692,13 @@ renderTasteInfluences();
 
     <div class="tl-field">
       <label class="tl-label">Type<span class="tl-required">*</span></label>
-      <select id="taste-item-category" class="tl-select">
-        <option value="books">Book</option>
-        <option value="movies">Movie</option>
-        <option value="music">Song</option>
-      </select>
+      <input type="hidden" id="taste-item-category" value="books">
+      <div id="taste-item-type-chips" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      <input id="taste-item-custom-type" class="tl-input" type="text" maxlength="40" placeholder="What is it? e.g. Restaurant, Board game, Museum" style="display:none;margin-top:10px;">
     </div>
 
     <div class="tl-field">
-      <label class="tl-label">Author / Artist</label>
+      <label class="tl-label" id="taste-item-sub-label">Author / Artist</label>
       <input id="taste-item-sub" class="tl-input" type="text">
     </div>
 
@@ -12600,6 +12749,6 @@ renderTasteInfluences();
 </div>
 
 <dialog id="creator-picks-dialog" style="width:min(640px,calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid var(--border);border-radius:20px;padding:28px;background:var(--surface);color:var(--text)" oncancel="event.preventDefault();closeCreatorPicks()"><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="creator-picks-title"></h2><button aria-label="Close" onclick="closeCreatorPicks()">×</button></div><p style="color:var(--muted)">Search, select your favorites, and put them in your order.</p><div id="creator-picks-selected"></div><form onsubmit="event.preventDefault();searchCreatorPicks()" style="display:flex;gap:8px;margin:20px 0"><input id="creator-picks-query" aria-label="Search titles" placeholder="Search titles…" style="flex:1;min-width:0;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px"><button type="submit" class="ob-button ob-secondary">Search</button></form><div id="creator-picks-results"></div><p id="creator-picks-error" role="alert" style="color:#f2a69a"></p><button id="creator-picks-save" class="ob-button ob-primary" onclick="saveCreatorPicks()">Save favorites</button></dialog>
-<dialog id="taste-share-dialog" aria-labelledby="taste-share-title" oncancel="event.preventDefault();closeTasteShare()" style="width:min(680px,calc(100% - 24px));max-height:90dvh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px"><h2 id="taste-share-title">Share your TasteList</h2><button aria-label="Close sharing" onclick="closeTasteShare()" class="ob-text-link">✕</button></div><div id="taste-share-preview"></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px"><button id="taste-share-native" class="ob-button ob-primary" onclick="nativeTasteShare()">Share…</button><button id="taste-share-download" class="ob-button ob-secondary" onclick="downloadTasteShareImage()">Save image</button><button class="ob-button ob-secondary" onclick="copyTasteShareLink()">Copy link</button><a id="taste-share-sms" class="ob-button ob-secondary">Text message</a><a id="taste-share-whatsapp" class="ob-button ob-secondary" target="_blank" rel="noopener">WhatsApp</a></div><p id="taste-share-status" role="status" style="font-size:13px;color:var(--muted);line-height:1.5;text-align:center"></p></dialog>
+<dialog id="taste-share-dialog" aria-labelledby="taste-share-title" oncancel="event.preventDefault();closeTasteShare()" style="width:min(680px,calc(100% - 24px));max-height:90dvh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px"><h2 id="taste-share-title">Share your TasteList</h2><button aria-label="Close sharing" onclick="closeTasteShare()" class="ob-text-link">✕</button></div><div id="taste-share-preview"></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px"><button id="taste-share-native" class="ob-button ob-primary" style="min-width:160px" onclick="nativeTasteShare()">Share</button><button id="taste-share-download" class="ob-button ob-secondary" onclick="downloadTasteShareImage()">Save image</button></div><div style="text-align:center;margin-top:12px"><button id="taste-share-copy-link" class="ob-text-link" onclick="copyTasteShareLink()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:inherit">Copy link</button></div><p id="taste-share-status" role="status" style="font-size:13px;color:var(--muted);line-height:1.5;text-align:center;min-height:1.5em;margin:6px 0 0"></p></dialog>
 </body>
 </html>
