@@ -2460,7 +2460,7 @@ function readTasteItemType() {
 }
 
 function openTasteItemForm(category, flatIdx) {
-  tasteItemFormState = { category: category || 'books', id: null, picked: null, tmdbId: null };
+  tasteItemFormState = { category: category || 'books', id: null, picked: null, tmdbId: null, reresolve: false };
   hideTasteSuggestions();
   document.getElementById('taste-item-link').value = '';
   document.getElementById('taste-item-link-note').textContent = "We'll pull the artwork from the page.";
@@ -2889,6 +2889,10 @@ async function saveTasteItemForm() {
     return;
   }
 
+  if (tasteItemFormState.id && ['movies', 'tv'].includes(category) && !tasteItemFormState.picked) {
+    const prev = tripPlaylistFlatItems.find(i => i.id === tasteItemFormState.id);
+    if (prev && (prev.title !== title || (prev.sub || '') !== sub) && art === prev.art && !link) { art = ''; tasteItemFormState.tmdbId = null; tasteItemFormState.reresolve = true; }
+  }
   const row = {
     category,
     title,
@@ -2899,6 +2903,7 @@ async function saveTasteItemForm() {
     link_url: link || null,
     tmdb_id: tasteItemFormState.tmdbId || null,
   };
+  if (tasteItemFormState.id && !tasteItemFormState.tmdbId && !tasteItemFormState.reresolve) delete row.tmdb_id; // keep any stored match unless re-resolving
 
   try {
     if (tasteItemFormState.id) {
@@ -10164,6 +10169,38 @@ async function persistTasteItemFields(itemId, fields) {
   if (!sb || !itemId) return;
   try { await sb.from('taste_list_items').update(fields).eq('id', itemId); } catch (e) { console.error('Failed to save item details:', e); }
 }
+// A plain title search returns TMDB's most popular match, which is often the wrong film ("The
+// Covenant", "Passing"). When the item names a director/creator, check the top candidates'
+// credits and pick the one that person actually made.
+async function resolveTmdbTitle(type, title, person) {
+  const norm = v => String(v || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const queries = [title];
+  if (person) queries.push(`${person}'s ${title}`);
+  const seen = new Map();
+  for (const q of queries) {
+    try {
+      const d = await (await tmdbFetch(`/search/${type}?query=${encodeURIComponent(q)}&page=1`)).json();
+      (d.results || []).slice(0, 8).forEach(r => { if (!seen.has(r.id)) seen.set(r.id, r); });
+    } catch (_) {}
+  }
+  const candidates = [...seen.values()];
+  if (!candidates.length) return null;
+  const who = norm(person);
+  if (who) {
+    for (const c of candidates.slice(0, 8)) {
+      try {
+        const credits = await (await tmdbFetch(`/${type}/${c.id}/credits`)).json();
+        const crew = (credits.crew || []).filter(x => ['Director', 'Creator', 'Screenplay', 'Writer', 'Executive Producer'].includes(x.job)).map(x => norm(x.name));
+        let creators = [];
+        if (type === 'tv') { try { creators = ((await (await tmdbFetch(`/tv/${c.id}`)).json()).created_by || []).map(x => norm(x.name)); } catch (_) {} }
+        if ([...crew, ...creators].some(n => n === who || n.endsWith(' ' + who) || who.endsWith(' ' + n))) return c;
+      } catch (_) {}
+    }
+  }
+  // No person to check against: prefer an exact title match over TMDB's popularity order.
+  return candidates.find(c => norm(c.title || c.name) === norm(title)) || candidates[0];
+}
+
 const KNOWN_IMAGE_HOSTS = /(image\.tmdb\.org|mzstatic\.com|covers\.openlibrary\.org|books\.google|googleusercontent\.com|media-amazon\.com|gr-assets\.com|cloudfront\.net)/i;
 function looksLikeImageUrl(url) { return /\.(jpe?g|png|gif|webp|avif)(\?|#|$)/i.test(url) || KNOWN_IMAGE_HOSTS.test(url); }
 
@@ -10188,15 +10225,19 @@ function initTripPlaylistArt() {
     if (item.art) return;
     (async () => {
       try {
-        let movieId = item.tmdbId;
+        let movieId = item.tmdbId, resolved = false;
         if (!movieId) {
-          const r = await tmdbFetch(`/search/movie?query=${encodeURIComponent(item.tmdbQuery)}&page=1`);
-          const d = await r.json();
-          movieId = d.results?.[0]?.id;
+          const hit = await resolveTmdbTitle('movie', item.tmdbQuery || item.title, item.sub);
+          movieId = hit?.id; resolved = !!movieId;
         }
         if (!movieId) return;
         const detail = await fetchMovieDetail(movieId);
-        if (detail.poster) { item.art = `${TMDB_IMG}${detail.poster}`; persistTasteItemArt(item.id, item.art); renderTripPlaylist(); refreshActivityFeeds(); }
+        if (detail.poster) {
+          item.art = `${TMDB_IMG}${detail.poster}`;
+          if (resolved) { item.tmdbId = movieId; persistTasteItemFields(item.id, { art_url: item.art, tmdb_id: movieId }); }
+          else persistTasteItemArt(item.id, item.art);
+          renderTripPlaylist(); refreshActivityFeeds();
+        }
       } catch (e) {}
     })();
   });
@@ -10219,10 +10260,8 @@ function initTripPlaylistArt() {
     if (item.art || !item.tmdbQuery) return;
     (async () => {
       try {
-        const r = await tmdbFetch(`/search/tv?query=${encodeURIComponent(item.tmdbQuery)}&page=1`);
-        const d = await r.json();
-        const poster = d.results?.[0]?.poster_path;
-        if (poster) { item.art = `${TMDB_IMG}${poster}`; persistTasteItemArt(item.id, item.art); renderTripPlaylist(); refreshActivityFeeds(); }
+        const hit = await resolveTmdbTitle('tv', item.tmdbQuery, item.sub);
+        if (hit?.poster_path) { item.art = `${TMDB_IMG}${hit.poster_path}`; item.tmdbId = hit.id; persistTasteItemFields(item.id, { art_url: item.art, tmdb_id: hit.id }); renderTripPlaylist(); refreshActivityFeeds(); }
       } catch (e) {}
     })();
   });
