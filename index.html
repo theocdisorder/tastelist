@@ -2851,7 +2851,9 @@ async function saveTasteItemForm() {
   const category = readTasteItemType();
   const sub = document.getElementById('taste-item-sub').value.trim();
   const eventDate = document.getElementById('taste-item-date').value.trim();
-  const by = document.getElementById('taste-item-by').value.trim();
+  let by = document.getElementById('taste-item-by').value.trim();
+  // Your own name here is redundant — your user tag already shows it's your pick.
+  { const me = [firstNameOnly(currentProfile?.display_name), currentProfile?.username].filter(Boolean).map(v => v.toLowerCase()); if (me.includes(by.toLowerCase())) by = ''; }
   let art = document.getElementById('taste-item-art').value.trim();
   let link = document.getElementById('taste-item-link').value.trim();
   const errEl = document.getElementById('taste-item-modal-error');
@@ -9844,7 +9846,35 @@ function clearTripPlaylistItems() {
   TRIP_PLAYLIST_CATEGORIES.length = 0;
   TASTE_ITEM_TYPES.forEach(t => TRIP_PLAYLIST_CATEGORIES.push({ key: t.key, label: t.label, color: t.color }));
 }
+// Profiles of the people who added items, for the user tag on each card.
+const tasteListPeople = new Map();
+async function loadTasteListPeople(rows) {
+  const ids = [...new Set((rows || []).map(r => r.added_by).filter(id => id && !tasteListPeople.has(id)))];
+  if (!ids.length || !sb) return;
+  try {
+    const { data } = await sb.from('profiles').select('id, username, display_name, avatar_url').in('id', ids);
+    (data || []).forEach(p => tasteListPeople.set(p.id, p));
+    renderTripPlaylist();
+  } catch (_) {}
+}
+function tastePersonTagHtml(item, size = 'card') {
+  const person = item.addedBy ? tasteListPeople.get(item.addedBy) : null;
+  // A free-text name means someone outside TasteList recommended it; otherwise it's the adder's pick.
+  const name = item.by || (person ? (firstNameOnly(person.display_name) || person.username) : '');
+  if (!name) return '';
+  const linked = !item.by && person?.username;
+  const d = size === 'card' ? 18 : 22;
+  const avatar = !item.by && person?.avatar_url
+    ? `<img src="${esc(person.avatar_url)}" alt="" style="width:${d}px;height:${d}px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
+    : `<span style="width:${d}px;height:${d}px;border-radius:50%;background:linear-gradient(135deg,#7C4DFF,#a78bfa);color:#fff;font-size:${Math.round(d * 0.45)}px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${esc(initials(name))}</span>`;
+  const style = `display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text);text-decoration:none;max-width:100%;`;
+  const label = `${avatar}<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(name)}</span>`;
+  return linked
+    ? `<a href="javascript:void(0)" onclick="event.stopPropagation(); goToProfile('${esc(person.username)}')" title="${esc(name)}'s pick" style="${style}cursor:pointer;">${label}</a>`
+    : `<span title="Recommended by ${esc(name)}" style="${style}">${label}</span>`;
+}
 function setTripPlaylistItemsFromRows(rows) {
+  loadTasteListPeople(rows);
   clearTripPlaylistItems();
   (rows || []).forEach(row => {
     const key = row.category;
@@ -9856,7 +9886,7 @@ function setTripPlaylistItemsFromRows(rows) {
     TRIP_PLAYLIST_ITEMS[key].push({
       id: row.id, title: row.title, sub: row.sub || '', by: row.recommended_by || '',
       eventDate: row.event_date || '',
-      caption: row.caption || undefined, art: row.art_url || '', tmdbId: row.tmdb_id || undefined, link: row.link_url || '',
+      caption: row.caption || undefined, art: row.art_url || '', tmdbId: row.tmdb_id || undefined, link: row.link_url || '', addedBy: row.added_by || null,
       // Not stored columns — rebuilt from title/sub so the live art/summary lookups have a query.
       bookQuery: key === 'books' ? `${row.title} ${row.sub || ''}`.trim() : undefined,
       tmdbQuery: (key === 'movies' || key === 'tv') && !row.tmdb_id ? row.title : undefined,
@@ -10011,7 +10041,8 @@ function renderTripPlaylist() {
             ${item.sub ? `<div class="collage-card-sub">${esc(item.sub)}</div>` : ''}
             ${item.link ? `<a href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-block;margin-top:4px;font-size:12px;color:var(--accent);text-decoration:none;">${esc((()=>{try{return new URL(item.link).hostname.replace(/^www\./,'');}catch(_){return 'Open link';}})())} ↗</a>` : ''}
             ${sharedItemDate(item) ? `<div class="collage-card-by">${esc(sharedDateLabel(item))}</div>` : ''}
-            ${item.caption ? `<div class="collage-card-by">— ${esc(item.caption)}</div>` : (item.by ? `<div class="collage-card-by">— rec'd by ${esc(item.by)}</div>` : '')}
+            ${item.caption ? `<div class="collage-card-by">— ${esc(item.caption)}</div>` : ''}
+            ${tastePersonTagHtml(item)}
           </div>
         </div>`;
       if (!sharedItemDate(item)) undatedCards.push(card);
@@ -10283,7 +10314,8 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
           <div style="font-size:17px;font-weight:700;color:var(--text);">${esc(item.title)}</div>
           <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(item.sub || '')}</div>
           ${item.eventDate ? `<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">📅 ${esc(sharedDateLabel(item))}</div>` : ''}
-          ${item.caption ? `<div style="font-size:11.5px;color:${color};margin-top:4px;font-style:italic;">— ${esc(item.caption)}</div>` : (item.by ? `<div style="font-size:11.5px;color:${color};margin-top:4px;font-style:italic;">— recommended by ${esc(item.by)}</div>` : '')}
+          ${item.caption ? `<div style="font-size:11.5px;color:${color};margin-top:4px;font-style:italic;">— ${esc(item.caption)}</div>` : ''}
+          ${tastePersonTagHtml(item, 'modal')}
         </div>
       </div>
       <div style="padding:14px 20px 20px;border-top:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);min-height:20px;">
@@ -12924,8 +12956,8 @@ renderTasteInfluences();
     </div>
 
     <div class="tl-field">
-      <label class="tl-label">Recommended by</label>
-      <input id="taste-item-by" class="tl-input" type="text" placeholder="Ritu">
+      <label class="tl-label">Recommended by someone else? <span class="tl-hint">optional</span></label>
+      <input id="taste-item-by" class="tl-input" type="text" placeholder="Leave blank if it's your pick">
     </div>
 
     <div class="tl-field">
