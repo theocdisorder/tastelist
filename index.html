@@ -11396,8 +11396,8 @@ function tastePosterGroups() {
  const poster=x=>x.poster?(x.poster.startsWith('http')?x.poster:TMDB_IMG+x.poster):'';
  return [
   {label:'Music',tab:'music',color:'#a26aff',items:dedupe([...preferred.filter(x=>x.kind==='artist'),...artists]).map(x=>({title:x.name||x.title,art:x.tilePhoto||x.bandPhoto||''}))},
-  {label:'Movies',tab:'movies',color:'#ff7864',items:dedupe([...preferred.filter(x=>x.kind==='movie'),...allFavoriteMovies()]).map(x=>({title:x.title,art:poster(x)}))},
-  {label:'TV',tab:'tv',color:'#35a8ff',items:dedupe([...preferred.filter(x=>x.kind==='tv'),...Object.values(CUSTOM_LISTS.tv).flat()]).map(x=>({title:x.title,art:poster(x)}))},
+  {label:'Movies',tab:'movies',color:'#ff7864',items:dedupe([...preferred.filter(x=>x.kind==='movie'),...allFavoriteMovies()]).map(x=>({title:x.title,art:poster(x),tmdbId:x.tmdbId,tmdbType:x.type==='tv'?'tv':'movie'}))},
+  {label:'TV',tab:'tv',color:'#35a8ff',items:dedupe([...preferred.filter(x=>x.kind==='tv'),...Object.values(CUSTOM_LISTS.tv).flat()]).map(x=>({title:x.title,art:poster(x),tmdbId:x.tmdbId,tmdbType:'tv'}))},
   {label:'Books',tab:'books',color:'#32cf83',items:dedupe([...preferred.filter(x=>x.kind==='book'),...Object.values(CUSTOM_LISTS.books).flat()]).map(x=>({title:x.title,art:preferredBookCover(x.title,x.author)||x.cover||''}))}
  ];
 }
@@ -11440,6 +11440,40 @@ function openTasteShare() {
  prepareTasteShareImage(++tasteShareRevision);
 }
 function closeTasteShare(){++tasteShareRevision;tasteShareAsset=null;document.getElementById('taste-share-dialog').close();}
+// Movie/TV posters are normally fetched only when their tab is opened, so fill any gaps here.
+async function fillMissingSharePosters(groups) {
+ const jobs=[];
+ for(const g of groups)for(const p of g.items){
+  if(p.art||!p.tmdbType)continue;
+  jobs.push((async()=>{
+   try{
+    let id=p.tmdbId;
+    if(!id){const r=await tmdbFetch(`/search/${p.tmdbType}?query=${encodeURIComponent(p.title)}&page=1`);id=(await r.json()).results?.[0]?.id;}
+    if(!id)return;
+    const d=await (await tmdbFetch(`/${p.tmdbType}/${id}`)).json();
+    if(d.poster_path)p.art=TMDB_IMG+d.poster_path;
+   }catch(_){}
+  })());
+ }
+ await Promise.all(jobs);
+}
+// Images from hosts without CORS headers can't be drawn onto a canvas directly. Try direct first,
+// then fetch through the image-proxy edge function and draw from a same-origin blob URL.
+function loadShareImageDirect(src){return new Promise(resolve=>{const img=new Image();img.crossOrigin='anonymous';const t=setTimeout(()=>resolve(null),6000);img.onload=()=>{clearTimeout(t);resolve(img)};img.onerror=()=>{clearTimeout(t);resolve(null)};img.src=src;});}
+async function loadShareImageViaProxy(src){
+ try{
+  if(!sb||src.startsWith('data:')||src.startsWith('blob:'))return null;
+  const token=(await sb.auth.getSession()).data.session?.access_token;if(!token)return null;
+  const r=await fetch(`${SUPABASE_URL}/functions/v1/image-proxy?url=${encodeURIComponent(src)}`,{headers:{Authorization:`Bearer ${token}`,apikey:SUPABASE_ANON_KEY},signal:AbortSignal.timeout(10000)});
+  if(!r.ok)return null;
+  const url=URL.createObjectURL(await r.blob());
+  const img=await loadShareImageDirect(url);
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  return img;
+ }catch(_){return null;}
+}
+async function loadShareImage(src){return (await loadShareImageDirect(src))||(await loadShareImageViaProxy(src));}
+
 async function prepareTasteShareImage(revision) {
  const groups=tastePosterGroups(),name=firstNameOnly(viewedProfile?.display_name)||viewedProfile.username;
  const url=tasteShareUrl();
@@ -11454,8 +11488,10 @@ async function prepareTasteShareImage(revision) {
  ctx.fillText(heading,50,105);ctx.font=`700 76px ${fontFamily}`;ctx.fillText('TASTE LIST',50,190);
  ctx.font=`400 19px ${fontFamily}`;ctx.fillStyle='#d0ccc5';ctx.fillText('YOU ARE WHAT YOU LOVE',50,237);
  let missing=0;
+ await fillMissingSharePosters(groups);
+ if(revision!==tasteShareRevision)return;
  const assets=await Promise.all(groups.map(g=>Promise.all(g.items.map(p=>new Promise(resolve=>{
-  if(!p.art){resolve(null);return;}const img=new Image();img.crossOrigin='anonymous';const timer=setTimeout(()=>{missing++;resolve(null)},7000);img.onload=()=>{clearTimeout(timer);resolve(img)};img.onerror=()=>{clearTimeout(timer);missing++;resolve(null)};img.src=p.art;
+  if(!p.art){resolve(null);return;}loadShareImage(p.art).then(img=>{if(!img)missing++;resolve(img);});
  })))));
  function textLine(text,x,y,max){let t=text;while(ctx.measureText(t).width>max&&t.length>1)t=t.slice(0,-1);ctx.fillText(t===text?t:t.slice(0,-1)+'…',x,y);}
  groups.forEach((g,i)=>{
