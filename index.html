@@ -2318,6 +2318,115 @@ function toggleEditMode() {
 // State for whichever item is currently being added/edited in the modal
 let tasteItemFormState = { category: null, id: null };
 
+// ── Add-item form: type-ahead suggestions per type ──
+const TASTE_SEARCHABLE = ['books','movies','tv','music','albums','podcasts','comedy'];
+let tasteSuggest = { timer: null, seq: 0, results: [], active: -1 };
+async function searchTasteCatalog(type, q) {
+  const itunes = async (media, entity, map) => {
+    const d = await sharedCatalogJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=${media}&entity=${entity}&limit=6`);
+    return (d.results || []).map(map);
+  };
+  const big = u => (u || '').replace(/\d+x\d+bb/, '600x600bb');
+  if (type === 'books') {
+    try {
+      const d = await sharedCatalogJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=6&fields=title,author_name,first_publish_year,cover_i`);
+      const r = (d.docs || []).map(b => ({ title: b.title, sub: (b.author_name || [])[0] || '', meta: b.first_publish_year || '', art: b.cover_i ? `https://covers.openlibrary.org/b/id/${b.cover_i}-L.jpg` : '' }));
+      if (r.length) return r;
+    } catch (_) {}
+    const d = await sharedCatalogJSON(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=6`);
+    return (d.items || []).map(i => i.volumeInfo).map(v => ({ title: v.title, sub: (v.authors || [])[0] || '', meta: (v.publishedDate || '').slice(0, 4), art: (v.imageLinks?.thumbnail || '').replace('http:', 'https:') }));
+  }
+  if (type === 'movies' || type === 'tv') {
+    const d = await (await tmdbFetch(`/search/${type === 'tv' ? 'tv' : 'movie'}?query=${encodeURIComponent(q)}&page=1`)).json();
+    return (d.results || []).slice(0, 6).map(r => ({ title: r.title || r.name, sub: '', meta: (r.release_date || r.first_air_date || '').slice(0, 4), art: r.poster_path ? `${TMDB_IMG}${r.poster_path}` : '', tmdbId: r.id }));
+  }
+  if (type === 'comedy') {
+    const d = await (await tmdbFetch(`/search/multi?query=${encodeURIComponent(q)}&page=1`)).json();
+    return (d.results || []).filter(r => ['movie', 'tv'].includes(r.media_type)).slice(0, 6).map(r => ({ title: r.title || r.name, sub: '', meta: (r.release_date || r.first_air_date || '').slice(0, 4), art: r.poster_path ? `${TMDB_IMG}${r.poster_path}` : '' }));
+  }
+  if (type === 'music') return itunes('music', 'song', r => ({ title: r.trackName, sub: r.artistName, meta: r.collectionName || '', art: big(r.artworkUrl100) }));
+  if (type === 'albums') return itunes('music', 'album', r => ({ title: r.collectionName, sub: r.artistName, meta: (r.releaseDate || '').slice(0, 4), art: big(r.artworkUrl100) }));
+  if (type === 'podcasts') return itunes('podcast', 'podcast', r => ({ title: r.collectionName || r.trackName, sub: r.artistName || '', meta: r.primaryGenreName || '', art: r.artworkUrl600 || big(r.artworkUrl100) }));
+  return [];
+}
+function onTasteTitleInput() {
+  const q = document.getElementById('taste-item-title').value.trim();
+  // Typing after picking a suggestion means it's no longer that exact item.
+  if (tasteItemFormState.picked && q !== tasteItemFormState.picked.title) { tasteItemFormState.picked = null; tasteItemFormState.tmdbId = null; if (!document.getElementById('taste-item-link').value.trim()) setTasteItemArt(''); }
+  clearTimeout(tasteSuggest.timer);
+  const type = document.getElementById('taste-item-category').value;
+  if (q.length < 2 || !TASTE_SEARCHABLE.includes(type)) { hideTasteSuggestions(); return; }
+  tasteSuggest.timer = setTimeout(async () => {
+    const seq = ++tasteSuggest.seq;
+    let results = [];
+    try { results = await searchTasteCatalog(type, q); } catch (_) {}
+    if (seq !== tasteSuggest.seq) return;
+    tasteSuggest.results = results.filter(r => r.title); tasteSuggest.active = -1;
+    renderTasteSuggestions();
+  }, 250);
+}
+function renderTasteSuggestions() {
+  const el = document.getElementById('taste-item-suggestions');
+  if (!tasteSuggest.results.length) { hideTasteSuggestions(); return; }
+  el.innerHTML = tasteSuggest.results.map((r, i) => `<div role="option" aria-selected="${i === tasteSuggest.active}" onmousedown="event.preventDefault();pickTasteSuggestion(${i})" onmouseover="tasteSuggest.active=${i};renderTasteSuggestions()" style="display:flex;gap:10px;align-items:center;padding:8px 12px;cursor:pointer;${i === tasteSuggest.active ? 'background:rgba(124,77,255,0.18);' : ''}">
+      ${r.art ? `<img src="${esc(r.art)}" alt="" style="width:32px;height:44px;object-fit:cover;border-radius:4px;flex-shrink:0;background:var(--surface3, #333);">` : `<div style="width:32px;height:44px;border-radius:4px;flex-shrink:0;background:var(--surface3, #333);"></div>`}
+      <div style="min-width:0;"><div style="font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r.title)}</div>
+      <div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc([r.sub, r.meta].filter(Boolean).join(' · '))}</div></div></div>`).join('');
+  el.style.display = 'block';
+}
+function hideTasteSuggestions() { const el = document.getElementById('taste-item-suggestions'); if (el) { el.style.display = 'none'; el.innerHTML = ''; } tasteSuggest.results = []; }
+function onTasteTitleKeydown(e) {
+  if (!tasteSuggest.results.length) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); tasteSuggest.active = Math.min(tasteSuggest.results.length - 1, tasteSuggest.active + 1); renderTasteSuggestions(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); tasteSuggest.active = Math.max(0, tasteSuggest.active - 1); renderTasteSuggestions(); }
+  else if (e.key === 'Enter' && tasteSuggest.active >= 0) { e.preventDefault(); pickTasteSuggestion(tasteSuggest.active); }
+  else if (e.key === 'Escape') { hideTasteSuggestions(); }
+}
+function pickTasteSuggestion(i) {
+  const r = tasteSuggest.results[i]; if (!r) return;
+  tasteSuggest.seq++;
+  document.getElementById('taste-item-title').value = r.title;
+  if (r.sub) document.getElementById('taste-item-sub').value = r.sub;
+  tasteItemFormState.picked = r; tasteItemFormState.tmdbId = r.tmdbId || null;
+  if (r.art) setTasteItemArt(r.art);
+  hideTasteSuggestions();
+}
+function setTasteItemArt(url) {
+  document.getElementById('taste-item-art').value = url || '';
+  const img = document.getElementById('taste-item-art-preview');
+  if (url) { img.src = url; img.style.display = 'block'; img.onerror = () => { img.style.display = 'none'; }; } else { img.removeAttribute('src'); img.style.display = 'none'; }
+}
+
+// ── Link previews: pull artwork (and a title) from an article / episode / any page ──
+const linkPreviewCache = new Map();
+async function fetchLinkPreview(url) {
+  if (!/^https?:\/\//i.test(url || '') || !sb) return null;
+  if (linkPreviewCache.has(url)) return linkPreviewCache.get(url);
+  const job = (async () => {
+    try {
+      const token = (await sb.auth.getSession()).data.session?.access_token; if (!token) return null;
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/link-preview?url=${encodeURIComponent(url)}`, { headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY }, signal: AbortSignal.timeout(12000) });
+      return r.ok ? await r.json() : null;
+    } catch (_) { return null; }
+  })();
+  linkPreviewCache.set(url, job);
+  return job;
+}
+async function previewTasteItemLink() {
+  const input = document.getElementById('taste-item-link'), note = document.getElementById('taste-item-link-note');
+  const url = input.value.trim();
+  if (!url) { note.textContent = "We'll pull the artwork from the page."; return; }
+  if (!/^https?:\/\//i.test(url)) { note.textContent = 'Links need to start with https://'; return; }
+  note.textContent = 'Fetching preview…';
+  const p = await fetchLinkPreview(url);
+  if (input.value.trim() !== url) return;
+  if (!p || (!p.image && !p.title)) { note.textContent = "Couldn't find artwork on that page — the link will still be saved."; return; }
+  if (p.image && !(tasteItemFormState.picked && document.getElementById('taste-item-art').value)) setTasteItemArt(p.image);
+  const titleEl = document.getElementById('taste-item-title');
+  if (!titleEl.value.trim() && p.title && !p.isImage) titleEl.value = p.title.slice(0, 200);
+  note.textContent = p.isImage ? 'Using this image as the artwork.' : `Preview from ${p.siteName || new URL(url).hostname}.`;
+}
+
 function renderTasteTypeChips() {
   const el = document.getElementById('taste-item-type-chips');
   if (!el) return;
@@ -2333,6 +2442,10 @@ function renderTasteTypeChips() {
 function setTasteItemType(key) {
   document.getElementById('taste-item-category').value = key;
   renderTasteTypeChips();
+  hideTasteSuggestions();
+  const t = document.getElementById('taste-item-title');
+  t.placeholder = TASTE_SEARCHABLE.includes(key) ? `Start typing to search ${tasteTypeMeta(key).label.toLowerCase()}…` : '';
+  if (key !== '__other') t.focus();
   if (key === '__other') document.getElementById('taste-item-custom-type').focus();
 }
 function readTasteItemType() {
@@ -2347,7 +2460,10 @@ function readTasteItemType() {
 }
 
 function openTasteItemForm(category, flatIdx) {
-  tasteItemFormState = { category: category || 'books', id: null };
+  tasteItemFormState = { category: category || 'books', id: null, picked: null, tmdbId: null };
+  hideTasteSuggestions();
+  document.getElementById('taste-item-link').value = '';
+  document.getElementById('taste-item-link-note').textContent = "We'll pull the artwork from the page.";
   document.getElementById('taste-item-modal-error').style.display = 'none';
   document.getElementById('taste-item-title').value = '';
   document.getElementById('taste-item-category').value = category || 'books';
@@ -2355,7 +2471,7 @@ function openTasteItemForm(category, flatIdx) {
   document.getElementById('taste-item-sub').value = '';
   document.getElementById('taste-item-date').value = '';
   document.getElementById('taste-item-by').value = '';
-  document.getElementById('taste-item-art').value = '';
+  setTasteItemArt('');
   document.getElementById('taste-item-modal-title').textContent = 'Add item';
 
   if (flatIdx !== undefined) {
@@ -2369,11 +2485,15 @@ function openTasteItemForm(category, flatIdx) {
       document.getElementById('taste-item-sub').value = item.sub || '';
       document.getElementById('taste-item-date').value = item.eventDate || '';
       document.getElementById('taste-item-by').value = item.by || '';
-      document.getElementById('taste-item-art').value = item.art || '';
+      setTasteItemArt(item.art || '');
+      document.getElementById('taste-item-link').value = item.link || '';
+      tasteItemFormState.tmdbId = item.tmdbId || null;
     }
   }
   renderTasteTypeChips();
+  { const k = document.getElementById('taste-item-category').value, t = document.getElementById('taste-item-title'); t.placeholder = TASTE_SEARCHABLE.includes(k) ? `Start typing to search ${tasteTypeMeta(k).label.toLowerCase()}…` : ''; }
   document.getElementById('taste-item-modal').style.display = 'flex';
+  if (flatIdx === undefined && category !== '__other') setTimeout(() => document.getElementById('taste-item-title').focus(), 0);
   if (document.getElementById('taste-item-category').value === '__other') document.getElementById('taste-item-custom-type').focus();
 }
 
@@ -2727,13 +2847,23 @@ async function removeCollaborator(listId, userId) {
 }
 
 async function saveTasteItemForm() {
-  const title = document.getElementById('taste-item-title').value.trim();
+  let title = document.getElementById('taste-item-title').value.trim();
   const category = readTasteItemType();
   const sub = document.getElementById('taste-item-sub').value.trim();
   const eventDate = document.getElementById('taste-item-date').value.trim();
   const by = document.getElementById('taste-item-by').value.trim();
-  const art = document.getElementById('taste-item-art').value.trim();
+  let art = document.getElementById('taste-item-art').value.trim();
+  let link = document.getElementById('taste-item-link').value.trim();
   const errEl = document.getElementById('taste-item-modal-error');
+  if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+  if (link) {
+    const saveBtn = document.getElementById('taste-item-save-btn'); saveBtn.disabled = true;
+    const p = await fetchLinkPreview(link);
+    saveBtn.disabled = false;
+    if (p?.isImage) { art = art || link; link = ''; }
+    else if (p?.image && !art) art = p.image;
+    if (!title && p?.title && !p.isImage) { title = p.title.slice(0, 200); document.getElementById('taste-item-title').value = title; }
+  }
   errEl.style.display = 'none';
   if (!category) {
     errEl.textContent = 'Tell us what kind of thing this is.';
@@ -2764,6 +2894,8 @@ async function saveTasteItemForm() {
     event_date: eventDate || null,
     recommended_by: by || null,
     art_url: art || null,
+    link_url: link || null,
+    tmdb_id: tasteItemFormState.tmdbId || null,
   };
 
   try {
@@ -9724,7 +9856,7 @@ function setTripPlaylistItemsFromRows(rows) {
     TRIP_PLAYLIST_ITEMS[key].push({
       id: row.id, title: row.title, sub: row.sub || '', by: row.recommended_by || '',
       eventDate: row.event_date || '',
-      caption: row.caption || undefined, art: row.art_url || '', tmdbId: row.tmdb_id || undefined,
+      caption: row.caption || undefined, art: row.art_url || '', tmdbId: row.tmdb_id || undefined, link: row.link_url || '',
       // Not stored columns — rebuilt from title/sub so the live art/summary lookups have a query.
       bookQuery: key === 'books' ? `${row.title} ${row.sub || ''}`.trim() : undefined,
       tmdbQuery: (key === 'movies' || key === 'tv') && !row.tmdb_id ? row.title : undefined,
@@ -9877,6 +10009,7 @@ function renderTripPlaylist() {
           <div class="collage-card-body">
             <div class="collage-card-title">${esc(item.title)}</div>
             ${item.sub ? `<div class="collage-card-sub">${esc(item.sub)}</div>` : ''}
+            ${item.link ? `<a href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-block;margin-top:4px;font-size:12px;color:var(--accent);text-decoration:none;">${esc((()=>{try{return new URL(item.link).hostname.replace(/^www\./,'');}catch(_){return 'Open link';}})())} ↗</a>` : ''}
             ${sharedItemDate(item) ? `<div class="collage-card-by">${esc(sharedDateLabel(item))}</div>` : ''}
             ${item.caption ? `<div class="collage-card-by">— ${esc(item.caption)}</div>` : (item.by ? `<div class="collage-card-by">— rec'd by ${esc(item.by)}</div>` : '')}
           </div>
@@ -9979,9 +10112,47 @@ async function persistTasteItemArt(itemId, artUrl) {
   } catch (e) { console.error('Failed to save resolved art:', e); }
 }
 
+// Books added without an author used to search for inauthor:"" and never find a cover.
+async function sharedBookCoverLookup(title, rawAuthor) {
+  const author = sharedBookAuthor(rawAuthor);
+  if (author) { const art = await fetchBookCoverArt(title, author); if (art) return { art, author }; }
+  const key = sharedBookKey(title);
+  try {
+    const d = await sharedCatalogJSON(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}${author ? '&author=' + encodeURIComponent(author) : ''}&limit=10&fields=title,author_name,cover_i,edition_count&sort=editions`);
+    const hit = (d.docs || []).find(b => b.cover_i && sharedBookKey(String(b.title).split(':')[0]) === key);
+    if (hit) return { art: `https://covers.openlibrary.org/b/id/${hit.cover_i}-L.jpg?default=false`, author: (hit.author_name || [])[0] || '' };
+  } catch (_) {}
+  try {
+    const d = await sharedCatalogJSON(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent('intitle:"' + title + '"' + (author ? ' inauthor:"' + author + '"' : ''))}&maxResults=8`);
+    const v = (d.items || []).map(i => i.volumeInfo).find(v => v.imageLinks?.thumbnail && sharedBookKey(String(v.title).split(':')[0]) === key);
+    if (v) return { art: v.imageLinks.thumbnail.replace('http:', 'https:').replace('zoom=1', 'zoom=2'), author: (v.authors || [])[0] || '' };
+  } catch (_) {}
+  return { art: '', author: '' };
+}
+async function persistTasteItemFields(itemId, fields) {
+  if (!sb || !itemId) return;
+  try { await sb.from('taste_list_items').update(fields).eq('id', itemId); } catch (e) { console.error('Failed to save item details:', e); }
+}
+const KNOWN_IMAGE_HOSTS = /(image\.tmdb\.org|mzstatic\.com|covers\.openlibrary\.org|books\.google|googleusercontent\.com|media-amazon\.com|gr-assets\.com|cloudfront\.net)/i;
+function looksLikeImageUrl(url) { return /\.(jpe?g|png|gif|webp|avif)(\?|#|$)/i.test(url) || KNOWN_IMAGE_HOSTS.test(url); }
+
 function initTripPlaylistArt() {
   if (tripPlaylistArtFetched) return;
   tripPlaylistArtFetched = true;
+  // Page links saved in the art field (e.g. an article URL): move them to link_url and use the
+  // page's preview image as the art instead.
+  Object.values(TRIP_PLAYLIST_ITEMS).flat().forEach(item => {
+    if (!item.id || !item.art || item.link || looksLikeImageUrl(item.art)) return;
+    (async () => {
+      if (await sharedImageWorks(item.art)) return;
+      const pageUrl = item.art, p = await fetchLinkPreview(pageUrl);
+      if (!p) return;
+      item.link = p.isImage ? '' : pageUrl;
+      item.art = p.isImage ? pageUrl : (p.image || '');
+      persistTasteItemFields(item.id, { art_url: item.art || null, link_url: item.link || null });
+      renderTripPlaylist();
+    })();
+  });
   TRIP_PLAYLIST_ITEMS.movies.forEach(item => {
     if (item.art) return;
     (async () => {
@@ -10004,8 +10175,13 @@ function initTripPlaylistArt() {
       const preferred=preferredBookCover(item.title,sharedBookAuthor(item.sub));
       if (!preferred && item.art && !item.art.includes('covers.openlibrary.org') && await sharedImageWorks(item.art)) return;
       if (preferred && item.art===preferred) return;
-      const art = await fetchBookCoverArt(item.title, item.sub);
-      if (art && await sharedImageWorks(art)) { item.art = art; persistTasteItemArt(item.id, art); renderTripPlaylist(); refreshActivityFeeds(); }
+      const found = await sharedBookCoverLookup(item.title, item.sub);
+      if (found.art && await sharedImageWorks(found.art)) {
+        item.art = found.art;
+        const fields = { art_url: found.art };
+        if (!item.sub && found.author) { item.sub = found.author; fields.sub = found.author; }
+        persistTasteItemFields(item.id, fields); renderTripPlaylist(); refreshActivityFeeds();
+      }
     })();
   });
   (TRIP_PLAYLIST_ITEMS.tv || []).forEach(item => {
@@ -12722,15 +12898,19 @@ renderTasteInfluences();
     <div id="taste-item-modal-error" class="tl-modal-error" style="display:none;"></div>
 
     <div class="tl-field">
-      <label class="tl-label">Title<span class="tl-required">*</span></label>
-      <input id="taste-item-title" class="tl-input" type="text">
-    </div>
-
-    <div class="tl-field">
       <label class="tl-label">Type<span class="tl-required">*</span></label>
       <input type="hidden" id="taste-item-category" value="books">
       <div id="taste-item-type-chips" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
       <input id="taste-item-custom-type" class="tl-input" type="text" maxlength="40" placeholder="What is it? e.g. Restaurant, Board game, Museum" style="display:none;margin-top:10px;">
+    </div>
+
+    <div class="tl-field" style="position:relative;">
+      <label class="tl-label">Title<span class="tl-required">*</span></label>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <img id="taste-item-art-preview" alt="" style="display:none;width:40px;height:54px;object-fit:cover;border-radius:6px;flex-shrink:0;background:var(--surface2);">
+        <input id="taste-item-title" class="tl-input" type="text" autocomplete="off" oninput="onTasteTitleInput()" onkeydown="onTasteTitleKeydown(event)" onblur="setTimeout(hideTasteSuggestions,150)" style="flex:1;">
+      </div>
+      <div id="taste-item-suggestions" role="listbox" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:5;background:var(--surface2);border:1px solid var(--border2, var(--border));border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);overflow:hidden;max-height:320px;overflow-y:auto;"></div>
     </div>
 
     <div class="tl-field">
@@ -12749,9 +12929,10 @@ renderTasteInfluences();
     </div>
 
     <div class="tl-field">
-      <label class="tl-label">Cover / poster / art URL <span class="tl-hint">optional</span></label>
-      <input id="taste-item-art" class="tl-input" type="text" placeholder="https://…">
-      <div class="tl-note">Movies and books will try to auto-resolve if left blank. Music won't — a link's worth adding.</div>
+      <label class="tl-label">Link <span class="tl-hint">optional — article, episode, or image</span></label>
+      <input id="taste-item-link" class="tl-input" type="url" placeholder="https://…" onchange="previewTasteItemLink()" onpaste="setTimeout(previewTasteItemLink,0)">
+      <input type="hidden" id="taste-item-art">
+      <div id="taste-item-link-note" class="tl-note">We'll pull the artwork from the page.</div>
     </div>
 
     <button id="taste-item-save-btn" class="tl-btn-primary" onclick="saveTasteItemForm()">Save</button>
