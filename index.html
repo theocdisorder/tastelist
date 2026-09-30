@@ -14,7 +14,7 @@
 <meta name="twitter:title" content="Sreya's Taste List">
 <meta name="twitter:description" content="The music that shaped me — favorite artists, albums, and songs.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1156,6 +1156,58 @@
   }
 
   /* ── COLLAGE / PINTEREST-STYLE PLAYLIST ── */
+  /* ── Shared list page (editorial layout) ── */
+  #trip-playlist-section { position:relative; }
+  .sl-hero { position:relative; padding:4px 0 34px; margin-bottom:8px; min-height:220px; }
+  .sl-hero-bg { position:absolute; top:-40px; right:-32px; width:min(62%,720px); height:calc(100% + 40px); background-size:cover; background-position:center 30%; opacity:.34; filter:grayscale(.55) contrast(1.05); pointer-events:none; z-index:0;
+    -webkit-mask-image:linear-gradient(to left, #000 25%, transparent 95%), linear-gradient(to top, transparent 0%, #000 55%); -webkit-mask-composite:source-in;
+    mask-image:linear-gradient(to left, #000 25%, transparent 95%), linear-gradient(to top, transparent 0%, #000 55%); mask-composite:intersect; }
+  .sl-hero > *:not(.sl-hero-bg) { position:relative; z-index:1; }
+  .sl-topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+  .sl-back { background:none; border:none; color:var(--muted); font:inherit; font-size:13.5px; cursor:pointer; padding:0; display:flex; align-items:center; gap:6px; }
+  .sl-back:hover { color:var(--text); }
+  .sl-actions { display:flex; gap:10px; align-items:center; }
+  .sl-btn { font:inherit; font-size:13px; font-weight:600; padding:9px 18px; border-radius:999px; cursor:pointer; border:1px solid rgba(255,255,255,.28); background:rgba(0,0,0,.35); color:var(--text); backdrop-filter:blur(6px); }
+  .sl-btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .sl-title { font-family:'Fraunces',Georgia,serif; font-weight:500; font-size:clamp(40px,6vw,76px); line-height:1.02; letter-spacing:-.035em; color:#f5f1ea; margin:0 0 20px; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .sl-title .sl-rename { font-family:Inter,sans-serif; font-size:12px; font-weight:600; letter-spacing:0; background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:999px; color:var(--muted); padding:5px 11px; cursor:pointer; align-self:center; }
+  .sl-byline { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .sl-byline img, .sl-byline .sl-avatar { width:44px; height:44px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+  .sl-byline .sl-avatar { background:linear-gradient(135deg,#7C4DFF,#a78bfa); color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .sl-byline-name { font-size:15px; font-weight:600; color:var(--text); }
+  .sl-byline-meta { font-size:13px; color:var(--muted); margin-top:2px; }
+  .sl-desc { font-size:15px; line-height:1.65; color:#d6d1c8; max-width:520px; margin:0 0 16px; }
+  .sl-members { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; font-size:12px; color:var(--muted); }
+  .sl-members > div { margin:0 !important; }
+  .sl-sections { display:flex; flex-wrap:wrap; gap:44px 40px; align-items:flex-start; }
+  .sl-section { flex:0 1 auto; max-width:100%; }
+  .sl-section-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .sl-section-head h3 { margin:0; font-size:15px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+  .sl-section-head h3 span { color:var(--muted); font-weight:500; margin-left:6px; letter-spacing:0; }
+  .sl-row { display:flex; flex-wrap:wrap; gap:18px; }
+  .sl-tile { cursor:pointer; outline:none; }
+  .sl-tile.sl-landscape { width:268px; } .sl-tile.sl-portrait { width:128px; } .sl-tile.sl-square { width:146px; }
+  .sl-art { position:relative; border-radius:6px; overflow:hidden; background:var(--surface2); box-shadow:0 8px 24px rgba(0,0,0,.35); transition:transform .2s ease, box-shadow .2s ease; }
+  .sl-landscape .sl-art { aspect-ratio:16/10; } .sl-portrait .sl-art { aspect-ratio:2/3; } .sl-square .sl-art { aspect-ratio:1/1; }
+  .sl-art img { width:100%; height:100%; object-fit:cover; display:block; }
+  .sl-tile:hover .sl-art, .sl-tile:focus-visible .sl-art { transform:translateY(-3px); box-shadow:0 14px 34px rgba(0,0,0,.55); }
+  .sl-art-empty { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:12px; text-align:center; font-size:13px; font-weight:600; line-height:1.3; }
+  .sl-info { display:flex; gap:9px; align-items:flex-start; margin-top:12px; }
+  .sl-num { width:19px; height:19px; border-radius:50%; color:#fff; font-size:10.5px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .sl-info-text { min-width:0; }
+  .sl-name { font-size:14px; font-weight:600; color:var(--text); line-height:1.3; overflow-wrap:anywhere; }
+  .sl-sub { font-size:12.5px; color:var(--muted); line-height:1.35; margin-top:2px; }
+  .sl-caption { font-size:12px; color:var(--muted); font-style:italic; margin-top:4px; }
+  .sl-edit-controls { position:absolute; top:8px; right:8px; display:flex; gap:5px; z-index:3; }
+  .sl-edit-controls button { width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,.7); border:1px solid rgba(255,255,255,.25); color:#fff; font-size:12px; cursor:pointer; }
+  @media (max-width: 700px) {
+    .sl-hero-bg { width:100%; right:-16px; opacity:.22; }
+    .sl-topbar { flex-wrap:wrap; }
+    .sl-section { flex-basis:100%; }
+    .sl-row { display:grid; gap:14px; grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .sl-row.sl-row-landscape { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .sl-tile.sl-landscape, .sl-tile.sl-portrait, .sl-tile.sl-square { width:auto; }
+  }
   .collage-grid {
     column-count: 4;
     column-gap: 18px;
@@ -1917,11 +1969,20 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
     <!-- One selected list's contents (books / movies / music, grouped, art auto-fetched) -->
     <div id="trip-playlist-section" style="display:none;">
-      <button onclick="backToTasteListsPicker()" style="background:none;border:none;color:var(--muted);font-size:13px;font-family:inherit;cursor:pointer;padding:0;margin-bottom:16px;display:flex;align-items:center;gap:5px;">← All lists</button>
-      <div id="taste-list-title" style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:6px;display:flex;align-items:center;gap:10px;">&nbsp;<button id="taste-list-rename-btn" onclick="renameTasteList()" style="display:none;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:normal;text-transform:none;cursor:pointer;padding:4px 10px;flex-shrink:0;font-family:inherit;" title="Rename list">✎ Rename</button><span style="flex:1;height:1px;background:var(--border);"></span></div>
-      <p id="taste-list-subtitle" class="site-sub" style="margin:-2px 0 12px;"></p>
-      <div id="taste-list-collaborators" style="margin-bottom:18px;"></div>
-      <div id="taste-list-engage" style="margin:-6px 0 18px;"></div>
+      <header class="sl-hero">
+        <div class="sl-hero-bg" id="sl-hero-bg" aria-hidden="true"></div>
+        <div class="sl-topbar">
+          <button class="sl-back" onclick="backToTasteListsPicker()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Shared Lists</button>
+          <div class="sl-actions" id="sl-actions"></div>
+        </div>
+        <h1 id="taste-list-title" class="sl-title">&nbsp;<button id="taste-list-rename-btn" class="sl-rename" onclick="renameTasteList()" style="display:none;" title="Rename list">✎ Rename</button></h1>
+        <div class="sl-byline" id="sl-byline"></div>
+        <p id="taste-list-subtitle" class="sl-desc"></p>
+        <div class="sl-members">
+          <div id="taste-list-collaborators"></div>
+          <div id="taste-list-engage"></div>
+        </div>
+      </header>
       <div id="trip-playlist-list"></div>
     </div>
   </div>
@@ -2689,6 +2750,8 @@ async function openTasteList(listId) {
   if (renameBtn) renameBtn.style.display = canEditTasteList ? 'inline-flex' : 'none';
   if (subEl) subEl.textContent = list.subtitle || '';
   renderTasteListCollaborators(list);
+  if (subEl) subEl.style.display = list.subtitle ? '' : 'none';
+  loadTasteListPeople([{ added_by: list.user_id }]);
   const engageEl = document.getElementById('taste-list-engage');
   if (engageEl) { engageEl.innerHTML = inlineEngagementBlockHtml('taste_list', listId); loadInlineEngagement('taste_list', listId); }
   await reloadCurrentTasteListItems();
@@ -9891,7 +9954,7 @@ function setTripPlaylistItemsFromRows(rows) {
     TRIP_PLAYLIST_ITEMS[key].push({
       id: row.id, title: row.title, sub: row.sub || '', by: row.recommended_by || '',
       eventDate: row.event_date || '',
-      caption: row.caption || undefined, art: row.art_url || '', tmdbId: row.tmdb_id || undefined, link: row.link_url || '', addedBy: row.added_by || null,
+      caption: row.caption || undefined, art: row.art_url || '', tmdbId: row.tmdb_id || undefined, link: row.link_url || '', addedBy: row.added_by || null, createdAt: row.created_at || null,
       // Not stored columns — rebuilt from title/sub so the live art/summary lookups have a query.
       bookQuery: key === 'books' ? `${row.title} ${row.sub || ''}`.trim() : undefined,
       tmdbQuery: (key === 'movies' || key === 'tv') && !row.tmdb_id ? row.title : undefined,
@@ -9979,24 +10042,62 @@ function toggleTripPlaylistViewMode(catKey) {
   renderTripPlaylist();
 }
 
+const SL_SHAPES = { movies: 'landscape', tv: 'landscape', comedy: 'landscape', articles: 'landscape', books: 'portrait', games: 'portrait', music: 'square', albums: 'square', podcasts: 'square' };
+function slShape(key) { return SL_SHAPES[key] || 'landscape'; }
+function slArtUrl(item, shape) {
+  if (shape === 'landscape' && item.backdrop) return item.backdrop.startsWith('http') ? item.backdrop : `https://image.tmdb.org/t/p/w780${item.backdrop}`;
+  return item.art || '';
+}
+// Movie/TV tiles are landscape, so fetch TMDB backdrops (not stored — posters are the saved art).
+let slBackdropRender = false;
+function ensureTripPlaylistBackdrops() {
+  ['movies', 'tv'].forEach(key => (TRIP_PLAYLIST_ITEMS[key] || []).forEach(item => {
+    if (!item.tmdbId || item.backdrop !== undefined) return;
+    item.backdrop = '';
+    (key === 'tv' ? fetchTVDetail(item.tmdbId) : fetchMovieDetail(item.tmdbId)).then(d => {
+      if (!d?.backdrop) return;
+      item.backdrop = d.backdrop;
+      if (!slBackdropRender) { slBackdropRender = true; requestAnimationFrame(() => { slBackdropRender = false; renderTripPlaylist(); }); }
+    }).catch(() => {});
+  }));
+}
+function renderTasteListHeader(flat) {
+  const list = allTasteLists.find(l => l.id === currentTasteListId);
+  const byline = document.getElementById('sl-byline');
+  if (byline && list) {
+    const owner = tasteListPeople.get(list.user_id) || (viewedProfile?.id === list.user_id ? viewedProfile : null);
+    const name = owner ? (firstNameOnly(owner.display_name) || owner.username) : '';
+    const times = flat.map(i => i.createdAt ? new Date(i.createdAt).getTime() : 0).filter(Boolean);
+    const updated = new Date(Math.max(list.created_at ? new Date(list.created_at).getTime() : 0, ...times));
+    const meta = [`${flat.length} item${flat.length === 1 ? '' : 's'}`, isNaN(updated) || updated.getTime() === 0 ? '' : `Updated ${updated.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`].filter(Boolean).join(' <span style="opacity:.5;margin:0 4px;">•</span> ');
+    const avatar = owner?.avatar_url ? `<img src="${esc(owner.avatar_url)}" alt="">` : `<div class="sl-avatar">${esc(initials(name || '?'))}</div>`;
+    byline.innerHTML = `${avatar}<div><div class="sl-byline-name">${owner?.username ? `<a href="javascript:void(0)" onclick="goToProfile('${esc(owner.username)}')" style="color:inherit;text-decoration:none;">${esc(name)}</a>` : esc(name)}</div><div class="sl-byline-meta">${meta}</div></div>`;
+  }
+  const actions = document.getElementById('sl-actions');
+  if (actions) actions.innerHTML = canEditTasteList ? (editMode
+    ? `<button class="sl-btn" onclick="openTasteItemForm()">+ Add item</button><button class="sl-btn primary" onclick="toggleEditMode()">✓ Done</button>`
+    : `<button class="sl-btn primary" onclick="openTasteItemForm()">+ Add item</button><button class="sl-btn" onclick="toggleEditMode()">✎ Edit</button>`) : '';
+  const bg = document.getElementById('sl-hero-bg');
+  if (bg) {
+    const pick = flat.find(i => i.backdrop) || flat.find(i => ['movies', 'tv'].includes(i.cat) && i.art) || flat.find(i => i.art);
+    const url = pick ? slArtUrl(pick, pick.backdrop ? 'landscape' : '') : '';
+    bg.style.backgroundImage = url ? `url('${url.replace(/'/g, '%27')}')` : 'none';
+  }
+}
+
 function renderTripPlaylist() {
   if (tripPlaylistViewList !== currentTasteListId) { tripPlaylistViewList = currentTasteListId; tripPlaylistViewMode = {}; tripPlaylistCarouselIndex = {}; }
   scheduleTasteConstellation();
   const el = document.getElementById('trip-playlist-list');
   if (!el) return;
   const catMeta = new Proxy({}, { get: (_, key) => tasteTypeMeta(key) });
-  // Flat index (across all categories, in category order) so click handlers can find the right
-  // item regardless of which section's grid it was clicked from.
+  // Flat index (across all categories, in display order) so click handlers can find the right item.
   const flat = [];
-  TRIP_PLAYLIST_CATEGORIES.forEach(c => TRIP_PLAYLIST_ITEMS[c.key].forEach(item => flat.push({ ...item, cat: c.key })));
+  TRIP_PLAYLIST_CATEGORIES.forEach(c => (TRIP_PLAYLIST_ITEMS[c.key] || []).forEach(item => flat.push({ ...item, cat: c.key })));
   tripPlaylistFlatItems = flat;
-  // Varying tile heights, deterministic per position, for a Pinterest-style waterfall within each section
-  const heights = [230, 165, 270, 190, 245, 205, 255, 175, 215, 235, 190, 225];
-
-  const editToggleHtml = canEditTasteList ? `
-    <button onclick="toggleEditMode()" style="font-size:11.5px;font-weight:600;background:${editMode ? 'var(--accent)' : 'var(--surface2)'};color:${editMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;margin-bottom:16px;">
-      ${editMode ? '✓ Done editing' : '✎ Edit list'}
-    </button>` : '';
+  renderTasteListHeader(flat);
+  ensureTripPlaylistBackdrops();
+  const ownerId = allTasteLists.find(l => l.id === currentTasteListId)?.user_id;
 
   let globalIndex = 0;
   const isEmpty = TRIP_PLAYLIST_CATEGORIES.every(c => (TRIP_PLAYLIST_ITEMS[c.key] || []).length === 0);
@@ -10014,63 +10115,62 @@ function renderTripPlaylist() {
       </div>`;
     return;
   }
-  // A category with zero items just shows as a bare header with nothing under it (exactly the
-  // "MOVIES" / "MUSIC" with blank space beneath, seen when a list is really only about one
-  // category) — skip it entirely unless editing, where it's still useful to see as a place to
-  // start adding something.
-  el.innerHTML = editToggleHtml + TRIP_PLAYLIST_CATEGORIES.filter(c => (TRIP_PLAYLIST_ITEMS[c.key] || []).length > 0).map(c => {
+  const sections = TRIP_PLAYLIST_CATEGORIES.filter(c => (TRIP_PLAYLIST_ITEMS[c.key] || []).length > 0).map(c => {
     const cat = catMeta[c.key];
+    const shape = slShape(c.key);
     const items = TRIP_PLAYLIST_ITEMS[c.key];
     const dated = [];
-    const undatedCards = [];
-    const cards = items.map((item, i) => {
+    const undatedTiles = [];
+    const tiles = items.map(item => {
       const idx = globalIndex++;
       if (sharedItemDate(item)) dated.push({ item, idx });
-      const h = heights[i % heights.length];
-      const artStyle = item.art
-        ? `background-image:url('${item.art}');`
-        : `background:${cat.color}20;display:flex;align-items:center;justify-content:center;`;
-      const placeholder = !item.art ? `<span style="font-size:10px;font-weight:600;letter-spacing:.08em;color:${cat.color};opacity:.7;">${cat.label.toUpperCase()}</span>` : '';
+      const art = slArtUrl(item, shape);
       const editControls = (editMode && canEditTasteList) ? `
-          <div style="position:absolute;top:8px;right:8px;display:flex;gap:5px;z-index:3;">
-            <button onclick="event.stopPropagation(); openTasteItemForm('${c.key}', ${idx})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✎</button>
-            <button onclick="event.stopPropagation(); deleteTasteItem(${idx})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✕</button>
+          <div class="sl-edit-controls">
+            <button title="Edit" onclick="event.stopPropagation(); openTasteItemForm('${esc(c.key)}', ${idx})">✎</button>
+            <button title="Remove" onclick="event.stopPropagation(); deleteTasteItem(${idx})">✕</button>
           </div>` : '';
-      const card = `
-        <div class="collage-card" style="position:relative;" onclick="${editMode ? '' : `openTripPlaylistSummary(${idx})`}" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
-          ${editControls}
-          <div class="collage-card-art" style="height:${h}px;${artStyle}">${placeholder}</div>
-          <span class="collage-card-tag" style="background:${cat.color}33;color:${cat.color};">${cat.label}</span>
-          <div class="collage-card-body">
-            <div class="collage-card-title">${esc(item.title)}</div>
-            ${item.sub ? `<div class="collage-card-sub">${esc(item.sub)}</div>` : ''}
-            ${item.link ? `<a href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-block;margin-top:4px;font-size:12px;color:var(--accent);text-decoration:none;">${esc((()=>{try{return new URL(item.link).hostname.replace(/^www\./,'');}catch(_){return 'Open link';}})())} ↗</a>` : ''}
-            ${sharedItemDate(item) ? `<div class="collage-card-by">${esc(sharedDateLabel(item))}</div>` : ''}
-            ${item.caption ? `<div class="collage-card-by">— ${esc(item.caption)}</div>` : ''}
-            ${tastePersonTagHtml(item)}
+      const meta = [item.sub, sharedItemDate(item) ? sharedDateLabel(item) : ''].filter(Boolean);
+      const linkHost = item.link ? (() => { try { return new URL(item.link).hostname.replace(/^www\./, ''); } catch (_) { return 'Open link'; } })() : '';
+      const tile = `
+        <div class="sl-tile sl-${shape}" onclick="${editMode ? '' : `openTripPlaylistSummary(${idx})`}" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+          <div class="sl-art">
+            ${art ? `<img src="${esc(art)}" alt="" loading="lazy" onerror="this.remove()">` : `<div class="sl-art-empty" style="background:${cat.color}1f;color:${cat.color};">${esc(item.title)}</div>`}
+            ${editControls}
+          </div>
+          <div class="sl-info">
+            <span class="sl-num" style="background:${cat.color};">${idx + 1}</span>
+            <div class="sl-info-text">
+              <div class="sl-name">${esc(item.title)}</div>
+              ${meta.map(m => `<div class="sl-sub">${esc(m)}</div>`).join('')}
+              ${item.link ? `<a href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-block;margin-top:3px;font-size:12px;color:var(--accent);text-decoration:none;">${esc(linkHost)} ↗</a>` : ''}
+              ${item.caption ? `<div class="sl-caption">“${esc(item.caption)}”</div>` : ''}
+              ${(item.by || (item.addedBy && item.addedBy !== ownerId)) ? tastePersonTagHtml(item) : ''}
+            </div>
           </div>
         </div>`;
-      if (!sharedItemDate(item)) undatedCards.push(card);
-      return card;
+      if (!sharedItemDate(item)) undatedTiles.push(tile);
+      return tile;
     }).join('');
     dated.sort((a, b) => sharedItemDate(a.item) - sharedItemDate(b.item));
     const viewMode = editMode || !dated.length ? 'grid' : (tripPlaylistViewMode[c.key] || 'calendar');
     const viewToggle = dated.length ? `
-        <button onclick="toggleTripPlaylistViewMode('${c.key}')" style="font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:3px 10px;cursor:pointer;font-family:inherit;">
+        <button onclick="toggleTripPlaylistViewMode('${esc(c.key)}')" style="font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:3px 10px;cursor:pointer;font-family:inherit;">
           ${viewMode === 'calendar' ? '▦ Grid' : '📅 Calendar'}
         </button>` : '';
+    const rowClass = `sl-row${shape === 'landscape' ? ' sl-row-landscape' : ''}`;
     return `
-      <div style="margin-bottom:28px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
-          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${cat.color};opacity:.85;">${cat.label}</div>
+      <section class="sl-section"${viewMode === 'calendar' ? ' style="flex-basis:100%;"' : ''}>
+        <div class="sl-section-head">
+          <h3 style="color:${cat.color};">${esc(cat.label)}<span>${items.length}</span></h3>
           ${viewToggle}
         </div>
         ${viewMode === 'calendar'
-          ? tripPlaylistCarouselHtml(c.key, dated, cat) + (undatedCards.length ? `<h4 style="margin:20px 0 12px;color:var(--muted);">No date yet</h4><div class="collage-grid">${undatedCards.join('')}</div>` : '')
-          : `<div class="collage-grid">${cards}</div>`}
-      </div>`;
-  }).join('') + ((editMode && canEditTasteList) ? `
-      <button onclick="openTasteItemForm()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:18px;margin-bottom:28px;font:inherit;font-size:14px;font-weight:600;color:#fff;background:var(--accent);border:none;border-radius:14px;cursor:pointer;box-shadow:0 6px 24px rgba(124,77,255,0.3);transition:filter .15s;" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''"><span style="font-size:18px;line-height:1;">+</span> Add an item</button>` : '');
+          ? tripPlaylistCarouselHtml(c.key, dated, cat) + (undatedTiles.length ? `<h4 style="margin:20px 0 12px;color:var(--muted);">No date yet</h4><div class="${rowClass}">${undatedTiles.join('')}</div>` : '')
+          : `<div class="${rowClass}">${tiles}</div>`}
+      </section>`;
+  }).join('');
+  el.innerHTML = `<div class="sl-sections">${sections}</div>`;
 }
 
 // Tries Open Library's search API first (structured title/author fields — the same pattern
