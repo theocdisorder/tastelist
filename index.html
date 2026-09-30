@@ -1402,10 +1402,44 @@ input::placeholder, textarea::placeholder {
 .taste-essay{padding:28px;border:1px solid #cbb0f425;border-radius:18px;background:linear-gradient(140deg,#cbb0f408,transparent)}.taste-essay-label{font-size:10px;letter-spacing:.12em;color:#bba2db}.taste-essay h3{font-size:24px;letter-spacing:-.5px;line-height:1.2;margin:14px 0}.taste-essay p{font-size:14px;line-height:1.8;color:#c4c0c9;margin:0 0 20px}.taste-essay-picks{display:flex;flex-wrap:wrap;gap:6px}.taste-essay-picks span{font-size:11px;padding:5px 10px;border-radius:20px;background:#cbb0f410;color:#dfd4ea}.taste-essay details{margin-top:20px;font-size:12px;color:var(--muted)}.taste-essay summary{cursor:pointer;margin-bottom:14px}.taste-essay details p{font-size:12px}.taste-analysis-status{grid-column:1/-1;font-size:13px;line-height:1.7;color:var(--muted)}
 </style><style>
 .list-start{margin:24px 0;padding:28px;border:1px solid #cbb0f424;border-radius:18px;background:#ffffff03;display:flex;align-items:center;justify-content:space-between;gap:24px}.list-start h3{margin:0 0 8px;font-size:21px;letter-spacing:-.4px}.list-start p{margin:0;font-size:14px;color:var(--muted);line-height:1.6}.list-start button{flex-shrink:0}.list-create-row{max-width:1100px;margin:0 auto;padding:12px 2rem 0;text-align:center}.list-create-row + .music-section .music-section-header{padding-top:1.25rem}
+#rec-tag-results{max-height:150px;overflow:auto}#rec-tag-results button{display:block;width:100%;padding:10px;text-align:left;border:0;border-radius:8px;background:#ffffff05;color:var(--text);cursor:pointer;margin:3px 0}#rec-tag-results button small{display:block;color:var(--muted);font-weight:400;font-size:11px;margin-top:1px}
+.rec-tag-confirmed{display:flex;align-items:center;gap:8px;background:#7C4DFF14;border:1px solid #7C4DFF33;border-radius:20px;padding:6px 8px 6px 12px;font-size:12.5px;color:var(--text);margin-top:8px}
+.rec-tag-confirmed button{background:none;border:0;color:var(--muted);cursor:pointer;width:20px;height:20px;border-radius:50%;font-size:12px;line-height:1;}
+.rec-tag-confirmed button:hover{background:#ffffff14;color:var(--text)}
 .list-create-cta{display:inline-flex;align-items:center;gap:10px;border:1.5px dashed var(--accent);border-radius:999px;padding:12px 26px;background:#7C4DFF14;color:var(--accent);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s,border-style .15s;}
 .list-create-cta:hover{background:#7C4DFF22;border-style:solid;}
 .list-create-cta .list-create-plus{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:15px;font-weight:700;flex-shrink:0;}.extra-more summary.selected{background:var(--accent);color:#fff}#new-list-dialog{margin:auto;width:min(470px,calc(100% - 32px));max-height:85dvh;overflow:auto;border:1px solid var(--border2);border-radius:20px;padding:28px;background:var(--surface);color:var(--text)}#new-list-dialog::backdrop{background:#0009;backdrop-filter:blur(8px)}#new-list-dialog h2{font-size:24px;letter-spacing:-.5px}#new-list-dialog label{display:block;font-size:13px;color:var(--muted)}#new-list-dialog label[hidden]{display:none}#new-list-dialog input,#new-list-dialog select{width:100%;padding:12px;margin:8px 0 18px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px}#new-list-ideas{display:flex;flex-wrap:wrap;gap:8px}#new-list-ideas button{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;cursor:pointer}.new-list-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:28px}@media(max-width:600px){.list-start{align-items:flex-start;flex-direction:column;padding:24px}.list-start button{width:100%}}
-</style></head>
+</style><style>
+.taste-poster{font-family:var(--font-site);width:min(100%,560px);margin:0 auto;background:linear-gradient(130deg,#121314,#090a0a 48%,#101112);border:1px solid #383a3a;color:#f5f1e9;box-sizing:border-box;text-align:left}
+.taste-poster-heading{padding:32px 30px 26px;border-bottom:1px solid #272929}
+.taste-poster-heading h2{font-family:var(--font-site)!important;font-size:clamp(38px,6vw,65px);font-weight:700;line-height:.98;letter-spacing:-.04em;text-transform:uppercase;margin:0;overflow-wrap:anywhere}
+.taste-poster-heading p{font-size:10px;letter-spacing:.24em;text-transform:uppercase;margin:20px 0 0;color:#d0ccc5}
+.taste-poster-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:24px;gap:24px 0}
+.taste-poster-category{appearance:none;border:0;border-radius:0;background:none;color:inherit;text-align:left;font:inherit;padding:0 16px 0 0;cursor:pointer;min-width:0}
+.taste-poster-category:nth-child(even){padding:0 0 0 16px;border-left:1px solid #303233}
+.taste-poster-category:nth-child(n+3){padding-top:20px;border-top:1px solid #303233}
+.taste-poster-category h3{font:700 12px/1.2 var(--font-site);letter-spacing:.02em;text-transform:uppercase;display:flex;align-items:center;gap:7px;margin:0 0 14px}
+.taste-poster-category h3 span{width:10px;height:10px;border-radius:50%;display:block}
+.taste-poster-art{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.taste-poster-art>div{aspect-ratio:2/3;background:#202222;overflow:hidden;border-radius:2px;display:flex;align-items:center;justify-content:center}
+.taste-poster-art img{width:100%;height:100%;object-fit:cover;display:block}
+.taste-poster-category:last-child img{object-fit:contain}
+.taste-poster-art span{font-size:11px;padding:8px;color:#bab7b1;overflow-wrap:anywhere}
+.taste-poster-art [hidden]{display:none}
+.taste-poster-category ul{list-style:none;margin:12px 0 0;padding:0;font-size:12px;line-height:1.55;color:#d0cec9}
+.taste-poster-category li{overflow-wrap:anywhere}
+.taste-poster-empty{font-size:12px;color:#8f928f}
+.taste-poster-category:hover h3{text-decoration:underline;text-underline-offset:4px}
+.taste-poster-category:focus-visible{outline:2px solid #cbb0f4;outline-offset:5px}
+.taste-poster-footer{padding:16px 24px 30px;text-align:center;display:flex;align-items:center;flex-direction:column;gap:7px}
+.taste-poster-logo{font-family:var(--font-site)!important;color:#f5f1e9;font-size:32px;font-weight:700;letter-spacing:-.06em;text-decoration:none}
+.taste-poster-create{font-size:9px;letter-spacing:.19em;text-transform:uppercase;color:#d0ccc5;text-decoration:none}
+.taste-poster-create:hover{text-decoration:underline}
+.taste-poster-share{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:20px auto;font-size:12px;color:var(--muted)}
+@media(max-width:420px){.taste-poster-heading{padding:24px 20px}.taste-poster-grid{padding:20px 16px}.taste-poster-category{padding-right:10px}.taste-poster-category:nth-child(even){padding-left:10px}.taste-poster-category ul{font-size:11px}}
+
+</style>
+</head>
 <body>
 <div id="app-startup-status" role="status" aria-live="polite">Loading…</div>
 
@@ -1659,7 +1693,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <!-- Defining picks -->
     <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);margin-bottom:2rem;">
       <div id="defining-picks-header" style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:16px;">Sreya&rsquo;s Defining Picks &mdash; tap a box to explore that section</div>
-      <div id="profile-picks"></div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="ob-button ob-secondary" onclick="openTasteShare()">Share my TasteList ↗</button></div><div id="profile-picks"></div>
     </div>
 
     <!-- What's New feed + Recommendations -->
@@ -1956,10 +1990,13 @@ let friendRecFormState = { id: null };
 
 function openFriendRecForm(idx) {
   friendRecFormState = { id: null };
+  clearTimeout(friendRecTagState.timer); friendRecTagState.request++;
+  friendRecTagState.results = []; friendRecTagState.selectedUsername = null; friendRecTagState.selectedDisplayName = null;
   document.getElementById('friend-rec-modal-error').style.display = 'none';
   document.getElementById('friend-rec-title').value = '';
   document.getElementById('friend-rec-type').value = 'film';
   document.getElementById('friend-rec-from').value = '';
+  document.getElementById('rec-tag-results').innerHTML = '';
   document.getElementById('friend-rec-art').value = '';
   document.getElementById('friend-rec-modal-title').textContent = 'Add recommendation';
 
@@ -1970,10 +2007,17 @@ function openFriendRecForm(idx) {
       document.getElementById('friend-rec-modal-title').textContent = 'Edit recommendation';
       document.getElementById('friend-rec-title').value = item.title || '';
       document.getElementById('friend-rec-type').value = item.type || 'film';
-      document.getElementById('friend-rec-from').value = item.from || '';
       document.getElementById('friend-rec-art').value = item.art || '';
+      if (item.fromUsername) {
+        // Already tagged to a real person — show it confirmed rather than making them re-search.
+        friendRecTagState.selectedUsername = item.fromUsername;
+        friendRecTagState.selectedDisplayName = item.fromDisplayName || item.fromUsername;
+      } else {
+        document.getElementById('friend-rec-from').value = item.from || '';
+      }
     }
   }
+  renderFriendRecTagConfirmed();
   document.getElementById('friend-rec-modal').style.display = 'flex';
 }
 
@@ -1996,6 +2040,57 @@ async function resolveInfluencerId(usernameInput) {
     const { data } = await sb.from('profiles').select('id').eq('username', username).maybeSingle();
     return data?.id || null;
   } catch (e) { return null; }
+}
+
+// "Recommended by" on a recommendation: search-as-you-type over real usernames, same idea as the
+// people-tagging search on What's New updates, but single-select — a recommendation only has one
+// source. Clicking a result locks in a real user (shown as a chip); typing without selecting
+// anyone just saves as a plain name, exactly like before.
+let friendRecTagState = { timer: null, request: 0, results: [], selectedUsername: null, selectedDisplayName: null };
+function renderFriendRecTagConfirmed() {
+  const el = document.getElementById('rec-tag-confirmed');
+  if (!friendRecTagState.selectedUsername) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'flex';
+  el.innerHTML = `<div class="rec-tag-confirmed">Tagging <strong>${esc(friendRecTagState.selectedDisplayName || friendRecTagState.selectedUsername)}</strong> (@${esc(friendRecTagState.selectedUsername)})<button type="button" onclick="clearFriendRecTag()" aria-label="Remove tag">✕</button></div>`;
+}
+function clearFriendRecTag() {
+  friendRecTagState.selectedUsername = null;
+  friendRecTagState.selectedDisplayName = null;
+  renderFriendRecTagConfirmed();
+  document.getElementById('friend-rec-from').value = '';
+  document.getElementById('friend-rec-from').focus();
+}
+function selectFriendRecFrom(index) {
+  const p = friendRecTagState.results[index];
+  if (!p) return;
+  friendRecTagState.selectedUsername = p.username;
+  friendRecTagState.selectedDisplayName = p.display_name || p.username;
+  clearTimeout(friendRecTagState.timer); friendRecTagState.request++;
+  document.getElementById('friend-rec-from').value = '';
+  document.getElementById('rec-tag-results').innerHTML = '';
+  renderFriendRecTagConfirmed();
+}
+function searchFriendRecFrom(value) {
+  // A fresh keystroke means whatever was previously confirmed no longer matches the typed text.
+  if (friendRecTagState.selectedUsername) { friendRecTagState.selectedUsername = null; friendRecTagState.selectedDisplayName = null; renderFriendRecTagConfirmed(); }
+  clearTimeout(friendRecTagState.timer);
+  const request = ++friendRecTagState.request;
+  const q = value.replace(/^@/, '').trim();
+  const el = document.getElementById('rec-tag-results');
+  el.innerHTML = '';
+  if (!q || !sb) return;
+  el.innerHTML = '<p style="font-size:12px;color:var(--muted);padding:4px 2px;">Searching…</p>';
+  friendRecTagState.timer = setTimeout(async () => {
+    try {
+      const { data, error } = await sb.from('profiles').select('id,username,display_name').or(`username.ilike.%${q}%,display_name.ilike.%${q}%`).limit(6);
+      if (request !== friendRecTagState.request) return;
+      if (error) throw error;
+      friendRecTagState.results = (data || []).filter(p => /^[a-zA-Z0-9_.-]+$/.test(p.username));
+      el.innerHTML = friendRecTagState.results.length
+        ? friendRecTagState.results.map((p, i) => `<button type="button" onclick="selectFriendRecFrom(${i})">${esc(p.display_name || p.username)}<small>@${esc(p.username)}</small></button>`).join('')
+        : '<p style="font-size:12px;color:var(--muted);padding:4px 2px;">No match — this will be saved as plain text.</p>';
+    } catch (e) { if (request === friendRecTagState.request) el.innerHTML = '<p style="font-size:12px;color:var(--muted);padding:4px 2px;">Couldn\u2019t search right now.</p>'; }
+  }, 250);
 }
 
 async function requireFreshSession() {
@@ -2031,7 +2126,10 @@ async function saveFriendRecForm() {
     return;
   }
 
-  const row = { title, type, from_name: from || null, recommended_by_user_id: from ? await resolveInfluencerId(from) : null, art_url: art || null };
+  const taggedUsername = friendRecTagState.selectedUsername;
+  const row = taggedUsername
+    ? { title, type, from_name: friendRecTagState.selectedDisplayName || taggedUsername, recommended_by_user_id: await resolveInfluencerId(taggedUsername), art_url: art || null }
+    : { title, type, from_name: from || null, recommended_by_user_id: from ? await resolveInfluencerId(from) : null, art_url: art || null };
 
   try {
     if (friendRecFormState.id) {
@@ -3639,7 +3737,7 @@ async function loadLandingArtwork() {
       const hit = (data.results || []).find(r => r.collectionName?.toLowerCase() === pick.title.toLowerCase() && r.artistName?.toLowerCase() === pick.artist.toLowerCase());
       art = hit?.artworkUrl100?.replace('100x100bb', '600x600bb') || '';
     } else if (pick.kind === 'book') {
-      art = await fetchBookCover(pick.title,pick.author);
+      art = preferredBookCover(pick.title,pick.author) || await fetchBookCover(pick.title,pick.author);
     } else {
       const response = await tmdbFetch(`/search/${pick.kind}?query=${encodeURIComponent(pick.title)}&page=1${pick.year ? '&primary_release_year=' + pick.year : ''}`);
       if (!response.ok) return;
@@ -3652,6 +3750,13 @@ async function loadLandingArtwork() {
     const img = new Image();
     img.alt = '';
     img.onload = () => tile.appendChild(img);
+    // The featured book has a known edition; don't depend on catalog search availability.
+    if(pick.kind==='book' && pick.title==='Infinite Jest') {
+      img.onerror = () => {
+        img.onerror = null;
+        img.src = 'https://covers.openlibrary.org/b/isbn/9780316920049-L.jpg?default=false';
+      };
+    }
     img.src = art;
   }));
 }
@@ -10983,8 +11088,9 @@ function renderFriendRecs() {
     <button onclick="toggleFriendRecsEditMode()" style="align-self:flex-start;font-size:11px;font-weight:600;background:${friendRecsEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${friendRecsEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;margin-bottom:10px;">
       ${friendRecsEditMode ? '✓ Done editing' : '✎ Edit'}
     </button>` : '';
-  const addBtnHtml = (friendRecsEditMode && isOwnProfile) ? `
-    <button onclick="openFriendRecForm()" style="align-self:flex-start;font-size:12.5px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:10px;padding:10px;cursor:pointer;font-family:inherit;">+ Add recommendation</button>` : '';
+  // Always available to the owner — adding a recommendation shouldn't require finding Edit first.
+  const addBtnHtml = isOwnProfile ? `
+    <button class="list-create-cta" onclick="openFriendRecForm()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
   if (!FRIEND_RECOMMENDATIONS.length) {
     el.innerHTML = `
       <div style="text-align:center;padding:36px 16px;">
@@ -10992,7 +11098,7 @@ function renderFriendRecs() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
         </div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:${isOwnProfile ? '16px' : '0'};line-height:1.5;">${isOwnProfile ? "Nothing here yet — recommendations from friends will show up in this list." : "Nothing here yet."}</div>
-        ${isOwnProfile ? `<button onclick="openFriendRecForm()" style="font-size:12.5px;font-weight:600;color:#fff;background:var(--accent);border:none;border-radius:20px;padding:9px 20px;cursor:pointer;font-family:inherit;">+ Add a recommendation</button>` : ''}
+        ${addBtnHtml}
       </div>`;
     return;
   }
@@ -11003,7 +11109,7 @@ function renderFriendRecs() {
     const t = MEDIA_ICONS[r.type] ? r.type : 'song';
     (groups[t] = groups[t] || []).push(r);
   });
-  el.innerHTML = editToggleHtml + order.filter(t => groups[t]).map(t => {
+  el.innerHTML = editToggleHtml + addBtnHtml + order.filter(t => groups[t]).map(t => {
     const iconColor = (MEDIA_ICONS[t] || MEDIA_ICONS.music).color;
     const items = groups[t].map(r => {
       const idx = FRIEND_RECOMMENDATIONS.indexOf(r);
@@ -11035,7 +11141,7 @@ function renderFriendRecs() {
       <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${iconColor};opacity:.75;margin-bottom:8px;">${typeLabels[t]}</div>
       <div style="display:flex;flex-direction:column;gap:10px;">${items}</div>
     </div>`;
-  }).join('<div style="height:6px;"></div>') + (addBtnHtml ? `<div style="margin-top:6px;">${addBtnHtml}</div>` : '');
+  }).join('<div style="height:6px;"></div>');
 }
 
 // Fetches poster/cover art for each recommendation that doesn't already have a static one —
@@ -11138,6 +11244,101 @@ async function initActivityFeedArt() {
     await new Promise(res => setTimeout(res, 200));
   }
 }
+function tastePosterGroups() {
+ const preferred=collectConstellationFavorites();
+ const dedupe=items=>{const seen=new Set();return items.filter(x=>{const key=String(x.title||x.name||'').trim().toLowerCase();if(!key||seen.has(key))return false;seen.add(key);return true;}).slice(0,4);};
+ const poster=x=>x.poster?(x.poster.startsWith('http')?x.poster:TMDB_IMG+x.poster):'';
+ return [
+  {label:'Music',tab:'music',color:'#a26aff',items:dedupe([...preferred.filter(x=>x.kind==='artist'),...artists]).map(x=>({title:x.name||x.title,art:x.tilePhoto||x.bandPhoto||''}))},
+  {label:'Movies',tab:'movies',color:'#ff7864',items:dedupe([...preferred.filter(x=>x.kind==='movie'),...allFavoriteMovies()]).map(x=>({title:x.title,art:poster(x)}))},
+  {label:'TV',tab:'tv',color:'#35a8ff',items:dedupe([...preferred.filter(x=>x.kind==='tv'),...Object.values(CUSTOM_LISTS.tv).flat()]).map(x=>({title:x.title,art:poster(x)}))},
+  {label:'Books',tab:'books',color:'#32cf83',items:dedupe([...preferred.filter(x=>x.kind==='book'),...Object.values(CUSTOM_LISTS.books).flat()]).map(x=>({title:x.title,art:preferredBookCover(x.title,x.author)||x.cover||''}))}
+ ];
+}
+function renderTastePoster() {
+ const el=document.getElementById('profile-picks');if(!el)return;
+ const heading=document.getElementById('defining-picks-header');if(heading)heading.hidden=true;
+ if(isLockedProfile()){el.innerHTML='';return;}
+ const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile?.username||'Your';
+ const title=name==='Your'?'Your Taste List':possessiveName(name)+' Taste List';
+ const groups=tastePosterGroups();
+ if(!groups.some(g=>g.items.length)){el.innerHTML='';return;}
+ el.innerHTML=`<article class="taste-poster" aria-label="${esc(title)}"><header class="taste-poster-heading"><h2>${esc(name==='Your'?'Your':possessiveName(name))}<br>Taste List</h2><p>You are what you love</p></header><div class="taste-poster-grid">${groups.map(g=>`<button type="button" class="taste-poster-category" onclick="goToFavorites('${g.tab}')" aria-label="Explore ${g.label}"><h3 style="color:${g.color}"><span style="background:${g.color}"></span>${g.label}</h3><div class="taste-poster-art">${g.items.map(p=>`<div>${p.art?`<img src="${esc(p.art)}" alt="${esc(p.title)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${esc(p.title)}</span>`:`<span>${esc(p.title)}</span>`}</div>`).join('')}</div><ul>${g.items.map(p=>`<li>${esc(p.title)}</li>`).join('')}</ul>${g.items.length?'':'<p class="taste-poster-empty">Still exploring</p>'}</button>`).join('')}</div><footer class="taste-poster-footer"><a class="taste-poster-logo" href="https://tastelist.ai/" aria-label="TasteList home">tastelist</a><a class="taste-poster-create" href="https://tastelist.ai/">Make yours at tastelist.ai <span aria-hidden="true">↗</span></a></footer></article><div class="taste-poster-share"><button class="ob-button ob-secondary" onclick="shareTastePoster()">Share ${isOwnProfile?'my':'this'} TasteList ↗</button><span id="taste-poster-share-status" role="status"></span></div>`;
+}
+async function shareTastePoster() {
+ const username=viewedProfile?.username;if(!username)return;
+ const url='https://tastelist.ai/?u='+encodeURIComponent(username);
+ const title=(firstNameOnly(viewedProfile.display_name)||username)+"’s Taste List";
+ try{if(navigator.share)await navigator.share({title,text:'You are what you love.',url});else {await navigator.clipboard.writeText(url);document.getElementById('taste-poster-share-status').textContent='Profile link copied';}}
+ catch(error){if(error.name!=='AbortError')document.getElementById('taste-poster-share-status').textContent='Could not share. Your profile link: '+url;}
+}
+
+let tasteShareAsset=null,tasteShareRevision=0;
+function tasteShareUrl(){return 'https://tastelist.ai/?u='+encodeURIComponent(viewedProfile?.username||'');}
+function openTasteShare() {
+ if(isLockedProfile()||!viewedProfile?.username)return;
+ const host=document.getElementById('profile-picks');
+ const original=host.innerHTML;const heading=document.getElementById('defining-picks-header');const wasHidden=heading?.hidden;
+ renderTastePoster();
+ const card=host.querySelector('.taste-poster');
+ document.getElementById('taste-share-preview').innerHTML=card?card.outerHTML:'<p>Add some favorites to create your card.</p>';
+ host.innerHTML=original;if(heading)heading.hidden=wasHidden;
+ const url=tasteShareUrl();
+ document.getElementById('taste-share-sms').href='sms:?body='+encodeURIComponent('Here’s my TasteList: '+url);
+ document.getElementById('taste-share-whatsapp').href='https://wa.me/?text='+encodeURIComponent('Here’s my TasteList: '+url);
+ document.querySelectorAll('#taste-share-preview button').forEach(button=>{button.removeAttribute('onclick');button.tabIndex=-1;});
+ document.getElementById('taste-share-dialog').showModal();
+ tasteShareAsset=null;document.getElementById('taste-share-native').disabled=true;document.getElementById('taste-share-download').disabled=true;
+ document.getElementById('taste-share-status').textContent='Preparing your share image…';
+ prepareTasteShareImage(++tasteShareRevision);
+}
+function closeTasteShare(){++tasteShareRevision;tasteShareAsset=null;document.getElementById('taste-share-dialog').close();}
+async function prepareTasteShareImage(revision) {
+ const groups=tastePosterGroups(),name=firstNameOnly(viewedProfile?.display_name)||viewedProfile.username;
+ const url=tasteShareUrl();
+ try {
+ if(document.fonts)await document.fonts.ready;
+ if(revision!==tasteShareRevision)return;
+ const fontFamily=getComputedStyle(document.body).fontFamily;
+ const canvas=document.createElement('canvas');canvas.width=900;canvas.height=1800;
+ const ctx=canvas.getContext('2d');ctx.fillStyle='#0c0d0e';ctx.fillRect(0,0,900,1800);
+ ctx.strokeStyle='#383a3a';ctx.strokeRect(1,1,898,1798);ctx.fillStyle='#f5f1e9';
+ let size=76;const heading=possessiveName(name).toUpperCase();ctx.font=`700 ${size}px ${fontFamily}`;while(ctx.measureText(heading).width>800&&size>28){ctx.font=`700 ${--size}px ${fontFamily}`;}
+ ctx.fillText(heading,50,105);ctx.font=`700 76px ${fontFamily}`;ctx.fillText('TASTE LIST',50,190);
+ ctx.font=`400 19px ${fontFamily}`;ctx.fillStyle='#d0ccc5';ctx.fillText('YOU ARE WHAT YOU LOVE',50,237);
+ let missing=0;
+ const assets=await Promise.all(groups.map(g=>Promise.all(g.items.map(p=>new Promise(resolve=>{
+  if(!p.art){resolve(null);return;}const img=new Image();img.crossOrigin='anonymous';const timer=setTimeout(()=>{missing++;resolve(null)},7000);img.onload=()=>{clearTimeout(timer);resolve(img)};img.onerror=()=>{clearTimeout(timer);missing++;resolve(null)};img.src=p.art;
+ })))));
+ function textLine(text,x,y,max){let t=text;while(ctx.measureText(t).width>max&&t.length>1)t=t.slice(0,-1);ctx.fillText(t===text?t:t.slice(0,-1)+'…',x,y);}
+ groups.forEach((g,i)=>{
+ const x=i%2?470:50,y=i<2?305:995;
+ ctx.fillStyle=g.color;ctx.beginPath();ctx.arc(x+7,y-6,7,0,Math.PI*2);ctx.fill();ctx.font=`700 23px ${fontFamily}`;ctx.fillText(g.label.toUpperCase(),x+25,y);
+ g.items.forEach((p,j)=>{
+ const ix=x+(j%2)*190,iy=y+28+Math.floor(j/2)*235,img=assets[i][j];ctx.fillStyle='#202222';ctx.fillRect(ix,iy,180,225);
+ if(img){const scale=Math.min(180/img.naturalWidth,225/img.naturalHeight);const w=img.naturalWidth*scale,h=img.naturalHeight*scale;ctx.drawImage(img,ix+(180-w)/2,iy+(225-h)/2,w,h);}
+ else{ctx.fillStyle='#ccc';ctx.font=`400 16px ${fontFamily}`;textLine(p.title,ix+8,iy+115,164);}
+ });
+ ctx.fillStyle='#d0cec9';ctx.font=`400 20px ${fontFamily}`;g.items.forEach((p,j)=>textLine(p.title,x,y+525+j*28,370));
+ });
+ ctx.fillStyle='#f5f1e9';ctx.textAlign='center';ctx.font=`700 54px ${fontFamily}`;ctx.fillText('tastelist',450,1730);ctx.font=`400 17px ${fontFamily}`;ctx.fillText('MAKE YOURS AT TASTELIST.AI',450,1770);
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Image export unavailable');
+ if(revision!==tasteShareRevision)return;
+ tasteShareAsset={file:new File([blob],'my-tastelist.png',{type:'image/png'}),url};
+ document.getElementById('taste-share-native').disabled=false;document.getElementById('taste-share-download').disabled=false;
+ document.getElementById('taste-share-status').textContent=missing?'Your image is ready. Some artwork could not be included; title labels are preserved.':'Ready to share. For Instagram, save the image and upload it to a Story or post.';
+ }catch(error){if(revision!==tasteShareRevision)return;document.getElementById('taste-share-native').disabled=false;document.getElementById('taste-share-status').textContent='Image export isn’t available. You can still share your profile link.';}
+}
+async function nativeTasteShare(){
+ const url=tasteShareAsset?.url||tasteShareUrl();
+ try{
+ if(navigator.share){const data={title:'My TasteList',text:'You are what you love.',url};if(tasteShareAsset&&navigator.canShare?.({files:[tasteShareAsset.file]}))data.files=[tasteShareAsset.file];await navigator.share(data);}
+ else await copyTasteShareLink();
+ }catch(error){if(error.name!=='AbortError')document.getElementById('taste-share-status').textContent='Could not open sharing. Try Copy link or Save image.';}
+}
+async function copyTasteShareLink(){try{await navigator.clipboard.writeText(tasteShareAsset?.url||tasteShareUrl());document.getElementById('taste-share-status').textContent='Profile link copied.';}catch(_){document.getElementById('taste-share-status').textContent=tasteShareUrl();}}
+function downloadTasteShareImage(){if(!tasteShareAsset)return;const url=URL.createObjectURL(tasteShareAsset.file),a=document.createElement('a');a.href=url;a.download='my-tastelist.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
+
 function renderProfileTab() {
   renderProfileOnboardingResume();
   scheduleTasteConstellation();
@@ -11230,6 +11431,7 @@ function renderProfileTab() {
   const headerEl = document.getElementById('defining-picks-header');
   if (headerEl) {
     const rawName = firstNameOnly(viewedProfile?.display_name) || viewedProfile?.username || 'Your';
+    headerEl.hidden=false;
     headerEl.textContent = `${isOwnProfile ? 'Your' : possessiveName(rawName)} Defining Picks — tap a box to explore that section`;
   }
 
@@ -11699,6 +11901,7 @@ function bookArtKey(value) {
 }
 function preferredBookCover(title, author) {
   const editions = {
+    infinitejest:['David Foster Wallace','9780316920049','hachette'],
     atlasshrugged:['Ayn Rand','9780451191144'],
     thefountainhead:['Ayn Rand','9780451191151'],
     prideandprejudice:['Jane Austen','9780141439518'],
@@ -11717,6 +11920,7 @@ function preferredBookCover(title, author) {
   };
   const entry=editions[bookArtKey(title)];
   if (!entry || bookArtKey(String(author || '').split(/\s+[·|]\s+/)[0])!==bookArtKey(entry[0])) return '';
+  if(entry[2]==='hachette')return `https://www.hachettebookgroup.com/wp-content/uploads/2017/06/${entry[1]}.jpg?w=600`;
   return entry[2]==='bloomsbury' ? `https://media.bloomsbury.com/rep/bj/${entry[1]}.jpg` : `https://images2.penguinrandomhouse.com/cover/${entry[1]}?width=600`;
 }
 function bookCoverMatches(title, author, candidate) {
@@ -12158,8 +12362,10 @@ renderTasteInfluences();
     </div>
 
     <div class="tl-field">
-      <label class="tl-label">Recommended by <span class="tl-hint">a TasteList username tags &amp; links them</span></label>
-      <input id="friend-rec-from" class="tl-input" type="text" placeholder="Subha or a username">
+      <label class="tl-label">Recommended by <span class="tl-hint">search to tag a friend on TasteList, or just type a name</span></label>
+      <input id="friend-rec-from" class="tl-input" type="text" placeholder="Search a username, or type a name" autocomplete="off" oninput="searchFriendRecFrom(this.value)">
+      <div id="rec-tag-results" aria-live="polite"></div>
+      <div id="rec-tag-confirmed" style="display:none;"></div>
     </div>
 
     <div class="tl-field">
@@ -12394,5 +12600,6 @@ renderTasteInfluences();
 </div>
 
 <dialog id="creator-picks-dialog" style="width:min(640px,calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid var(--border);border-radius:20px;padding:28px;background:var(--surface);color:var(--text)" oncancel="event.preventDefault();closeCreatorPicks()"><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="creator-picks-title"></h2><button aria-label="Close" onclick="closeCreatorPicks()">×</button></div><p style="color:var(--muted)">Search, select your favorites, and put them in your order.</p><div id="creator-picks-selected"></div><form onsubmit="event.preventDefault();searchCreatorPicks()" style="display:flex;gap:8px;margin:20px 0"><input id="creator-picks-query" aria-label="Search titles" placeholder="Search titles…" style="flex:1;min-width:0;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px"><button type="submit" class="ob-button ob-secondary">Search</button></form><div id="creator-picks-results"></div><p id="creator-picks-error" role="alert" style="color:#f2a69a"></p><button id="creator-picks-save" class="ob-button ob-primary" onclick="saveCreatorPicks()">Save favorites</button></dialog>
+<dialog id="taste-share-dialog" aria-labelledby="taste-share-title" oncancel="event.preventDefault();closeTasteShare()" style="width:min(680px,calc(100% - 24px));max-height:90dvh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px"><h2 id="taste-share-title">Share your TasteList</h2><button aria-label="Close sharing" onclick="closeTasteShare()" class="ob-text-link">✕</button></div><div id="taste-share-preview"></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px"><button id="taste-share-native" class="ob-button ob-primary" onclick="nativeTasteShare()">Share…</button><button id="taste-share-download" class="ob-button ob-secondary" onclick="downloadTasteShareImage()">Save image</button><button class="ob-button ob-secondary" onclick="copyTasteShareLink()">Copy link</button><a id="taste-share-sms" class="ob-button ob-secondary">Text message</a><a id="taste-share-whatsapp" class="ob-button ob-secondary" target="_blank" rel="noopener">WhatsApp</a></div><p id="taste-share-status" role="status" style="font-size:13px;color:var(--muted);line-height:1.5;text-align:center"></p></dialog>
 </body>
 </html>
