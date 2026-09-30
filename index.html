@@ -2473,6 +2473,10 @@ async function fetchLinkPreview(url) {
   linkPreviewCache.set(url, job);
   return job;
 }
+function usableLinkTitle(t) {
+  const clean = String(t || '').replace(/\s*[-|–—]\s*(YouTube|Vimeo|Spotify)\s*$/i, '').trim();
+  return /^[-|–—\s]*$/.test(clean) || /^(youtube|vimeo|spotify|just a moment\.*)$/i.test(clean) ? '' : clean;
+}
 async function previewTasteItemLink() {
   const input = document.getElementById('taste-item-link'), note = document.getElementById('taste-item-link-note');
   const url = input.value.trim();
@@ -2484,7 +2488,7 @@ async function previewTasteItemLink() {
   if (!p || (!p.image && !p.title)) { note.textContent = "Couldn't find artwork on that page — the link will still be saved."; return; }
   if (p.image && !(tasteItemFormState.picked && document.getElementById('taste-item-art').value)) setTasteItemArt(p.image);
   const titleEl = document.getElementById('taste-item-title');
-  if (!titleEl.value.trim() && p.title && !p.isImage) titleEl.value = p.title.slice(0, 200);
+  if (!titleEl.value.trim() && usableLinkTitle(p.title) && !p.isImage) titleEl.value = usableLinkTitle(p.title).slice(0, 200);
   note.textContent = p.isImage ? 'Using this image as the artwork.' : `Preview from ${p.siteName || new URL(url).hostname}.`;
 }
 
@@ -2926,8 +2930,11 @@ async function saveTasteItemForm() {
     const p = await fetchLinkPreview(link);
     saveBtn.disabled = false;
     if (p?.isImage) { art = art || link; link = ''; }
-    else if (p?.image && !art) art = p.image;
-    if (!title && p?.title && !p.isImage) { title = p.title.slice(0, 200); document.getElementById('taste-item-title').value = title; }
+    else if (!art && category === 'podcasts' && title) {
+      try { const hit = (await searchTasteCatalog('podcasts', title)).find(r => sharedBookKey(r.title) === sharedBookKey(title)); if (hit?.art) art = hit.art; } catch (_) {}
+    }
+    if (!art && p?.image && !p.isImage) art = p.image;
+    if (!title && usableLinkTitle(p?.title) && !p.isImage) { title = usableLinkTitle(p.title).slice(0, 200); document.getElementById('taste-item-title').value = title; }
   }
   errEl.style.display = 'none';
   if (!category) {
@@ -10061,6 +10068,21 @@ function ensureTripPlaylistBackdrops() {
     }).catch(() => {});
   }));
 }
+// Broken image (hotlink-blocked, deleted, etc.): show the title tile, then re-resolve art once.
+function slArtFailed(img, idx) {
+  const flatItem = tripPlaylistFlatItems[idx];
+  const color = tasteTypeMeta(flatItem?.cat).color;
+  const ph = document.createElement('div');
+  ph.className = 'sl-art-empty'; ph.style.background = color + '1f'; ph.style.color = color; ph.textContent = flatItem?.title || '';
+  img.replaceWith(ph);
+  const item = (TRIP_PLAYLIST_ITEMS[flatItem?.cat] || []).find(i => i.id === flatItem?.id);
+  if (!item || item._artRetried) return;
+  item._artRetried = true;
+  if (item.backdrop) { item.backdrop = ''; renderTripPlaylist(); return; }
+  item.art = '';
+  tripPlaylistArtFetched = false;
+  initTripPlaylistArt();
+}
 function renderTasteListHeader(flat) {
   const list = allTasteLists.find(l => l.id === currentTasteListId);
   const byline = document.getElementById('sl-byline');
@@ -10135,7 +10157,7 @@ function renderTripPlaylist() {
       const tile = `
         <div class="sl-tile sl-${shape}" onclick="${editMode ? '' : `openTripPlaylistSummary(${idx})`}" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
           <div class="sl-art">
-            ${art ? `<img src="${esc(art)}" alt="" loading="lazy" onerror="this.remove()">` : `<div class="sl-art-empty" style="background:${cat.color}1f;color:${cat.color};">${esc(item.title)}</div>`}
+            ${art ? `<img src="${esc(art)}" alt="" loading="lazy" onerror="slArtFailed(this, ${idx})">` : `<div class="sl-art-empty" style="background:${cat.color}1f;color:${cat.color};">${esc(item.title)}</div>`}
             ${editControls}
           </div>
           <div class="sl-info">
@@ -10263,6 +10285,20 @@ async function sharedBookCoverLookup(title, rawAuthor) {
     const v = (d.items || []).map(i => i.volumeInfo).find(v => v.imageLinks?.thumbnail && sharedBookKey(String(v.title).split(':')[0]) === key);
     if (v) return { art: v.imageLinks.thumbnail.replace('http:', 'https:').replace('zoom=1', 'zoom=2'), author: (v.authors || [])[0] || '' };
   } catch (_) {}
+  // Looser pass: the title appears inside a longer title (e.g. "Folding Beijing: A Novelette"),
+  // with the author confirming it's the same work.
+  const authorKey = sharedBookKey(author);
+  const loose = (t, authors) => sharedBookKey(t).includes(key) && (!authorKey || (authors || []).some(a => sharedBookKey(a) === authorKey));
+  try {
+    const d = await sharedCatalogJSON(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title + (author ? ' ' + author : ''))}&maxResults=12`);
+    const v = (d.items || []).map(i => i.volumeInfo).find(v => v.imageLinks?.thumbnail && loose(v.title, v.authors));
+    if (v) return { art: v.imageLinks.thumbnail.replace('http:', 'https:').replace('zoom=1', 'zoom=2'), author: (v.authors || [])[0] || '' };
+  } catch (_) {}
+  try {
+    const d = await sharedCatalogJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(title + (author ? ' ' + author : ''))}&media=ebook&limit=10`);
+    const b = (d.results || []).find(r => r.artworkUrl100 && loose(r.trackName, [r.artistName]));
+    if (b) return { art: b.artworkUrl100.replace('100x100bb', '600x600bb'), author: b.artistName || '' };
+  } catch (_) {}
   return { art: '', author: '' };
 }
 async function persistTasteItemFields(itemId, fields) {
@@ -10369,13 +10405,17 @@ function initTripPlaylistArt() {
     (TRIP_PLAYLIST_ITEMS[key] || []).forEach(item => {
       if (item.art || !item.artQuery) return;
       (async () => {
-        try {
-          const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery)}&media=${media}&entity=${entity}&limit=1`);
-          const d = await r.json();
-          const hit = d.results?.[0];
-          const art = (hit?.artworkUrl600 || hit?.artworkUrl100?.replace('100x100bb', '600x600bb'));
-          if (art) { item.art = art; persistTasteItemArt(item.id, art); renderTripPlaylist(); refreshActivityFeeds(); }
-        } catch (e) {}
+        let art = '';
+        for (const term of [item.artQuery, item.title]) {
+          try {
+            const d = await sharedCatalogJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=${media}&entity=${entity}&limit=1`);
+            const hit = d.results?.[0];
+            art = hit?.artworkUrl600 || hit?.artworkUrl100?.replace('100x100bb', '600x600bb') || '';
+          } catch (e) {}
+          if (art) break;
+        }
+        if (!art && item.link) art = (await fetchLinkPreview(item.link))?.image || '';
+        if (art) { item.art = art; persistTasteItemArt(item.id, art); renderTripPlaylist(); refreshActivityFeeds(); }
       })();
     });
   });
