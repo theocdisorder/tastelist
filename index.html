@@ -3,16 +3,22 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sreya's Taste List</title>
-<meta name="description" content="The music that shaped me — Sreya's favorite artists, albums, and songs.">
-<meta property="og:title" content="Sreya's Taste List">
-<meta property="og:description" content="The music that shaped me — favorite artists, albums, and songs.">
+<title>TasteList — You are what you love</title>
+<meta name="description" content="Share the music, movies, TV and books that made you — and see what your friends love. Make your own taste list in a couple of minutes.">
+<meta property="og:site_name" content="TasteList">
+<meta property="og:title" content="TasteList — You are what you love">
+<meta property="og:description" content="Share the music, movies, TV and books that made you — and see what your friends love. Make yours in a couple of minutes.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tastelist.app">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://tastelist.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="TasteList: You are what you love. Make yours at tastelist.app">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://tastelist.app/og-image.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<meta name="twitter:title" content="Sreya's Taste List">
-<meta name="twitter:description" content="The music that shaped me — favorite artists, albums, and songs.">
+<meta name="twitter:title" content="TasteList — You are what you love">
+<meta name="twitter:description" content="Share the music, movies, TV and books that made you — and see what your friends love.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
 <style>
@@ -2410,6 +2416,49 @@ async function searchTasteCatalog(type, q) {
   if (type === 'podcasts') return itunes('podcast', 'podcast', r => ({ title: r.collectionName || r.trackName, sub: r.artistName || '', meta: r.primaryGenreName || '', art: r.artworkUrl600 || big(r.artworkUrl100) }));
   return [];
 }
+// ── Official capitalization for typed (not picked) items ──
+const tasteNorm = v => String(v || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
+const SMALL_WORDS = new Set(['a','an','and','as','at','but','by','for','from','in','into','nor','of','on','or','over','the','to','up','vs','with']);
+// Only applied to text typed entirely in lowercase, so deliberate stylings ("BRAT", "iPhone") are left alone.
+function titleCaseIfLowercase(text, { names = false } = {}) {
+  const t = String(text || '').trim();
+  if (!t || t !== t.toLowerCase() || !/[a-z]/.test(t)) return t;
+  const words = t.split(/(\s+)/);
+  const last = words.length - 1;
+  return words.map((w, i) => {
+    if (/^\s+$/.test(w)) return w;
+    if (!names && i !== 0 && i !== last && SMALL_WORDS.has(w)) return w;
+    return w.replace(/^([^a-z0-9]*)([a-z])/, (_, pre, c) => pre + c.toUpperCase())
+            .replace(names ? /([-'’.])([a-z])/g : /([-'’])([a-z])/g, (_, sep, c) => sep + c.toUpperCase()).replace(/'S\b/g, "'s").replace(/’S\b/g, '’s');
+  }).join('');
+}
+// Find the catalog entry this typed item refers to; use its official title (and creator, when
+// the creator you typed matches theirs or you left it blank).
+async function canonicalizeTasteItem(category, title, sub) {
+  let outTitle = title, outSub = sub, matched = false;
+  if (TASTE_SEARCHABLE.includes(category) && title) {
+    try {
+      const results = await searchTasteCatalog(category, `${title} ${sub || ''}`.trim());
+      let pool = results;
+      if (!pool.some(r => tasteNorm(r.title) === tasteNorm(title)) && sub) pool = await searchTasteCatalog(category, title);
+      const want = tasteNorm(title), wantSub = tasteNorm(sub);
+      const sameTitle = r => { const n = tasteNorm(r.title), main = tasteNorm(String(r.title).split(/[:(]/)[0]); return n === want || main === want; };
+      const subOk = r => !wantSub || !r.sub || tasteNorm(r.sub) === wantSub;
+      const hit = pool.find(r => sameTitle(r) && subOk(r) && r.sub) || pool.find(r => sameTitle(r) && subOk(r));
+      if (hit) {
+        matched = true;
+        // Keep the main title when the catalog adds a subtitle you didn't type.
+        const official = tasteNorm(hit.title) === want ? hit.title : String(hit.title).split(/[:(]/)[0].trim();
+        outTitle = official;
+        if (hit.sub && (!wantSub || tasteNorm(hit.sub) === wantSub)) outSub = hit.sub;
+      }
+    } catch (_) {}
+  }
+  if (!matched) outTitle = titleCaseIfLowercase(outTitle);
+  outSub = titleCaseIfLowercase(outSub, { names: true });
+  return { title: outTitle, sub: outSub };
+}
+
 function onTasteTitleInput() {
   const q = document.getElementById('taste-item-title').value.trim();
   // Typing after picking a suggestion means it's no longer that exact item.
@@ -2774,7 +2823,7 @@ function renderTasteListCollaborators(list) {
   if (!el) return;
   const chips = list.collaborators.map(c => {
     const label = firstNameOnly(c.display_name) || c.username || 'Someone';
-    const removeBtn = list.isOwner ? `<span onclick="${esc(`event.stopPropagation(); removeCollaborator('${jsStr(list.id)}','${jsStr(c.user_id)}')`)}" style="cursor:pointer;margin-left:5px;opacity:.6;">✕</span>` : '';
+    const removeBtn = list.isOwner ? `<span role="button" title="Manage members" onclick="${esc(`event.stopPropagation(); inviteCollaborator('${jsStr(list.id)}')`)}" style="cursor:pointer;margin-left:5px;opacity:.6;">✕</span>` : '';
     return `<span style="display:inline-flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:4px 10px;font-size:12px;color:var(--text);margin-right:6px;margin-bottom:6px;">${esc(label)}${removeBtn}</span>`;
   }).join('');
   const inviteBtn = list.isOwner ? `<button onclick="${esc(`inviteCollaborator('${jsStr(list.id)}')`)}" style="font-size:11.5px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border2);border-radius:14px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Invite a friend</button>` : '';
@@ -2875,48 +2924,188 @@ async function renameTasteList(listId) {
   }
 }
 
-async function inviteCollaborator(listId) {
+// ── Invite people to a shared list (in-app panel, search by name or username) ──
+let inviteListId = null;
+let inviteSearchTimer = null, inviteSearchSeq = 0;
+let inviteRemoveConfirm = null;
+let inviteFriends = null; // people you follow or who follow you (accepted), with profiles
+async function loadInviteFriends() {
+  if (!sb || !currentUser) return [];
+  try {
+    const [{ data: out }, { data: inc }] = await Promise.all([
+      sb.from('follows').select('followed_id').eq('follower_id', currentUser.id).eq('status', 'accepted'),
+      sb.from('follows').select('follower_id').eq('followed_id', currentUser.id).eq('status', 'accepted'),
+    ]);
+    const ids = [...new Set([...(out || []).map(r => r.followed_id), ...(inc || []).map(r => r.follower_id)])].filter(id => id && id !== currentUser.id);
+    if (!ids.length) return [];
+    const { data } = await sb.from('profiles').select('id, username, display_name, avatar_url').in('id', ids);
+    return (data || []).sort((a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username));
+  } catch (_) { return []; }
+}
+// Friend matches: any word of their name or their username starts with what you typed
+// (so "j", "jen", "kwan" and "jennyl" all find Jenny Kwan / @jennylkwan); then looser contains-matches.
+function matchInviteFriends(q) {
+  const needle = q.toLowerCase();
+  const scored = (inviteFriends || []).map(p => {
+    const words = [p.username, ...(String(p.display_name || '').split(/\s+/))].filter(Boolean).map(w => w.toLowerCase());
+    const full = `${p.display_name || ''} ${p.username}`.toLowerCase();
+    const score = words.some(w => w.startsWith(needle)) ? 2 : (full.includes(needle) ? 1 : 0);
+    return { p, score };
+  }).filter(x => x.score > 0);
+  return scored.sort((a, b) => b.score - a.score).map(x => x.p);
+}
+function inviteActionHtml(list, p) {
+  return list.collaborators.some(c => c.user_id === p.id)
+    ? `<span style="font-size:12px;color:var(--muted);">Added</span>`
+    : `<button onclick="addInviteMember('${jsStr(p.id)}', this)" style="font:inherit;font-size:12.5px;font-weight:600;color:#fff;background:var(--accent);border:none;border-radius:999px;padding:8px 16px;cursor:pointer;">Invite</button>`;
+}
+const inviteSectionLabel = t => `<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 4px 2px;">${t}</div>`;
+function renderInviteResults(q, others, state) {
+  const list = allTasteLists.find(l => l.id === inviteListId);
+  const results = document.getElementById('invite-results');
+  if (!list || !results) return;
+  const friends = q ? matchInviteFriends(q) : (inviteFriends || []);
+  const friendIds = new Set(friends.map(f => f.id));
+  const rest = (others || []).filter(p => !friendIds.has(p.id) && !(inviteFriends || []).some(f => f.id === p.id));
+  results._people = [...friends, ...rest];
+  let html = '';
+  if (friends.length) html += inviteSectionLabel(q ? 'Your friends' : 'Your friends') + friends.map(p => inviteRowHtml(p, inviteActionHtml(list, p))).join('');
+  if (rest.length) html += inviteSectionLabel('Others on TasteList') + rest.map(p => inviteRowHtml(p, inviteActionHtml(list, p))).join('');
+  if (state === 'searching') html += `<div style="font-size:12.5px;color:var(--muted);padding:8px 4px;">Searching everyone on TasteList…</div>`;
+  if (!html) {
+    if (!q) html = inviteFriends === null ? `<div style="font-size:12.5px;color:var(--muted);padding:8px 4px;">Loading your friends…</div>` : '';
+    else if (state === 'error') html = `<div style="font-size:13px;color:#F97360;padding:10px 4px;">Search failed. Please try again.</div>`;
+    else if (state !== 'pending') html = `<div style="font-size:13px;color:var(--muted);padding:10px 4px;line-height:1.5;">No one on TasteList matches “${esc(q)}”. If they haven't joined yet, send them a join link below.</div>`;
+  }
+  results.innerHTML = html;
+}
+function personAvatarHtml(p, size = 36) {
+  const name = firstNameOnly(p.display_name) || p.username || '?';
+  return p.avatar_url
+    ? `<img src="${esc(p.avatar_url)}" alt="" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
+    : `<span style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,#7C4DFF,#a78bfa);color:#fff;font-weight:700;font-size:${Math.round(size * 0.4)}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${esc(initials(name))}</span>`;
+}
+function inviteRowHtml(p, actionHtml) {
+  return `<div role="listitem" style="display:flex;align-items:center;gap:12px;padding:8px 4px;border-radius:12px;">
+    ${personAvatarHtml(p)}
+    <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.display_name || p.username)}</div>
+    <div style="font-size:12.5px;color:var(--muted);">@${esc(p.username)}</div></div>
+    ${actionHtml}
+  </div>`;
+}
+function inviteListOwnerRow(list) {
+  const me = currentProfile || {};
+  return inviteRowHtml({ ...me, display_name: (me.display_name || me.username || 'You') }, `<span style="font-size:12px;color:var(--muted);">Owner</span>`);
+}
+function inviteCollaborator(listId) {
   const list = allTasteLists.find(l => l.id === listId);
   if (!list || !list.isOwner) return;
-  const username = (prompt("Friend's username to invite:") || '').trim().replace(/^@/, '');
-  if (!username) return;
-  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  inviteListId = listId;
+  inviteRemoveConfirm = null;
+  document.getElementById('invite-modal-sub').textContent = `Members can add items to “${list.title}”.`;
+  const input = document.getElementById('invite-search');
+  input.value = '';
+  renderInviteMembers();
+  renderInviteResults('', [], 'idle');
+  loadInviteFriends().then(f => { inviteFriends = f; if (inviteListId === listId && !input.value.trim()) renderInviteResults('', [], 'idle'); });
+  document.getElementById('invite-modal').style.display = 'flex';
+  setTimeout(() => input.focus(), 0);
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('invite-modal')?.style.display === 'flex') closeInviteModal(); });
+function closeInviteModal() {
+  document.getElementById('invite-modal').style.display = 'none';
+  inviteListId = null;
+  inviteFriends = null;
+}
+function renderInviteMembers() {
+  const list = allTasteLists.find(l => l.id === inviteListId);
+  const el = document.getElementById('invite-members');
+  if (!list || !el) return;
+  const rows = list.collaborators.map(c => {
+    const confirming = inviteRemoveConfirm === c.user_id;
+    const btn = confirming
+      ? `<button onclick="removeCollaborator('${jsStr(list.id)}','${jsStr(c.user_id)}')" style="font:inherit;font-size:12px;font-weight:600;color:#fff;background:#d9534f;border:none;border-radius:999px;padding:7px 12px;cursor:pointer;">Remove?</button>`
+      : `<button onclick="inviteRemoveConfirm='${jsStr(c.user_id)}';renderInviteMembers()" aria-label="Remove ${esc(c.display_name || c.username)}" style="font:inherit;font-size:12px;color:var(--muted);background:none;border:1px solid var(--border);border-radius:999px;padding:6px 12px;cursor:pointer;">Remove</button>`;
+    return inviteRowHtml(c, btn);
+  });
+  el.innerHTML = inviteListOwnerRow(list) + rows.join('');
+}
+function onInviteSearchInput() {
+  clearTimeout(inviteSearchTimer);
+  const q = document.getElementById('invite-search').value.trim().replace(/^@/, '');
+  inviteSearchSeq++; // cancel any in-flight server search for older text
+  if (q.length < 2) { renderInviteResults(q, [], 'pending'); return; }
+  renderInviteResults(q, [], 'searching');
+  inviteSearchTimer = setTimeout(() => runInviteSearch(q), 220);
+}
+async function runInviteSearch(q) {
+  const seq = ++inviteSearchSeq;
+  const list = allTasteLists.find(l => l.id === inviteListId);
+  if (!list || !sb) return;
+  // Strip characters that have meaning in PostgREST filter syntax.
+  const safe = q.replace(/[%,()*\\]/g, ' ').trim();
+  if (!safe) return;
   try {
-    const { data: person, error: lookupError } = await sb.from('profiles').select('id, username, display_name').eq('username', username).maybeSingle();
-    if (lookupError || !person) { alert(`Couldn't find anyone with the username "${username}".`); return; }
-    if (person.id === currentUser.id) { alert("That's you — you're already on this list!"); return; }
-    if (list.collaborators.some(c => c.user_id === person.id)) { alert(`${firstNameOnly(person.display_name) || person.username} is already on this list.`); return; }
-    const { error } = await sb.from('taste_list_collaborators').insert({ list_id: listId, user_id: person.id });
+    const { data, error } = await sb.from('profiles')
+      .select('id, username, display_name, avatar_url')
+      .or(`username.ilike.%${safe}%,display_name.ilike.%${safe}%`)
+      .limit(10);
     if (error) throw error;
-    list.collaborators.push({ user_id: person.id, username: person.username, display_name: person.display_name });
+    if (seq !== inviteSearchSeq) return;
+    renderInviteResults(q, (data || []).filter(p => p.id !== currentUser?.id), 'done');
+  } catch (e) {
+    if (seq === inviteSearchSeq) renderInviteResults(q, [], 'error');
+  }
+}
+async function addInviteMember(userId, btn) {
+  const list = allTasteLists.find(l => l.id === inviteListId);
+  const person = (document.getElementById('invite-results')._people || []).find(p => p.id === userId);
+  if (!list || !person || !list.isOwner) return;
+  btn.disabled = true; btn.textContent = 'Adding…';
+  if (!(await requireFreshSession())) { btn.disabled = false; btn.textContent = 'Invite'; showToast(SESSION_EXPIRED_MESSAGE); return; }
+  try {
+    const { error } = await sb.from('taste_list_collaborators').insert({ list_id: list.id, user_id: person.id });
+    if (error && !/duplicate|unique/i.test(error.message || '')) throw error;
+    if (!list.collaborators.some(c => c.user_id === person.id)) list.collaborators.push({ user_id: person.id, username: person.username, display_name: person.display_name, avatar_url: person.avatar_url });
+    btn.outerHTML = `<span style="font-size:12px;color:var(--accent);font-weight:600;">✓ Added</span>`;
+    renderInviteMembers();
     renderTasteListCollaborators(list);
     renderTasteListsPicker();
-    showToast(`Invited ${firstNameOnly(person.display_name) || person.username}`);
   } catch (e) {
-    alert('Failed to invite: ' + (e.message || 'unknown error'));
+    btn.disabled = false; btn.textContent = 'Invite';
+    showToast('Couldn’t add them: ' + (e.message || 'please try again'));
   }
+}
+async function copyJoinLink() {
+  const owner = currentProfile?.username;
+  const url = owner ? `https://tastelist.app/?u=${encodeURIComponent(owner)}` : 'https://tastelist.app';
+  const btn = document.getElementById('invite-copy-link');
+  try { await navigator.clipboard.writeText(url); btn.textContent = '✓ Copied'; }
+  catch (_) { btn.textContent = url; }
+  setTimeout(() => { btn.textContent = 'Copy join link'; }, 2200);
 }
 
 async function removeCollaborator(listId, userId) {
   const list = allTasteLists.find(l => l.id === listId);
   if (!list || !list.isOwner) return;
-  if (!confirm('Remove this person from the list?')) return;
-  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  if (!(await requireFreshSession())) { showToast(SESSION_EXPIRED_MESSAGE); return; }
   try {
     const { error } = await sb.from('taste_list_collaborators').delete().eq('list_id', listId).eq('user_id', userId);
     if (error) throw error;
     list.collaborators = list.collaborators.filter(c => c.user_id !== userId);
+    inviteRemoveConfirm = null;
+    renderInviteMembers();
     renderTasteListCollaborators(list);
     renderTasteListsPicker();
   } catch (e) {
-    alert('Failed to remove: ' + (e.message || 'unknown error'));
+    showToast('Couldn’t remove them: ' + (e.message || 'please try again'));
   }
 }
 
 async function saveTasteItemForm() {
   let title = document.getElementById('taste-item-title').value.trim();
   const category = readTasteItemType();
-  const sub = document.getElementById('taste-item-sub').value.trim();
+  let sub = document.getElementById('taste-item-sub').value.trim();
   const eventDate = document.getElementById('taste-item-date').value.trim();
   let by = document.getElementById('taste-item-by').value.trim();
   // Your own name here is redundant — your user tag already shows it's your pick.
@@ -2959,6 +3148,12 @@ async function saveTasteItemForm() {
     return;
   }
 
+  if (!tasteItemFormState.picked && title) {
+    const saveBtn = document.getElementById('taste-item-save-btn'); saveBtn.disabled = true;
+    const c = await canonicalizeTasteItem(category, title, sub);
+    saveBtn.disabled = false;
+    title = c.title; sub = c.sub;
+  }
   if (tasteItemFormState.id && ['movies', 'tv'].includes(category) && !tasteItemFormState.picked) {
     const prev = tripPlaylistFlatItems.find(i => i.id === tasteItemFormState.id);
     if (prev && (prev.title !== title || (prev.sub || '') !== sub) && art === prev.art && !link) { art = ''; tasteItemFormState.tmdbId = null; tasteItemFormState.reresolve = true; }
@@ -3105,6 +3300,7 @@ function openAuthModal(mode) {
 }
 function closeAuthModal() {
   document.getElementById('auth-modal').style.display = 'none';
+  inviteSignupPending = false;
 }
 function toggleAuthMode() {
   authMode = authMode === 'signin' ? 'signup' : 'signin';
@@ -3132,7 +3328,7 @@ async function submitAuthForm() {
   try {
     const { error } = authMode === 'signin'
       ? await sb.auth.signInWithPassword({ email, password })
-      : await sb.auth.signUp({ email, password });
+      : await sb.auth.signUp({ email, password, options: { emailRedirectTo: inviteSignupPending ? inviteReturnUrl() : location.origin + '/' } });
     if (error) throw error;
     if (authMode === 'signup') {
       errEl.style.color = '#22C55E';
@@ -3152,7 +3348,75 @@ async function submitAuthForm() {
 
 // Google sign-in: Supabase sends the person to Google, then back to this same page, where
 // supabase-js picks up the session from the URL and onAuthStateChange takes over as usual.
-async function signInWithGoogle() {
+// ── Invites: a signed-out friend opening someone's profile link ──
+// The bar invites them to make their own. Signing up from it returns to that profile with
+// ?ref=invite, which (for a brand-new account) sends them straight into onboarding instead, and
+// remembers who invited them so we can offer to follow that person afterwards.
+let inviteSignupPending = false;
+function inviteBarShouldShow() {
+  return !currentUser && !!viewedProfile && new URLSearchParams(location.search).has('u') && sessionStorage.getItem('tl_invite_dismissed') !== '1';
+}
+function renderInviteBar() {
+  const bar = document.getElementById('invite-bar');
+  if (!bar) return;
+  const show = inviteBarShouldShow();
+  bar.hidden = !show;
+  document.body.classList.toggle('has-invite-bar', show);
+  if (show) {
+    const name = firstNameOnly(viewedProfile.display_name) || viewedProfile.username;
+    document.getElementById('invite-title').textContent = name ? `Like ${name}'s taste? Make your own.` : 'Make your own TasteList';
+  }
+}
+function dismissInviteBar() {
+  try { sessionStorage.setItem('tl_invite_dismissed', '1'); } catch (_) {}
+  renderInviteBar();
+}
+function inviteReturnUrl() {
+  const back = new URL(location.origin + location.pathname);
+  const u = new URLSearchParams(location.search).get('u');
+  if (u) back.searchParams.set('u', u);
+  back.searchParams.set('ref', 'invite');
+  return back.toString();
+}
+function startInviteSignup(method) {
+  const u = new URLSearchParams(location.search).get('u');
+  try { if (u) localStorage.setItem('tl_invited_by', u); } catch (_) {}
+  inviteSignupPending = true;
+  if (method === 'google') { signInWithGoogle(inviteReturnUrl()); return; }
+  openAuthModal('signup');
+}
+// After an invited friend finishes signing up: offer (once) to follow whoever invited them.
+async function maybeOfferInviterFollow() {
+  if (!currentUser || !sb || shouldShowOnboarding()) return;
+  let inviter = null;
+  try { inviter = localStorage.getItem('tl_invited_by'); } catch (_) {}
+  if (!inviter) return;
+  try { localStorage.removeItem('tl_invited_by'); } catch (_) {}
+  try {
+    const { data: prof } = await sb.from('profiles').select('id, username, display_name, is_public').eq('username', inviter).maybeSingle();
+    if (!prof || prof.id === currentUser.id) return;
+    const { data: existing } = await sb.from('follows').select('id').eq('follower_id', currentUser.id).eq('followed_id', prof.id).maybeSingle();
+    if (existing) return;
+    const name = firstNameOnly(prof.display_name) || prof.username;
+    const toast = document.createElement('div');
+    toast.setAttribute('role', 'status');
+    toast.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:950;display:flex;align-items:center;gap:14px;padding:14px 16px 14px 20px;border-radius:16px;background:rgba(24,22,28,.95);border:1px solid rgba(203,176,244,.3);box-shadow:0 16px 48px rgba(0,0,0,.6);font-size:14px;color:#eee;max-width:calc(100% - 32px);';
+    toast.innerHTML = `<span>You joined from ${esc(name)}'s TasteList.</span><button style="font:inherit;font-weight:600;font-size:13px;background:#dbc0ff;color:#17111e;border:none;border-radius:999px;padding:8px 16px;cursor:pointer;white-space:nowrap;">Follow ${esc(name)}</button><button aria-label="Dismiss" style="background:none;border:none;color:#8d8a84;cursor:pointer;font-size:14px;">✕</button>`;
+    const [followBtn, closeBtn] = toast.querySelectorAll('button');
+    closeBtn.onclick = () => toast.remove();
+    followBtn.onclick = async () => {
+      followBtn.disabled = true;
+      const status = prof.is_public === false ? 'pending' : 'accepted';
+      const { error } = await sb.from('follows').insert({ follower_id: currentUser.id, followed_id: prof.id, status });
+      toast.querySelector('span').textContent = error ? 'Couldn’t follow right now — try from their profile.' : (status === 'pending' ? `Follow request sent to ${name}.` : `You're following ${name}.`);
+      followBtn.remove();
+      setTimeout(() => toast.remove(), 3500);
+    };
+    document.body.appendChild(toast);
+  } catch (_) {}
+}
+
+async function signInWithGoogle(redirectOverride) {
   const errEl = document.getElementById('auth-modal-error');
   const btn = document.getElementById('auth-google-btn');
   errEl.style.display = 'none';
@@ -3166,12 +3430,13 @@ async function signInWithGoogle() {
     back.hash = '';
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: back.toString(), queryParams: { prompt: 'select_account' } },
+      options: { redirectTo: (typeof redirectOverride === 'string' && redirectOverride) || (inviteSignupPending ? inviteReturnUrl() : back.toString()), queryParams: { prompt: 'select_account' } },
     });
     if (error) throw error;
   } catch (e) {
     btn.disabled = false;
     document.getElementById('auth-google-label').textContent = 'Continue with Google';
+    if (document.getElementById('auth-modal').style.display !== 'flex') openAuthModal('signup');
     errEl.style.color = '#F97360';
     errEl.style.background = 'rgba(249,115,96,0.1)';
     errEl.textContent = /provider is not enabled|Unsupported provider/i.test(e.message || '')
@@ -4074,6 +4339,8 @@ function updateAuthGate() {
     loadLandingArtistTiles();
   }
   shell.style.display = showLanding ? 'none' : '';
+  renderInviteBar();
+  if (currentUser) setTimeout(maybeOfferInviterFollow, 1200);
 }
 
 async function loadFavoriteArtistsFromSupabase(userId) {
@@ -5017,6 +5284,7 @@ function saveOnboardingProgress(status, step = 0) {
   onboardingUserId = id;
   onboardingState = value;
   renderProfileOnboardingResume();
+  if (status !== 'pending') setTimeout(maybeOfferInviterFollow, 1500); // invited friends: offer to follow whoever invited them
   try { localStorage.setItem(onboardingStorageKey(id), JSON.stringify(value)); } catch (_) {}
   currentUser.user_metadata = { ...currentUser.user_metadata, tastelist_onboarding: value };
   // Defer outside Supabase's auth callback and serialize writes so older steps cannot win.
@@ -5373,8 +5641,17 @@ async function resumeOnboarding() {
 }
 
 function decideInitialView() {
-  const usernameParam = new URLSearchParams(window.location.search).get('u');
-  if (usernameParam) { setTopView('profile'); return; }
+  const params = new URLSearchParams(window.location.search);
+  const usernameParam = params.get('u');
+  // Arrived by signing up from a friend's profile: new accounts set up their own first.
+  if (params.get('ref') === 'invite' && currentUser) {
+    const clean = new URL(location.href);
+    clean.searchParams.delete('ref');
+    if (shouldShowOnboarding()) clean.searchParams.delete('u');
+    history.replaceState(null, '', clean.toString());
+    if (shouldShowOnboarding()) { setTopView('onboarding'); return; }
+  }
+  if (new URLSearchParams(window.location.search).get('u')) { setTopView('profile'); return; }
   if (currentUser) { setTopView(shouldShowOnboarding() && !onboardingState.defaultToFeed ? 'onboarding' : 'feed'); return; }
   setTopView('profile'); // signed out + no ?u= shows the marketing landing page instead anyway
 }
@@ -10392,9 +10669,27 @@ async function resolveTmdbTitle(type, title, person) {
 const KNOWN_IMAGE_HOSTS = /(image\.tmdb\.org|mzstatic\.com|covers\.openlibrary\.org|books\.google|googleusercontent\.com|media-amazon\.com|gr-assets\.com|cloudfront\.net)/i;
 function looksLikeImageUrl(url) { return /\.(jpe?g|png|gif|webp|avif)(\?|#|$)/i.test(url) || KNOWN_IMAGE_HOSTS.test(url); }
 
+const tasteCaseChecked = new Set();
+function fixLowercaseTasteItems() {
+  if (!canEditTasteList) return; // only people who can edit the list can save the correction
+  Object.entries(TRIP_PLAYLIST_ITEMS).forEach(([cat, items]) => (items || []).forEach(item => {
+    if (!item.id || tasteCaseChecked.has(item.id)) return;
+    const lower = v => v && v === v.toLowerCase() && /[a-z]/.test(v);
+    if (!lower(item.title) && !lower(item.sub)) return;
+    tasteCaseChecked.add(item.id);
+    canonicalizeTasteItem(cat, item.title, item.sub || '').then(c => {
+      if (c.title === item.title && (c.sub || '') === (item.sub || '')) return;
+      item.title = c.title; item.sub = c.sub;
+      persistTasteItemFields(item.id, { title: c.title, sub: c.sub || null });
+      renderTripPlaylist();
+    });
+  }));
+}
+
 function initTripPlaylistArt() {
   if (tripPlaylistArtFetched) return;
   tripPlaylistArtFetched = true;
+  fixLowercaseTasteItems();
   // Page links saved in the art field (e.g. an article URL): move them to link_url and use the
   // page's preview image as the art instead.
   Object.values(TRIP_PLAYLIST_ITEMS).flat().forEach(item => {
@@ -13154,6 +13449,27 @@ renderTasteInfluences();
   </div>
 </div>
 
+<div id="invite-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeInviteModal()">
+  <div class="tl-modal-shell" style="max-width:440px;" role="dialog" aria-modal="true" aria-labelledby="invite-modal-title">
+    <button class="tl-modal-close" onclick="closeInviteModal()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="invite-modal-title" class="tl-modal-title">Invite friends</div>
+    <div id="invite-modal-sub" style="font-size:13px;color:var(--muted);margin:-6px 0 16px;line-height:1.5;"></div>
+    <div style="position:relative;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="invite-search" class="tl-input" type="text" autocomplete="off" placeholder="Search your friends or anyone by name" oninput="onInviteSearchInput()" style="padding-left:40px;width:100%;">
+    </div>
+    <div id="invite-results" role="list" style="margin-top:10px;max-height:260px;overflow-y:auto;"></div>
+    <div id="invite-members-wrap" style="margin-top:18px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">On this list</div>
+      <div id="invite-members" role="list"></div>
+    </div>
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <span style="font-size:12.5px;color:var(--muted);line-height:1.45;">Friend not on TasteList yet? Send them a link to join, then add them here.</span>
+      <button id="invite-copy-link" onclick="copyJoinLink()" style="flex-shrink:0;font:inherit;font-size:12.5px;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:8px 14px;cursor:pointer;">Copy join link</button>
+    </div>
+  </div>
+</div>
+
 <div id="taste-item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeTasteItemModal()">
   <div class="tl-modal-shell" style="max-width:400px;">
     <button class="tl-modal-close" onclick="closeTasteItemModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
@@ -13201,6 +13517,44 @@ renderTasteInfluences();
     <button id="taste-item-save-btn" class="tl-btn-primary" onclick="saveTasteItemForm()">Save</button>
   </div>
 </div>
+
+<div id="invite-bar" role="region" aria-label="Make your own TasteList" hidden>
+  <div class="invite-inner">
+    <div class="invite-copy">
+      <div class="invite-title" id="invite-title">Make your own TasteList</div>
+      <div class="invite-sub">Your favorite music, movies, TV and books on one page. Takes a couple of minutes.</div>
+    </div>
+    <div class="invite-actions">
+      <button class="invite-google" onclick="startInviteSignup('google')">
+        <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+      <button class="invite-email" onclick="startInviteSignup('email')">Use email</button>
+    </div>
+    <button class="invite-close" aria-label="Dismiss" onclick="dismissInviteBar()">✕</button>
+  </div>
+</div>
+<style>
+  #invite-bar { position:fixed; left:0; right:0; bottom:0; z-index:900; padding:0 16px calc(16px + env(safe-area-inset-bottom, 0px)); pointer-events:none; }
+  #invite-bar[hidden] { display:none; }
+  .invite-inner { pointer-events:auto; position:relative; max-width:880px; margin:0 auto; display:flex; align-items:center; gap:20px; padding:18px 52px 18px 24px; border-radius:20px; background:rgba(24,22,28,.92); border:1px solid rgba(203,176,244,.28); box-shadow:0 20px 60px rgba(0,0,0,.6); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); }
+  .invite-copy { flex:1; min-width:0; }
+  .invite-title { font-family:'Fraunces',Georgia,serif; font-size:21px; font-weight:500; letter-spacing:-.3px; color:#f4efe7; }
+  .invite-sub { font-size:13px; color:#aaa59c; margin-top:3px; line-height:1.45; }
+  .invite-actions { display:flex; gap:10px; flex-shrink:0; }
+  .invite-google, .invite-email { font:inherit; font-size:14px; font-weight:600; border-radius:999px; padding:11px 18px; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:8px; }
+  .invite-google { background:#fff; color:#1f1f1f; border:1px solid #fff; }
+  .invite-email { background:transparent; color:#eee5d5; border:1px solid rgba(255,255,255,.3); }
+  .invite-close { position:absolute; top:10px; right:12px; background:none; border:none; color:#8d8a84; font-size:14px; cursor:pointer; padding:6px; }
+  body.has-invite-bar { padding-bottom:120px; }
+  @media (max-width:640px) {
+    .invite-inner { flex-direction:column; align-items:stretch; gap:14px; padding:18px 18px 16px; }
+    .invite-title { font-size:19px; padding-right:28px; }
+    .invite-actions { flex-direction:column; }
+    .invite-google, .invite-email { justify-content:center; }
+    body.has-invite-bar { padding-bottom:210px; }
+  }
+</style>
 
 <div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeAuthModal()">
   <div class="tl-modal-shell" style="max-width:360px;">
