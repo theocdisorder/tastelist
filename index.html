@@ -2646,11 +2646,52 @@ async function loadFavoriteAuthors(profileId) {
  const {data,error}=await sb.from('favorite_authors').select('*').eq('user_id',profileId).order('created_at');
  if(viewedProfile?.id!==profileId)return;
  if(error){document.getElementById('favorite-authors').innerHTML=isOwnProfile?'<p>Favorite authors could not load. Please try again after the database setup.</p>':'';return;}
- favoriteAuthors=data||[];renderFavoriteAuthors();
+ favoriteAuthors=data||[];renderFavoriteAuthors();fillAuthorPhotos();
 }
+// ── Author photos ──
+// Wikipedia's lead image (only when the page describes a writer, so "Sally Rooney" doesn't
+// match a namesake), then Open Library's author photo. Saved to favorite_authors.photo_url.
+const authorPhotoChecked = new Set();
+async function lookupAuthorPhoto(name) {
+  try {
+    const d = await sharedCatalogJSON(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(name)}&prop=pageimages|description|pageprops&redirects=1&pithumbsize=600&format=json&origin=*`);
+    const page = Object.values(d.query?.pages || {})[0];
+    const writer = /writer|novelist|author|poet|essayist|journalist|playwright|screenwriter|historian|philosopher|critic|memoirist/i.test(page?.description || '');
+    if (page?.thumbnail?.source && writer && !page.pageprops?.disambiguation) return page.thumbnail.source;
+  } catch (_) {}
+  try {
+    const d = await sharedCatalogJSON(`https://openlibrary.org/search/authors.json?q=${encodeURIComponent(name)}&limit=5`);
+    const hit = (d.docs || []).find(a => bookArtKey(a.name) === bookArtKey(name));
+    if (hit?.key) {
+      const url = `https://covers.openlibrary.org/a/olid/${hit.key}-L.jpg?default=false`;
+      if (await sharedImageWorks(url)) return url;
+    }
+  } catch (_) {}
+  return '';
+}
+function fillAuthorPhotos() {
+  favoriteAuthors.forEach(a => {
+    if (a.photo_url || authorPhotoChecked.has(a.id)) return;
+    authorPhotoChecked.add(a.id);
+    lookupAuthorPhoto(a.name).then(url => {
+      if (!url) return;
+      a.photo_url = url;
+      renderFavoriteAuthors();
+      if (isOwnProfile && currentUser && a.user_id === currentUser.id) sb.from('favorite_authors').update({ photo_url: url }).eq('id', a.id).then(() => {});
+    });
+  });
+}
+function authorPhotoHtml(a) {
+  const size = 64;
+  const fallback = `<span style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,#22C55E,#0f5132);color:#fff;font-weight:700;font-size:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${esc(initials(a.name))}</span>`;
+  return a.photo_url
+    ? `<img src="${esc(a.photo_url)}" alt="" loading="lazy" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;object-position:center 20%;flex-shrink:0;background:var(--surface2);" onerror="this.outerHTML=${esc(JSON.stringify(fallback))}">`
+    : fallback;
+}
+
 function renderFavoriteAuthors() {
  const el=document.getElementById('favorite-authors');if(!el)return;
- el.innerHTML=(!favoriteAuthors.length&&!isOwnProfile)?'':`<div class="music-section"><div class="music-section-header"><h2 class="music-section-title">Favorite Authors</h2>${isOwnProfile?'<button class="ob-button ob-secondary" onclick="addFavoriteAuthor()">+ Add author</button>':''}</div>${favoriteAuthors.map(a=>`<details style="padding:20px 0;border-bottom:1px solid var(--border)"><summary style="cursor:pointer;font-size:20px;font-weight:600">${esc(a.name)} <small style="font-size:12px;color:var(--muted)">${(a.books||[]).length} favorite books</small></summary>${creatorAction('author',a.id,a.books?.length)}<div style="display:flex;gap:16px;flex-wrap:wrap;padding:16px 0">${(a.books||[]).map(b=>`<div style="width:140px">${b.art?`<img src="${esc(b.art)}" alt="${esc(b.title)}" style="width:140px;height:210px;object-fit:contain" onerror="this.style.display='none'">`:''}<p>${esc(b.title)}</p></div>`).join('')}</div></details>`).join('')}</div>`;
+ el.innerHTML=(!favoriteAuthors.length&&!isOwnProfile)?'':`<div class="music-section"><div class="music-section-header"><h2 class="music-section-title">Favorite Authors</h2>${isOwnProfile?'<button class="ob-button ob-secondary" onclick="addFavoriteAuthor()">+ Add author</button>':''}</div>${favoriteAuthors.map(a=>`<details style="padding:20px 0;border-bottom:1px solid var(--border)"><summary style="cursor:pointer;display:flex;align-items:center;gap:16px;list-style:none;">${authorPhotoHtml(a)}<span style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:20px;font-weight:600">${esc(a.name)}</span><small style="font-size:12px;color:var(--muted)">${(a.books||[]).length} favorite book${(a.books||[]).length===1?'':'s'}</small></span></summary>${creatorAction('author',a.id,a.books?.length)}<div style="display:flex;gap:16px;flex-wrap:wrap;padding:16px 0">${(a.books||[]).map(b=>`<div style="width:140px">${b.art?`<img src="${esc(b.art)}" alt="${esc(b.title)}" style="width:140px;height:210px;object-fit:contain" onerror="this.style.display='none'">`:''}<p>${esc(b.title)}</p></div>`).join('')}</div></details>`).join('')}</div>`;
 }
 async function addFavoriteAuthor() {
  if(!isOwnProfile||!currentUser)return;
@@ -2658,7 +2699,7 @@ async function addFavoriteAuthor() {
  if(favoriteAuthors.some(a=>bookArtKey(a.name)===bookArtKey(name))){showToast('This author is already added.');return;}
  const {data,error}=await sb.from('favorite_authors').insert({user_id:currentUser.id,name,books:[]}).select().single();
  if(error){alert(error.message);return;}
- favoriteAuthors.push(data);renderFavoriteAuthors();openCreatorPicks('author',data.id);
+ favoriteAuthors.push(data);renderFavoriteAuthors();fillAuthorPhotos();openCreatorPicks('author',data.id);
 }
 function openCreatorPicks(kind,id) {
  if(!isOwnProfile||!currentUser)return;
@@ -4261,7 +4302,7 @@ async function loadLandingArtwork() {
   if (!el || el.dataset.loaded) return;
   el.dataset.loaded = 'true';
   const picks = [
-    { kind: 'artist', title: 'The Strokes' },
+    { kind: 'artist', title: 'Nas' },
     { kind: 'movie', title: 'Mean Girls', year: '2004' },
     { kind: 'book', title: 'Infinite Jest', author: 'David Foster Wallace' },
     { kind: 'tv', title: 'The Sopranos' }
@@ -11427,6 +11468,7 @@ let feedHasMore = true;
 let feedAudienceIds = null; // [currentUser.id, ...accepted-follow targets], resolved once per load
 
 // Who a "following" feed should include: yourself plus anyone you have an accepted follow on.
+let feedFollowCount = 0;
 async function resolveFeedAudience() {
   if (!currentUser) return [];
   const ids = [currentUser.id];
@@ -11438,6 +11480,12 @@ async function resolveFeedAudience() {
     if(error)throw error;
     (data || []).forEach(r => { if (!ids.includes(r.followed_id)) ids.push(r.followed_id); });
   } catch (e) { console.error('Failed to resolve feed audience:', e); throw e; }
+  feedFollowCount = ids.length - 1;
+  // Featured profiles (set by an admin, always public) show up in everyone's feed by default.
+  try {
+    const { data: featured } = await sb.from('profiles').select('id').eq('is_featured', true).eq('is_public', true);
+    (featured || []).forEach(r => { if (!ids.includes(r.id)) ids.push(r.id); });
+  } catch (_) {}
   return ids;
 }
 
@@ -11520,7 +11568,7 @@ async function fetchFeedPage(isFirstPage) {
     const followedIds=feedAudienceIds.filter(id=>id!==currentUser?.id);
     if(!followedIds.length){feedMode='suggestions';feedHasMore=false;await showPeopleToFollow();return;}
     document.getElementById('feed-heading').textContent="What's New";
-    document.getElementById('feed-context').textContent='From people you follow';
+    document.getElementById('feed-context').textContent=feedFollowCount?'From people you follow':'Featured on TasteList — follow friends to see their picks here too';
     let query = sb.from('activity_feed')
       .select('id, label, sub, type, note, activity_date, art_url, tmdb_id, user_id, profiles!activity_feed_user_id_fkey(username, display_name, is_public)')
       .order('activity_date', { ascending: false })
@@ -11554,7 +11602,7 @@ async function showPeopleToFollow() {
  el.innerHTML='<p style="color:var(--muted)">Finding people…</p>';
  try {
   const [profiles,relationships]=await Promise.all([
-   sb.from('profiles').select('id,username,display_name,is_public').eq('is_public',true).neq('id',userId).order('username').limit(60),
+   sb.from('profiles').select('id,username,display_name,is_public,is_featured').eq('is_public',true).neq('id',userId).order('is_featured',{ascending:false}).order('username').limit(60),
    sb.from('follows').select('followed_id,status').eq('follower_id',userId)
   ]);
   if(profiles.error||relationships.error)throw profiles.error||relationships.error;
