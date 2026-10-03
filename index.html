@@ -2,7 +2,7 @@
 <html lang="en" class="app-starting">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
 <title>TasteList — You are what you love</title>
 <meta name="description" content="Share the music, movies, TV and books that made you — and see what your friends love. Make your own taste list in a couple of minutes.">
 <meta property="og:site_name" content="TasteList">
@@ -1205,6 +1205,14 @@
   .sl-sub { font-size:12.5px; color:var(--muted); line-height:1.35; margin-top:2px; }
   .sl-caption { font-size:12px; color:var(--muted); font-style:italic; margin-top:4px; }
   .sl-edit-controls { position:absolute; top:8px; right:8px; display:flex; gap:5px; z-index:3; }
+  .sl-drag-handle { position:absolute; top:8px; left:8px; z-index:3; width:28px; height:28px; border-radius:8px; background:rgba(0,0,0,.7); border:1px solid rgba(255,255,255,.25); color:#fff; font-size:15px; line-height:1; cursor:grab; touch-action:none; display:flex; align-items:center; justify-content:center; padding:0; }
+  .sl-drag-handle:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .sl-row.sl-sortable .sl-tile { cursor:grab; user-select:none; -webkit-user-select:none; }
+  .sl-tile.sl-dragging { opacity:.25; }
+  .sl-tile.sl-dragging .sl-art { box-shadow:none; }
+  .sl-drag-ghost { position:fixed; z-index:2000; pointer-events:none; transform:rotate(2deg) scale(1.03); box-shadow:0 24px 50px rgba(0,0,0,.6); border-radius:6px; opacity:.95; }
+  .sl-drag-ghost .sl-edit-controls, .sl-drag-ghost .sl-drag-handle { display:none; }
+  .sl-reorder-hint { font-size:12.5px; color:var(--muted); margin:0 0 22px; }
   .sl-edit-controls button { width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,.7); border:1px solid rgba(255,255,255,.25); color:#fff; font-size:12px; cursor:pointer; }
   @media (max-width: 700px) {
     .sl-hero-bg { width:100%; right:-16px; opacity:.22; }
@@ -1324,6 +1332,8 @@
 .ob-hero-collage .ob-hero-tile:nth-child(2){left:4%;top:20%;transform:rotate(-5deg)}
 .ob-hero-collage .ob-hero-tile:nth-child(3){left:58%;top:27%;transform:rotate(5deg)}
 .ob-hero-collage .ob-hero-tile:nth-child(4){left:28%;top:48%;transform:rotate(-3deg)}
+.ob-hero-collage .ob-hero-tile:nth-child(1) img { object-position:center 15%; } /* back tile: keep faces above the cards in front */
+.ob-hero-collage .ob-hero-tile.is-album { height:auto;aspect-ratio:1/1;z-index:2; } /* square sleeve on top of the stack, so the whole cover shows */
 .ob-hero-tile { margin:0;background:linear-gradient(145deg,#383044,#1b1c21);overflow:hidden;display:flex;align-items:center;justify-content:center; }
 .ob-hero-tile figcaption { padding:18px;text-align:center;color:#d1b9f4;font-size:20px; }
 .ob-hero-tile img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover; }
@@ -1496,6 +1506,167 @@ input::placeholder, textarea::placeholder {
 .taste-poster-share{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:20px auto;font-size:12px;color:var(--muted)}
 @media(max-width:420px){.taste-poster-heading{padding:24px 20px}.taste-poster-grid{padding:20px 16px}.taste-poster-category{padding-right:10px}.taste-poster-category:nth-child(even){padding-left:10px}.taste-poster-category ul{font-size:11px}}
 
+
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE LAYER — one place for layout rules across phone, tablet and desktop.
+   Breakpoints: ≤480 small phone · ≤720 phone · ≤1023 tablet · ≥1024 desktop.
+   Touch sizing keys off (pointer: coarse), not width, so a narrow desktop window keeps mouse sizes.
+   ════════════════════════════════════════════════════════════════════════════════════════ */
+:root { --page-max: 1100px; --gutter: clamp(16px, 4.5vw, 32px); }
+
+/* ── 1. Page container: centered, ~1100px, 16–20px gutters on phones ── */
+.music-layout, .bio-sidebar { max-width: var(--page-max) !important; }
+.bio-sidebar { padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; }
+#view-feed-container > div { max-width: var(--page-max) !important; padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; }
+.tab-nav { max-width: var(--page-max); margin-left: auto; margin-right: auto; padding-left: var(--gutter); padding-right: var(--gutter);
+  overflow-x: auto; scrollbar-width: none; }
+.tab-nav::-webkit-scrollbar { display: none; }
+.tab-btn { white-space: nowrap; flex-shrink: 0; }
+/* Text never forces the page wider: long words break inside their box. */
+body { overflow-wrap: break-word; }
+img, video, svg { max-width: 100%; }
+
+/* ── 2. Navigation: one row on desktop; brand+account / tabs / search on phones ── */
+.global-header { display: grid !important; grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: "brand tabs search account"; align-items: center; gap: 10px 20px;
+  max-width: var(--page-max); margin: 0 auto !important; padding: 18px var(--gutter) 14px !important; }
+.global-header .global-navigation { display: contents !important; }
+.global-header .global-navigation > div:first-child { grid-area: brand; min-width: 0; }
+.global-header .global-navigation > div:nth-child(2) { grid-area: tabs; min-width: 0; display: flex; flex-wrap: nowrap; }
+.global-header .global-account { position: static !important; grid-area: account; gap: 12px !important; white-space: nowrap; }
+.global-header #people-search-wrap { grid-area: search; justify-self: end; width: min(100%, 340px) !important; max-width: none !important; margin: 0 !important; }
+@media (max-width: 720px) {
+  .global-header { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "brand account" "tabs tabs" "search search"; gap: 6px 12px; padding-top: 12px !important; }
+  .global-header .global-navigation > div:first-child span { font-size: 18px !important; }
+  .global-header .global-navigation > div:first-child img { width: 26px !important; height: 26px !important; }
+  .global-header .global-navigation > div:nth-child(2) { margin-left: -12px; }
+  .global-header #people-search-wrap { justify-self: stretch; width: auto !important; }
+  #notif-dropdown { position: fixed !important; top: calc(var(--vvt, 0px) + 64px) !important; left: 12px !important; right: 12px !important; width: auto !important; max-height: min(70dvh, 520px) !important; }
+}
+
+/* ── 3. Cards: feed/profile activity cards stack when their own width gets tight ── */
+*:has(> .activity-card) { container-type: inline-size; }
+.activity-card { display: grid !important; grid-template-columns: 150px minmax(0, 1fr); table-layout: auto; }
+.activity-card-art { display: block !important; width: auto !important; position: relative; overflow: hidden; background: var(--surface3, #1d1d20); }
+.activity-card-art-img { width: 100% !important; height: 225px; position: relative; z-index: 1; }
+img.activity-card-art-img { object-fit: contain; }                       /* whole cover, never cropped */
+.activity-card-art.has-art::before { content: ""; position: absolute; inset: -24px; background: var(--art) center / cover no-repeat;
+  filter: blur(22px) brightness(.45) saturate(1.15); }                    /* fills the panel around the cover */
+.activity-card-mosaic { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }   /* 2×2 of 2:3 cells */
+.activity-card-body { display: block !important; width: auto !important; min-width: 0; padding: 18px 20px; overflow-wrap: anywhere; }
+@container (max-width: 520px) {
+  .activity-card { grid-template-columns: minmax(0, 1fr); }
+  img.activity-card-art-img { height: clamp(200px, 62cqi, 280px); }
+  .activity-card-art-empty { height: 88px !important; }
+  .activity-card-mosaic { height: auto !important; aspect-ratio: 8 / 3; grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr; }  /* one row of four 2:3 cells */
+  .activity-card-body { padding: 16px; }
+}
+
+/* ── 4. Artwork: keep proportions; book covers & posters shown whole ── */
+.ob-art { aspect-ratio: 2 / 3 !important; }                                 /* onboarding tiles match poster/cover shape */
+.sl-art-contain { background: #111; }
+.sl-art-contain::before { content: ""; position: absolute; inset: -20px; background: var(--art) center / cover no-repeat; filter: blur(18px) brightness(.45); }
+.sl-art-contain img { position: relative; z-index: 1; object-fit: contain !important; }
+.taste-poster-grid { align-items: start; }
+.taste-poster-art span { overflow-wrap: normal; word-break: normal; hyphens: auto; }
+
+/* ── 5. Type: headings scale smoothly; long names/titles wrap instead of colliding ── */
+.site-heading, .profile-name, #profile-name { font-size: clamp(26px, 6vw, 40px); line-height: 1.1; overflow-wrap: anywhere; }
+#feed-heading { font-size: clamp(20px, 4.5vw, 24px) !important; }
+.sl-title { overflow-wrap: anywhere; }
+.sl-name, .sl-sub, .sl-agenda-title, .ob-pick-card strong, .ob-result strong, .collage-card-title { overflow-wrap: anywhere; }
+/* Flex/grid children holding text must be allowed to shrink, or long titles push buttons off-screen. */
+.sl-info-text, .sl-topbar > *, .sl-byline > div, .activity-card-body > *, .ob-heading, .tl-modal-shell * { min-width: 0; }
+.sl-topbar { flex-wrap: wrap; row-gap: 10px; }
+.sl-actions { flex-wrap: wrap; }
+
+/* ── 6. Phones: gutters, columns, inputs ── */
+@media (max-width: 720px) {
+  .site-header { padding-left: var(--gutter); padding-right: var(--gutter); }
+  #view-feed-container > div { padding-top: 4px !important; padding-bottom: 48px !important; }
+  .tab-nav { margin-top: 8px; }
+  .tl-modal-shell { padding: 22px 18px 18px; }
+  .taste-poster-heading { padding: 24px 20px; }
+  .taste-poster-grid { padding: 18px 14px; }
+  .taste-poster-art span { font-size: 10.5px; }
+}
+@media (max-width: 480px) {
+  .sl-row, .sl-row.sl-row-landscape { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }   /* two columns on phones */
+  .artist-grid > * { flex-basis: calc((100% - 12px) / 2.15) !important; }                          /* 2 visible + a peek */
+}
+@media (min-width: 481px) and (max-width: 1023px) { .artist-grid > * { flex-basis: calc((100% - 36px) / 4) !important; } }
+/* iOS zooms into any field under 16px; keep form text at 16px on touch screens and phones. */
+@media (pointer: coarse), (max-width: 720px) {
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select, textarea { font-size: 16px !important; }
+}
+
+/* ── 7. Touch: 44px targets; nothing essential hidden behind hover ── */
+@media (pointer: coarse) {
+  button, summary, select, [role=button]:not(.sl-tile):not(.activity-card):not(.collage-card),
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]):not([type=file]) { min-height: 44px; }
+  button, summary, [role=button]:not(.sl-tile):not(.activity-card):not(.collage-card) { min-width: 44px; }
+  /* Stand-alone text links act as buttons here (nav, account, card links). */
+  #auth-widget a, .global-account a, .sl-info-text a, .sl-back, .ob-skip, .ob-question-switch { display: inline-flex; align-items: center; min-height: 44px; }
+  /* Small round icon buttons: 44px hit area, same visual size (background painted inside the padding). */
+  .sl-edit-controls button, .sl-drag-handle, .card-edit-controls button, .tl-modal-close, #notif-bell-btn,
+  .sl-cal-arrow, button[aria-label="Clear search"] {
+    width: 44px !important; height: 44px !important; min-width: 44px; padding: 8px !important; background-clip: content-box !important; border-color: transparent !important; }
+  .sl-edit-controls, .card-edit-controls { top: 2px !important; right: 2px !important; gap: 0 !important; }
+  .sl-drag-handle { top: 2px !important; left: 2px !important; }
+  .tl-modal-close { top: 6px !important; right: 6px !important; }
+  .sl-cal-arrow { border: 0 !important; }
+}
+@media (hover: none) {
+  .artist-tile .tile-overlay, .artist-tile .tile-arrow, .song-row .song-edit-hint, .music-section-title .edit-pencil { opacity: 1 !important; transform: none !important; }
+}
+
+
+@media (pointer: coarse) {
+  .sl-byline-name a { display: inline-flex; align-items: center; min-height: 44px; }
+  /* Inline links inside sentences / artwork: grow the hit area with padding, cancel it with margin so layout doesn't move. */
+  #auth-modal p a, #auth-modal div > a { display: inline-block; padding: 15px 6px; margin: -15px -6px; }
+  .taste-poster-footer a { display: inline-block; padding: 17px 8px; margin: -17px -8px; }
+}
+/* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
+#friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
+#invite-modal, #taste-item-modal, #auth-modal, #activity-summary-modal, #activity-item-modal, .modal-bg {
+  top: var(--vvt, 0px) !important; bottom: auto !important; height: var(--vvh, 100%) !important; padding: 12px !important; overflow: hidden !important; }
+.tl-modal-shell, .modal, .update-composer, #activity-summary-content {
+  max-height: calc(var(--vvh, 100dvh) - 24px) !important; overflow-y: auto !important; overscroll-behavior: contain; margin: auto !important; }
+dialog { max-height: calc(var(--vvh, 100dvh) - 24px) !important; overscroll-behavior: contain; max-width: calc(100vw - 24px); }
+html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important; margin-bottom: auto !important; }
+/* Primary action sticks to the bottom of the dialog while its content scrolls. */
+.tl-modal-shell .tl-btn-primary { position: sticky; bottom: 0; z-index: 2; box-shadow: 0 -14px 18px var(--surface); }
+.taste-share-actions { position: sticky; bottom: -1px; z-index: 2; background: var(--surface); padding-top: 12px; padding-bottom: 4px; }
+
+/* ── 9. Onboarding: full-height on phones with actions pinned to the bottom ── */
+@media (max-width: 720px) {
+  #view-onboarding-container { padding: 0 !important; }
+  .ob-frame { min-height: calc(var(--vvh, 100dvh) - 1px) !important; border-radius: 0 !important; border-left: 0 !important; border-right: 0 !important; padding: 18px var(--gutter) 0 !important; }
+  .ob-results-grid { max-height: none !important; overflow: visible !important; }
+  .ob-footer { position: sticky; bottom: 0; z-index: 5; margin: 0 calc(-1 * var(--gutter)); padding: 14px var(--gutter) calc(14px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to bottom, rgba(10,11,10,0), #0a0b0a 26%); }
+}
+
+/* ── 10. Shared lists: calendar strip when it fits, chronological agenda when it doesn't ── */
+.sl-cal { container-type: inline-size; }
+.sl-agenda { display: none; list-style: none; margin: 0; padding: 0; }
+@container (max-width: 620px) {
+  .sl-cal-strip { display: none !important; }
+  .sl-agenda { display: block; }
+}
+.sl-agenda-month { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; }
+.sl-agenda-month:first-child { margin-top: 0; }
+.sl-agenda-row { width: 100%; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 76px; padding: 8px 12px 8px 8px;
+  margin-bottom: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.sl-agenda-row.is-next { border-color: var(--cat); box-shadow: inset 3px 0 0 var(--cat); }
+.sl-agenda-thumb { width: 44px; aspect-ratio: 2 / 3; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--cat) 18%, transparent); display: block; }
+.sl-agenda-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sl-agenda-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sl-agenda-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+.sl-agenda-sub { font-size: 12.5px; color: var(--muted); }
+.sl-agenda-when { font-size: 11.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.sl-agenda-row.is-next .sl-agenda-when { color: var(--cat); }
 </style>
 </head>
 <body>
@@ -2807,8 +2978,8 @@ function renderTasteListsPicker() {
     const mosaicCells = list.previewArt.map(u => `<div style="background-image:url('${esc(u)}');background-size:cover;background-position:center;"></div>`).join('') +
       Array(Math.max(0, 4 - list.previewArt.length)).fill(`<div style="background:#7C4DFF18;"></div>`).join('');
     const art = list.previewArt.length
-      ? `<div class="activity-card-art-img" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;">${mosaicCells}</div>`
-      : `<div class="activity-card-art-img" style="background:#7C4DFF18;display:flex;align-items:center;justify-content:center;">${mediaIcon('list', 42)}</div>`;
+      ? `<div class="activity-card-art-img activity-card-mosaic" style="display:grid;gap:2px;">${mosaicCells}</div>`
+      : `<div class="activity-card-art-img activity-card-art-empty" style="background:#7C4DFF18;display:flex;align-items:center;justify-content:center;">${mediaIcon('list', 42)}</div>`;
     const canEditThisList = list.isOwner || list.collaborators.some(c => c.user_id === currentUser?.id);
     const renameBtn = canEditThisList ? `<button onclick="event.stopPropagation(); renameTasteList('${jsStr(list.id)}')" title="Rename list" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:2px 4px;flex-shrink:0;">✎</button>` : '';
     return `<div class="activity-card" onclick="${esc(`openTasteList('${jsStr(list.id)}')`)}" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);margin-bottom:12px;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
@@ -4297,27 +4468,51 @@ function copyProfileLink(btn, link) {
 }
 
 // Curated examples, with artwork resolved from the same providers as onboarding.
+// Album cover: Apple's catalog first (tolerating edition suffixes like "(Remastered)" or
+// "Illmatic XX"), then MusicBrainz's Cover Art Archive as a backup source.
+async function lookupAlbumCover(title, artist) {
+  const norm = v => String(v || '').toLowerCase().replace(/\s*[\(\[].*?[\)\]]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  const t = norm(title), a = norm(artist);
+  const titleOk = name => { const n = norm(name); return n === t || n.startsWith(t + ' '); };
+  const artistOk = name => { const n = norm(name); return n === a || n.split(' and ').includes(a) || n.startsWith(a + ' '); };
+  for (const term of [`${title} ${artist}`, title]) {
+    try {
+      const d = await sharedCatalogJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=album&limit=25`);
+      const hits = (d.results || []).filter(r => titleOk(r.collectionName) && artistOk(r.artistName) && r.artworkUrl100);
+      // Prefer the plain original over anniversary / deluxe editions.
+      const hit = hits.find(r => norm(r.collectionName) === t) || hits[0];
+      if (hit) return hit.artworkUrl100.replace(/\d+x\d+bb/, '600x600bb');
+    } catch (_) {}
+  }
+  try {
+    const q = `releasegroup:"${title.replace(/"/g, '')}" AND artist:"${artist.replace(/"/g, '')}" AND primarytype:album`;
+    const d = await sharedCatalogJSON(`https://musicbrainz.org/ws/2/release-group?query=${encodeURIComponent(q)}&fmt=json&limit=5`);
+    const rg = (d['release-groups'] || []).find(g => norm(g.title) === t);
+    if (rg?.id) {
+      const url = `https://coverartarchive.org/release-group/${rg.id}/front-500`;
+      if (await sharedImageWorks(url)) return url;
+    }
+  } catch (_) {}
+  return '';
+}
+
 async function loadLandingArtwork() {
   const el = document.getElementById('landing-artwork');
   if (!el || el.dataset.loaded) return;
   el.dataset.loaded = 'true';
   const picks = [
-    { kind: 'artist', title: 'Nas' },
+    { kind: 'artist', title: 'Run-DMC' },
     { kind: 'movie', title: 'Mean Girls', year: '2004' },
     { kind: 'book', title: 'Infinite Jest', author: 'David Foster Wallace' },
     { kind: 'tv', title: 'The Sopranos' }
   ];
-  el.innerHTML = picks.map(p => `<figure class="ob-hero-tile"><figcaption>${esc(p.title)}</figcaption></figure>`).join('');
+  el.innerHTML = picks.map(p => `<figure class="ob-hero-tile${p.kind === 'album' ? ' is-album' : ''}"><figcaption>${esc(p.title)}</figcaption></figure>`).join('');
   await Promise.allSettled(picks.map(async (pick, index) => {
     let art = '';
     if (pick.kind === 'artist') {
       art = (await lookupArtistArt(pick.title))?.tilePhoto || '';
     } else if (pick.kind === 'album') {
-      const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(pick.title + ' ' + pick.artist)}&entity=album&limit=6`);
-      if (!response.ok) return;
-      const data = await response.json();
-      const hit = (data.results || []).find(r => r.collectionName?.toLowerCase() === pick.title.toLowerCase() && r.artistName?.toLowerCase() === pick.artist.toLowerCase());
-      art = hit?.artworkUrl100?.replace('100x100bb', '600x600bb') || '';
+      art = await lookupAlbumCover(pick.title, pick.artist);
     } else if (pick.kind === 'book') {
       art = preferredBookCover(pick.title,pick.author) || await fetchBookCover(pick.title,pick.author);
     } else {
@@ -5379,20 +5574,53 @@ function onboardingPicks() {
   if (!profileFavoritesLoaded || !isOwnProfile || viewedProfile?.id !== currentUser?.id) return [];
   return buildTasteConstellation(collectConstellationFavorites()).items;
 }
+// Low-pressure prompts: nobody needs "all-time favorites" to get started. `list` is the short
+// name the picks are saved under on the profile; `ideas` are tap-to-search examples.
 const ONBOARDING_QUESTIONS = [
-  'What have you been into lately?',
-  'What would you recommend to a friend?',
-  'What won’t you shut up about?',
-  'What’s an all-time favorite?',
-  'What’s your comfort watch?',
+  { q: 'What have you been obsessed with lately?', list: 'Recent obsessions',
+    hint: 'A song on repeat, a show you binged, a book you couldn’t put down. Anything counts.',
+    ideas: ['Sabrina Carpenter', 'The Bear', 'Severance', 'Fourth Wing', 'Chappell Roan', 'Dune: Part Two'] },
+  { q: 'What are you watching, reading or listening to right now?', list: 'Currently into',
+    hint: 'It doesn’t have to be a favorite yet. Whatever’s in rotation.',
+    ideas: ['The Pitt', 'Intermezzo', 'Shrinking', 'Wicked', 'Call Her Daddy', 'Noah Kahan'] },
+  { q: 'What’s your comfort watch?', list: 'Comfort watches',
+    hint: 'The thing you put on when you need a break.',
+    ideas: ['The Office', 'Gilmore Girls', 'Parks and Recreation', 'Pride and Prejudice', 'Friends', 'The Great British Bake Off'] },
+  { q: 'What’s been stuck in your head?', list: 'On repeat',
+    hint: 'A song, an album, an artist you keep coming back to.',
+    ideas: ['Espresso', 'Brat', 'SOS', 'Kendrick Lamar', 'Taylor Swift', 'Hozier'] },
+  { q: 'What would you tell a friend to check out?', list: 'Recommendations',
+    hint: 'One good recommendation is plenty.',
+    ideas: ['Normal People', 'Shōgun', 'Past Lives', 'Succession', 'Tomorrow, and Tomorrow, and Tomorrow', 'Serial'] },
+  { q: 'What did you grow up loving?', list: 'Grew up on',
+    hint: 'The stuff that made you, you. No judgment.',
+    ideas: ['Harry Potter', 'Spirited Away', 'Avatar: The Last Airbender', 'The Princess Diaries', 'Destiny’s Child', 'Matilda'] },
+  { q: 'What’s the last thing that made you laugh?', list: 'Made me laugh',
+    hint: 'A show, a special, a podcast, a movie.',
+    ideas: ['Abbott Elementary', 'Hacks', 'What We Do in the Shadows', 'Nate Bargatze', 'Ali Wong', 'SmartLess'] },
+  { q: 'What’s a guilty pleasure you secretly love?', list: 'Guilty pleasures',
+    hint: 'We won’t tell.',
+    ideas: ['Love Is Blind', 'Mamma Mia!', 'Twilight', 'The Summer I Turned Pretty', 'Selling Sunset', 'One Direction'] },
 ];
+function onboardingQuestion() {
+  const state = onboardingVisualState();
+  return ONBOARDING_QUESTIONS[(state.questionIndex || 0) % ONBOARDING_QUESTIONS.length];
+}
+function onboardingIdeasHtml(ready = true) {
+  return onboardingQuestion().ideas.map(q => `<button type="button" onclick="suggestOnboardingSearch('${jsStr(q)}')" ${!ready ? 'disabled' : ''}>${esc(q)}</button>`).join('');
+}
 function cycleOnboardingQuestion() {
   const heading = document.getElementById('onboarding-title');
   if (!heading || !document.getElementById('ob-question-switch')) return;
   const state = onboardingVisualState();
   state.questionIndex = ((state.questionIndex || 0) + 1) % ONBOARDING_QUESTIONS.length;
-  // Update only the heading: retain query, filters, results, selection, and input focus.
-  heading.textContent = ONBOARDING_QUESTIONS[state.questionIndex];
+  // Update only the heading, hint and ideas: retain query, filters, results, selection, and input focus.
+  const q = onboardingQuestion();
+  heading.textContent = q.q;
+  const hint = document.getElementById('ob-question-hint');
+  if (hint) hint.textContent = q.hint;
+  const ideas = document.querySelector('#ob-search-ideas > div');
+  if (ideas) ideas.innerHTML = onboardingIdeasHtml(true);
 }
 
 function onboardingVisualState() {
@@ -5430,11 +5658,11 @@ function renderOnboardingJourney() {
     body = `<div class="ob-added"><div class="ob-celebrate">${onboardingArtwork(state.added)}<i></i><i></i><i></i><i></i></div><h1 id="onboarding-title" tabindex="-1">Added to your list!</h1><strong>${esc(state.added.title)}</strong><p>${esc(state.added.label)}</p>${btn('Add another','onboardingAddAnother()')}</div>`;
     footer = `${btn('← Back','onboardingAddAnother()')}${btn('Next →','advanceOnboarding(1)',true)}`;
   } else if (step === 0) {
-    body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1" aria-live="polite" aria-atomic="true">${esc(ONBOARDING_QUESTIONS[state.questionIndex || 0])}</h1><button id="ob-question-switch" type="button" class="ob-question-switch" onclick="cycleOnboardingQuestion()">Try another question <span aria-hidden="true">↻</span></button><p>Search the artists, albums, movies, shows, and books you love.</p></div>
-      <label class="ob-search"><span aria-hidden="true">⌕</span><input id="ob-search" type="search" aria-label="Search for something you love" placeholder="Search for something you love…" value="${esc(state.query)}" oninput="onOnboardingSearch(this.value)" ${!ready?'disabled':''}><button type="button" aria-label="Clear search" onclick="clearOnboardingSearch()">×</button></label>
+    body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1" aria-live="polite" aria-atomic="true">${esc(onboardingQuestion().q)}</h1><button id="ob-question-switch" type="button" class="ob-question-switch" onclick="cycleOnboardingQuestion()">Try another question <span aria-hidden="true">↻</span></button><p id="ob-question-hint">${esc(onboardingQuestion().hint)}</p></div>
+      <label class="ob-search"><span aria-hidden="true">⌕</span><input id="ob-search" type="search" aria-label="Search songs, artists, movies, shows, books and podcasts" placeholder="Search a song, show, book, anything…" value="${esc(state.query)}" oninput="onOnboardingSearch(this.value)" ${!ready?'disabled':''}><button type="button" aria-label="Clear search" onclick="clearOnboardingSearch()">×</button></label>
       <div class="ob-filters" aria-label="Search categories">${[['all','All'],['artist','Artists'],['album','Albums'],['movie','Movies'],['tv','TV shows'],['book','Books'],['comedian','Comedy'],['special','Specials'],['podcast','Podcasts'],['episode','Episodes']].map(([key,label])=>`<button type="button" data-ob-filter="${key}" aria-pressed="${state.filter===key}" onclick="filterOnboardingSearch('${key}')">${label}</button>`).join('')}</div>
       <p class="ob-multiselect-hint">Select as many as you like. Your selections stay here as you search.</p><div id="ob-pending" class="ob-pending" aria-live="polite"></div><div id="ob-results" aria-live="polite"></div>
-      <div id="ob-search-ideas" class="ob-ideas" ${state.query?'hidden':''}><p>Try something like…</p><div>${['The Strokes','The Bear','Pride and Prejudice','Normal People','Sabrina Carpenter','Dune'].map(q=>`<button type="button" onclick="suggestOnboardingSearch('${q}')" ${!ready?'disabled':''}>${q}</button>`).join('')}</div></div>
+      <div id="ob-search-ideas" class="ob-ideas" ${state.query?'hidden':''}><p>Try something like…</p><div>${onboardingIdeasHtml(ready)}</div></div>
       <div id="ob-feedback" class="ob-feedback" role="status">${!ready?'Loading your favorites…':''}</div>`;
     footer = `<span class="ob-saved-count"><strong id="ob-selection-count">0 selected</strong><br>${picks.length} ${picks.length===1?'pick':'picks'} saved</span><div><button id="ob-review-button" type="button" class="ob-button" onclick="advanceOnboarding(1)" ${!picks.length?'disabled':''}>Review my picks</button> <button id="ob-add-button" type="button" class="ob-button ob-primary" onclick="saveOnboardingSelection()" disabled>Add to my list</button></div>`;
   } else if (step === 1) {
@@ -5552,7 +5780,7 @@ function selectOnboardingResult(index) {
   const state=onboardingVisualState(),item=state.results[index];
   if(state.saving||!item)return;
   const key=onboardingSelectionKey(item),existing=state.pending.findIndex(p=>onboardingSelectionKey(p)===key);
-  if(existing>=0)state.pending.splice(existing,1);else state.pending.push({...item,category:ONBOARDING_QUESTIONS[state.questionIndex||0]});
+  if(existing>=0)state.pending.splice(existing,1);else state.pending.push({...item,category:onboardingQuestion().list});
   renderOnboardingSearchResults();
 }
 function removeOnboardingSelection(index) {
@@ -5591,7 +5819,7 @@ async function saveOnboardingItem(item,userId) {
     const state=onboardingVisualState();
     const picks=onboardingPicks();
     if(picks.some(p=>p.kind===item.kind && (p.title||p.name).toLowerCase()===item.title.toLowerCase() && (item.kind!=='album'||(p.artist||'').toLowerCase()===(item.artist||'').toLowerCase()) && (item.kind!=='book'||(p.author||'').toLowerCase()===(item.author||'').toLowerCase())))throw new Error('This is already in your favorites. Choose another pick.');
-    const category=item.category||ONBOARDING_QUESTIONS[state.questionIndex||0];
+    const category=item.category||onboardingQuestion().list;
     if(['comedian','special','podcast','episode'].includes(item.kind)){await saveExtraPick(item,category);return;}
     let table,row,local;
     if(item.kind==='artist') {
@@ -6224,11 +6452,13 @@ async function lookupArtistArt(name) {
   try {
     const res = await fetch(`https://www.theaudiodb.com/api/v1/json/123/search.php?s=${encodeURIComponent(name)}`);
     const data = await res.json();
-    const hit = data.artists?.[0];
+    // Prefer the exact artist ("Run-DMC" vs a tribute act) before falling back to the top result.
+    const key = v => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const hit = (data.artists || []).find(a => key(a.strArtist) === key(name) && a.strArtistThumb) || data.artists?.[0];
     if (hit?.strArtistThumb) return { bandPhoto: hit.strArtistThumb, tilePhoto: hit.strArtistThumb };
   } catch (e) {}
   try {
-    const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(name)}&prop=pageimages&format=json&pithumbsize=800&origin=*`);
+    const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(name)}&prop=pageimages&redirects=1&format=json&pithumbsize=800&origin=*`);
     const data = await res.json();
     const pages = data.query?.pages || {};
     const page = Object.values(pages)[0];
@@ -10391,15 +10621,31 @@ function tripPlaylistCarouselHtml(catKey, dated, cat) {
   const arrowStyle = disabled => `background:none;border:1px solid var(--border);border-radius:50%;width:30px;height:30px;color:var(--text);flex-shrink:0;align-self:center;opacity:${disabled ? '.25' : '1'};cursor:${disabled ? 'default' : 'pointer'};`;
   const dots = dated.map((_, i) => `<span style="width:6px;height:6px;border-radius:50%;background:${i === safeIndex ? cat.color : 'var(--border2)'};display:inline-block;"></span>`).join('');
 
-  return `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 20px 18px;">
+  // Agenda: every dated item in order, grouped by month — used when the filmstrip doesn't fit.
+  let lastMonth = '';
+  const agenda = dated.map((d, i) => {
+    const month = sharedDateLabel(d.item);
+    const head = month !== lastMonth ? `<li class="sl-agenda-month" aria-hidden="true">${esc(month)}</li>` : '';
+    lastMonth = month;
+    const isNext = i === naturalIndex && sharedItemDate(d.item) >= today;
+    return `${head}<li><button type="button" class="sl-agenda-row${isNext ? ' is-next' : ''}" onclick="openTripPlaylistSummary(${d.idx})" style="--cat:${cat.color}">
+      <span class="sl-agenda-thumb">${d.item.art ? `<img src="${esc(d.item.art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>
+      <span class="sl-agenda-text"><span class="sl-agenda-title">${esc(d.item.title)}</span>${d.item.sub ? `<span class="sl-agenda-sub">${esc(d.item.sub)}</span>` : ''}</span>
+      <span class="sl-agenda-when">${isNext ? 'Next up' : esc(month)}</span>
+    </button></li>`;
+  }).join('');
+
+  return `<div class="sl-cal">
+    <ol class="sl-agenda" aria-label="${esc(cat.label)} by date">${agenda}</ol>
+    <div class="sl-cal-strip" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 20px 18px;">
       <div style="display:flex;align-items:flex-end;gap:12px;justify-content:center;overflow-x:auto;padding:0 4px 4px;">
-        <button onclick="shiftTripPlaylistCarousel('${catKey}', -1)" ${leftDisabled ? 'disabled' : ''} style="${arrowStyle(leftDisabled)}">‹</button>
+        <button class="sl-cal-arrow" aria-label="Earlier" onclick="shiftTripPlaylistCarousel('${catKey}', -1)" ${leftDisabled ? 'disabled' : ''} style="${arrowStyle(leftDisabled)}">‹</button>
         ${cells}
-        <button onclick="shiftTripPlaylistCarousel('${catKey}', 1)" ${rightDisabled ? 'disabled' : ''} style="${arrowStyle(rightDisabled)}">›</button>
+        <button class="sl-cal-arrow" aria-label="Later" onclick="shiftTripPlaylistCarousel('${catKey}', 1)" ${rightDisabled ? 'disabled' : ''} style="${arrowStyle(rightDisabled)}">›</button>
       </div>
       <div style="display:flex;gap:5px;justify-content:center;margin-top:16px;">${dots}</div>
-    </div>`;
+    </div>
+  </div>`;
 }
 
 function shiftTripPlaylistCarousel(catKey, delta) {
@@ -10513,10 +10759,13 @@ function renderTripPlaylist() {
     const items = TRIP_PLAYLIST_ITEMS[c.key];
     const dated = [];
     const undatedTiles = [];
-    const tiles = items.map(item => {
+    const sortable = editMode && canEditTasteList && items.length > 1;
+    const tiles = items.map((item, pos) => {
       const idx = globalIndex++;
       if (sharedItemDate(item)) dated.push({ item, idx });
       const art = slArtUrl(item, shape);
+      // Wide tiles normally use a wide scene image; if only the poster exists, show it whole.
+      const containArt = !!art && shape === 'landscape' && ['movies', 'tv', 'comedy'].includes(c.key) && !item.backdrop;
       const editControls = (editMode && canEditTasteList) ? `
           <div class="sl-edit-controls">
             <button title="Edit" onclick="event.stopPropagation(); openTasteItemForm('${esc(c.key)}', ${idx})">✎</button>
@@ -10525,8 +10774,9 @@ function renderTripPlaylist() {
       const meta = [item.sub, sharedItemDate(item) ? sharedDateLabel(item) : ''].filter(Boolean);
       const linkHost = item.link ? (() => { try { return new URL(item.link).hostname.replace(/^www\./, ''); } catch (_) { return 'Open link'; } })() : '';
       const tile = `
-        <div class="sl-tile sl-${shape}" onclick="${editMode ? '' : `openTripPlaylistSummary(${idx})`}" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
-          <div class="sl-art">
+        <div class="sl-tile sl-${shape}" data-cat="${esc(c.key)}" data-pos="${pos}" onclick="${editMode ? '' : `openTripPlaylistSummary(${idx})`}" ${sortable ? `onpointerdown="slDragStart(event)"` : ''} role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+          <div class="sl-art${containArt ? ' sl-art-contain' : ''}"${containArt ? ` style="--art:url('${esc(art.replace(/'/g, '%27'))}')"` : ''}>
+            ${sortable ? `<button class="sl-drag-handle" title="Drag to reorder (or use arrow keys)" aria-label="Reorder ${esc(item.title)}: drag, or press arrow keys" onkeydown="slKeyMove(event, '${esc(c.key)}', ${pos})">⠿</button>` : ''}
             ${art ? `<img src="${esc(art)}" alt="" loading="lazy" onerror="slArtFailed(this, ${idx})">` : `<div class="sl-art-empty" style="background:${cat.color}1f;color:${cat.color};">${esc(item.title)}</div>`}
             ${editControls}
           </div>
@@ -10559,10 +10809,107 @@ function renderTripPlaylist() {
         </div>
         ${viewMode === 'calendar'
           ? tripPlaylistCarouselHtml(c.key, dated, cat) + (undatedTiles.length ? `<h4 style="margin:20px 0 12px;color:var(--muted);">No date yet</h4><div class="${rowClass}">${undatedTiles.join('')}</div>` : '')
-          : `<div class="${rowClass}">${tiles}</div>`}
+          : `<div class="${rowClass}${sortable ? ' sl-sortable' : ''}" data-cat="${esc(c.key)}">${tiles}</div>`}
       </section>`;
   }).join('');
-  el.innerHTML = `<div class="sl-sections">${sections}</div>`;
+  el.innerHTML = (editMode && canEditTasteList && flat.length > 1 ? `<p class="sl-reorder-hint">Drag items to reorder them within a section.</p>` : '') + `<div class="sl-sections">${sections}</div>`;
+}
+
+// ── Drag to reorder (edit mode). Mouse: drag the whole tile. Touch/pen: drag the ⠿ handle, so
+// swiping elsewhere still scrolls. Keyboard: arrow keys on the handle. Order saves automatically.
+let slDrag = null, slSuppressClick = false;
+function slDragStart(e) {
+  const tile = e.currentTarget;
+  const onHandle = !!e.target.closest('.sl-drag-handle');
+  if (e.pointerType === 'mouse' ? e.button !== 0 : !onHandle) return;
+  if (!onHandle && e.target.closest('button, a, input')) return;
+  const row = tile.parentElement;
+  slDrag = { tile, row, cat: tile.dataset.cat, startX: e.clientX, startY: e.clientY, active: false, ghost: null, offX: 0, offY: 0, pointerId: e.pointerId };
+  window.addEventListener('pointermove', slDragMove, { passive: false });
+  window.addEventListener('pointerup', slDragEnd);
+  window.addEventListener('pointercancel', slDragEnd);
+}
+function slDragMove(e) {
+  const d = slDrag;
+  if (!d || e.pointerId !== d.pointerId) return;
+  if (!d.active) {
+    if (Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < 6) return;
+    d.active = true;
+    const r = d.tile.getBoundingClientRect();
+    d.offX = d.startX - r.left; d.offY = d.startY - r.top;
+    d.ghost = d.tile.cloneNode(true);
+    d.ghost.classList.add('sl-drag-ghost');
+    d.ghost.style.width = r.width + 'px';
+    document.body.appendChild(d.ghost);
+    d.tile.classList.add('sl-dragging');
+    document.body.style.userSelect = 'none';
+  }
+  e.preventDefault();
+  d.ghost.style.left = (e.clientX - d.offX) + 'px';
+  d.ghost.style.top = (e.clientY - d.offY) + 'px';
+  // Live reorder: move the original tile before/after whichever sibling the pointer is over.
+  const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.sl-tile');
+  if (over && over !== d.tile && over.parentElement === d.row) {
+    const r = over.getBoundingClientRect();
+    const sameLine = Math.abs(r.top - d.tile.getBoundingClientRect().top) < r.height / 2;
+    const after = sameLine ? e.clientX > r.left + r.width / 2 : e.clientY > r.top + r.height / 2;
+    d.row.insertBefore(d.tile, after ? over.nextSibling : over);
+  }
+  // Auto-scroll near the top/bottom of the window.
+  if (e.clientY < 70) window.scrollBy(0, -14); else if (e.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
+}
+function slDragEnd(e) {
+  const d = slDrag;
+  window.removeEventListener('pointermove', slDragMove);
+  window.removeEventListener('pointerup', slDragEnd);
+  window.removeEventListener('pointercancel', slDragEnd);
+  slDrag = null;
+  document.body.style.userSelect = '';
+  if (!d || !d.active) return;
+  d.ghost?.remove();
+  d.tile.classList.remove('sl-dragging');
+  slSuppressClick = true; setTimeout(() => { slSuppressClick = false; }, 0);
+  const newOrder = [...d.row.querySelectorAll(':scope > .sl-tile')].map(t => Number(t.dataset.pos));
+  slApplyOrder(d.cat, newOrder);
+}
+document.addEventListener('click', e => { if (slSuppressClick && e.target.closest('.sl-tile')) { e.stopPropagation(); e.preventDefault(); } }, true);
+function slKeyMove(e, cat, pos) {
+  const delta = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key];
+  if (!delta) return;
+  e.preventDefault(); e.stopPropagation();
+  const items = TRIP_PLAYLIST_ITEMS[cat] || [];
+  const to = pos + delta;
+  if (to < 0 || to >= items.length) return;
+  const order = items.map((_, i) => i);
+  [order[pos], order[to]] = [order[to], order[pos]];
+  slApplyOrder(cat, order);
+  // Keep keyboard focus on the moved item's handle.
+  requestAnimationFrame(() => document.querySelector(`.sl-row[data-cat="${CSS.escape(cat)}"] .sl-tile[data-pos="${to}"] .sl-drag-handle`)?.focus());
+}
+function slApplyOrder(cat, order) {
+  const items = TRIP_PLAYLIST_ITEMS[cat];
+  if (!items || order.every((p, i) => p === i)) { renderTripPlaylist(); return; }
+  TRIP_PLAYLIST_ITEMS[cat] = order.map(p => items[p]);
+  renderTripPlaylist();
+  persistTasteListOrder();
+}
+let slOrderSaveTimer = null;
+function persistTasteListOrder() {
+  clearTimeout(slOrderSaveTimer);
+  slOrderSaveTimer = setTimeout(async () => {
+    if (!sb) return;
+    const updates = [];
+    let n = 0;
+    TRIP_PLAYLIST_CATEGORIES.forEach(c => (TRIP_PLAYLIST_ITEMS[c.key] || []).forEach(item => { if (item.id) updates.push({ id: item.id, sort_order: n }); n++; }));
+    try {
+      const results = await Promise.all(updates.map(u => sb.from('taste_list_items').update({ sort_order: u.sort_order }).eq('id', u.id)));
+      const failed = results.find(r => r.error);
+      if (failed) throw failed.error;
+    } catch (err) {
+      console.error('Failed to save list order:', err);
+      showToast('Couldn’t save the new order. Please try again.');
+    }
+  }, 400);
 }
 
 // Tries Open Library's search API first (structured title/author fields — the same pattern
@@ -10939,7 +11286,7 @@ function tripPlaylistMosaicHtml() {
     ? `<div style="background-image:url('${p.item.art}');background-size:cover;background-position:center;"></div>`
     : `<div style="background:${catColor[p.cat]}22;"></div>`
   ).join('');
-  return `<div class="activity-card-art-img" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;">${cells}</div>`;
+  return `<div class="activity-card-art-img activity-card-mosaic" style="display:grid;gap:2px;">${cells}</div>`;
 }
 
 // ── LIKES & COMMENTS ──
@@ -11379,24 +11726,23 @@ function activityCardHtml(item, globalIndex) {
   const art = isPlaylistAnnouncement
     ? tripPlaylistMosaicHtml()
     : (item.art
-      ? `<img src="${item.art}" class="activity-card-art-img" style="display:block;object-fit:cover;" onerror="this.style.display='none'; handleActivityArtError(${globalIndex})">`
-      : `<div class="activity-card-art-img" style="background:${iconColor}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(iconType,42)}</div>`);
+      ? `<img src="${item.art}" class="activity-card-art-img" style="display:block;" onerror="this.style.display='none'; handleActivityArtError(${globalIndex})">`
+      : `<div class="activity-card-art-img activity-card-art-empty" style="background:${iconColor}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(iconType,42)}</div>`);
+  const ART_SRC = isPlaylistAnnouncement ? '' : (item.art || '');
   const editControls = (activityEditMode && isOwnProfile) ? `
-    <div style="position:absolute;top:8px;right:8px;display:flex;gap:5px;z-index:3;">
+    <div class="card-edit-controls" style="position:absolute;top:8px;right:8px;display:flex;gap:5px;z-index:3;">
       <button onclick="event.stopPropagation(); openActivityItemForm(${globalIndex})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✎</button>
       <button onclick="event.stopPropagation(); deleteActivityItem(${globalIndex})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✕</button>
     </div>` : '';
   return `<div class="activity-card" style="position:relative;background:var(--surface2);border:1px solid var(--border);" onmouseover="this.style.borderColor='${iconColor}55'" onmouseout="this.style.borderColor='var(--border)'">
     ${editControls}
-    <div class="activity-card-art">
-      ${art}
-    </div>
+    ${activityArtWrap(ART_SRC, art)}
     <div class="activity-card-body">
       <table style="border-collapse:collapse;width:100%;"><tr><td style="vertical-align:middle;width:38px;padding:0;">${activityFeedAvatarHtml()}</td><td style="vertical-align:middle;padding:0 0 0 10px;">
         <div style="font-size:13.5px;font-weight:600;color:var(--text);">${esc(firstNameOnly(viewedProfile?.display_name) || viewedProfile?.username || 'Someone')}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);">${item.timestamp || ''}</div>
       </td></tr></table>
-      <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.label)}</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;line-height:1.3;overflow-wrap:anywhere;">${esc(item.label)}</div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
         <span title="${esc(item.type)}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:${iconColor}18;color:${iconColor};flex-shrink:0;">${typeIcon}</span>
         <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.sub)}</span>
@@ -11726,6 +12072,15 @@ function publicFeedAvatarHtml(who) {
   return `<div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#7C4DFF,#7c6ff0);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${esc(initials(who))}</div>`;
 }
 
+// Artwork panel for activity cards. The image is shown whole (object-fit: contain); a blurred,
+// darkened copy of the same image fills the rest of the panel, so any shape of cover, poster or
+// photo fits without cropping its title.
+function activityArtWrap(src, inner) {
+  return src
+    ? `<div class="activity-card-art has-art" style="--art:url('${esc(String(src).replace(/'/g, '%27'))}')">${inner}</div>`
+    : `<div class="activity-card-art">${inner}</div>`;
+}
+
 function publicActivityCardHtml(row) {
   const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
   const typeIcon = badgeIcon(meta.icon, 13);
@@ -11735,25 +12090,24 @@ function publicActivityCardHtml(row) {
       Array(Math.max(0, 4 - row._mosaicArt.length)).fill(`<div style="background:${meta.color}18;"></div>`).join('')
     : '';
   const art = row.art_url
-    ? `<img src="${row.art_url}" class="activity-card-art-img" style="display:block;object-fit:cover;" onerror="this.style.display='none'">`
+    ? `<img src="${row.art_url}" class="activity-card-art-img" style="display:block;" onerror="this.style.display='none'">`
     : mosaicCells
-      ? `<div class="activity-card-art-img" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;">${mosaicCells}</div>`
-      : `<div class="activity-card-art-img" style="background:${meta.color}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(meta.icon,42)}</div>`;
+      ? `<div class="activity-card-art-img activity-card-mosaic" style="display:grid;gap:2px;">${mosaicCells}</div>`
+      : `<div class="activity-card-art-img activity-card-art-empty" style="background:${meta.color}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(meta.icon,42)}</div>`;
+  const ART_SRC = row.art_url || '';
   const who = row.profiles.display_name || row.profiles.username;
   const whoDisplay = firstNameOnly(who);
   const uname = row.profiles.username;
   const commentCount = (COMMENT_CACHE[engagementKey('activity_feed', row.id)] || {}).count || '';
   const commentsOpen = openFeedCommentPanels.has(row.id);
   return `<div class="activity-card" style="position:relative;cursor:pointer;background:var(--surface2);border:1px solid var(--border);" onclick="goToProfile('${esc(uname)}')" onmouseover="this.style.borderColor='${meta.color}55'" onmouseout="this.style.borderColor='var(--border)'">
-    <div class="activity-card-art">
-      ${art}
-    </div>
+    ${activityArtWrap(ART_SRC, art)}
     <div class="activity-card-body">
       <table style="border-collapse:collapse;width:100%;"><tr><td style="vertical-align:middle;width:38px;padding:0;">${publicFeedAvatarHtml(who)}</td><td style="vertical-align:middle;padding:0 0 0 10px;">
         <div style="font-size:13.5px;font-weight:600;color:var(--text);">${esc(whoDisplay)}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);">${formatActivityDate(row.activity_date)}</div>
       </td></tr></table>
-      <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(row.label)}</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;line-height:1.3;overflow-wrap:anywhere;">${esc(row.label)}</div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
         <span title="${esc(row.type)}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:${meta.color}18;color:${meta.color};flex-shrink:0;">${typeIcon}</span>
         <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(row.sub)}</span>
@@ -12041,8 +12395,10 @@ function renderFriendRecs() {
     const iconColor = (MEDIA_ICONS[t] || MEDIA_ICONS.music).color;
     const items = groups[t].map(r => {
       const idx = FRIEND_RECOMMENDATIONS.indexOf(r);
+      // Books, films and shows are tall covers: use a 2:3 frame so the cover isn't cropped.
+      const tall = /^(book|movie|tv|film|show)/.test(String(t));
       const thumb = r.art
-        ? `<div style="width:40px;height:40px;border-radius:8px;flex-shrink:0;position:relative;overflow:hidden;background:${iconColor}18;">
+        ? `<div style="width:${tall ? '36px' : '40px'};height:${tall ? '54px' : '40px'};border-radius:${tall ? '5px' : '8px'};flex-shrink:0;position:relative;overflow:hidden;background:${iconColor}18;">
              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">${mediaIcon(t,22)}</div>
              <img src="${r.art}" style="position:relative;width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">
            </div>`
@@ -12172,15 +12528,48 @@ async function initActivityFeedArt() {
     await new Promise(res => setTimeout(res, 200));
   }
 }
+// An assortment of a section's favorites: takes turns across its lists (Comedies, Dramas,
+// Thrillers...) so one list can't fill the whole grid. Used by both the profile grid and the
+// share image, so they show the same picks.
+function assortedTastePicks(tab, n = 4) {
+  const lists = [];
+  if (tab === 'music') { const l = Object.values(CUSTOM_LISTS.music || {}).filter(a => a?.length); lists.push(...(l.length ? l : [artists || []])); }
+  else if (tab === 'movies') lists.push(movies || [], ...Object.values(CUSTOM_LISTS.movies || {}));
+  else if (tab === 'tv') {
+    // Older TV sections are declared later in the file; guard in case this runs during page load.
+    let legacy = [];
+    try { legacy = [tvComedyShows || [], tvDramaShows || []]; } catch (_) {}
+    lists.push(...Object.values(CUSTOM_LISTS.tv || {}), ...legacy);
+  }
+  else if (tab === 'books') lists.push(...Object.values(CUSTOM_LISTS.books || {}));
+  const clean = lists.map(l => (l || []).filter(x => x && !x.videoId && (x.title || x.name))).filter(l => l.length);
+  const out = [], seen = new Set();
+  for (let round = 0; out.length < n && clean.some(l => round < l.length); round++) {
+    for (const l of clean) {
+      if (round >= l.length) continue;
+      const x = l[round], key = String(x.title || x.name).trim().toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key); out.push(x);
+      if (out.length >= n) break;
+    }
+  }
+  return out;
+}
+function tastePickArt(tab, x) {
+  if (tab === 'music') return x.tilePhoto || x.bandPhoto || '';
+  if (tab === 'books') return preferredBookCover(x.title, x.author) || x.cover || '';
+  return x.poster ? (x.poster.startsWith('http') ? x.poster : TMDB_IMG + x.poster) : '';
+}
+
 function tastePosterGroups() {
  const preferred=collectConstellationFavorites();
  const dedupe=items=>{const seen=new Set();return items.filter(x=>{const key=String(x.title||x.name||'').trim().toLowerCase();if(!key||seen.has(key))return false;seen.add(key);return true;}).slice(0,4);};
  const poster=x=>x.poster?(x.poster.startsWith('http')?x.poster:TMDB_IMG+x.poster):'';
  return [
-  {label:'Music',tab:'music',color:'#a26aff',items:dedupe([...preferred.filter(x=>x.kind==='artist'),...artists]).map(x=>({title:x.name||x.title,art:x.tilePhoto||x.bandPhoto||''}))},
-  {label:'Movies',tab:'movies',color:'#ff7864',items:dedupe([...preferred.filter(x=>x.kind==='movie'),...allFavoriteMovies()]).map(x=>({title:x.title,art:poster(x),tmdbId:x.tmdbId,tmdbType:x.type==='tv'?'tv':'movie'}))},
-  {label:'TV',tab:'tv',color:'#35a8ff',items:dedupe([...preferred.filter(x=>x.kind==='tv'),...Object.values(CUSTOM_LISTS.tv).flat()]).map(x=>({title:x.title,art:poster(x),tmdbId:x.tmdbId,tmdbType:'tv'}))},
-  {label:'Books',tab:'books',color:'#32cf83',items:dedupe([...preferred.filter(x=>x.kind==='book'),...Object.values(CUSTOM_LISTS.books).flat()]).map(x=>({title:x.title,art:preferredBookCover(x.title,x.author)||x.cover||''}))}
+  {label:'Music',tab:'music',color:'#a26aff',items:assortedTastePicks('music').map(x=>({title:x.name||x.title,art:tastePickArt('music',x)}))},
+  {label:'Movies',tab:'movies',color:'#ff7864',items:assortedTastePicks('movies').map(x=>({title:x.title,art:tastePickArt('movies',x),tmdbId:x.tmdbId,tmdbType:x.type==='tv'?'tv':'movie'}))},
+  {label:'TV',tab:'tv',color:'#35a8ff',items:assortedTastePicks('tv').map(x=>({title:x.title,art:tastePickArt('tv',x),tmdbId:x.tmdbId,tmdbType:'tv'}))},
+  {label:'Books',tab:'books',color:'#32cf83',items:assortedTastePicks('books').map(x=>({title:x.title,art:tastePickArt('books',x)}))}
  ];
 }
 function renderTastePoster() {
@@ -12387,12 +12776,12 @@ function renderProfileTab() {
   // with Sreya's hardcoded demo bio for anyone who had at least two favorite artists loaded.
 
   // Defining picks — visual artwork cards
-  const topArtist = artists[0];
-  const topFilmObj = allFavoriteMovies()[0];
-  const allTVPicks = Object.values(CUSTOM_LISTS.tv).flat();
-  const allBookPicks = Object.values(CUSTOM_LISTS.books).flat();
-  const topTVObj = allTVPicks[0];
-  const topBookObj = allBookPicks[0];
+  const musicPicks = assortedTastePicks('music'), filmPicks = assortedTastePicks('movies');
+  const tvPicks = assortedTastePicks('tv'), bookPicks = assortedTastePicks('books');
+  const topArtist = musicPicks[0];
+  const topFilmObj = filmPicks[0];
+  const topTVObj = tvPicks[0];
+  const topBookObj = bookPicks[0];
 
   const picksEl = document.getElementById('profile-picks');
   if (!picksEl) return;
@@ -12406,10 +12795,10 @@ function renderProfileTab() {
 
   // Render placeholders immediately
   const picksData = [
-    { id: 'pick-music', label: 'My Music Taste',     icon: 'music', name: topArtist?.name || '', sub: 'Most influential artist', color: '#7C4DFF', tab: 'music',  art: '', mosaic: artists.slice(0,4).map(a => a.tilePhoto).filter(Boolean) },
-    { id: 'pick-film',  label: 'My Movie Taste',    icon: 'film',  name: topFilmObj?.title || '', sub: 'Top favorite film',    color: '#F97360', tab: 'movies', art: topFilmObj?.poster ? `https://image.tmdb.org/t/p/w185${topFilmObj.poster}` : '', mosaic: [] },
-    { id: 'pick-tv',    label: 'My TV Taste',  icon: 'tv',    name: topTVObj?.title || '', sub: 'Top TV pick',         color: '#3B82F6', tab: 'tv',     art: topTVObj?.poster ? `https://image.tmdb.org/t/p/w185${topTVObj.poster}` : '', mosaic: allTVPicks.slice(0,4).map(t => t.poster ? `https://image.tmdb.org/t/p/w185${t.poster}` : '').filter(Boolean) },
-    { id: 'pick-book',  label: 'My Book Taste',     icon: 'books', name: topBookObj?.title || '', sub: 'Top book pick',  color: '#22C55E', tab: 'books',  art: topBookObj?.cover || '', mosaic: allBookPicks.slice(0,4).map(b => b.cover).filter(Boolean) },
+    { id: 'pick-music', label: 'My Music Taste', icon: 'music', name: topArtist?.name || topArtist?.title || '', sub: 'Most influential artist', color: '#7C4DFF', tab: 'music', art: '', mosaic: musicPicks.map(x => tastePickArt('music', x)) },
+    { id: 'pick-film',  label: 'My Movie Taste', icon: 'film',  name: topFilmObj?.title || '', sub: 'Top favorite film', color: '#F97360', tab: 'movies', art: tastePickArt('movies', topFilmObj || {}), mosaic: filmPicks.map(x => tastePickArt('movies', x)) },
+    { id: 'pick-tv',    label: 'My TV Taste',    icon: 'tv',    name: topTVObj?.title || '', sub: 'Top TV pick', color: '#3B82F6', tab: 'tv', art: tastePickArt('tv', topTVObj || {}), mosaic: tvPicks.map(x => tastePickArt('tv', x)) },
+    { id: 'pick-book',  label: 'My Book Taste',  icon: 'books', name: topBookObj?.title || '', sub: 'Top book pick', color: '#22C55E', tab: 'books', art: tastePickArt('books', topBookObj || {}), mosaic: bookPicks.map(x => tastePickArt('books', x)) },
   ];
 
   function mosaicCell(src, color) {
@@ -12476,16 +12865,18 @@ function renderProfileTab() {
   // time renderProfileTab() runs) — previously this pulled from the hardcoded MOVIE_PRELOAD /
   // TV_DRAMA_PRELOAD demo constants unconditionally, so every account's mosaic showed Sreya's
   // original picks regardless of what the signed-in user actually had saved.
-  if (movies.length) {
-    picksData[1].mosaic = movies.slice(0, 4).filter(m => m.poster).map(m => `${TMDB_IMG}${m.poster}`);
-    renderPicks(picksData);
-  }
-
-  const tvDramaArr = TV_GRID_STORE['tv-drama']?.arr || [];
-  if (tvDramaArr.length) {
-    picksData[2].mosaic = tvDramaArr.slice(0, 4).filter(t => t.poster).map(t => `${TMDB_IMG}${t.poster}`);
-    renderPicks(picksData);
-  }
+  // Posters are normally fetched when a tab is opened; fill any gaps in the assortment now.
+  [[1, filmPicks, 'movie'], [2, tvPicks, 'tv']].forEach(([slot, picks, type]) => picks.forEach((x, k) => {
+    if (picksData[slot].mosaic[k] || !x.tmdbId) return;
+    const kind = x.type === 'tv' ? 'tv' : type;
+    (kind === 'tv' ? fetchTVDetail(x.tmdbId) : fetchMovieDetail(x.tmdbId)).then(d => {
+      if (!d?.poster) return;
+      x.poster = d.poster;
+      picksData[slot].mosaic[k] = tastePickArt('movies', x);
+      if (k === 0) picksData[slot].art = picksData[slot].mosaic[k];
+      renderPicks(picksData);
+    }).catch(() => {});
+  }));
 
   // Activity Feed (shared component — also powers the Music tab's feed)
   refreshActivityFeeds();
@@ -13636,6 +14027,27 @@ renderTasteInfluences();
 </div>
 
 <dialog id="creator-picks-dialog" style="width:min(640px,calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid var(--border);border-radius:20px;padding:28px;background:var(--surface);color:var(--text)" oncancel="event.preventDefault();closeCreatorPicks()"><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="creator-picks-title"></h2><button aria-label="Close" onclick="closeCreatorPicks()">×</button></div><p style="color:var(--muted)">Search, select your favorites, and put them in your order.</p><div id="creator-picks-selected"></div><form onsubmit="event.preventDefault();searchCreatorPicks()" style="display:flex;gap:8px;margin:20px 0"><input id="creator-picks-query" aria-label="Search titles" placeholder="Search titles…" style="flex:1;min-width:0;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px"><button type="submit" class="ob-button ob-secondary">Search</button></form><div id="creator-picks-results"></div><p id="creator-picks-error" role="alert" style="color:#f2a69a"></p><button id="creator-picks-save" class="ob-button ob-primary" onclick="saveCreatorPicks()">Save favorites</button></dialog>
-<dialog id="taste-share-dialog" aria-labelledby="taste-share-title" oncancel="event.preventDefault();closeTasteShare()" style="width:min(680px,calc(100% - 24px));max-height:90dvh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px"><h2 id="taste-share-title">Share your TasteList</h2><button aria-label="Close sharing" onclick="closeTasteShare()" class="ob-text-link">✕</button></div><div id="taste-share-preview"></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px"><button id="taste-share-native" class="ob-button ob-primary" style="min-width:160px" onclick="nativeTasteShare()">Share</button><button id="taste-share-download" class="ob-button ob-secondary" onclick="downloadTasteShareImage()">Save image</button></div><div style="text-align:center;margin-top:12px"><button id="taste-share-copy-link" class="ob-text-link" onclick="copyTasteShareLink()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:inherit">Copy link</button></div><p id="taste-share-status" role="status" style="font-size:13px;color:var(--muted);line-height:1.5;text-align:center;min-height:1.5em;margin:6px 0 0"></p></dialog>
+<dialog id="taste-share-dialog" aria-labelledby="taste-share-title" oncancel="event.preventDefault();closeTasteShare()" style="width:min(680px,calc(100% - 24px));max-height:90dvh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px"><h2 id="taste-share-title">Share your TasteList</h2><button aria-label="Close sharing" onclick="closeTasteShare()" class="ob-text-link">✕</button></div><div id="taste-share-preview"></div><div class="taste-share-actions" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px"><button id="taste-share-native" class="ob-button ob-primary" style="min-width:160px" onclick="nativeTasteShare()">Share</button><button id="taste-share-download" class="ob-button ob-secondary" onclick="downloadTasteShareImage()">Save image</button></div><div style="text-align:center;margin-top:12px"><button id="taste-share-copy-link" class="ob-text-link" onclick="copyTasteShareLink()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:inherit">Copy link</button></div><p id="taste-share-status" role="status" style="font-size:13px;color:var(--muted);line-height:1.5;text-align:center;min-height:1.5em;margin:6px 0 0"></p></dialog>
+<script>
+(function () {
+  const vv = window.visualViewport;
+  const root = document.documentElement;
+  function sync() {
+    const h = vv ? vv.height : window.innerHeight, top = vv ? vv.offsetTop : 0;
+    root.style.setProperty('--vvh', h + 'px');
+    root.style.setProperty('--vvt', top + 'px');
+    root.classList.toggle('kb-open', !!vv && h < window.innerHeight * 0.8);
+  }
+  if (vv) { vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync); }
+  window.addEventListener('resize', sync);
+  sync();
+  document.addEventListener('focusin', e => {
+    const field = e.target;
+    if (!field.matches || !field.matches('input, textarea, select')) return;
+    if (!field.closest('.tl-modal-shell, .modal, .update-composer, dialog, .ob-frame')) return;
+    setTimeout(() => field.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250);
+  });
+})();
+</script>
 </body>
 </html>
