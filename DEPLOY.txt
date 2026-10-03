@@ -1,0 +1,1 @@
+Deploy index.html and _redirects together at the site root on Netlify. Keep your existing assets, including og-image.png. If using a repository, copy both files into its publish directory. If _redirects already exists, put /@* /index.html 200 before broader rules. Existing ?u= links continue working.
