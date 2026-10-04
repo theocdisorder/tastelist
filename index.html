@@ -5270,7 +5270,7 @@ async function loadExtraLists(userId){
   extraLists=[];extraLoadError='';
   try{const {data,error}=await sb.from('taste_extra_lists').select('*').eq('user_id',userId).order('created_at');if(error)throw error;if(viewedProfile?.id!==userId)return;extraLists=data||[];}
   catch(_){if(viewedProfile?.id!==userId)return;extraLoadError='These lists couldn’t load. Please try again.';}
-  renderExtraLists();scheduleTasteConstellation();
+  renderExtraLists();scheduleTasteConstellation();recoverPodcastArtwork(userId);
 }
 function renderExtraLists(){
  for(const type of ['movie','tv']){
@@ -5282,7 +5282,7 @@ function renderExtraLists(){
   const el=document.getElementById('extra-'+category);if(!el)continue;
   const lists=extraLists.filter(l=>l.category===category);
   el.innerHTML=`<div class="extra-heading"><h2>${category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button type="button" class="ed-primary" onclick="promptNewCustomList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a new list</button>`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
-   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div><button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">Rename</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">Delete list</button></div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile?`<button class="ob-text-link" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">Remove</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="promptNewCustomList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a new list</button></section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
+   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div><button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">Rename</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">Delete list</button></div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile?`${list.category==='podcasts'?`<button class="ob-text-link" data-id="${esc(list.id)}" onclick="choosePodcastShow(this.dataset.id,${i})">${item.art?'Change show / artwork':'Choose show / add artwork'}</button>`:''}<button class="ob-text-link" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">Remove</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="promptNewCustomList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a new list</button></section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
  }
 }
 async function createExtraList(category, suppliedTitle){
@@ -5300,13 +5300,62 @@ async function updateExtraList(list,changes){
 async function renameExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;const title=prompt('Rename list',list.title);if(!title?.trim())return;extraBusy=true;try{await updateExtraList(list,{title:title.trim().slice(0,120)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
 async function removeExtraItem(id,index){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;extraBusy=true;try{await updateExtraList(list,{items:list.items.filter((_,i)=>i!==index)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
 async function deleteExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile||extraBusy||!confirm('Delete this list and its picks?'))return;extraBusy=true;try{const {error}=await sb.from('taste_extra_lists').delete().eq('id',id).eq('user_id',currentUser.id);if(error)throw error;extraLists=extraLists.filter(l=>l.id!==id);renderExtraLists();scheduleTasteConstellation();renderProfileTab();}catch(_){alert('Could not delete the list.');}finally{extraBusy=false;}}
-function openExtraPicker(id){const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile)return;extraPicker.request++;extraPicker.listId=id;extraPicker.category=list.category;extraPicker.results=[];document.getElementById('extra-picker-query').value='';document.getElementById('extra-picker-results').innerHTML='';document.getElementById('extra-picker-title').textContent='Add to '+list.title;document.getElementById('extra-picker-kind').innerHTML=(list.category==='comedy'?[['comedian','Comedians / performers'],['special','Stand-up specials']]:[['podcast','Podcast shows'],['episode','Podcast episodes']]).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');document.getElementById('extra-picker').showModal();}
+function openExtraPicker(id){extraPicker.replaceItem=null;document.getElementById('extra-picker-kind').disabled=false;const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile)return;extraPicker.request++;extraPicker.listId=id;extraPicker.category=list.category;extraPicker.results=[];document.getElementById('extra-picker-query').value='';document.getElementById('extra-picker-results').innerHTML='';document.getElementById('extra-picker-title').textContent='Add to '+list.title;document.getElementById('extra-picker-kind').innerHTML=(list.category==='comedy'?[['comedian','Comedians / performers'],['special','Stand-up specials']]:[['podcast','Podcast shows'],['episode','Podcast episodes']]).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');document.getElementById('extra-picker').showModal();}
 function queueExtraSearch(){clearTimeout(extraPicker.timer);extraPicker.request++;extraPicker.timer=setTimeout(runExtraSearch,350);}
 async function runExtraSearch(){const request=++extraPicker.request,el=document.getElementById('extra-picker-results'),query=document.getElementById('extra-picker-query').value.trim(),kind=document.getElementById('extra-picker-kind').value;if(!query){el.innerHTML='';return;}el.innerHTML='<p>Searching…</p>';try{const items=await searchExtraCatalog(kind,query);if(request!==extraPicker.request)return;extraPicker.results=items;el.innerHTML=items.length?items.map((item,i)=>`<button class="extra-result" onclick="addExtraResult(${i})">${onboardingArtwork(item)}<span><strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.artist?' · '+esc(item.artist):''}</small></span><span>+</span></button>`).join(''):'<p>No matching results.</p>';}catch(_){if(request===extraPicker.request)el.innerHTML='<p>Search couldn’t load. Please try again.</p>';}}
+// Catalog IDs are preferred; title-only matches must be unambiguous.
+function podcastCatalogItem(r,kind='podcast') {
+ return {kind,id:'apple:'+(r.trackId||r.collectionId),catalogId:r.trackId||r.collectionId,
+ title:r.trackName||r.collectionName,artist:r.artistName||r.collectionName||'',
+ art:r.artworkUrl600||r.artworkUrl100||'',url:r.trackViewUrl||r.collectionViewUrl||'',
+ label:kind==='podcast'?'Podcast':'Episode',genres:(r.genres||[]).filter(g=>typeof g==='string'),year:r.releaseDate?.slice(0,4)||''};
+}
+function exactPodcastMatch(item,results) {
+ const candidates=results.filter(r=>r.art&&bookArtKey(r.title)===bookArtKey(item.title)&&
+ (!item.artist||bookArtKey(r.artist)===bookArtKey(item.artist)));
+ const unique=[...new Map(candidates.map(r=>[r.id,r])).values()];
+ return unique.length===1?unique[0]:null;
+}
+async function resolvePodcastArt(item) {
+ const id=item.catalogId||String(item.id||'').match(/^apple:(\d+)$/)?.[1];
+ if(id){
+  try{const d=await onboardingSearchJSON('https://itunes.apple.com/lookup?id='+encodeURIComponent(id));
+   const row=(d.results||[]).find(r=>String(r.trackId||r.collectionId)===String(id));
+   if(row){const match=podcastCatalogItem(row,item.kind||'podcast');if(match.art)return match;}
+  }catch(_){}
+ }
+ return exactPodcastMatch(item,await searchExtraCatalog(item.kind==='episode'?'episode':'podcast',item.title));
+}
+async function recoverPodcastArtwork(profileId) {
+ for(const list of [...extraLists].filter(l=>l.category==='podcasts')) {
+  const original=list.items,revision=list.revision;
+  const items=original.map(x=>({...x}));let changed=false;
+  for(const item of items){
+   if(item.art)continue;
+   if(viewedProfile?.id!==profileId)return;
+   try{const match=await resolvePodcastArt(item);if(match){item.art=match.art;item.catalogId=match.catalogId;item.url=match.url;changed=true;}}catch(_){}
+  }
+  if(viewedProfile?.id!==profileId)return;
+  if(!changed||list.items!==original||list.revision!==revision)continue;
+  if(isOwnProfile&&currentUser?.id===profileId){
+   if(extraBusy)continue;
+   extraBusy=true;try{await updateExtraList(list,{items});}catch(_){/* Retain saved picks on conflicts; the owner can use Choose show. */}finally{extraBusy=false;}
+  }else{list.items=items;renderExtraLists();}
+ }
+}
+function choosePodcastShow(listId,index) {
+ const list=extraLists.find(l=>l.id===listId),item=list?.items?.[index];
+ if(!item||!isOwnProfile||list.user_id!==currentUser?.id||extraBusy)return;
+ openExtraPicker(listId);
+ extraPicker.replaceItem=item;extraPicker.replaceRevision=list.revision;extraPicker.ownerId=currentUser.id;
+ document.getElementById('extra-picker-title').textContent='Choose the correct '+(item.kind==='episode'?'episode':'show');
+ const kind=document.getElementById('extra-picker-kind');kind.value=item.kind==='episode'?'episode':'podcast';kind.disabled=true;
+ document.getElementById('extra-picker-query').value=item.title;runExtraSearch();
+}
 async function searchExtraCatalog(kind,query){
  if(kind==='podcast'||kind==='episode'){
   const data=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=podcast&entity=${kind==='podcast'?'podcast':'podcastEpisode'}&limit=12`);
-  return (data.results||[]).filter(r=>r.trackName||r.collectionName).map(r=>({kind,id:'apple:'+r.trackId,title:r.trackName||r.collectionName,artist:r.artistName||r.collectionName||'',art:(r.artworkUrl600||r.artworkUrl100||''),label:kind==='podcast'?'Podcast':'Episode',genres:(r.genres||[]).filter(g=>typeof g==='string'),year:r.releaseDate?.slice(0,4)||''}));
+  return (data.results||[]).filter(r=>(r.trackId||r.collectionId)&&(r.trackName||r.collectionName)).map(r=>podcastCatalogItem(r,kind));
  }
  if(kind==='comedian'){
   const data=await constellationTMDB(`/search/person?query=${encodeURIComponent(query)}`);
@@ -5331,7 +5380,20 @@ async function saveExtraPick(item,category){
  if(list.items.some(p=>p.id===item.id))throw Error('Already in this list.');
  await updateExtraList(list,{items:[...list.items,item]});
 }
-async function addExtraResult(index){const item=extraPicker.results[index],list=extraLists.find(l=>l.id===extraPicker.listId);if(!item||!list||extraBusy)return;extraBusy=true;try{await saveExtraPick(item,list.title);document.getElementById('extra-picker').close();}catch(e){alert(e.message);}finally{extraBusy=false;}}
+async function addExtraResult(index){
+ const item=extraPicker.results[index],list=extraLists.find(l=>l.id===extraPicker.listId);
+ if(!item||!list||extraBusy||!isOwnProfile||list.user_id!==currentUser?.id)return;
+ extraBusy=true;
+ try{
+  if(extraPicker.replaceItem){
+   const old=extraPicker.replaceItem;
+   if(currentUser.id!==extraPicker.ownerId||list.revision!==extraPicker.replaceRevision||!list.items.includes(old))throw Error('This list changed. Close this window and choose the show again.');
+   if(list.items.some(p=>p!==old&&p.id===item.id))throw Error('That show is already in this list.');
+   await updateExtraList(list,{items:list.items.map(p=>p===old?{...p,...item}:p)});
+  }else await saveExtraPick(item,list.title);
+  extraPicker.request++;document.getElementById('extra-picker').close();
+ }catch(e){alert(e.message);}finally{extraBusy=false;}
+}
 
 let CUSTOM_LISTS = { movies: {}, tv: {}, books: {}, music: {}, albums: {} };         // tab -> { category: [items] }
 let CUSTOM_LIST_EDIT = { movies: {}, tv: {}, books: {}, music: {}, albums: {} };     // tab -> { category: bool }
@@ -12974,10 +13036,8 @@ async function loadFriendRecArt() {
         if (!art) art = (await wikiSummary(r.title, 'book'))?.art || '';
         if (art) { r.art = art; renderFriendRecs(); }
       } else if (r.type === 'podcast') {
-        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(r.title)}&media=podcast&entity=podcast&limit=1`);
-        const data = await res.json();
-        const art = data.results?.[0]?.artworkUrl600 || data.results?.[0]?.artworkUrl100;
-        if (art) { r.art = art; renderFriendRecs(); }
+        const hit=await resolvePodcastArt({title:r.title,kind:'podcast'});
+        if(hit?.art){r.art=hit.art;renderFriendRecs();}
       } else if (r.type === 'artist') {
         const art = await lookupArtistArt(r.title);
         if (art?.tilePhoto || art?.bandPhoto) { r.art = art.tilePhoto || art.bandPhoto; renderFriendRecs(); }
@@ -13006,11 +13066,8 @@ async function initActivityFeedArt() {
         item.spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(item.artQuery)}`;
         if (art || hit) refreshActivityFeeds();
       } else if (item.podcastQuery) {
-        const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.podcastQuery)}&media=podcast&entity=podcast&limit=1`);
-        const d = await r.json();
-        const hit = d.results?.[0];
-        const art = hit?.artworkUrl600 || hit?.artworkUrl100;
-        if (art) { item.art = art; refreshActivityFeeds(); }
+        const hit=await resolvePodcastArt({title:item.podcastQuery,kind:'podcast'});
+        if(hit?.art){item.art=hit.art;refreshActivityFeeds();}
       } else if (item.artistQuery) {
         const art = await lookupArtistArt(item.artistQuery);
         if (art?.tilePhoto) { item.art = art.tilePhoto; refreshActivityFeeds(); }
