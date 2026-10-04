@@ -1544,6 +1544,9 @@ img, video, svg { max-width: 100%; }
 
 /* ── 3. Cards: feed/profile activity cards stack when their own width gets tight ── */
 *:has(> .activity-card) { container-type: inline-size; }
+/* Cards inside the scrolling "What's New" / "What's Next" boxes keep their natural height; the box scrolls.
+   (Without this, flex lets every card shrink to a sliver to fit the box's max-height.) */
+#profile-feed > *, #friend-recs > *, .activity-card { flex-shrink: 0; }
 .activity-card { display: grid !important; grid-template-columns: 150px minmax(0, 1fr); table-layout: auto; }
 .activity-card-art { display: block !important; width: auto !important; position: relative; overflow: hidden; background: var(--surface3, #1d1d20); }
 .activity-card-art-img { width: 100% !important; height: 225px; position: relative; z-index: 1; }
@@ -1625,9 +1628,69 @@ img.activity-card-art-img { object-fit: contain; }                       /* whol
   #auth-modal p a, #auth-modal div > a { display: inline-block; padding: 15px 6px; margin: -15px -6px; }
   .taste-poster-footer a { display: inline-block; padding: 17px 8px; margin: -17px -8px; }
 }
+
+/* ── What's Next: collapsed strips + expanded page ── */
+#friend-recs { max-height: none !important; overflow: visible !important; padding-right: 0 !important; gap: 18px !important; }
+.recs-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: -4px; }
+.recs-seeall, .recs-add { font: inherit; font-size: 12.5px; font-weight: 600; border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.recs-seeall { color: var(--text); background: var(--surface2); border: 1px solid var(--border); }
+.recs-add { color: #fff; background: var(--accent); border: 1px solid var(--accent); }
+.recs-group-head { margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.recs-group-head span { color: var(--muted); font-weight: 500; margin-left: 6px; letter-spacing: 0; }
+.recs-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.recs-thumb { position: relative; padding: 0; border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); border-radius: 6px; overflow: hidden; cursor: pointer;
+  background: color-mix(in srgb, var(--c) 14%, var(--surface2)); display: flex; align-items: center; justify-content: center; min-width: 0; }
+.recs-portrait { aspect-ratio: 2 / 3; } .recs-square { aspect-ratio: 1 / 1; } .recs-landscape { aspect-ratio: 16 / 10; }
+.recs-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.recs-thumb-title { padding: 6px; font-size: 10.5px; font-weight: 600; line-height: 1.25; color: var(--c); text-align: center; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; max-height: calc(1.25em * 4); hyphens: auto; }  /* full title is in the expanded view */
+.recs-thumb img ~ .recs-thumb-title { display: none; }
+.recs-thumb-more { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,10,12,.62); color: #fff; font-size: 16px; font-weight: 700; z-index: 1; }
+.recs-thumb:hover, .recs-thumb:focus-visible { border-color: var(--c); }
+#recs-expanded { position: fixed; inset: 0; z-index: 1000; background: var(--bg, #0c0c0d); overflow-y: auto; overscroll-behavior: contain; }
+#recs-expanded[hidden] { display: none; }
+#recs-expanded-inner { max-width: var(--page-max, 1100px); margin: 0 auto; padding: 28px var(--gutter, 24px) 80px; }
+.recs-tag { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 10px 3px 3px; border-radius: 999px; background: rgba(255,255,255,.06);
+  border: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text); text-decoration: none; max-width: 100%; }
+.recs-tag-avatar { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg,#7C4DFF,#a78bfa); color: #fff; font-size: 8px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+@media (pointer: coarse) { .recs-tag { min-height: 44px; } .recs-thumb { min-height: 44px; } }
+
+.recs-tile-hit { cursor: pointer; border-radius: 6px; outline: none; }
+.recs-tile-hit:focus-visible .sl-art { outline: 2px solid var(--accent); outline-offset: 2px; }
+.recs-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.recs-tags .recs-tag { margin-top: 0; }
+.recs-tag-more { padding: 3px 10px; color: var(--muted); }
+img.recs-tag-avatar { object-fit: cover; }
+.recs-tag-wrap { display: inline-flex; align-items: center; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid var(--border); }
+.recs-tag-wrap .recs-tag { margin: 0; border: 0; background: none; }
+.recs-tag-remove { font: inherit; font-size: 11px; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 4px 10px 4px 2px; cursor: pointer; }
+.recs-tag-remove:hover { color: var(--text); }
+.rec-detail-head { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 18px; align-items: start; padding-right: 28px; }
+.rec-detail-art { position: relative; border-radius: 6px; overflow: hidden; background: color-mix(in srgb, var(--c) 16%, var(--surface2)); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 26px rgba(0,0,0,.4); }
+.rec-detail-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rec-detail-art span { padding: 8px; font-size: 11px; font-weight: 600; color: var(--c); text-align: center; overflow-wrap: anywhere; }
+.rec-detail-kind { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.rec-detail-title { font-family: var(--ob-serif, Georgia, serif); font-size: 26px; font-weight: 500; line-height: 1.15; margin: 0; color: var(--text); overflow-wrap: anywhere; text-wrap: balance; }
+.rec-detail-note { font-size: 13.5px; color: var(--muted); font-style: italic; margin: 8px 0 0; }
+.rec-detail-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+.rec-detail-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.rec-detail-people { display: flex; flex-wrap: wrap; gap: 8px; }
+.rec-detail-people .recs-tag { margin-top: 0; }
+.rec-detail-empty { font-size: 13px; color: var(--muted); }
+.rec-detail-add { margin-top: 14px; position: relative; }
+.rec-detail-add .tl-input { width: 100%; }
+#rec-detail-results:not(:empty) { margin-top: 6px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface2); }
+.rec-detail-option { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 12px; min-height: 48px; font: inherit; color: var(--text); background: none; border: 0; text-align: left; cursor: pointer; }
+.rec-detail-option + .rec-detail-option { border-top: 1px solid var(--border); }
+.rec-detail-option:hover, .rec-detail-option:focus-visible { background: rgba(124,77,255,.14); outline: none; }
+.rec-detail-option strong { display: block; font-size: 14px; } .rec-detail-option small { display: block; font-size: 12px; color: var(--muted); }
+.rec-detail-plus { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+.rec-detail-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+@media (pointer: coarse) { .recs-tag-remove { min-width: 44px; min-height: 44px; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
-#invite-modal, #taste-item-modal, #auth-modal, #activity-summary-modal, #activity-item-modal, .modal-bg {
+#invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #activity-summary-modal, #activity-item-modal, .modal-bg {
   top: var(--vvt, 0px) !important; bottom: auto !important; height: var(--vvh, 100%) !important; padding: 12px !important; overflow: hidden !important; }
 .tl-modal-shell, .modal, .update-composer, #activity-summary-content {
   max-height: calc(var(--vvh, 100dvh) - 24px) !important; overflow-y: auto !important; overscroll-behavior: contain; margin: auto !important; }
@@ -2250,6 +2313,239 @@ let activityEditMode = false;
 let viewedProfile = null; // the profile whose content is currently displayed (self or someone else)
 let isOwnProfile = false; // whether the signed-in user can edit what's shown (viewing their own profile)
 
+
+// ── What's Next: shared grouping + expanded (shared-list style) view ──
+function friendRecGroups() {
+  const META = {
+    film:    { label: 'Movies',   shape: 'portrait' }, tv: { label: 'TV Shows', shape: 'portrait' }, book: { label: 'Books', shape: 'portrait' },
+    song:    { label: 'Music',    shape: 'square' },   album: { label: 'Music', shape: 'square' },     artist: { label: 'Music', shape: 'square' },
+    podcast: { label: 'Podcasts', shape: 'square' },   article: { label: 'Articles', shape: 'landscape' }, other: { label: 'Other', shape: 'landscape' },
+  };
+  const order = ['film', 'tv', 'book', 'song', 'album', 'artist', 'podcast', 'article', 'other'];
+  const byLabel = new Map();
+  order.forEach(t => FRIEND_RECOMMENDATIONS.forEach(r => {
+    const type = MEDIA_ICONS[r.type] ? r.type : 'song';
+    if (type !== t) return;
+    const m = META[t] || META.other;
+    if (!byLabel.has(m.label)) byLabel.set(m.label, { label: m.label, shape: m.shape, type: t, color: (MEDIA_ICONS[t] || MEDIA_ICONS.music).color, items: [] });
+    byLabel.get(m.label).items.push(r);
+  }));
+  return [...byLabel.values()];
+}
+function recPeople(r) {
+  if (Array.isArray(r.recommenders) && r.recommenders.length) return r.recommenders;
+  return r.from ? [{ userId: null, name: r.fromDisplayName || r.from, username: r.fromUsername || null }] : [];
+}
+function recPersonTagHtml(p, { removable = false, recIdx = null, k = 0 } = {}) {
+  const name = p.username ? (firstNameOnly(p.name) || p.username) : (abbreviateName(p.name) || p.name);
+  const avatar = p.avatar ? `<img class="recs-tag-avatar" src="${esc(p.avatar)}" alt="">` : `<span class="recs-tag-avatar">${esc(initials(p.name || p.username || '?'))}</span>`;
+  const remove = removable ? `<button type="button" class="recs-tag-remove" aria-label="Remove ${esc(p.name)}" onclick="event.stopPropagation(); removeRecommender(${recIdx}, ${k})">✕</button>` : '';
+  const inner = `${avatar}<span>${esc(name)}</span>`;
+  const body = p.username
+    ? `<a class="recs-tag" href="javascript:void(0)" title="${esc(p.name)} on TasteList" onclick="event.stopPropagation();closeRecDetail();closeRecsExpanded();goToProfile('${esc(p.username)}')">${inner}</a>`
+    : `<span class="recs-tag" title="Recommended by ${esc(p.name)}">${inner}</span>`;
+  return removable ? `<span class="recs-tag-wrap">${body}${remove}</span>` : body;
+}
+function recFromTagHtml(r) {
+  const people = recPeople(r);
+  if (!people.length) return '';
+  const shown = people.slice(0, 3).map(p => recPersonTagHtml(p)).join('');
+  return `<div class="recs-tags">${shown}${people.length > 3 ? `<span class="recs-tag recs-tag-more">+${people.length - 3}</span>` : ''}</div>`;
+}
+
+// ── What's Next item detail: cover, title, and who recommended it (owner can add/remove) ──
+let recDetailIdx = null, recDetailSearch = { timer: null, seq: 0, results: [], friends: null };
+function openRecDetail(idx) {
+  const r = FRIEND_RECOMMENDATIONS[idx];
+  if (!r) return;
+  recDetailIdx = idx;
+  recDetailSearch.results = [];
+  renderRecDetail();
+  document.getElementById('rec-detail-modal').style.display = 'flex';
+  if (isOwnProfile && recDetailSearch.friends === null) loadInviteFriends().then(f => { recDetailSearch.friends = f; });
+}
+function closeRecDetail() {
+  const m = document.getElementById('rec-detail-modal');
+  if (m) m.style.display = 'none';
+  recDetailIdx = null;
+}
+function renderRecDetail() {
+  const r = FRIEND_RECOMMENDATIONS[recDetailIdx];
+  const el = document.getElementById('rec-detail-body');
+  if (!r || !el) return;
+  const g = friendRecGroups().find(x => x.items.includes(r)) || { label: '', color: '#7C4DFF', shape: 'portrait' };
+  const people = recPeople(r);
+  const own = isOwnProfile;
+  el.innerHTML = `
+    <div class="rec-detail-head">
+      <div class="rec-detail-art recs-${g.shape}" style="--c:${g.color}">
+        ${r.art ? `<img src="${esc(r.art)}" alt="" onerror="this.remove()">` : `<span>${esc(r.title)}</span>`}
+      </div>
+      <div style="min-width:0;">
+        <div class="rec-detail-kind" style="color:${g.color}">${esc(g.label)}</div>
+        <h2 id="rec-detail-title" class="rec-detail-title">${esc(r.title)}</h2>
+        ${r.note ? `<p class="rec-detail-note">“${esc(r.note)}”</p>` : ''}
+      </div>
+    </div>
+    <div class="rec-detail-section">
+      <div class="rec-detail-label">Recommended by</div>
+      <div class="rec-detail-people">${people.length
+        ? people.map((p, k) => recPersonTagHtml(p, { removable: own, recIdx: recDetailIdx, k })).join('')
+        : `<span class="rec-detail-empty">${own ? 'No one yet. Add who told you about it.' : 'No one listed.'}</span>`}</div>
+      ${own ? `
+      <div class="rec-detail-add">
+        <input id="rec-detail-search" class="tl-input" type="text" autocomplete="off" placeholder="Add a friend, or type any name" aria-label="Add who recommended this"
+          oninput="onRecDetailSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();addRecommenderFromInput();}">
+        <div id="rec-detail-results" role="listbox" aria-label="Suggestions"></div>
+      </div>` : ''}
+    </div>
+    ${own ? `<div class="rec-detail-actions"><button type="button" class="sl-btn" onclick="const i=recDetailIdx; closeRecDetail(); openFriendRecForm(i)">✎ Edit details</button></div>` : ''}`;
+}
+function onRecDetailSearch() {
+  clearTimeout(recDetailSearch.timer);
+  const q = document.getElementById('rec-detail-search').value.trim().replace(/^@/, '');
+  recDetailSearch.seq++;
+  if (!q) { renderRecDetailResults('', []); return; }
+  renderRecDetailResults(q, []);                       // friends + "add name" right away
+  if (q.length >= 2) recDetailSearch.timer = setTimeout(async () => {
+    const seq = ++recDetailSearch.seq;
+    const safe = q.replace(/[%,()*\\]/g, ' ').trim();
+    try {
+      const { data } = await sb.from('profiles').select('id, username, display_name, avatar_url')
+        .or(`username.ilike.%${safe}%,display_name.ilike.%${safe}%`).limit(8);
+      if (seq === recDetailSearch.seq) renderRecDetailResults(q, (data || []).filter(p => p.id !== currentUser?.id));
+    } catch (_) {}
+  }, 220);
+}
+function renderRecDetailResults(q, others) {
+  const box = document.getElementById('rec-detail-results');
+  const r = FRIEND_RECOMMENDATIONS[recDetailIdx];
+  if (!box || !r) return;
+  if (!q) { box.innerHTML = ''; recDetailSearch.results = []; return; }
+  const have = new Set(recPeople(r).map(p => p.userId || ('name:' + p.name.toLowerCase())));
+  const needle = q.toLowerCase();
+  const friends = (recDetailSearch.friends || []).filter(f => [f.username, ...(String(f.display_name || '').split(/\s+/))].some(w => String(w || '').toLowerCase().startsWith(needle)));
+  const seen = new Set(friends.map(f => f.id));
+  const people = [...friends, ...others.filter(p => !seen.has(p.id))].filter(p => !have.has(p.id)).slice(0, 6);
+  const exactName = people.some(p => (p.display_name || '').toLowerCase() === needle || p.username.toLowerCase() === needle) || have.has('name:' + needle);
+  recDetailSearch.results = people;
+  box.innerHTML = people.map((p, i) => `<button type="button" role="option" class="rec-detail-option" onclick="addRecommender(${i})">
+      ${personAvatarHtml(p, 30)}<span><strong>${esc(p.display_name || p.username)}</strong><small>@${esc(p.username)}${seen.has(p.id) ? ' · friend' : ''}</small></span></button>`).join('')
+    + (exactName ? '' : `<button type="button" role="option" class="rec-detail-option" onclick="addRecommenderFromInput()"><span class="rec-detail-plus">+</span><span><strong>Add “${esc(q)}”</strong><small>Not on TasteList</small></span></button>`);
+}
+async function addRecommender(i) {
+  const p = recDetailSearch.results[i];
+  if (p) await saveRecommenders(list => list.concat({ userId: p.id, name: p.display_name || p.username, username: p.username, avatar: p.avatar_url || null }));
+}
+async function addRecommenderFromInput() {
+  const input = document.getElementById('rec-detail-search');
+  const name = input?.value.trim().replace(/^@/, '');
+  if (!name) return;
+  // Enter on a name that matches a suggested person picks that person.
+  const match = recDetailSearch.results.find(p => (p.display_name || '').toLowerCase() === name.toLowerCase() || p.username.toLowerCase() === name.toLowerCase());
+  if (match) return addRecommender(recDetailSearch.results.indexOf(match));
+  await saveRecommenders(list => list.concat({ userId: null, name, username: null, avatar: null }));
+}
+async function removeRecommender(idx, k) {
+  if (idx !== recDetailIdx) return;
+  await saveRecommenders(list => list.filter((_, j) => j !== k));
+}
+async function saveRecommenders(change) {
+  const r = FRIEND_RECOMMENDATIONS[recDetailIdx];
+  if (!r || !isOwnProfile) return;
+  const before = recPeople(r);
+  const next = change(before.slice()).filter((p, i, a) => a.findIndex(q => (q.userId && q.userId === p.userId) || (!q.userId && !p.userId && q.name.toLowerCase() === p.name.toLowerCase())) === i).slice(0, 20);
+  r.recommenders = next;
+  const first = next[0];
+  r.from = first?.name; r.fromUsername = first?.username || null; r.fromDisplayName = first?.name || null;
+  renderRecDetail(); renderFriendRecs();
+  setTimeout(() => document.getElementById('rec-detail-search')?.focus(), 0);
+  if (!sb || !r.id) return;
+  if (!(await requireFreshSession())) { showToast(SESSION_EXPIRED_MESSAGE); return; }
+  const { error } = await sb.from('friend_recs').update({
+    recommenders: next.map(p => p.userId ? { user_id: p.userId, name: p.name } : { name: p.name }),
+    from_name: first?.name || null, recommended_by_user_id: first?.userId || null,
+  }).eq('id', r.id);
+  if (error) {
+    r.recommenders = before; renderRecDetail(); renderFriendRecs();
+    showToast('Couldn’t save that change. Please try again.');
+  }
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('rec-detail-modal')?.style.display === 'flex') { e.stopImmediatePropagation(); closeRecDetail(); }
+}, true);
+
+let recsReturnFocus = null;
+function openRecsExpanded() {
+  const el = document.getElementById('recs-expanded');
+  if (!el) return;
+  recsReturnFocus = document.activeElement;
+  el.classList.add('open'); el.hidden = false;
+  document.body.style.overflow = 'hidden';
+  renderRecsExpanded();
+  el.scrollTop = 0;
+  requestAnimationFrame(() => el.querySelector('.sl-back')?.focus());
+}
+function closeRecsExpanded() {
+  const el = document.getElementById('recs-expanded');
+  if (!el || !el.classList.contains('open')) return;
+  el.classList.remove('open'); el.hidden = true;
+  document.body.style.overflow = '';
+  if (friendRecsEditMode) { friendRecsEditMode = false; renderFriendRecs(); }
+  recsReturnFocus?.focus?.();
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !document.getElementById('recs-expanded')?.classList.contains('open')) return;
+  if (document.getElementById('friend-rec-modal')?.style.display === 'flex') return; // let the form close first
+  closeRecsExpanded();
+});
+function renderRecsExpanded() {
+  const el = document.getElementById('recs-expanded-inner');
+  if (!el) return;
+  const groups = friendRecGroups();
+  const total = FRIEND_RECOMMENDATIONS.length;
+  const friends = new Set(FRIEND_RECOMMENDATIONS.flatMap(r => recPeople(r).map(p => p.username || p.name))).size;
+  const owner = viewedProfile ? (firstNameOnly(viewedProfile.display_name) || viewedProfile.username) : '';
+  const editing = friendRecsEditMode && isOwnProfile;
+  const sections = groups.map(g => {
+    const tiles = g.items.map(r => {
+      const idx = FRIEND_RECOMMENDATIONS.indexOf(r);
+      const controls = editing ? `<div class="sl-edit-controls">
+          <button title="Edit" aria-label="Edit ${esc(r.title)}" onclick="event.stopPropagation(); openFriendRecForm(${idx})">✎</button>
+          <button title="Remove" aria-label="Remove ${esc(r.title)}" onclick="event.stopPropagation(); deleteFriendRec(${idx})">✕</button>
+        </div>` : '';
+      return `<div class="sl-tile sl-${g.shape}" role="listitem"><div role="button" tabindex="0" class="recs-tile-hit" aria-label="${esc(r.title)}: details" onclick="openRecDetail(${idx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRecDetail(${idx})}">
+        <div class="sl-art">
+          ${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">` : `<div class="sl-art-empty" style="background:${g.color}1f;color:${g.color};">${esc(r.title)}</div>`}
+          ${controls}
+        </div>
+        <div class="sl-info"><div class="sl-info-text">
+          <div class="sl-name">${esc(r.title)}</div>
+          ${r.note ? `<div class="sl-caption">“${esc(r.note)}”</div>` : ''}
+        </div></div></div>
+          ${recFromTagHtml(r)}
+      </div>`;
+    }).join('');
+    return `<section class="sl-section">
+      <div class="sl-section-head"><h3 style="color:${g.color};">${esc(g.label)}<span>${g.items.length}</span></h3></div>
+      <div class="sl-row${g.shape === 'landscape' ? ' sl-row-landscape' : ''}" role="list">${tiles}</div>
+    </section>`;
+  }).join('');
+  el.innerHTML = `
+    <header class="sl-hero" style="min-height:0;padding-bottom:22px;">
+      <div class="sl-topbar">
+        <button class="sl-back" onclick="closeRecsExpanded()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>${owner ? esc(owner) + '’s profile' : 'Back'}</button>
+        <div class="sl-actions">${isOwnProfile ? (editing
+          ? `<button class="sl-btn" onclick="openFriendRecForm()">+ Add</button><button class="sl-btn primary" onclick="toggleFriendRecsEditMode()">✓ Done</button>`
+          : `<button class="sl-btn primary" onclick="openFriendRecForm()">+ Add recommendation</button><button class="sl-btn" onclick="toggleFriendRecsEditMode()">✎ Edit</button>`) : ''}</div>
+      </div>
+      <h1 class="sl-title">What’s Next</h1>
+      <p class="sl-desc" style="margin-bottom:6px;">Things ${isOwnProfile ? 'I want' : esc(owner || 'they') + ' wants'} to check out</p>
+      <div class="sl-byline-meta">${total} item${total === 1 ? '' : 's'}${friends ? ` <span style="opacity:.5;margin:0 4px;">•</span> recommended by ${friends} friend${friends === 1 ? '' : 's'}` : ''}</div>
+    </header>
+    ${total ? `<div class="sl-sections">${sections}</div>` : `<p style="color:var(--muted);">Nothing here yet.</p>`}`;
+}
+
 function toggleFriendRecsEditMode() {
   friendRecsEditMode = !friendRecsEditMode;
   renderFriendRecs();
@@ -2287,6 +2583,7 @@ function openFriendRecForm(idx) {
     }
   }
   renderFriendRecTagConfirmed();
+  document.getElementById('friend-rec-from-field').style.display = friendRecFormState.id ? 'none' : '';
   document.getElementById('friend-rec-modal').style.display = 'flex';
 }
 
@@ -2396,9 +2693,15 @@ async function saveFriendRecForm() {
   }
 
   const taggedUsername = friendRecTagState.selectedUsername;
-  const row = taggedUsername
-    ? { title, type, from_name: friendRecTagState.selectedDisplayName || taggedUsername, recommended_by_user_id: await resolveInfluencerId(taggedUsername), art_url: art || null }
-    : { title, type, from_name: from || null, recommended_by_user_id: from ? await resolveInfluencerId(from) : null, art_url: art || null };
+  let row;
+  if (friendRecFormState.id) {
+    row = { title, type, art_url: art || null };   // recommenders are edited on the item's detail card
+  } else {
+    row = taggedUsername
+      ? { title, type, from_name: friendRecTagState.selectedDisplayName || taggedUsername, recommended_by_user_id: await resolveInfluencerId(taggedUsername), art_url: art || null }
+      : { title, type, from_name: from || null, recommended_by_user_id: from ? await resolveInfluencerId(from) : null, art_url: art || null };
+    row.recommenders = row.from_name ? [row.recommended_by_user_id ? { user_id: row.recommended_by_user_id, name: row.from_name } : { name: row.from_name }] : [];
+  }
 
   try {
     if (friendRecFormState.id) {
@@ -3795,15 +4098,32 @@ async function loadFriendRecsFromSupabase(userId) {
       .order('created_at', { ascending: true });
     if (error || !data) return false;
 
+    // Profiles for everyone linked in any item's recommenders list.
+    const ids = [...new Set(data.flatMap(r => (Array.isArray(r.recommenders) ? r.recommenders : []).map(p => p.user_id).filter(Boolean)))];
+    const people = new Map();
+    if (ids.length) {
+      const { data: profs } = await sb.from('profiles').select('id, username, display_name, avatar_url').in('id', ids);
+      (profs || []).forEach(p => people.set(p.id, p));
+    }
     FRIEND_RECOMMENDATIONS.length = 0;
     data.forEach(row => {
+      let recommenders = (Array.isArray(row.recommenders) ? row.recommenders : []).map(p => {
+        const prof = p.user_id ? people.get(p.user_id) : null;
+        return { userId: p.user_id || null, name: prof?.display_name || p.name || prof?.username || '', username: prof?.username || null, avatar: prof?.avatar_url || null };
+      }).filter(p => p.name || p.username);
+      // Older rows only have the single from_name / recommended_by fields.
+      if (!recommenders.length && (row.from_name || row.recommended_by)) {
+        recommenders = [{ userId: row.recommended_by_user_id || null, name: row.recommended_by?.display_name || row.from_name || row.recommended_by?.username, username: row.recommended_by?.username || null, avatar: null }];
+      }
+      const first = recommenders[0];
       FRIEND_RECOMMENDATIONS.push({
         id: row.id,
         title: row.title,
         type: row.type,
-        from: row.from_name || undefined,
-        fromUsername: row.recommended_by?.username || null,
-        fromDisplayName: row.recommended_by?.display_name || null,
+        recommenders,
+        from: first?.name || undefined,
+        fromUsername: first?.username || null,
+        fromDisplayName: first?.name || null,
         art: row.art_url || '',
         tmdbId: row.tmdb_id || undefined,
       });
@@ -11821,10 +12141,8 @@ function renderActivityFeed(containerId, filterFn) {
     if (controlsEl) {
       controlsEl.innerHTML = (isOwnProfile && items.length) ? `
         <div style="display:flex;align-items:center;gap:8px;">
-          ${activityEditMode ? `<button onclick="openActivityItemForm()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add update</button>` : ''}
-          <button onclick="toggleActivityEditMode()" style="font-size:11px;font-weight:600;background:${activityEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${activityEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
-            ${activityEditMode ? '✓ Done editing' : '✎ Edit'}
-          </button>
+          <button type="button" class="recs-seeall" onclick="toggleActivityEditMode()">${activityEditMode ? '✓ Done' : '✎ Edit'}</button>
+          <button type="button" class="recs-add" onclick="openActivityItemForm()">+ Add update</button>
         </div>` : '';
     }
   }
@@ -12397,10 +12715,6 @@ function refreshActivityFeeds() {
 function renderFriendRecs() {
   const el = document.getElementById('friend-recs');
   if (!el) return;
-  const editToggleHtml = isOwnProfile ? `
-    <button onclick="toggleFriendRecsEditMode()" style="align-self:flex-start;font-size:11px;font-weight:600;background:${friendRecsEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${friendRecsEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;margin-bottom:10px;">
-      ${friendRecsEditMode ? '✓ Done editing' : '✎ Edit'}
-    </button>` : '';
   // Always available to the owner — adding a recommendation shouldn't require finding Edit first.
   const addBtnHtml = isOwnProfile ? `
     <button class="list-create-cta" onclick="openFriendRecForm()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
@@ -12415,48 +12729,33 @@ function renderFriendRecs() {
       </div>`;
     return;
   }
-  const typeLabels = { film: 'Movies', tv: 'TV Shows', book: 'Books', song: 'Music', album: 'Music', artist: 'Music', podcast: 'Podcasts', article: 'Articles', other: 'Other' };
-  const order = ['film', 'tv', 'book', 'song', 'album', 'artist', 'podcast', 'article', 'other'];
-  const groups = {};
-  FRIEND_RECOMMENDATIONS.forEach(r => {
-    const t = MEDIA_ICONS[r.type] ? r.type : 'song';
-    (groups[t] = groups[t] || []).push(r);
-  });
-  el.innerHTML = editToggleHtml + addBtnHtml + order.filter(t => groups[t]).map(t => {
-    const iconColor = (MEDIA_ICONS[t] || MEDIA_ICONS.music).color;
-    const items = groups[t].map(r => {
-      const idx = FRIEND_RECOMMENDATIONS.indexOf(r);
-      // Books, films and shows are tall covers: use a 2:3 frame so the cover isn't cropped.
-      const tall = /^(book|movie|tv|film|show)/.test(String(t));
-      const thumb = r.art
-        ? `<div style="width:${tall ? '36px' : '40px'};height:${tall ? '54px' : '40px'};border-radius:${tall ? '5px' : '8px'};flex-shrink:0;position:relative;overflow:hidden;background:${iconColor}18;">
-             <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">${mediaIcon(t,22)}</div>
-             <img src="${r.art}" style="position:relative;width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">
-           </div>`
-        : `<span style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;background:${iconColor}18;color:${iconColor};flex-shrink:0;">${badgeIcon(t,17)}</span>`;
-      const editControls = (friendRecsEditMode && isOwnProfile) ? `
-        <div style="display:flex;gap:5px;flex-shrink:0;">
-          <button onclick="openFriendRecForm(${idx})" style="width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);font-size:11px;cursor:pointer;">✎</button>
-          <button onclick="deleteFriendRec(${idx})" style="width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);font-size:11px;cursor:pointer;">✕</button>
-        </div>` : '';
-      return `
-      <div style="padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,${iconColor}14,${iconColor}08);border:1px solid ${iconColor}2a;display:flex;align-items:center;gap:12px;">
-        ${thumb}
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r.title)}</div>
-          ${r.from ? (r.fromUsername
-            ? `<div style="font-size:11px;color:var(--muted);margin-top:3px;">Rec'd by <span onclick="event.stopPropagation();goToProfile('${esc(r.fromUsername)}')" style="color:var(--accent);cursor:pointer;">${esc(firstNameOnly(r.fromDisplayName) || r.fromUsername)}</span></div>`
-            : `<div style="font-size:11px;color:var(--muted);margin-top:3px;">Rec'd by ${esc(abbreviateName(r.from))}</div>`) : ''}
-          ${r.note ? `<div style="font-size:11.5px;color:var(--text);opacity:.8;line-height:1.4;margin-top:3px;">${esc(r.note)}</div>` : ''}
-        </div>
-        ${editControls}
-      </div>`;
+  // Collapsed view: one compact strip of covers per category so the panel fits beside What's New.
+  // "See all" opens the expanded view, styled like a shared list page.
+  const groups = friendRecGroups();
+  const MAX = 4;
+  const strip = groups.map(g => {
+    const shown = g.items.slice(0, MAX), extra = g.items.length - shown.length;
+    const thumbs = shown.map((r, k) => {
+      const more = k === shown.length - 1 && extra > 0;
+      return `<button type="button" class="recs-thumb recs-${g.shape}" style="--c:${g.color}" onclick="${more ? 'openRecsExpanded()' : `openRecDetail(${FRIEND_RECOMMENDATIONS.indexOf(r)})`}"
+        aria-label="${esc(r.title)}${r.from ? ', recommended by ' + esc(r.fromDisplayName || r.from) : ''}${more ? ` and ${extra} more` : ''}" title="${esc(r.title)}">
+        ${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+        <span class="recs-thumb-title">${esc(r.title)}</span>
+        ${more ? `<span class="recs-thumb-more">+${extra}</span>` : ''}
+      </button>`;
     }).join('');
-    return `<div>
-      <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${iconColor};opacity:.75;margin-bottom:8px;">${typeLabels[t]}</div>
-      <div style="display:flex;flex-direction:column;gap:10px;">${items}</div>
-    </div>`;
-  }).join('<div style="height:6px;"></div>');
+    return `<section class="recs-group">
+      <h3 class="recs-group-head" style="color:${g.color}">${esc(g.label)}<span>${g.items.length}</span></h3>
+      <div class="recs-strip recs-strip-${g.shape}">${thumbs}</div>
+    </section>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="recs-toolbar">
+      <button type="button" class="recs-seeall" onclick="openRecsExpanded()">See all ${FRIEND_RECOMMENDATIONS.length} <span aria-hidden="true">→</span></button>
+      ${isOwnProfile ? `<button type="button" class="recs-add" onclick="openFriendRecForm()" aria-label="Add recommendation">+ Add</button>` : ''}
+    </div>
+    ${strip}`;
+  if (document.getElementById('recs-expanded')?.classList.contains('open')) renderRecsExpanded();
 }
 
 // Fetches poster/cover art for each recommendation that doesn't already have a static one —
@@ -13730,6 +14029,15 @@ renderTasteInfluences();
   </section>
 </div>
 
+<div id="recs-expanded" role="dialog" aria-modal="true" aria-label="What's Next" hidden><div id="recs-expanded-inner"></div></div>
+
+<div id="rec-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeRecDetail()">
+  <div class="tl-modal-shell" style="max-width:480px;" role="dialog" aria-modal="true" aria-labelledby="rec-detail-title">
+    <button class="tl-modal-close" onclick="closeRecDetail()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="rec-detail-body"></div>
+  </div>
+</div>
+
 <div id="friend-rec-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeFriendRecModal()">
   <div class="tl-modal-shell" style="max-width:400px;">
     <button class="tl-modal-close" onclick="closeFriendRecModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
@@ -13755,8 +14063,8 @@ renderTasteInfluences();
       </select>
     </div>
 
-    <div class="tl-field">
-      <label class="tl-label">Recommended by <span class="tl-hint">search to tag a friend on TasteList, or just type a name</span></label>
+    <div class="tl-field" id="friend-rec-from-field">
+      <label class="tl-label">Recommended by <span class="tl-hint">search to tag a friend on TasteList, or just type a name. You can add more people from the item afterwards.</span></label>
       <input id="friend-rec-from" class="tl-input" type="text" placeholder="Search a username, or type a name" autocomplete="off" oninput="searchFriendRecFrom(this.value)">
       <div id="rec-tag-results" aria-live="polite"></div>
       <div id="rec-tag-confirmed" style="display:none;"></div>
