@@ -11285,6 +11285,7 @@ function tastePersonTagHtml(item, size = 'card') {
   const linked = !item.by && person?.username;
   const d = size === 'card' ? 18 : 22;
   const avatar = profileAvatarHtml(!item.by&&person?person:{display_name:name},d);
+  const style = `display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text);text-decoration:none;max-width:100%;`;
   const label = `${avatar}<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(name)}</span>`;
   return linked
     ? `<a href="javascript:void(0)" onclick="event.stopPropagation(); goToProfile('${esc(person.username)}')" title="${esc(name)}'s pick" style="${style}cursor:pointer;">${label}</a>`
@@ -13186,7 +13187,7 @@ function renderFriendRecs() {
       const more = k === shown.length - 1 && extra > 0;
       return `<button type="button" class="recs-thumb recs-${g.shape}" style="--c:${g.color}" onclick="${more ? 'openRecsExpanded()' : `openRecDetail(${FRIEND_RECOMMENDATIONS.indexOf(r)})`}"
         aria-label="${esc(r.title)}${r.from ? ', recommended by ' + esc(r.fromDisplayName || r.from) : ''}${more ? ` and ${extra} more` : ''}" title="${esc(r.title)}">
-        ${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()" onload="if(this.naturalWidth<10)this.remove()">` : ''}
+        ${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="recArtMissing(${FRIEND_RECOMMENDATIONS.indexOf(r)}, this)" onload="if(this.naturalWidth<10)recArtMissing(${FRIEND_RECOMMENDATIONS.indexOf(r)}, this)">` : ''}
         <span class="recs-thumb-title">${esc(r.title)}</span>
         ${more ? `<span class="recs-thumb-more">+${extra}</span>` : ''}
       </button>`;
@@ -13206,6 +13207,16 @@ function renderFriendRecs() {
 
 // Fetches poster/cover art for each recommendation that doesn't already have a static one —
 // movies and TV shows via TMDB, using the same helpers as the rest of the app.
+// A saved cover that comes back broken or as a 1x1 "no cover" placeholder: drop it and look again
+// (catalogs, then Wikipedia). Once per item per visit.
+function recArtMissing(idx, img) {
+  img?.remove();
+  const r = FRIEND_RECOMMENDATIONS[idx];
+  if (!r || r._artRetried) return;
+  r._artRetried = true;
+  r.art = '';
+  loadFriendRecArt();
+}
 async function loadFriendRecArt() {
   for (const r of FRIEND_RECOMMENDATIONS) {
     if (r.art) continue;
@@ -13341,12 +13352,20 @@ function assortedTastePicks(tab, n = 4) {
     return limit > 0 ? picks : [];
   };
   if (tab === 'music') {
-    // Match formative-list wording, not one literal title. Never use unrelated music lists.
-    const formative = Object.entries(CUSTOM_LISTS.music || {}).filter(([key]) => {
-      const label = normalize(customListLabel('music', key));
-      return /^(?:my )?(?:artists|musicians|music|bands) (?:that |who |which )?(?:have )?shaped me$/.test(label) || label === 'shaped';
-    }).flatMap(([,items]) => items || []);
-    return take(formative, n);
+    // Core list first: "Favorite Artists" or "Artists That Shaped Me" (and similar wording).
+    // Then other favorites-style lists ("Other Faves", "Top Bands"…). Unrelated music lists are
+    // only used if the profile has no favorites-style list at all.
+    const entries = Object.entries(CUSTOM_LISTS.music || {});
+    const labelOf = key => normalize(customListLabel('music', key));
+    const isCore = key => /^(?:my )?(?:favou?rite|top|all time) (?:artists|musicians|bands|music)$/.test(labelOf(key))
+      || /^(?:my )?(?:artists|musicians|music|bands) (?:that |who |which )?(?:have )?shaped me$/.test(labelOf(key)) || labelOf(key) === 'shaped';
+    const isFaves = key => !isCore(key) && /fav|\btop\b|\bbest\b|\blove/.test(labelOf(key));
+    const core = entries.filter(([k]) => isCore(k)).flatMap(([, items]) => items || []);
+    const faves = entries.filter(([k]) => isFaves(k)).flatMap(([, items]) => items || []);
+    const picks = take(core, n);
+    if (picks.length < n) picks.push(...take(faves, n - picks.length));
+    if (!picks.length) picks.push(...take(artists || [], n));
+    return picks;
   }
   if (tab === 'movies') {
     const named = fromLists('movies', ['Favorite Movies', 'Favorite Films']);
