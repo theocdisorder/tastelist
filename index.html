@@ -1747,9 +1747,48 @@ html body .activity-title { font-weight: 650; font-size: 19px; letter-spacing: -
 .rec-detail-summary.is-loading p { color: var(--muted); }
 .rec-detail-summary a, .rec-detail-summary span { display: inline-block; margin-top: 8px; font-size: 12.5px; color: var(--muted); text-decoration: none; }
 .rec-detail-summary a:hover { color: var(--text); text-decoration: underline; }
+
+/* ── Import from Letterboxd / Goodreads ── */
+.ob-import { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 2px; font-size: 13px; color: var(--muted); }
+.ob-import button { font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.ob-import button:hover { border-color: rgba(255,255,255,.35); }
+.ti-shell { max-width: 760px !important; width: 100%; }
+.ti-title { font-family: var(--ob-serif, Georgia, serif); font-weight: 600; font-size: 26px; letter-spacing: -.015em; margin: 0 32px 6px 0; color: #f2efe9; }
+.ti-lede { margin: 0 0 18px; font-size: 14px; color: var(--muted); }
+.ti-row { display: flex; gap: 8px; }
+.ti-row .tl-input { flex: 1; min-width: 0; }
+.ti-help { margin: 8px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+.ti-shelves { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 0; }
+.ti-shelves button { font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; color: var(--muted); background: none; border: 1px solid var(--border); }
+.ti-shelves button[aria-selected="true"] { color: var(--text); background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.35); }
+.ti-error { margin: 16px 0 0; padding: 10px 12px; border-radius: 10px; background: rgba(249,115,96,.1); color: #F97360; font-size: 13.5px; line-height: 1.5; }
+.ti-error b { color: #fff; }
+.ti-loading, .ti-empty { margin: 22px 0 0; color: var(--muted); font-size: 14px; }
+.ti-group { margin: 24px 0 10px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text); }
+.ti-group span { margin-left: 8px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.ti-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 16px 12px; }
+.ti-card { display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding: 0; text-align: left; font: inherit; color: var(--text); background: none; border: 0; cursor: pointer; min-width: 0; }
+.ti-card:disabled { cursor: default; opacity: .5; }
+.ti-art { position: relative; aspect-ratio: 2 / 3; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.06); box-shadow: 0 6px 16px rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; outline: 2px solid transparent; outline-offset: 2px; transition: outline-color .12s; margin-bottom: 6px; }
+.ti-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ti-art-title { padding: 8px; font-size: 11px; font-weight: 600; text-align: center; color: var(--muted); overflow-wrap: anywhere; }
+.ti-card.on .ti-art { outline-color: var(--accent); }
+.ti-check { position: absolute; top: 6px; right: 6px; z-index: 1; min-width: 24px; height: 24px; padding: 0 7px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; background: rgba(0,0,0,.7); border: 1px solid rgba(255,255,255,.3); }
+.ti-card.on .ti-check { background: var(--accent); border-color: var(--accent); }
+.ti-name { font-size: 13px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.ti-sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ti-meta { display: flex; gap: 6px; font-size: 12px; }
+.ti-stars { color: #00c030; letter-spacing: 1px; }
+.ti-heart { color: #ff8000; }
+.ti-note { margin: 0; font-size: 13px; color: var(--muted); flex: 1; min-width: 0; }
+.ti-footer { position: sticky; bottom: -18px; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; margin: 22px -4px 0; padding: 14px 4px; background: var(--surface); border-top: 1px solid var(--border); }
+.ti-dest { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); flex: 1; min-width: 0; }
+.ti-dest select { min-width: 0; max-width: 100%; font: inherit; font-size: 14px; color: var(--text); background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+@media (max-width: 480px) { .ti-row { flex-direction: column; } .ti-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .ti-title { font-size: 22px; } }
+@media (pointer: coarse) { .ob-import button, .ti-shelves button { min-height: 44px; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
-#invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #activity-summary-modal, #activity-item-modal, .modal-bg {
+#invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #activity-summary-modal, #activity-item-modal, .modal-bg {
   top: var(--vvt, 0px) !important; bottom: auto !important; height: var(--vvh, 100%) !important; padding: 12px !important; overflow: hidden !important; }
 .tl-modal-shell, .modal, .update-composer, #activity-summary-content {
   max-height: calc(var(--vvh, 100dvh) - 24px) !important; overflow-y: auto !important; overscroll-behavior: contain; margin: auto !important; }
@@ -2187,7 +2226,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
 <div class="music-main">
 
-  <div id="movies-create-list-row" class="list-create-row" style="display:none;"><button type="button" class="ed-primary" onclick="promptNewCustomList('movies')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a new list</button></div>
+  <div id="movies-create-list-row" class="list-create-row" style="display:none;"><button type="button" class="ed-primary" onclick="promptNewCustomList('movies')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a new list</button><button type="button" class="ed-link" onclick="openTasteImport('letterboxd','profile')">Import from Letterboxd</button></div>
 
   <div class="music-section">
     <div class="music-section-header">
@@ -5587,6 +5626,7 @@ function sortShapedMeFirst(tab, cats) {
 
 function renderCustomLists(tab) {
   scheduleTasteConstellation();
+  if (tab === 'books') setTimeout(ensureBooksImportRow, 0);
   if (tab === 'music') {
     const container = document.getElementById('music-lists-container');
     const lateContainer = document.getElementById('music-lists-container-late');
@@ -6404,6 +6444,7 @@ function renderOnboardingJourney() {
   } else if (step === 0) {
     body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1" aria-live="polite" aria-atomic="true">${esc(onboardingQuestion().q)}</h1><button id="ob-question-switch" type="button" class="ob-question-switch" onclick="cycleOnboardingQuestion()">Try another question <span aria-hidden="true">↻</span></button><p id="ob-question-hint">${esc(onboardingQuestion().hint)}</p></div>
       <label class="ob-search"><span aria-hidden="true">⌕</span><input id="ob-search" type="search" aria-label="Search songs, artists, movies, shows, books and podcasts" placeholder="Search a song, show, book, anything…" value="${esc(state.query)}" oninput="onOnboardingSearch(this.value)" ${!ready?'disabled':''}><button type="button" aria-label="Clear search" onclick="clearOnboardingSearch()">×</button></label>
+      <div class="ob-import" role="group" aria-label="Bring picks from another app"><span>Or bring picks from</span><button type="button" onclick="openTasteImport('letterboxd','onboarding')" ${!ready?'disabled':''}>Letterboxd</button><button type="button" onclick="openTasteImport('goodreads','onboarding')" ${!ready?'disabled':''}>Goodreads</button></div>
       <div class="ob-filters" aria-label="Search categories">${[['all','All'],['artist','Artists'],['album','Albums'],['movie','Movies'],['tv','TV shows'],['book','Books'],['comedian','Comedy'],['special','Specials'],['podcast','Podcasts'],['episode','Episodes']].map(([key,label])=>`<button type="button" data-ob-filter="${key}" aria-pressed="${state.filter===key}" onclick="filterOnboardingSearch('${key}')">${label}</button>`).join('')}</div>
       <p class="ob-multiselect-hint">Select as many as you like. Your selections stay here as you search.</p><div id="ob-pending" class="ob-pending" aria-live="polite"></div><div id="ob-results" aria-live="polite"></div>
       <section id="ob-starters" aria-label="Suggested picks" aria-live="polite"></section>
@@ -6561,7 +6602,208 @@ async function saveOnboardingSelection() {
   } catch(error) {if(currentUser?.id===userId)state.error=error.message||'Could not save your picks. Please try again.';}
   finally {state.saving=false;if(currentUser?.id===userId)renderOnboardingSearchResults();}
 }
+
+// ── Import from Letterboxd / Goodreads ─────────────────────────────────────────────────────────
+// Reads the person's PUBLIC feed (via the taste-import function), shows a ranked set of suggestions,
+// and adds only what they pick. Onboarding: picks join the pending selection. Profile: saved straight
+// into the list they choose (Goodreads "Want to read" defaults to What's Next).
+const TASTE_IMPORT_SOURCES = {
+  letterboxd: { name: 'Letterboxd', field: 'Your Letterboxd username', placeholder: 'username or letterboxd.com/username',
+    help: 'We read your public Letterboxd diary — your most recent ~50 films. Nothing changes on Letterboxd.' },
+  goodreads: { name: 'Goodreads', field: 'Your Goodreads profile link', placeholder: 'goodreads.com/user/show/12345-yourname',
+    help: 'On Goodreads, open your profile and copy the link from the address bar — it includes a number. Your shelves need to be public.',
+    shelves: [['read', 'Read'], ['currently-reading', 'Reading now'], ['to-read', 'Want to read']] },
+};
+const TASTE_IMPORT_ERRORS = {
+  invalid_username: 'That doesn’t look like a Letterboxd username. It’s the name in your profile link: letterboxd.com/<b>name</b>.',
+  invalid_profile: 'Paste the link to your Goodreads profile — it has a number in it, like goodreads.com/user/show/<b>12345</b>-name.',
+  not_found: 'We couldn’t find that profile. Check the spelling and try again.',
+  private: 'That profile is private (or its shelves are hidden). Make it public, then try again — or search for picks instead.',
+  unavailable: 'We couldn’t reach it just now. Please try again in a minute.',
+};
+let tasteImport = { source: null, ctx: 'onboarding', user: '', shelf: 'read', items: [], selected: new Set(), loading: false, error: '', dest: '', profile: '', saving: false, seq: 0 };
+
+function tasteImportCleanTitle(t) { return String(t || '').replace(/\s*\([^()]*#\s*\d+(?:\.\d+)?\)\s*$/, '').trim(); }
+function tasteImportStars(r) { if (!r) return ''; const full = Math.floor(r), half = r - full >= 0.5; return '★'.repeat(full) + (half ? '½' : ''); }
+function tasteImportOwnedKey(kind, title) { return `${kind === 'tv' ? 'tv' : kind}|${String(title).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()}`; }
+function tasteImportOwned() {
+  const owned = new Set();
+  try { onboardingPicks().forEach(p => owned.add(tasteImportOwnedKey(p.kind || (p.author ? 'book' : 'movie'), p.title || p.name))); } catch (_) {}
+  Object.values(CUSTOM_LISTS.movies || {}).flat().forEach(x => owned.add(tasteImportOwnedKey('movie', x.title)));
+  (movies || []).forEach(x => owned.add(tasteImportOwnedKey('movie', x.title)));
+  Object.values(CUSTOM_LISTS.tv || {}).flat().forEach(x => owned.add(tasteImportOwnedKey('tv', x.title)));
+  Object.values(CUSTOM_LISTS.books || {}).flat().forEach(x => owned.add(tasteImportOwnedKey('book', x.title)));
+  FRIEND_RECOMMENDATIONS.forEach(r => owned.add('next|' + tasteImportOwnedKey(r.type === 'book' ? 'book' : r.type === 'tv' ? 'tv' : 'movie', r.title)));
+  return owned;
+}
+function tasteImportDestinations() {
+  const src = tasteImport.source, opts = [];
+  const label = (tab, key) => (typeof customListLabel === 'function' ? customListLabel(tab, key) : key);
+  if (src === 'letterboxd') {
+    Object.keys(CUSTOM_LISTS.movies || {}).forEach(k => opts.push([`movies:${k}`, label('movies', k)]));
+    if (!opts.length) opts.push(['movies:Favorite Movies', 'Favorite Movies']);
+  } else {
+    Object.keys(CUSTOM_LISTS.books || {}).forEach(k => opts.push([`books:${k}`, label('books', k)]));
+    if (!opts.length) opts.push(['books:Books That Shaped Me', 'Books That Shaped Me']);
+  }
+  opts.push(['__next', 'What’s Next (want to read/watch)']);
+  return opts;
+}
+function openTasteImport(source, ctx = 'onboarding') {
+  if (!TASTE_IMPORT_SOURCES[source]) return;
+  let remembered = '';
+  try { remembered = localStorage.getItem('tl_import_' + source) || ''; } catch (_) {}
+  tasteImport = { ...tasteImport, source, ctx, user: remembered, shelf: 'read', items: [], selected: new Set(), loading: false, error: '', profile: '', saving: false, dest: '' };
+  document.getElementById('taste-import-modal').style.display = 'flex';
+  renderTasteImport();
+  if (remembered) loadTasteImport(); else setTimeout(() => document.getElementById('taste-import-user')?.focus(), 0);
+}
+function closeTasteImport() { document.getElementById('taste-import-modal').style.display = 'none'; tasteImport.seq++; }
+async function loadTasteImport() {
+  const input = document.getElementById('taste-import-user');
+  if (input) tasteImport.user = input.value.trim();
+  if (!tasteImport.user) { tasteImport.error = tasteImport.source === 'letterboxd' ? TASTE_IMPORT_ERRORS.invalid_username : TASTE_IMPORT_ERRORS.invalid_profile; renderTasteImport(); return; }
+  const seq = ++tasteImport.seq;
+  tasteImport.loading = true; tasteImport.error = ''; tasteImport.items = []; tasteImport.selected = new Set();
+  renderTasteImport();
+  try {
+    const token = (await sb.auth.getSession()).data.session?.access_token;
+    if (!token) throw Object.assign(new Error(), { code: 'unavailable' });
+    const url = `${SUPABASE_URL}/functions/v1/taste-import?source=${tasteImport.source}&user=${encodeURIComponent(tasteImport.user)}&shelf=${tasteImport.shelf}`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY }, signal: AbortSignal.timeout(25000) });
+    const data = await r.json().catch(() => ({}));
+    if (seq !== tasteImport.seq) return;
+    if (!r.ok || data.error) throw Object.assign(new Error(), { code: data.error || 'unavailable' });
+    try { localStorage.setItem('tl_import_' + tasteImport.source, tasteImport.user); } catch (_) {}
+    tasteImport.profile = data.profile || '';
+    tasteImport.items = (data.items || []).map(it => ({ ...it, title: it.kind === 'book' ? tasteImportCleanTitle(it.title) : it.title }));
+    if (!tasteImport.dest) tasteImport.dest = tasteImport.shelf === 'to-read' ? '__next' : tasteImportDestinations()[0][0];
+  } catch (e) {
+    if (seq !== tasteImport.seq) return;
+    tasteImport.error = TASTE_IMPORT_ERRORS[e.code] || TASTE_IMPORT_ERRORS.unavailable;
+  }
+  tasteImport.loading = false;
+  renderTasteImport();
+}
+function setTasteImportShelf(shelf) {
+  if (tasteImport.shelf === shelf) return;
+  tasteImport.shelf = shelf;
+  tasteImport.dest = shelf === 'to-read' ? '__next' : (tasteImport.dest === '__next' ? tasteImportDestinations()[0][0] : tasteImport.dest);
+  loadTasteImport();
+}
+function toggleTasteImportPick(i) { const s = tasteImport.selected; s.has(i) ? s.delete(i) : s.add(i); renderTasteImport(); }
+function tasteImportRanked() {
+  const t = d => Date.parse(d) || 0;
+  const items = tasteImport.items.map((it, i) => ({ it, i }));
+  const fav = x => (x.it.rating || 0) >= 4.5 || x.it.liked;
+  const by = (a, b) => (b.it.liked - a.it.liked) || ((b.it.rating || 0) - (a.it.rating || 0)) || (t(b.it.date) - t(a.it.date));
+  if (tasteImport.shelf === 'to-read' || tasteImport.shelf === 'currently-reading') return { top: [], rest: items.sort((a, b) => t(b.it.date) - t(a.it.date)) };
+  return { top: items.filter(fav).sort(by), rest: items.filter(x => !fav(x)).sort((a, b) => t(b.it.date) - t(a.it.date)) };
+}
+function renderTasteImport() {
+  const el = document.getElementById('taste-import-body');
+  if (!el) return;
+  const src = TASTE_IMPORT_SOURCES[tasteImport.source];
+  const owned = tasteImportOwned();
+  const toNext = tasteImport.ctx === 'onboarding' ? tasteImport.shelf === 'to-read' : tasteImport.dest === '__next';
+  const card = ({ it, i }) => {
+    const key = (toNext ? 'next|' : '') + tasteImportOwnedKey(it.kind, it.title);
+    const have = owned.has(key), on = tasteImport.selected.has(i);
+    const sub = [it.kind === 'tv' ? 'TV' : '', it.author || '', it.year || ''].filter(Boolean).join(' · ');
+    return `<button type="button" class="ti-card${on ? ' on' : ''}" aria-pressed="${on}" ${have ? 'disabled' : ''} onclick="toggleTasteImportPick(${i})">
+      <span class="ti-art">${it.art ? `<img src="${esc(it.art)}" alt="" loading="lazy" onerror="this.remove()" onload="if(this.naturalWidth<10)this.remove()">` : ''}<span class="ti-art-title">${esc(it.title)}</span>
+        <span class="ti-check" aria-hidden="true">${have ? 'Added' : on ? '✓' : '+'}</span></span>
+      <span class="ti-name">${esc(it.title)}</span>
+      ${sub ? `<span class="ti-sub">${esc(sub)}</span>` : ''}
+      ${(it.rating || it.liked) ? `<span class="ti-meta">${it.rating ? `<span class="ti-stars">${tasteImportStars(it.rating)}</span>` : ''}${it.liked ? '<span class="ti-heart" title="Liked">♥</span>' : ''}</span>` : ''}
+    </button>`;
+  };
+  const { top, rest } = tasteImportRanked();
+  const n = tasteImport.selected.size;
+  const destSel = tasteImport.ctx === 'profile' && tasteImport.items.length
+    ? `<label class="ti-dest">Add to <select onchange="tasteImport.dest=this.value;renderTasteImport()">${tasteImportDestinations().map(([v, l]) => `<option value="${esc(v)}"${v === tasteImport.dest ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`
+    : (tasteImport.ctx === 'onboarding' && tasteImport.items.length ? `<p class="ti-note">${toNext ? 'These will go to your <strong>What’s Next</strong> list.' : `These will join your picks for “${esc(onboardingQuestion().list)}”.`}</p>` : '');
+  el.innerHTML = `
+    <div class="ti-head"><h2 id="taste-import-title" class="ti-title">Bring picks from ${src.name}</h2>
+      <p class="ti-lede">Pick only what belongs on your TasteList — nothing is added until you choose it.</p></div>
+    <form class="ti-form" onsubmit="event.preventDefault();loadTasteImport()">
+      <label class="tl-label" for="taste-import-user">${src.field}</label>
+      <div class="ti-row"><input id="taste-import-user" class="tl-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(src.placeholder)}" value="${esc(tasteImport.user)}">
+        <button type="submit" class="ed-primary" ${tasteImport.loading ? 'disabled' : ''}>${tasteImport.loading ? 'Looking…' : (tasteImport.items.length ? 'Refresh' : 'Find my picks')}</button></div>
+      <p class="ti-help">${src.help}</p>
+    </form>
+    ${src.shelves && (tasteImport.items.length || tasteImport.shelf !== 'read') ? `<div class="ti-shelves" role="tablist">${src.shelves.map(([k, l]) => `<button type="button" role="tab" aria-selected="${tasteImport.shelf === k}" onclick="setTasteImportShelf('${k}')">${l}</button>`).join('')}</div>` : ''}
+    ${tasteImport.error ? `<p class="ti-error" role="alert">${tasteImport.error}</p>` : ''}
+    ${tasteImport.loading ? `<p class="ti-loading" aria-live="polite">Reading your ${src.name}…</p>` : ''}
+    ${!tasteImport.loading && !tasteImport.error && tasteImport.user && !tasteImport.items.length && tasteImport.profile !== '' ? `<p class="ti-empty">Nothing on this ${tasteImport.source === 'goodreads' ? 'shelf' : 'diary'} yet.</p>` : ''}
+    ${top.length ? `<h3 class="ti-group">Your favorites <span>${tasteImport.source === 'letterboxd' ? '4½★ and up, or liked' : '5★ and 4½★'}</span></h3><div class="ti-grid">${top.map(card).join('')}</div>` : ''}
+    ${rest.length ? `<h3 class="ti-group">${tasteImport.shelf === 'to-read' ? 'Want to read' : tasteImport.shelf === 'currently-reading' ? 'Reading now' : 'Recently'} <span>${rest.length}</span></h3><div class="ti-grid">${rest.map(card).join('')}</div>` : ''}
+    ${tasteImport.items.length ? `<div class="ti-footer">${destSel}<button type="button" class="ed-primary" ${!n || tasteImport.saving ? 'disabled' : ''} onclick="applyTasteImport()">${tasteImport.saving ? 'Adding…' : n ? `Add ${n} pick${n === 1 ? '' : 's'}` : 'Select picks to add'}</button></div>` : ''}`;
+}
+function tasteImportToItem(it) {
+  if (it.kind === 'book') return { kind: 'book', label: 'Book', title: it.title, author: it.author || '', year: (String(it.year).match(/\d{4}/) || [''])[0], art: it.art || '' };
+  return { kind: it.kind === 'tv' ? 'tv' : 'movie', label: it.kind === 'tv' ? 'TV show' : 'Movie', title: it.title, year: it.year || '', id: it.tmdbId || undefined, art: it.art || '' };
+}
+async function saveImportToWhatsNext(item) {
+  const type = item.kind === 'book' ? 'book' : item.kind === 'tv' ? 'tv' : 'film';
+  if (FRIEND_RECOMMENDATIONS.some(r => r.type === type && r.title.toLowerCase() === item.title.toLowerCase())) return;
+  const { data, error } = await sb.from('friend_recs').insert({ user_id: currentUser.id, title: item.title, type, art_url: item.art || null, recommenders: [] }).select().single();
+  if (error) throw error;
+  FRIEND_RECOMMENDATIONS.push({ id: data.id, title: data.title, type, recommenders: [], art: data.art_url || '' });
+  renderFriendRecs();
+}
+async function applyTasteImport() {
+  const picks = [...tasteImport.selected].map(i => tasteImport.items[i]).filter(Boolean).map(tasteImportToItem);
+  if (!picks.length) return;
+  if (tasteImport.ctx === 'onboarding') {
+    const state = onboardingVisualState();
+    const toNext = tasteImport.shelf === 'to-read';
+    let added = 0;
+    picks.forEach(p => {
+      const item = { ...p, category: onboardingQuestion().list, destination: toNext ? 'next' : undefined };
+      if (state.pending.some(x => onboardingSelectionKey(x) === onboardingSelectionKey(item))) return;
+      state.pending.push(item); added++;
+    });
+    closeTasteImport();
+    renderOnboardingSearchResults();
+    showToast(`${added} pick${added === 1 ? '' : 's'} from ${TASTE_IMPORT_SOURCES[tasteImport.source].name} added to your selection.`);
+    return;
+  }
+  // Profile: save now, into the chosen list.
+  tasteImport.saving = true; renderTasteImport();
+  const dest = tasteImport.dest;
+  let ok = 0, failed = 0;
+  for (const p of picks) {
+    try {
+      if (dest === '__next') await saveImportToWhatsNext(p);
+      else await saveOnboardingItem({ ...p, category: dest.split(':').slice(1).join(':') }, currentUser.id);
+      ok++;
+    } catch (e) { failed++; }
+  }
+  tasteImport.saving = false;
+  const tab = dest === '__next' ? null : dest.split(':')[0];
+  if (tab) { try { renderCustomLists(tab); } catch (_) {} }
+  try { renderProfileTab(); } catch (_) {}
+  closeTasteImport();
+  const where = dest === '__next' ? 'What’s Next' : (tasteImportDestinations().find(([v]) => v === dest) || [, 'your list'])[1];
+  showToast(`Added ${ok} to ${where}${failed ? ` (${failed} couldn’t be added — maybe already there)` : ''}.`);
+}
+// Books tab: an import row above the lists (owner only)
+function ensureBooksImportRow() {
+  const container = document.getElementById('books-lists-container');
+  if (!container) return;
+  let row = document.getElementById('books-import-row');
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'books-import-row'; row.className = 'list-create-row';
+    row.innerHTML = `<button type="button" class="ed-link" onclick="openTasteImport('goodreads','profile')">Import from Goodreads</button>`;
+    container.parentNode.insertBefore(row, container);
+  }
+  row.style.display = isOwnProfile ? '' : 'none';
+}
+
 async function saveOnboardingItem(item,userId) {
+    if(item.destination==='next'){await saveImportToWhatsNext(item);return;}
     const state=onboardingVisualState();
     const picks=onboardingPicks();
     if(picks.some(p=>p.kind===item.kind && (p.title||p.name).toLowerCase()===item.title.toLowerCase() && (item.kind!=='album'||(p.artist||'').toLowerCase()===(item.artist||'').toLowerCase()) && (item.kind!=='book'||(p.author||'').toLowerCase()===(item.author||'').toLowerCase())))throw new Error('This is already in your favorites. Choose another pick.');
@@ -14545,6 +14787,13 @@ renderTasteInfluences();
   <div class="tl-modal-shell" style="max-width:480px;" role="dialog" aria-modal="true" aria-labelledby="rec-detail-title">
     <button class="tl-modal-close" onclick="closeRecDetail()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
     <div id="rec-detail-body"></div>
+  </div>
+</div>
+
+<div id="taste-import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeTasteImport()">
+  <div class="tl-modal-shell ti-shell" role="dialog" aria-modal="true" aria-labelledby="taste-import-title">
+    <button class="tl-modal-close" onclick="closeTasteImport()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <div id="taste-import-body"></div>
   </div>
 </div>
 
