@@ -1288,6 +1288,17 @@
     color: var(--faint);
     margin-top: 4px;
   }
+
+#activity-catalog-results{max-height:300px;overflow:auto;margin:8px 0 16px}
+.activity-catalog-result,.activity-catalog-choice{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:1px solid var(--border,#333);border-radius:12px;background:var(--card,#202022);color:inherit;text-align:left;margin:6px 0;font:inherit}
+.activity-catalog-result{cursor:pointer}.activity-catalog-result:hover,.activity-catalog-result:focus-visible{border-color:var(--accent,#8955ff)}
+.activity-catalog-result>span:nth-child(2),.activity-catalog-choice>div{flex:1;min-width:0}
+.activity-catalog-result strong,.activity-catalog-choice strong{display:block;overflow-wrap:anywhere}
+.activity-catalog-result small,.activity-catalog-choice small,.activity-catalog-choice div>span{display:block;font-size:12px;color:var(--muted,#aaa);margin-top:4px}
+.activity-catalog-art{display:flex;align-items:center;justify-content:center;flex:0 0 48px;width:48px;height:66px;background:#303034;border-radius:5px;overflow:hidden;font-size:10px;text-align:center}
+.activity-catalog-art img{width:100%;height:100%;object-fit:contain}
+.activity-catalog-manual{margin:8px 0;padding:8px;background:none;color:inherit;border:0;text-decoration:underline;cursor:pointer}
+
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -2840,6 +2851,73 @@ function toggleActivityEditMode() {
 }
 
 let activityItemFormState = { id: null };
+// Explicit selection: never silently choose the first title match.
+let activityCatalog = {seq:0,timer:null,results:[],selected:null,manual:false,type:'movie'};
+const activityCatalogTypes={movie:'movies',tv:'tv',book:'books',song:'music',podcast:'podcasts'};
+function resetActivityCatalog() {
+ clearTimeout(activityCatalog.timer);activityCatalog.seq++;
+ activityCatalog.results=[];activityCatalog.selected=null;activityCatalog.manual=false;
+ document.getElementById('activity-catalog-results').innerHTML='';
+ document.getElementById('activity-catalog-selected').innerHTML='';
+}
+function activityCatalogPreview() {
+ const p=activityCatalog.selected,el=document.getElementById('activity-catalog-selected');
+ el.innerHTML=p?`<div class="activity-catalog-choice">${activityCatalogImage(p)}<div><strong>${esc(p.title)}</strong><small>${esc([p.sub,p.meta].filter(Boolean).join(' · '))}</small><span>Selected for this update</span></div><button type="button" onclick="activityCatalogInput()">Change</button></div>`:'';
+}
+function activityCatalogImage(p) {
+ const art=/^https?:\/\//i.test(p.art||'')?p.art:'';
+ return `<span class="activity-catalog-art">${art?`<img src="${esc(art)}" alt="" onerror="this.remove()">`:'<span>No artwork</span>'}</span>`;
+}
+function activityCatalogInput() {
+ resetActivityCatalog();
+ document.getElementById('activity-item-art').value='';
+ activityItemFormState.tmdbId=null;
+ const type=document.getElementById('activity-item-type').value;
+ activityCatalog.type=type;
+ const q=document.getElementById('activity-item-label').value.trim();
+ const el=document.getElementById('activity-catalog-results');
+ if(!activityCatalogTypes[type]&&type!=='artist')return;
+ if(q.length<2){el.textContent='Type at least two letters to find a title.';return;}
+ const seq=activityCatalog.seq;
+ el.textContent='Searching…';
+ activityCatalog.timer=setTimeout(()=>runActivityCatalogSearch(q,type,seq),300);
+}
+async function searchActivityCatalog(type,q) {
+ if(type==='artist') {
+  const artists=await searchOnboardingArtists(q);
+  return artists.map(p=>({title:p.title,sub:p.genre||'Artist',meta:'',art:p.art||'',id:p.id,source:'artist-catalog'}));
+ }
+ const results=await searchTasteCatalog(activityCatalogTypes[type],q);
+ return results.map(p=>({...p,source:(type==='movie'||type==='tv')?'tmdb':type==='book'?'book-catalog':'apple'}));
+}
+async function runActivityCatalogSearch(q,type,seq) {
+ try {
+  const results=await searchActivityCatalog(type,q);
+  if(seq!==activityCatalog.seq)return;
+  activityCatalog.results=results;
+  document.getElementById('activity-catalog-results').innerHTML=(results.length?results.map((p,i)=>`<button type="button" class="activity-catalog-result" onclick="selectActivityCatalog(${i})">${activityCatalogImage(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.sub,p.meta].filter(Boolean).join(' · ')||type)}</small></span><span>Select</span></button>`).join(''):'<p>No matches found. Try adding the author, artist, or year.</p>')+'<button type="button" class="activity-catalog-manual" onclick="useManualActivityItem()">Can’t find it? Add this title manually</button>';
+ }catch(e){if(seq===activityCatalog.seq)document.getElementById('activity-catalog-results').innerHTML='<p>Search is unavailable. Try again or add the title manually.</p><button type="button" onclick="activityCatalogInput()">Retry search</button> <button type="button" onclick="useManualActivityItem()">Add manually</button>';}
+}
+function selectActivityCatalog(index) {
+ const p=activityCatalog.results[index];if(!p)return;
+ clearTimeout(activityCatalog.timer);activityCatalog.seq++;
+ activityCatalog.selected={...p};activityCatalog.manual=false;
+ document.getElementById('activity-item-label').value=p.title;
+ document.getElementById('activity-item-art').value=p.art||'';
+ activityItemFormState.tmdbId=p.tmdbId||null;
+ document.getElementById('activity-catalog-results').innerHTML='';
+ activityCatalogPreview();
+}
+function useManualActivityItem() {
+ resetActivityCatalog();activityCatalog.manual=true;
+ document.getElementById('activity-catalog-selected').textContent='Manual entry — you can add an artwork link in More details.';
+}
+function changeActivityCatalogType(type) {
+ if(type===document.getElementById('activity-item-type').value)return;
+ document.getElementById('activity-item-type').value=type;
+ renderActivityTypes();activityCatalogInput();
+}
+
 let activityTagState = { selected:[], results:[], request:0, timer:null };
 
 function parseActivityPeople(note) {
@@ -2854,7 +2932,7 @@ function renderActivityNote(note) {
 }
 function renderActivityTypes() {
   const value=document.getElementById('activity-item-type').value;
-  document.getElementById('activity-type-options').innerHTML=[['movie','Film'],['tv','TV'],['book','Book'],['song','Music'],['artist','Artist'],['podcast','Podcast'],['article','Article'],['other','Other']].map(([key,label])=>`<button type="button" aria-pressed="${key===value}" onclick="document.getElementById('activity-item-type').value='${key}';renderActivityTypes()">${label}</button>`).join('');
+  document.getElementById('activity-type-options').innerHTML=[['movie','Film'],['tv','TV'],['book','Book'],['song','Music'],['artist','Artist'],['podcast','Podcast'],['article','Article'],['other','Other']].map(([key,label])=>`<button type="button" aria-pressed="${key===value}" onclick="changeActivityCatalogType('${key}')">${label}</button>`).join('');
 }
 function renderActivityTags() {
   document.getElementById('activity-tag-chips').innerHTML=activityTagState.selected.map((p,i)=>`<button type="button" aria-label="Remove ${esc(p.username)}" onclick="activityTagState.selected.splice(${i},1);renderActivityTags()">@${esc(p.username)} ×</button>`).join('');
@@ -2882,6 +2960,7 @@ function searchActivityTags(value) {
 }
 
 function openActivityItemForm(globalIndex) {
+  resetActivityCatalog();
   activityItemFormState = { id: null };
   clearTimeout(activityTagState.timer);activityTagState.request++;activityTagState.selected=[];activityTagState.results=[];
   document.getElementById('activity-tag-search').value='';document.getElementById('activity-tag-results').innerHTML='';
@@ -2899,6 +2978,10 @@ function openActivityItemForm(globalIndex) {
     const item = ACTIVITY_FEED_ITEMS[globalIndex];
     if (item) {
       activityItemFormState.id = item.id;
+      activityItemFormState.tmdbId=item.tmdbId||item.tmdbTvId||null;
+      activityCatalog.selected=item.catalogItem||null;
+      activityCatalog.manual=!item.catalogItem;
+      activityCatalogPreview();
       document.getElementById('activity-item-modal-title').textContent = 'Edit update';
       document.getElementById('activity-item-label').value = item.label || '';
       document.getElementById('activity-item-type').value = item.type || 'movie';
@@ -2917,6 +3000,7 @@ function openActivityItemForm(globalIndex) {
 }
 
 function closeActivityItemModal() {
+  resetActivityCatalog();
   clearTimeout(activityTagState.timer);activityTagState.request++;
   document.getElementById('activity-item-modal').style.display = 'none';
 }
@@ -2943,13 +3027,17 @@ async function persistActivityItemForm() {
     errEl.style.display = 'block';
     return;
   }
+  if ((activityCatalogTypes[type] || type==='artist') && !activityCatalog.selected && !activityCatalog.manual) {
+    errEl.textContent='Select the correct search result, or choose “Add manually.”';
+    errEl.style.display='block';return;
+  }
   if (!(await requireFreshSession())) {
     errEl.textContent = SESSION_EXPIRED_MESSAGE;
     errEl.style.display = 'block';
     return;
   }
 
-  const row = { label, type, sub: sub || null, note: note || null, activity_date: date, art_url: art || null };
+  const row = { label, type, sub: sub || null, note: note || null, activity_date: date, art_url: art || null, tmdb_id: activityItemFormState.tmdbId || null, catalog_item: activityCatalog.selected ? {...activityCatalog.selected, type} : null };
 
   try {
     if (activityItemFormState.id) {
@@ -4354,6 +4442,7 @@ async function loadActivityFeedFromSupabase(userId) {
         timestamp: formatActivityDate(row.activity_date),
         rawDate: row.activity_date,
         art: row.art_url || '',
+        catalogItem: row.catalog_item || null,
       };
       if (row.tmdb_id) {
         if (row.type === 'tv') item.tmdbTvId = row.tmdb_id;
@@ -4367,6 +4456,7 @@ async function loadActivityFeedFromSupabase(userId) {
       } else if (row.type === 'artist') {
         item.artistQuery = row.label;
       }
+      if(row.type==='book' && row.catalog_item){item.bookTitle=row.label;item.bookAuthor=row.catalog_item.sub||'';}
       ACTIVITY_FEED_ITEMS.push(item);
     });
     activityFeedArtFetched = false; // allow art resolution to run again against the new data
@@ -11266,6 +11356,7 @@ function slArtFailed(img, idx) {
   img.replaceWith(ph);
   const item = (TRIP_PLAYLIST_ITEMS[flatItem?.cat] || []).find(i => i.id === flatItem?.id);
   if (!item || item._artRetried) return;
+  if(item.catalogItem){item._artRetried=true;item.art='';refreshActivityFeeds();return;}
   item._artRetried = true;
   if (item.backdrop) { item.backdrop = ''; renderTripPlaylist(); return; }
   item.art = '';
@@ -12538,7 +12629,7 @@ async function fetchFeedPage(isFirstPage) {
     document.getElementById('feed-heading').textContent="What's New";
     document.getElementById('feed-context').textContent=feedFollowCount?'From people you follow':'Featured on TasteList — follow friends to see their picks here too';
     let query = sb.from('activity_feed')
-      .select('id, label, sub, type, note, activity_date, art_url, tmdb_id, user_id, profiles!activity_feed_user_id_fkey(username, display_name, is_public)')
+      .select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, user_id, profiles!activity_feed_user_id_fkey(username, display_name, is_public)')
       .order('activity_date', { ascending: false })
       .range(feedOffset, feedOffset + FEED_PAGE_SIZE - 1);
     query = query.in('user_id', followedIds);
@@ -12639,7 +12730,7 @@ async function initFeedEngagement(rows) {
 // runs over the page of rows just fetched (not the whole accumulated feed every time).
 async function resolvePublicFeedArt(rows) {
   for (const row of rows) {
-    if (row.art_url) continue;
+    if (row.art_url || row.catalog_item) continue;
     try {
       if (row.type === 'movie') {
         let movieId = row.tmdb_id;
@@ -13081,6 +13172,7 @@ async function initActivityFeedArt() {
   // iTunes, books via Open Library + Google Books) was bursting past Google Books' rate limit in
   // particular, since it's much stricter than the others and some items need 2 searches each.
   for (const item of ACTIVITY_FEED_ITEMS) {
+    if (item.catalogItem) continue; // Selected artwork is authoritative, even when unavailable.
     if (item.art) continue; // already has art (hardcoded or previously resolved) — nothing to do
     try {
       if (item.artQuery) {
@@ -14319,7 +14411,8 @@ renderTasteInfluences();
     <div id="activity-item-modal-error" class="tl-modal-error" role="alert" style="display:none;"></div>
     <div class="update-types" id="activity-type-options" aria-label="Update type"></div>
     <select id="activity-item-type" hidden><option value="movie">Movie</option><option value="tv">TV Show</option><option value="book">Book</option><option value="song">Song</option><option value="artist">Artist</option><option value="podcast">Podcast</option><option value="article">Article</option><option value="other">Other</option></select>
-    <label class="update-sr" for="activity-item-label">Title</label><input id="activity-item-label" class="update-title" placeholder="What’s caught your attention?" maxlength="300">
+    <label class="update-sr" for="activity-item-label">Title</label><input id="activity-item-label" oninput="activityCatalogInput()" autocomplete="off" class="update-title" placeholder="What’s caught your attention?" maxlength="300">
+    <div id="activity-catalog-results" aria-live="polite"></div><div id="activity-catalog-selected" aria-live="polite"></div>
     <label class="update-sr" for="activity-item-note">Your note</label><textarea id="activity-item-note" class="update-note" rows="4" placeholder="The scene that stuck with you. The song on repeat. Tell us about it."></textarea>
     <div class="update-tag-area"><label for="activity-tag-search">With / recommended by</label><div id="activity-tag-chips"></div><input id="activity-tag-search" autocomplete="off" placeholder="Tag someone…" oninput="searchActivityTags(this.value)"><div id="activity-tag-results" aria-live="polite"></div></div>
     <details id="activity-update-details"><summary>More details <span>Date, status & artwork</span></summary><div class="update-detail-grid"><label>Date<input id="activity-item-date" type="date"></label><label>Status<input id="activity-item-sub" placeholder="Watched, finished reading…"></label></div><label>Artwork link <span>(optional)</span><input id="activity-item-art" type="url" placeholder="https://…"></label></details>
