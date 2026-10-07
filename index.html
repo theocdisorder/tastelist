@@ -13261,7 +13261,14 @@ function assortedTastePicks(tab, n = 4) {
     }
     return limit > 0 ? picks : [];
   };
-  if (tab === 'music') return take(fromLists('music', ['Artists That Shaped Me']), n);
+  if (tab === 'music') {
+    // Match formative-list wording, not one literal title. Never use unrelated music lists.
+    const formative = Object.entries(CUSTOM_LISTS.music || {}).filter(([key]) => {
+      const label = normalize(customListLabel('music', key));
+      return /^(?:my )?(?:artists|musicians|music|bands) (?:that |who |which )?(?:have )?shaped me$/.test(label) || label === 'shaped';
+    }).flatMap(([,items]) => items || []);
+    return take(formative, n);
+  }
   if (tab === 'movies') {
     const named = fromLists('movies', ['Favorite Movies', 'Favorite Films']);
     return take(named.length ? named : (movies || []), n);
@@ -13275,8 +13282,19 @@ function assortedTastePicks(tab, n = 4) {
   }
   return [];
 }
+const summaryArtistPhotoCache = new Map();
+function summaryArtistPhoto(name) {
+  const key=String(name||'').trim().toLowerCase();
+  if(!key)return Promise.resolve('');
+  if(!summaryArtistPhotoCache.has(key)) {
+    const task=lookupArtistArt(name).then(p=>p?.tilePhoto||p?.bandPhoto||'').catch(()=> '');
+    summaryArtistPhotoCache.set(key,task);
+    task.then(art=>{if(!art)summaryArtistPhotoCache.delete(key);});
+  }
+  return summaryArtistPhotoCache.get(key);
+}
 function tastePickArt(tab, x) {
-  if (tab === 'music') return x.tilePhoto || x.bandPhoto || '';
+  if (tab === 'music') return x.tilePhoto || x.bandPhoto || x.tile_photo || x.band_photo || x.art || '';
   if (tab === 'books') return preferredBookCover(x.title, x.author) || x.cover || '';
   return x.poster ? (x.poster.startsWith('http') ? x.poster : TMDB_IMG + x.poster) : '';
 }
@@ -13508,6 +13526,7 @@ function renderProfileTab() {
 
   const picksEl = document.getElementById('profile-picks');
   if (!picksEl) return;
+  const picksRenderToken = picksEl._tasteRenderToken = Symbol('profile-picks');
 
   const headerEl = document.getElementById('defining-picks-header');
   if (headerEl) {
@@ -13531,6 +13550,7 @@ function renderProfileTab() {
   }
 
   function renderPicks(data) {
+    if(picksEl._tasteRenderToken !== picksRenderToken) return;
     picksEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">` +
       data.map(p => {
         const hasMosaic = p.mosaic && p.mosaic.filter(Boolean).length > 0;
@@ -13558,15 +13578,16 @@ function renderProfileTab() {
 
   renderPicks(picksData);
 
-  // Fetch artist artwork — search for their most known album art via iTunes
-  if (topArtist?.name) {
-    fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(topArtist.name)}&entity=album&limit=3&country=US`)
-      .then(r => r.json())
-      .then(d => {
-        const art = d.results?.[0]?.artworkUrl100?.replace('100x100bb', '400x400bb');
-        if (art) { picksData[0].art = art; renderPicks(picksData); }
-      }).catch(() => {});
-  }
+  // Fill all four artist photos, including for visitors. Keep the selected artists/order.
+  musicPicks.forEach((artist,index) => {
+    if(tastePickArt('music',artist))return;
+    summaryArtistPhoto(artist.name || artist.title).then(art => {
+      if(!art || picksEl._tasteRenderToken !== picksRenderToken)return;
+      artist.tilePhoto=art;
+      picksData[0].mosaic[index]=art;
+      renderPicks(picksData);
+    });
+  });
 
   // Fetch film poster from TMDB if not already loaded
   if (topFilmObj && !topFilmObj.poster) {
