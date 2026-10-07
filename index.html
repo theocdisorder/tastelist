@@ -1299,6 +1299,8 @@
 .activity-catalog-art img{width:100%;height:100%;object-fit:contain}
 .activity-catalog-manual{margin:8px 0;padding:8px;background:none;color:inherit;border:0;text-decoration:underline;cursor:pointer}
 
+
+.ob-starter-heading{font-weight:600;margin:24px 0 6px}.ob-starter-caption{color:var(--muted);font-size:13px;margin:0 0 18px}#ob-starters .ob-result:disabled{opacity:.65}#ob-starters .ob-results-grid{margin-bottom:20px}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -6269,6 +6271,80 @@ const ONBOARDING_QUESTIONS = [
     hint: 'We won’t tell.',
     ideas: ['Love Is Blind', 'Mamma Mia!', 'Twilight', 'The Summer I Turned Pretty', 'Selling Sunset', 'One Direction'] },
 ];
+// Editorial starter sets, not a claimed global popularity ranking.
+// [medium, exact title, year (optional), creator (optional)].
+const ONBOARDING_STARTERS = [
+ [['artist','Sabrina Carpenter'],['tv','The Bear',2022],['tv','Severance',2022],['book','Fourth Wing',2023,'Rebecca Yarros'],['artist','Chappell Roan'],['movie','Dune: Part Two',2024]],
+ [['tv','The Pitt',2025],['book','Intermezzo',2024,'Sally Rooney'],['tv','Shrinking',2023],['movie','Wicked',2024],['podcast','Call Her Daddy'],['artist','Noah Kahan']],
+ [['movie','Legally Blonde',2001],['movie','Mamma Mia!',2008],['movie','The Princess Bride',1987],['movie','Paddington 2',2017],['movie','The Princess Diaries',2001],['movie','Clueless',1995],['movie','The Holiday',2006],['movie','School of Rock',2003],['tv','Friends',1994],['tv','Gilmore Girls',2000]],
+ [['album','BRAT',2024,'Charli xcx'],['album','SOS',2022,'SZA'],['artist','Sabrina Carpenter'],['artist','Kendrick Lamar'],['artist','Taylor Swift'],['artist','Hozier']],
+ [['tv','Normal People',2020],['tv','Shōgun',2024],['movie','Past Lives',2023],['tv','Succession',2018],['book','Tomorrow, and Tomorrow, and Tomorrow',2022,'Gabrielle Zevin'],['podcast','Serial']],
+ [['book',"Harry Potter and the Philosopher's Stone",1997,'J. K. Rowling'],['movie','Spirited Away',2001],['tv','Avatar: The Last Airbender',2005],['movie','The Princess Diaries',2001],['artist','Destiny’s Child'],['book','Matilda',1988,'Roald Dahl']],
+ [['tv','Abbott Elementary',2021],['tv','Hacks',2021],['tv','What We Do in the Shadows',2019],['movie','Bridesmaids',2011],['movie','School of Rock',2003],['podcast','SmartLess']],
+ [['tv','Love Is Blind',2020],['movie','Mamma Mia!',2008],['movie','Twilight',2008],['tv','The Summer I Turned Pretty',2022],['tv','Selling Sunset',2019],['artist','One Direction']]
+];
+const onboardingStarterCache=new Map();
+let onboardingStarterView={key:'',user:null,rows:[],loading:false,token:0};
+const starterNorm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+async function resolveOnboardingStarter(seed) {
+ const [kind,title,year,creator]=seed;let candidates=[];
+ if(kind==='movie'||kind==='tv') {
+  const response=await tmdbFetch(`/search/${kind}?query=${encodeURIComponent(title)}&page=1`);
+  if(!response.ok)throw Error('Catalog unavailable');const data=await response.json();
+  candidates=(data.results||[]).map(r=>({kind,id:r.id,title:r.title||r.name,year:(r.release_date||r.first_air_date||'').slice(0,4),poster:r.poster_path||'',label:kind==='movie'?'Movie':'TV show'}));
+ } else if(kind==='book') {
+  const data=await onboardingSearchJSON(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(creator||'')}&limit=10&fields=key,title,author_name,cover_i,first_publish_year`);
+  candidates=(data.docs||[]).map(r=>({kind,id:r.key,title:r.title,author:r.author_name?.[0]||'',year:String(r.first_publish_year||''),label:'Book',art:preferredBookCover(r.title,r.author_name?.[0]||'')||(r.cover_i?`https://covers.openlibrary.org/b/id/${r.cover_i}-L.jpg`:'')}));
+ } else if(kind==='artist') {
+  candidates=await searchOnboardingArtists(title);
+ } else if(kind==='podcast') {
+  candidates=await searchExtraCatalog('podcast',title);
+ } else if(kind==='album') {
+  const data=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(title+' '+creator)}&entity=album&limit=10`);
+  candidates=(data.results||[]).map(r=>({kind,id:r.collectionId,title:r.collectionName,artist:r.artistName,year:(r.releaseDate||'').slice(0,4),art:(r.artworkUrl100||'').replace('100x100bb','400x400bb'),label:'Album'}));
+ }
+ const matches=candidates.filter(p=>starterNorm(p.title)===starterNorm(title)&&(!year||String(p.year)===String(year))&&(!creator||starterNorm(p.author||p.artist)===starterNorm(creator)));
+ const identities=new Map(matches.map(p=>[onboardingSelectionKey(p),p]));
+ if(identities.size!==1)return null; // Ambiguous match: let the user search and choose.
+ const item=[...identities.values()][0];
+ if(kind==='artist'&&!onboardingArt(item))item.art=await summaryArtistPhoto(title);
+ return item;
+}
+function loadOnboardingStarters(force=false) {
+ const state=onboardingVisualState(),index=(state.questionIndex||0)%ONBOARDING_STARTERS.length;
+ const key=String(index),user=currentUser?.id;
+ if(!force&&onboardingStarterView.key===key&&onboardingStarterView.user===user){renderOnboardingStarters();return;}
+ const token=onboardingStarterView.token+1;
+ onboardingStarterView={key,user,token,loading:true,rows:ONBOARDING_STARTERS[index].map(seed=>({seed,item:null,done:false}))};
+ renderOnboardingStarters();
+ let next=0;const rows=onboardingStarterView.rows;
+ async function worker(){while(next<rows.length){const row=rows[next++],cacheKey=JSON.stringify(row.seed);
+  try{let item=onboardingStarterCache.get(cacheKey);if(!item){item=await resolveOnboardingStarter(row.seed);if(item)onboardingStarterCache.set(cacheKey,item);}row.item=item;}catch(_){}row.done=true;
+  if(token!==onboardingStarterView.token||user!==currentUser?.id)return;
+  renderOnboardingStarters();
+ }}
+ Promise.allSettled([worker(),worker(),worker()]).then(()=>{if(token!==onboardingStarterView.token||user!==currentUser?.id)return;onboardingStarterView.loading=false;renderOnboardingStarters();});
+}
+function renderOnboardingStarters() {
+ const el=document.getElementById('ob-starters');if(!el)return;
+ const state=onboardingVisualState();el.hidden=!!state.query.trim();if(el.hidden)return;
+ const rows=onboardingStarterView.rows.map((r,i)=>({...r,index:i})).filter(r=>state.filter==='all'||r.seed[0]===state.filter);
+ const ready=profileFavoritesLoaded&&isOwnProfile&&viewedProfile?.id===currentUser?.id;
+ el.innerHTML=`<p class="ob-starter-heading">A few ideas to get you started</p><p class="ob-starter-caption">Curated suggestions — pick any that feel like you, or search for your own.</p><div class="ob-results-grid">${rows.map(row=>{
+ const p=row.item||{title:row.seed[1],kind:row.seed[0],label:row.seed[0],year:row.seed[2]||'',author:row.seed[3]||''};
+ const selected=row.item&&state.pending.some(x=>onboardingSelectionKey(x)===onboardingSelectionKey(p));
+ return `<button type="button" class="ob-result ${selected?'selected':''}" aria-pressed="${!!selected}" onclick="selectOnboardingStarter(${row.index})" ${!ready||state.saving||!row.done?'disabled':''}>${onboardingArtwork(p)}<strong>${esc(p.title)}</strong><small>${esc([p.label,p.author||p.artist,p.year].filter(Boolean).join(' · '))}</small>${row.item?`<span class="ob-selected-mark">${selected?'✓':'+'}</span>`:`<small>${row.done?'Search for this title':'Loading…'}</small>`}</button>`;
+ }).join('')}</div>${!rows.length?'<p>No starter picks for this category on this question. Search above to find your own.</p>':''}${!onboardingStarterView.loading&&rows.some(r=>!r.item)?'<button type="button" class="ob-button" onclick="loadOnboardingStarters(true)">Retry suggestions</button>':''}`;
+}
+function selectOnboardingStarter(index) {
+ const state=onboardingVisualState(),row=onboardingStarterView.rows[index];
+ if(!row?.done||state.saving||!profileFavoritesLoaded||!isOwnProfile)return;
+ if(!row.item){state.filter=row.seed[0];suggestOnboardingSearch(row.seed[1]);return;}
+ const item=row.item,key=onboardingSelectionKey(item),found=state.pending.findIndex(p=>onboardingSelectionKey(p)===key);
+ if(found>=0)state.pending.splice(found,1);else state.pending.push({...item,category:onboardingQuestion().list});
+ renderOnboardingSearchResults();
+}
+
 function onboardingQuestion() {
   const state = onboardingVisualState();
   return ONBOARDING_QUESTIONS[(state.questionIndex || 0) % ONBOARDING_QUESTIONS.length];
@@ -6288,6 +6364,7 @@ function cycleOnboardingQuestion() {
   if (hint) hint.textContent = q.hint;
   const ideas = document.querySelector('#ob-search-ideas > div');
   if (ideas) ideas.innerHTML = onboardingIdeasHtml(true);
+  loadOnboardingStarters();
 }
 
 function onboardingVisualState() {
@@ -6329,7 +6406,7 @@ function renderOnboardingJourney() {
       <label class="ob-search"><span aria-hidden="true">⌕</span><input id="ob-search" type="search" aria-label="Search songs, artists, movies, shows, books and podcasts" placeholder="Search a song, show, book, anything…" value="${esc(state.query)}" oninput="onOnboardingSearch(this.value)" ${!ready?'disabled':''}><button type="button" aria-label="Clear search" onclick="clearOnboardingSearch()">×</button></label>
       <div class="ob-filters" aria-label="Search categories">${[['all','All'],['artist','Artists'],['album','Albums'],['movie','Movies'],['tv','TV shows'],['book','Books'],['comedian','Comedy'],['special','Specials'],['podcast','Podcasts'],['episode','Episodes']].map(([key,label])=>`<button type="button" data-ob-filter="${key}" aria-pressed="${state.filter===key}" onclick="filterOnboardingSearch('${key}')">${label}</button>`).join('')}</div>
       <p class="ob-multiselect-hint">Select as many as you like. Your selections stay here as you search.</p><div id="ob-pending" class="ob-pending" aria-live="polite"></div><div id="ob-results" aria-live="polite"></div>
-      <div id="ob-search-ideas" class="ob-ideas" ${state.query?'hidden':''}><p>Try something like…</p><div>${onboardingIdeasHtml(ready)}</div></div>
+      <section id="ob-starters" aria-label="Suggested picks" aria-live="polite"></section>
       <div id="ob-feedback" class="ob-feedback" role="status">${!ready?'Loading your favorites…':''}</div>`;
     footer = `<span class="ob-saved-count"><strong id="ob-selection-count">0 selected</strong><br>${picks.length} ${picks.length===1?'pick':'picks'} saved</span><div><button id="ob-review-button" type="button" class="ob-button" onclick="advanceOnboarding(1)" ${!picks.length?'disabled':''}>Review my picks</button> <button id="ob-add-button" type="button" class="ob-button ob-primary" onclick="saveOnboardingSelection()" disabled>Add to my list</button></div>`;
   } else if (step === 1) {
@@ -6343,6 +6420,7 @@ function renderOnboardingJourney() {
   }
   el.innerHTML = `<section class="ob-frame" aria-labelledby="onboarding-title"><header class="ob-top"><img class="tl-logo tl-logo-ob" src="${TL_LOGO_SRC}" alt="TasteList"><div class="ob-progress" aria-label="Step ${step+1} of 3">${[0,1,2].map(i=>`<span class="${i<=step?'filled':''}"></span>`).join('')}</div><span>${step+1} / 3</span></header><main class="ob-content">${body}</main><footer class="ob-footer">${footer}</footer><button class="ob-skip" onclick="finishOnboarding('skipped')">Skip for now</button></section>`;
   if (step===0 && !state.added) {
+    loadOnboardingStarters();
     renderOnboardingSearchResults();
     if (focused) {const next=document.getElementById('ob-search');next?.focus();try{next?.setSelectionRange(cursor,cursor)}catch(_){}}
   }
@@ -6426,6 +6504,7 @@ async function runOnboardingSearch() {
   });
 }
 function renderOnboardingSearchResults() {
+  renderOnboardingStarters();
   const state=onboardingVisualState(),el=document.getElementById('ob-results');if(!el)return;
   document.querySelectorAll('[data-ob-filter]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.obFilter===state.filter)));
   el.innerHTML=state.loading?'<p class="ob-search-status">Searching…</p>':state.results.length?`<div class="ob-results-grid">${state.results.map((item,i)=>`<button type="button" class="ob-result ${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'selected':''}" aria-pressed="${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))}" onclick="selectOnboardingResult(${i})" ${state.saving?'disabled':''}>${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.artist&&item.kind==='album'?' · '+esc(item.artist):item.author?' · '+esc(item.author):''}</small>${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'<span class="ob-selected-mark" aria-hidden="true">✓</span>':'<span class="ob-select-circle" aria-hidden="true">+</span>'}</button>`).join('')}</div>`:state.query.trim()?(state.searchFailed?'<p class="ob-search-status">Search is temporarily unavailable.</p>':'<p class="ob-search-status">No matches found. Try another title or category.</p>'):'';
