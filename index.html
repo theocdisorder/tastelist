@@ -1816,11 +1816,20 @@ td.songs-table-links[data-listen] { display: table-cell; vertical-align: middle;
 .list-create-row .ed-primary, .list-start .ed-primary { white-space: normal; text-align: left; line-height: 1.3; }
 .list-create-import { flex-basis: 100%; display: flex; gap: 16px; margin-top: -2px; }
 .list-start .list-create-import { margin-top: 2px; }
+.list-start-actions { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .ed-secondary { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--text); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
 .ed-secondary:hover { border-color: rgba(255,255,255,.35); }
 /* Author picker: Save pinned to the bottom of the dialog while the results scroll */
 #creator-picks-dialog { overflow-y: auto; }
 .creator-picks-footer { position: sticky; bottom: -24px; z-index: 2; margin: 12px -24px -24px; padding: 14px 24px 18px; background: var(--surface, #18181b); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
+
+/* ── List CTAs (v2): centered; import is a quiet text link underneath ── */
+.list-create-row { justify-content: center; text-align: center; }
+.list-create-import { justify-content: center; }
+.list-import-link { font: inherit; font-size: 12.5px; font-weight: 500; color: var(--muted); background: none; border: 0; padding: 4px 6px; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(255,255,255,.2); text-underline-offset: 3px; }
+.list-import-link:hover { color: var(--text); text-decoration-color: currentColor; }
+#new-list-ideas button.is-on { border-color: var(--accent); color: var(--text); background: rgba(124,77,255,.16); }
+@media (pointer: coarse) { .list-import-link { min-height: 44px; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -2261,7 +2270,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
 <div class="music-main">
 
-  <div id="movies-create-list-row" class="list-create-row" style="display:none;"><button type="button" class="ed-primary" onclick="promptNewCustomList('movies')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add movies you loved and would recommend</button><div class="list-create-import"><button type="button" class="ed-link" onclick="openTasteImport('letterboxd','profile')">Import from Letterboxd</button></div></div>
+  <div id="movies-create-list-row" class="list-create-row" style="display:none;"><button type="button" class="ed-primary" onclick="promptNewCustomList('movies')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add movies you love</button><div class="list-create-import"><button type="button" class="list-import-link" onclick="openTasteImport('letterboxd','profile')">or import from Letterboxd</button></div></div>
 
   <div class="music-section">
     <div class="music-section-header">
@@ -3463,9 +3472,9 @@ function renderFavoriteAuthors() {
  const el=document.getElementById('favorite-authors');if(!el)return;
  el.innerHTML=!favoriteAuthors.length?'':`<div class="music-section"><div class="music-section-header"><h2 class="music-section-title">Favorite Authors</h2></div>${favoriteAuthors.map(a=>`<details style="padding:20px 0;border-bottom:1px solid var(--border)"><summary style="cursor:pointer;display:flex;align-items:center;gap:16px;list-style:none;">${authorPhotoHtml(a)}<span style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:20px;font-weight:600">${esc(a.name)}</span><small style="font-size:12px;color:var(--muted)">${(a.books||[]).length} favorite book${(a.books||[]).length===1?'':'s'}</small></span></summary>${creatorAction('author',a.id,a.books?.length)}<div style="display:flex;gap:16px;flex-wrap:wrap;padding:16px 0">${(a.books||[]).map(b=>`<div style="width:140px">${b.art?`<img src="${esc(b.art)}" alt="${esc(b.title)}" style="width:140px;height:210px;object-fit:contain" onerror="this.style.display='none'">`:''}<p>${esc(b.title)}</p></div>`).join('')}</div></details>`).join('')}</div>`;
 }
-async function addFavoriteAuthor() {
+async function addFavoriteAuthor(presetName) {
  if(!isOwnProfile||!currentUser)return;
- const name=(prompt('Author name:')||'').trim();if(!name)return;
+ const name=(typeof presetName==='string'?presetName:(prompt('Author name:')||'')).trim();if(!name)return;
  if(favoriteAuthors.some(a=>bookArtKey(a.name)===bookArtKey(name))){showToast('This author is already added.');return;}
  const {data,error}=await sb.from('favorite_authors').insert({user_id:currentUser.id,name,books:[]}).select().single();
  if(error){alert(error.message);return;}
@@ -5703,9 +5712,13 @@ function renderCustomLists(tab) {
   }
   if (isOwnProfile && tab === 'books' && addListHtml) {
     // Books: [main button][Add author], with "Import from Goodreads" on its own line below.
-    const extras = `<button type="button" class="ed-secondary" onclick="addFavoriteAuthor()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add author</button>`;
-    const importLine = `<div class="list-create-import"><button type="button" class="ed-link" onclick="openTasteImport('goodreads','profile')">Import from Goodreads</button></div>`;
-    addListHtml = addListHtml.replace(/(<\/button>)(<\/div>|<\/section>)$/, `$1${extras}${importLine}$2`);
+    const extras = '';
+    const _unused = `<button type="button" class="ed-secondary" onclick="addFavoriteAuthor()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add author</button>`;
+    const importLine = `<div class="list-create-import"><button type="button" class="list-import-link" onclick="openTasteImport('goodreads','profile')">or import from Goodreads</button></div>`;
+    addListHtml = addListHtml.endsWith('</section>')
+      // Empty state: keep the import link directly under the button.
+      ? addListHtml.replace(/(<button type="button" class="ed-primary"[\s\S]*?<\/button>)(<\/section>)$/, `<div class="list-start-actions">$1${importLine}</div>$2`)
+      : addListHtml.replace(/(<\/button>)(<\/div>)$/, `$1${extras}${importLine}$2`);
   }
   container.innerHTML = addListHtml + sectionsHtml;
 }
@@ -5811,25 +5824,45 @@ let newListCategory='music';
 
 // What each tab's list button says: what goes in the list, not just "a new list".
 const LIST_CTA_NOUN = { books: 'books', movies: 'movies', tv: 'shows', music: 'music', albums: 'albums', comedy: 'comedy', podcasts: 'podcasts' };
-function listCtaLabel(tab) { return `Add ${LIST_CTA_NOUN[tab] || 'things'} you loved and would recommend`; }
+function listCtaLabel(tab) { return `Add ${LIST_CTA_NOUN[tab] || 'things'} you love`; }
 function promptNewCustomList(tab) {
   if(!isOwnProfile)return;
   newListCategory=tab;
+  newListMode='list';
   document.getElementById('new-list-title').textContent='Start a new list';
-  document.getElementById('new-list-lede').textContent=`A list of ${LIST_CTA_NOUN[tab]||'things'} you loved and would recommend. Give it a name, then add your picks.`;
+  document.getElementById('new-list-lede').textContent=`A list of ${LIST_CTA_NOUN[tab]||'things'} you love. Give it a name, then add your picks.`;
+  document.querySelector('label[for="new-list-name"]').textContent='List name';
+  document.getElementById('new-list-name').placeholder='e.g. All-time favorites';
   document.getElementById('new-list-name').value='';
   document.getElementById('new-list-kind-wrap').hidden=!['music','albums'].includes(tab);
   document.getElementById('new-list-kind').value=tab==='albums'?'albums':'music';
   renderNewListIdeas();
   document.getElementById('new-list-dialog').showModal();
 }
+let newListMode = 'list';
+function setNewListMode(mode){
+  newListMode = mode;
+  const author = mode === 'author';
+  document.getElementById('new-list-title').textContent = author ? 'Add a favorite author' : 'Start a new list';
+  document.getElementById('new-list-lede').textContent = author
+    ? 'Add an author you love — next, pick your favorite books of theirs.'
+    : `A list of ${LIST_CTA_NOUN[newListCategory]||'things'} you love. Give it a name, then add your picks.`;
+  document.querySelector('label[for="new-list-name"]').textContent = author ? 'Author’s name' : 'List name';
+  const input = document.getElementById('new-list-name');
+  input.placeholder = author ? 'e.g. Sally Rooney' : 'e.g. All-time favorites';
+  input.value = ''; input.focus();
+  renderNewListIdeas();
+}
 function renderNewListIdeas(){
   const category=['music','albums'].includes(newListCategory)?document.getElementById('new-list-kind').value:newListCategory;
-  document.getElementById('new-list-ideas').innerHTML=(STARTER_LIST_SUGGESTIONS[category]||[]).map(name=>`<button type="button" data-name="${esc(name)}" onclick="document.getElementById('new-list-name').value=this.dataset.name;document.getElementById('new-list-name').focus()">${esc(name)}</button>`).join('');
+  const ideas=(STARTER_LIST_SUGGESTIONS[category]||[]).map(name=>`<button type="button" data-name="${esc(name)}" onclick="if(newListMode!=='list')setNewListMode('list');document.getElementById('new-list-name').value=this.dataset.name;document.getElementById('new-list-name').focus()">${esc(name)}</button>`).join('');
+  const authorIdea = category==='books' ? `<button type="button" aria-pressed="${newListMode==='author'}" class="${newListMode==='author'?'is-on':''}" onclick="setNewListMode(newListMode==='author'?'list':'author')">Favorite authors</button>` : '';
+  document.getElementById('new-list-ideas').innerHTML=ideas+authorIdea;
 }
 async function submitNewList(event){
  event.preventDefault();if(!isOwnProfile)return;
  const name=document.getElementById('new-list-name').value.trim();if(!name)return;
+ if(newListMode==='author'){document.getElementById('new-list-dialog').close();newListMode='list';await addFavoriteAuthor(name);return;}
  const category=['music','albums'].includes(newListCategory)?document.getElementById('new-list-kind').value:newListCategory;
  document.getElementById('new-list-dialog').close();
  if(['comedy','podcasts'].includes(category)){await createExtraList(category,name);return;}
@@ -6846,7 +6879,7 @@ function ensureBooksImportRow() {
   if (!row) {
     row = document.createElement('div');
     row.id = 'books-import-row'; row.className = 'list-create-row';
-    row.innerHTML = `<button type="button" class="ed-link" onclick="openTasteImport('goodreads','profile')">Import from Goodreads</button>`;
+    row.innerHTML = `<button type="button" class="list-import-link" onclick="openTasteImport('goodreads','profile')">Import from Goodreads</button>`;
     container.parentNode.insertBefore(row, container);
   }
   row.style.display = isOwnProfile ? '' : 'none';
