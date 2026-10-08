@@ -1301,7 +1301,10 @@
 
 
 .ob-starter-heading{font-weight:600;margin:24px 0 6px}.ob-starter-caption{color:var(--muted);font-size:13px;margin:0 0 18px}#ob-starters .ob-result:disabled{opacity:.65}#ob-starters .ob-results-grid{margin-bottom:20px}
-#list-order-dialog{width:min(600px,calc(100% - 32px));max-height:90dvh;padding:24px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px}#list-order-dialog::backdrop{background:#0009}#list-order-choice{width:100%;padding:10px;margin:8px 0;background:var(--surface2);color:inherit}#list-order-rows{max-height:55dvh;overflow:auto;overscroll-behavior:contain}.order-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}.order-row>span{flex:1;min-width:0;overflow-wrap:anywhere}.order-row button{min-width:40px;min-height:40px;background:var(--surface2);color:inherit;border:1px solid var(--border);border-radius:8px}.order-grip{touch-action:none;cursor:grab}#list-order-error{color:#f99}
+
+[data-inline-order] .tile-label,[data-inline-order] .other-fav-card-name,[data-inline-order]>strong,[data-inline-order]>span{touch-action:none;cursor:grab;user-select:none}[data-inline-order]{cursor:grab}.inline-order-dragging{opacity:.55;outline:2px solid var(--accent);outline-offset:3px} 
+.sl-tile[onpointerdown] .sl-name{touch-action:none;cursor:grab;user-select:none}
+.shared-list-card{position:relative}.shared-list-card .activity-card-body{padding-right:64px!important}.shared-list-trash{position:absolute;top:12px;right:12px;z-index:2;display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--muted);cursor:pointer}.shared-list-trash:hover{color:#f97360;background:rgba(249,115,96,.1)}.shared-list-trash:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -2220,7 +2223,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
   </div>
 </div>
 
-<div class="tab-panel" id="tab-favorites"><div id="all-list-order-control"></div>
+<div class="tab-panel" id="tab-favorites">
   <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 0;display:flex;gap:8px;flex-wrap:wrap;">
     <button class="fav-chip" id="fav-chip-music" onclick="switchFavoritesFilter('music')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Music</button>
     <button class="fav-chip" id="fav-chip-movies" onclick="switchFavoritesFilter('movies')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Movies</button>
@@ -3499,7 +3502,7 @@ function openCreatorPicks(kind,id) {
 function closeCreatorPicks(){if(creatorEditor?.busy)return;++creatorSearchRevision;creatorEditor=null;document.getElementById('creator-picks-dialog').close();}
 function renderCreatorDraft() {
  const state=creatorEditor;if(!state)return;
- document.getElementById('creator-picks-selected').innerHTML=state.picks.map((p,i)=>`<div style="display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><span style="flex:1">${i+1}. ${esc(p.title)}${p.album?` <small>${esc(p.album)}</small>`:''}</span><button aria-label="Move ${esc(p.title)} up" ${i===0?'disabled':''} onclick="moveCreatorPick(${i},-1)">↑</button><button aria-label="Move ${esc(p.title)} down" ${i===state.picks.length-1?'disabled':''} onclick="moveCreatorPick(${i},1)">↓</button><button aria-label="Remove ${esc(p.title)}" onclick="removeCreatorPick(${i})">×</button></div>`).join('')||'<p>No favorites selected yet.</p>';
+ document.getElementById('creator-picks-selected').innerHTML=state.picks.map((p,i)=>`<div ${inlineOrderAttrs('creator',i,true)} style="display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><span style="flex:1">${i+1}. ${esc(p.title)}${p.album?` <small>${esc(p.album)}</small>`:''}</span><button aria-label="Move ${esc(p.title)} up" ${i===0?'disabled':''} onclick="moveCreatorPick(${i},-1)">↑</button><button aria-label="Move ${esc(p.title)} down" ${i===state.picks.length-1?'disabled':''} onclick="moveCreatorPick(${i},1)">↓</button><button aria-label="Remove ${esc(p.title)}" onclick="removeCreatorPick(${i})">×</button></div>`).join('')||'<p>No favorites selected yet.</p>';
 }
 function moveCreatorPick(i,delta){const s=creatorEditor,j=i+delta;if(!s||s.busy||j<0||j>=s.picks.length)return;[s.picks[i],s.picks[j]]=[s.picks[j],s.picks[i]];renderCreatorDraft();}
 function removeCreatorPick(i){if(!creatorEditor||creatorEditor.busy)return;creatorEditor.picks.splice(i,1);renderCreatorDraft();renderCreatorResults(creatorEditor);}
@@ -3627,8 +3630,7 @@ async function loadAllTasteLists(profileId) {
   }
 }
 
-let listOrderEditor=null;
-function reorderButton(tab,cat){return isOwnProfile?`<button type="button" class="profile-control" onclick="${esc(`openListOrder('${jsStr(tab)}','${jsStr(cat)}')`)}">⠿ Reorder items</button>`:'';}
+
 function listOrderChoices(){
  const out=[];const add=(key,label,items,table,field,parent,refresh)=>{if(items?.length>1)out.push({key,label,items,table,field,parent,refresh});};
  if(isOwnProfile){
@@ -3645,41 +3647,63 @@ function listOrderChoices(){
  if(canEditTasteList&&currentTasteListId)for(const c of TRIP_PLAYLIST_CATEGORIES)add('shared|'+c.key,'Shared list · '+(c.label||c.key),TRIP_PLAYLIST_ITEMS[c.key],'taste_list_items',null,null,renderTripPlaylist);
  return out;
 }
-function openListOrder(tab,cat){
- const choices=listOrderChoices();if(!choices.length){showToast('Add at least two items to reorder a list.');return;}
- listOrderEditor={choices,userId:currentUser?.id,listId:currentTasteListId,busy:false};
- const select=document.getElementById('list-order-choice');select.innerHTML=choices.map((c,i)=>`<option value="${i}">${esc(c.label)}</option>`).join('');
- const found=choices.findIndex(c=>c.key===tab+'|'+cat);select.value=String(found>=0?found:0);
- chooseListOrder();document.getElementById('list-order-dialog').showModal();
+let inlineOrderBusy=false,inlineOrderSuppressUntil=0;
+const inlineListEditing=new Set();
+function toggleInlineListEdit(key){if(inlineListEditing.has(key))inlineListEditing.delete(key);else inlineListEditing.add(key);renderExtraLists();renderFavoriteAuthors();}
+function inlineOrderAttrs(key,index,enabled){return enabled?`data-inline-order="${esc(key)}" data-order-index="${index}"`:'';}
+function inlineOrderChoice(key){
+ if(key==='creator'&&creatorEditor&&!creatorEditor.busy)return {items:creatorEditor.picks,refresh:renderCreatorDraft,draft:true};
+ return listOrderChoices().find(c=>c.key===key);
 }
-function chooseListOrder(){const s=listOrderEditor;if(!s||s.busy)return;s.choice=s.choices[Number(document.getElementById('list-order-choice').value)];s.order=s.choice.items.map((_,i)=>i);document.getElementById('list-order-error').textContent='';renderListOrder();}
-function renderListOrder(){const s=listOrderEditor;if(!s)return;
- document.getElementById('list-order-rows').innerHTML=s.order.map((index,pos)=>{const p=s.choice.items[index];return `<div class="order-row" data-pos="${pos}"><button type="button" class="order-grip" aria-label="Drag ${esc(p.title||p.name)}" onpointerdown="startListOrderDrag(event)">⠿</button><span>${esc(p.title||p.name||'Untitled')}</span><button type="button" aria-label="Move up" onclick="moveListOrder(${pos},${pos-1})" ${pos===0||s.busy?'disabled':''}>↑</button><button type="button" aria-label="Move down" onclick="moveListOrder(${pos},${pos+1})" ${pos===s.order.length-1||s.busy?'disabled':''}>↓</button></div>`;}).join('');
-}
-function moveListOrder(from,to){const s=listOrderEditor;if(!s||s.busy||to<0||to>=s.order.length||from===to)return;const [item]=s.order.splice(from,1);s.order.splice(to,0,item);renderListOrder();}
-function startListOrderDrag(e){
- const s=listOrderEditor;if(!s||s.busy||e.button>0)return;e.preventDefault();const before=[...s.order];let pos=Number(e.currentTarget.parentElement.dataset.pos);const pointer=e.pointerId;
- function move(ev){if(ev.pointerId!==pointer)return;ev.preventDefault();const row=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('#list-order-rows .order-row');if(row){const next=Number(row.dataset.pos);moveListOrder(pos,next);pos=next;}const box=document.getElementById('list-order-rows'),r=box.getBoundingClientRect();if(ev.clientY<r.top+40)box.scrollTop-=16;else if(ev.clientY>r.bottom-40)box.scrollTop+=16;}
- function end(ev){if(ev.pointerId!==pointer)return;window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',end);window.removeEventListener('pointercancel',end);if(ev.type==='pointercancel'&&listOrderEditor===s){s.order=before;renderListOrder();}}
- window.addEventListener('pointermove',move,{passive:false});window.addEventListener('pointerup',end);window.addEventListener('pointercancel',end);
-}
-function closeListOrder(){if(listOrderEditor?.busy)return;document.getElementById('list-order-dialog').close();listOrderEditor=null;}
-async function saveListOrder(){
- const s=listOrderEditor;if(!s||s.busy||s.userId!==currentUser?.id)return;
- s.busy=true;document.getElementById('list-order-save').disabled=true;document.getElementById('list-order-choice').disabled=true;
+async function commitInlineOrder(choice,order,userId,listId){
+ if(inlineOrderBusy||currentUser?.id!==userId)return;inlineOrderBusy=true;
+ const original=[...choice.items],sorted=order.map(i=>original[i]);
  try{
+  if(choice.draft){choice.items.splice(0,choice.items.length,...sorted);choice.refresh();return;}
   if(!(await requireFreshSession()))throw Error(SESSION_EXPIRED_MESSAGE);
-  const c=s.choice,ordered=s.order.map(i=>c.items[i]);let error;
-  if(c.field){const id=c.parent.rowId||c.parent.id;({error}=await sb.from(c.table).update({[c.field]:ordered}).eq('id',id).eq('user_id',s.userId).select('id').single());}
-  else {const ids=ordered.map(p=>p.rowId||p.id);if(ids.some(id=>!id))throw Error('Reload this list before reordering.');({error}=await sb.rpc('reorder_tastelist_items',{target_table:c.table,item_ids:ids,shared_list_id:c.table==='taste_list_items'?s.listId:null}));}
-  if(error)throw error;
-  if(currentUser?.id!==s.userId)throw Error('Account changed. Reload to see the saved order.');
-  c.items.splice(0,c.items.length,...ordered);
-  if(c.key.startsWith('shared|'))tripPlaylistViewMode[c.key.slice(7)]='grid';
-  c.refresh();renderProfileTab();s.busy=false;closeListOrder();showToast('Order saved');
- }catch(e){document.getElementById('list-order-error').textContent=e.message||'Could not save the order. Your changes are still here.';}
- finally{s.busy=false;document.getElementById('list-order-save').disabled=false;document.getElementById('list-order-choice').disabled=false;}
+  let result;
+  if(choice.field)result=await sb.from(choice.table).update({[choice.field]:sorted}).eq('id',choice.parent.rowId||choice.parent.id).eq('user_id',userId).select('id').single();
+  else result=await sb.rpc('reorder_tastelist_items',{target_table:choice.table,item_ids:sorted.map(p=>p.rowId||p.id),shared_list_id:choice.table==='taste_list_items'?listId:null});
+  if(result.error)throw result.error;
+  if(currentUser?.id!==userId)return;
+  choice.items.splice(0,choice.items.length,...sorted);choice.refresh();renderProfileTab();showToast('Order saved');
+ }catch(e){choice.refresh();showToast(e.message||'Could not save order. The previous order was restored.');}
+ finally{inlineOrderBusy=false;}
 }
+document.addEventListener('click',e=>{if(Date.now()<inlineOrderSuppressUntil&&e.target.closest('[data-inline-order]')){e.preventDefault();e.stopPropagation();}},true);
+document.addEventListener('dragstart',e=>{if(e.target.closest('[data-inline-order]'))e.preventDefault();});
+document.addEventListener('pointerdown',e=>{
+ const tile=e.target.closest('[data-inline-order]');
+ if(!tile||inlineOrderBusy||e.button>0||e.target.closest('button,a,input,select,textarea'))return;
+ const key=tile.dataset.inlineOrder,choice=inlineOrderChoice(key);if(!choice)return;
+ const parent=tile.parentElement,userId=currentUser?.id,listId=currentTasteListId,pointer=e.pointerId;
+ const x=e.clientX,y=e.clientY;let active=false;
+ function move(ev){
+  if(ev.pointerId!==pointer)return;
+  if(!tile.isConnected){end({...ev,type:'pointercancel'});return;}
+  if(!active&&Math.hypot(ev.clientX-x,ev.clientY-y)<7)return;
+  active=true;ev.preventDefault();tile.classList.add('inline-order-dragging');
+  const over=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-inline-order]');
+  if(over&&over!==tile&&over.parentElement===parent&&over.dataset.inlineOrder===key){
+   const r=over.getBoundingClientRect(),t=tile.getBoundingClientRect(),horizontal=Math.abs(r.top-t.top)<r.height/2;
+   parent.insertBefore(tile,(horizontal?ev.clientX>r.left+r.width/2:ev.clientY>r.top+r.height/2)?over.nextSibling:over);
+  }
+  if(ev.clientY<65)window.scrollBy(0,-15);else if(ev.clientY>innerHeight-65)window.scrollBy(0,15);
+ }
+ function end(ev){
+  if(ev.pointerId!==pointer)return;
+  window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',end);window.removeEventListener('pointercancel',end);
+  tile.classList.remove('inline-order-dragging');if(!active)return;
+  inlineOrderSuppressUntil=Date.now()+500;
+  if(ev.type==='pointercancel'||currentUser?.id!==userId){choice.refresh();return;}
+  const order=[...parent.children].filter(c=>c.dataset.inlineOrder===key).map(c=>Number(c.dataset.orderIndex));
+  if(order.length!==choice.items.length||new Set(order).size!==order.length){choice.refresh();return;}
+  if(order.every((p,i)=>p===i))return;
+  commitInlineOrder(choice,order,userId,listId);
+ }
+ window.addEventListener('pointermove',move,{passive:false});window.addEventListener('pointerup',end);window.addEventListener('pointercancel',end);
+});
+
 let deletingSharedList=false;
 async function deleteSharedTasteList(id){
  const list=allTasteLists.find(l=>l.id===id);if(!list?.isOwner||list.user_id!==currentUser?.id||deletingSharedList)return;
@@ -3710,12 +3734,13 @@ function renderTasteListsPicker() {
       : `<div class="activity-card-art-img activity-card-art-empty" style="background:#7C4DFF18;display:flex;align-items:center;justify-content:center;">${mediaIcon('list', 42)}</div>`;
     const canEditThisList = list.isOwner || list.collaborators.some(c => c.user_id === currentUser?.id);
     const renameBtn = canEditThisList ? `<button onclick="event.stopPropagation(); renameTasteList('${jsStr(list.id)}')" title="Rename list" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:2px 4px;flex-shrink:0;">✎</button>` : '';
-    return `<div class="activity-card" onclick="${esc(`openTasteList('${jsStr(list.id)}')`)}" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);margin-bottom:12px;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+    return `<div class="activity-card shared-list-card" onclick="${esc(`openTasteList('${jsStr(list.id)}')`)}" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);margin-bottom:12px;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      ${list.isOwner ? `<button type="button" class="shared-list-trash" aria-label="Delete ${esc(list.title || 'shared list')}" title="Delete list" onclick="event.stopPropagation();deleteSharedTasteList('${jsStr(list.id)}')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button>` : ''}
       <div class="activity-card-art">${art}</div>
       <div class="activity-card-body">
         <div style="display:flex;align-items:center;gap:6px;">
           <div style="font-size:15px;font-weight:700;color:var(--text);">${esc(list.title || 'Untitled list')}</div>
-          ${renameBtn}${list.isOwner ? `<button type="button" class="profile-control" onclick="event.stopPropagation();deleteSharedTasteList('${jsStr(list.id)}')">Delete list</button>` : ''}
+          ${renameBtn}
         </div>
         ${list.subtitle ? `<div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(list.subtitle)}</div>` : ''}
         <div style="font-size:11.5px;color:var(--faint);margin-top:8px;">${list.itemCount} item${list.itemCount === 1 ? '' : 's'}${list.isOwner ? '' : ' · shared with you'}</div>
@@ -5530,7 +5555,7 @@ function renderExtraLists(){
   const el=document.getElementById('extra-'+category);if(!el)continue;
   const lists=extraLists.filter(l=>l.category===category);
   el.innerHTML=`<div class="extra-heading"><h2>${category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button type="button" class="ed-primary" onclick="promptNewCustomList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
-   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div><button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">Rename</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">Delete list</button></div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile?`${list.category==='podcasts'?`<button class="ob-text-link" data-id="${esc(list.id)}" onclick="choosePodcastShow(this.dataset.id,${i})">${item.art?'Change show / artwork':'Choose show / add artwork'}</button>`:''}<button class="ob-text-link" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">Remove</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="promptNewCustomList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button></section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
+   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div><button class="profile-control" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">Rename</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">Delete list</button></div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile?`${list.category==='podcasts'?`<button class="ob-text-link" data-id="${esc(list.id)}" onclick="choosePodcastShow(this.dataset.id,${i})">${item.art?'Change show / artwork':'Choose show / add artwork'}</button>`:''}<button class="ob-text-link" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">Remove</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="promptNewCustomList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button></section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
  }
 }
 async function createExtraList(category, suppliedTitle){
@@ -5798,7 +5823,7 @@ function customListSectionHtml(tab, cat) {
       <div class="music-section-header">
         <h2 class="music-section-title">${esc(customListLabel(tab, cat))}</h2>
       </div>
-      ${listEngagementHtml(tab, cat)}${reorderButton(tab,cat)}
+      ${listEngagementHtml(tab, cat)}
       <div class="section-controls-row">
         ${editing ? `<button onclick="${esc(`openCustomAddModal('${jsStr(tab)}','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ ${addLabel}</button>` : ''}
         <button onclick="${esc(`toggleCustomListEditMode('${jsStr(tab)}','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;background:${editing ? 'var(--accent)' : 'var(--surface2)'};color:${editing ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
@@ -5836,7 +5861,7 @@ function customListGridInnerHtml(tab, cat, items) {
       ? (item.cover ? `<img class="tile-img" src="${esc(item.cover)}" alt="${esc(item.title)}" style="object-fit:contain;object-position:center;background:var(--card);" onerror="this.style.display='none'">` : `<div class="tile-placeholder" style="aspect-ratio:2/3;height:auto;font-size:11px;color:var(--faint);">No cover</div>`)
       : (item.poster ? `<img class="tile-img" src="${TMDB_IMG}${item.poster}" alt="${esc(item.title)}" style="object-position:center top;">` : `<div class="tile-placeholder" style="aspect-ratio:2/3;height:auto;font-size:11px;color:var(--faint);">No poster</div>`);
     const sub = tab === 'books' ? esc(item.author || '') : esc(item.year || '');
-    return `<div class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="${customListSlug(cat)}-tile-${i}" style="cursor:pointer;position:relative;" onclick="${esc(`toggleCustomListExpand('${jsStr(tab)}','${jsStr(cat)}', ${i})`)}">
+    return `<div ${inlineOrderAttrs(tab+'|'+cat,i,editing)} class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="${customListSlug(cat)}-tile-${i}" style="cursor:pointer;position:relative;" onclick="${esc(`toggleCustomListExpand('${jsStr(tab)}','${jsStr(cat)}', ${i})`)}">
       ${removeBtn}
       <div class="tile-img-wrap" style="aspect-ratio:2/3;position:relative;">
         ${art}
@@ -6063,7 +6088,7 @@ function musicListSectionHtml(cat) {
       <div class="music-section-header">
         <h2 class="music-section-title">${esc(cat)}</h2>
       </div>
-      ${listEngagementHtml('music', cat)}${reorderButton('music',cat)}
+      ${listEngagementHtml('music', cat)}
       <div class="section-controls-row">
         ${editing ? `<button onclick="${esc(`openArtistItemForm(undefined, '${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add artist</button>` : ''}
         ${editing ? `<button onclick="${esc(`openVideoItemForm('${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add YouTube link</button>` : ''}
@@ -6095,7 +6120,7 @@ function musicGridInnerHtml(cat, items) {
         <button onclick="${esc(`event.stopPropagation(); openArtistItemForm('${jsStr(a.id)}', '${jsStr(cat)}')`)}" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">E</button>
         <button onclick="${esc(`event.stopPropagation(); removeCustomListItem('music','${jsStr(cat)}', ${i})`)}" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">X</button>
       </div>` : '';
-    return `<div class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="music-${customListSlug(cat)}-tile-${i}" style="cursor:pointer;position:relative;" onclick="${esc(`toggleCustomListExpand('music','${jsStr(cat)}', ${i})`)}">
+    return `<div ${inlineOrderAttrs('music|'+cat,i,editing)} class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="music-${customListSlug(cat)}-tile-${i}" style="cursor:pointer;position:relative;" onclick="${esc(`toggleCustomListExpand('music','${jsStr(cat)}', ${i})`)}">
       ${editControls}
       <div class="tile-img-wrap">
         ${a.videoId
@@ -6168,7 +6193,7 @@ function albumListSectionHtml(cat) {
       <div class="music-section-header">
         <h2 class="music-section-title">${esc(cat)}</h2>
       </div>
-      ${listEngagementHtml('albums', cat)}${reorderButton('albums',cat)}
+      ${listEngagementHtml('albums', cat)}
       <div class="section-controls-row">
         ${editing ? `<button onclick="${esc(`openAlbumItemForm(undefined, '${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add album</button>` : ''}
         <button onclick="${esc(`toggleCustomListEditMode('albums','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;background:${editing ? 'var(--accent)' : 'var(--surface2)'};color:${editing ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
@@ -6199,7 +6224,7 @@ function albumGridInnerHtml(cat, items) {
         <button onclick="${esc(`event.stopPropagation(); openAlbumItemForm('${jsStr(a.id)}', '${jsStr(cat)}')`)}" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">E</button>
         <button onclick="${esc(`event.stopPropagation(); removeCustomListItem('albums','${jsStr(cat)}', ${i})`)}" style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">X</button>
       </div>` : '';
-    return `<div class="artist-tile album-cover-tile ${expandedIdx === i ? 'tile-active' : ''}" id="album-${customListSlug(cat)}-tile-${i}" style="cursor:pointer;position:relative;" onclick="${esc(`toggleCustomListExpand('albums','${jsStr(cat)}', ${i})`)}">
+    return `<div ${inlineOrderAttrs('albums|'+cat,i,editing)} class="artist-tile album-cover-tile ${expandedIdx === i ? 'tile-active' : ''}" id="album-${customListSlug(cat)}-tile-${i}" style="cursor:pointer;position:relative;" onclick="${esc(`toggleCustomListExpand('albums','${jsStr(cat)}', ${i})`)}">
       ${editControls}
       <div class="tile-img-wrap">
         ${a.tilePhoto
@@ -10380,7 +10405,7 @@ function renderMovieGrid() {
     return;
   }
   grid.innerHTML = movies.map((m, i) =>
-    `<div class="artist-tile" id="movie-tile-${m.id}" onclick="toggleMovieExpand(${m.id})">
+    `<div ${inlineOrderAttrs('movies|main',i,isOwnProfile&&movieEditMode)} class="artist-tile" id="movie-tile-${m.id}" onclick="toggleMovieExpand(${m.id})">
       <div class="tile-img-wrap">
         ${m.poster
           ? `<img class="tile-img" src="${TMDB_IMG}${m.poster}" alt="${esc(m.title)}" style="object-fit:contain;object-position:center;background:var(--card);" onerror="this.style.display='none'">`
@@ -10446,6 +10471,7 @@ function toggleMovieExpand(movieId) {
 let movieEditMode = false;
 function toggleMovieEditMode() {
   movieEditMode = !movieEditMode;
+  renderMovieGrid();
   renderMovieGrid();
   renderMovieControls();
 }
@@ -10752,8 +10778,8 @@ function renderDirectorsList() {
     grid.innerHTML = emptyGridHtml('directors', 'toggleDirectorEditMode()');
     return;
   }
-  grid.innerHTML = directors.map(d =>
-    `<div class="other-fav-card ${expandedDirectorId === d.id ? 'tile-active' : ''}" id="director-tile-${d.id}" onclick="toggleDirector(${d.id})" style="cursor:pointer;">
+  grid.innerHTML = directors.map((d,i) =>
+    `<div ${inlineOrderAttrs('directors|main',i,isOwnProfile&&directorEditMode)} class="other-fav-card ${expandedDirectorId === d.id ? 'tile-active' : ''}" id="director-tile-${d.id}" onclick="toggleDirector(${d.id})" style="cursor:pointer;">
       <div class="other-fav-card-img-wrap">
         ${d.photo
           ? `<img class="other-fav-card-img" src="${TMDB_IMG}${d.photo}" alt="${esc(d.name)}" style="object-fit:contain;object-position:center;background:var(--card);">`
@@ -10832,6 +10858,7 @@ function toggleDirector(id) {
 let directorEditMode = false;
 function toggleDirectorEditMode() {
   directorEditMode = !directorEditMode;
+  renderDirectorsList();
   renderDirectorsList();
   renderDirectorControls();
 }
@@ -11993,7 +12020,7 @@ function renderTasteListHeader(flat) {
   if (actions) actions.innerHTML = canEditTasteList ? (editMode
     ? `<button class="sl-btn" onclick="openTasteItemForm()">+ Add item</button><button class="sl-btn primary" onclick="toggleEditMode()">✓ Done</button>`
     : `<button class="sl-btn primary" onclick="openTasteItemForm()">+ Add item</button><button class="sl-btn" onclick="toggleEditMode()">✎ Edit</button>`) : '';
-  if(actions && canEditTasteList)actions.innerHTML += `<button class="sl-btn" onclick="openListOrder('shared','${TRIP_PLAYLIST_CATEGORIES.find(c=>(TRIP_PLAYLIST_ITEMS[c.key]||[]).length>1)?.key||''}')">⠿ Reorder items</button>${list?.isOwner?`<button class="sl-btn" onclick="deleteSharedTasteList('${jsStr(list.id)}')">Delete list</button>`:''}`;
+  if(actions && list?.isOwner)actions.innerHTML += `<button class="sl-btn" onclick="deleteSharedTasteList('${jsStr(list.id)}')">Delete list</button>`;
   const bg = document.getElementById('sl-hero-bg');
   if (bg) {
     const pick = flat.find(i => i.backdrop) || flat.find(i => ['movies', 'tv'].includes(i.cat) && i.art) || flat.find(i => i.art);
@@ -12125,7 +12152,7 @@ function renderTripPlaylist() {
 let slDrag = null, slSuppressClick = false;
 function slDragStart(e) {
   const tile = e.currentTarget;
-  const onHandle = !!e.target.closest('.sl-drag-handle');
+  const onHandle = !!e.target.closest('.sl-drag-handle, .sl-name');
   if (e.pointerType === 'mouse' ? e.button !== 0 : !onHandle) return;
   if (!onHandle && e.target.closest('button, a, input')) return;
   const row = tile.parentElement;
@@ -14074,7 +14101,6 @@ async function copyTasteShareLink(){
 function downloadTasteShareImage(){if(!tasteShareAsset)return;const url=URL.createObjectURL(tasteShareAsset.file),a=document.createElement('a');a.href=url;a.download='my-tastelist.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 
 function renderProfileTab() {
-  const orderControl=document.getElementById('all-list-order-control');if(orderControl)orderControl.innerHTML=isOwnProfile?'<button type="button" class="profile-control" onclick="openListOrder()">⠿ Reorder any list</button>':'';
   renderProfileOnboardingResume();
   scheduleTasteConstellation();
   // Stats bar
@@ -15456,6 +15482,6 @@ renderTasteInfluences();
   });
 })();
 </script>
-<dialog id="list-order-dialog" oncancel="event.preventDefault();closeListOrder()" aria-labelledby="list-order-title"><h2 id="list-order-title">Reorder items</h2><p>Drag the handle, or use the arrows. Save when you’re happy.</p><label>List <select id="list-order-choice" onchange="chooseListOrder()"></select></label><div id="list-order-rows"></div><p id="list-order-error" role="alert"></p><button type="button" class="profile-control" onclick="closeListOrder()">Cancel</button> <button type="button" id="list-order-save" class="ed-primary" onclick="saveListOrder()">Save order</button></dialog>
+
 </body>
 </html>
