@@ -1301,6 +1301,7 @@
 
 
 .ob-starter-heading{font-weight:600;margin:24px 0 6px}.ob-starter-caption{color:var(--muted);font-size:13px;margin:0 0 18px}#ob-starters .ob-result:disabled{opacity:.65}#ob-starters .ob-results-grid{margin-bottom:20px}
+#list-order-dialog{width:min(600px,calc(100% - 32px));max-height:90dvh;padding:24px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px}#list-order-dialog::backdrop{background:#0009}#list-order-choice{width:100%;padding:10px;margin:8px 0;background:var(--surface2);color:inherit}#list-order-rows{max-height:55dvh;overflow:auto;overscroll-behavior:contain}.order-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}.order-row>span{flex:1;min-width:0;overflow-wrap:anywhere}.order-row button{min-width:40px;min-height:40px;background:var(--surface2);color:inherit;border:1px solid var(--border);border-radius:8px}.order-grip{touch-action:none;cursor:grab}#list-order-error{color:#f99}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -2219,7 +2220,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
   </div>
 </div>
 
-<div class="tab-panel" id="tab-favorites">
+<div class="tab-panel" id="tab-favorites"><div id="all-list-order-control"></div>
   <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 0;display:flex;gap:8px;flex-wrap:wrap;">
     <button class="fav-chip" id="fav-chip-music" onclick="switchFavoritesFilter('music')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Music</button>
     <button class="fav-chip" id="fav-chip-movies" onclick="switchFavoritesFilter('movies')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Movies</button>
@@ -3422,7 +3423,7 @@ function creatorAction(kind,id,hasItems) {
 }
 async function loadFavoriteAuthors(profileId) {
  favoriteAuthors=[];renderFavoriteAuthors();
- const {data,error}=await sb.from('favorite_authors').select('*').eq('user_id',profileId).order('created_at');
+ const {data,error}=await sb.from('favorite_authors').select('*').eq('user_id',profileId).order('sort_order').order('created_at');
  if(viewedProfile?.id!==profileId)return;
  if(error){document.getElementById('favorite-authors').innerHTML=isOwnProfile?'<p>Favorite authors could not load. Please try again after the database setup.</p>':'';return;}
  favoriteAuthors=data||[];renderFavoriteAuthors();fillAuthorPhotos();
@@ -3626,6 +3627,70 @@ async function loadAllTasteLists(profileId) {
   }
 }
 
+let listOrderEditor=null;
+function reorderButton(tab,cat){return isOwnProfile?`<button type="button" class="profile-control" onclick="${esc(`openListOrder('${jsStr(tab)}','${jsStr(cat)}')`)}">⠿ Reorder items</button>`:'';}
+function listOrderChoices(){
+ const out=[];const add=(key,label,items,table,field,parent,refresh)=>{if(items?.length>1)out.push({key,label,items,table,field,parent,refresh});};
+ if(isOwnProfile){
+  for(const [tab,lists] of Object.entries(CUSTOM_LISTS))for(const [cat,items] of Object.entries(lists))add(tab+'|'+cat,customListLabel(tab,cat)+' · '+tab,items,{music:'favorite_artists',albums:'favorite_albums',books:'favorite_books',movies:'favorite_media_lists',tv:'favorite_media_lists'}[tab],null,null,()=>{if(CUSTOM_LIST_EXPANDED[tab])CUSTOM_LIST_EXPANDED[tab][cat]=null;renderCustomLists(tab);});
+  add('movies|main','Favorite Movies',movies,'favorite_media_lists',null,null,renderMovieGrid);
+  add('directors|main','Favorite Directors',directors,'favorite_directors',null,null,renderDirectorsList);
+  add('authors|main','Favorite Authors',favoriteAuthors,'favorite_authors',null,null,renderFavoriteAuthors);
+  add('next|main','What’s Next',FRIEND_RECOMMENDATIONS,'friend_recs',null,null,renderFriendRecs);
+  for(const list of extraLists)add('extra|'+list.id,list.title,list.items,'taste_extra_lists','items',list,renderExtraLists);
+  for(const a of artists)add('songs|'+a.id,a.name+' · favorite songs',a.songs,'favorite_artists','songs',a,()=>renderCustomLists('music'));
+  for(const d of directors)add('films|'+d.id,d.name+' · favorite movies',d.movies,'favorite_directors','movies',d,renderDirectorsList);
+  for(const a of favoriteAuthors)add('books|'+a.id,a.name+' · favorite books',a.books,'favorite_authors','books',a,renderFavoriteAuthors);
+ }
+ if(canEditTasteList&&currentTasteListId)for(const c of TRIP_PLAYLIST_CATEGORIES)add('shared|'+c.key,'Shared list · '+(c.label||c.key),TRIP_PLAYLIST_ITEMS[c.key],'taste_list_items',null,null,renderTripPlaylist);
+ return out;
+}
+function openListOrder(tab,cat){
+ const choices=listOrderChoices();if(!choices.length){showToast('Add at least two items to reorder a list.');return;}
+ listOrderEditor={choices,userId:currentUser?.id,listId:currentTasteListId,busy:false};
+ const select=document.getElementById('list-order-choice');select.innerHTML=choices.map((c,i)=>`<option value="${i}">${esc(c.label)}</option>`).join('');
+ const found=choices.findIndex(c=>c.key===tab+'|'+cat);select.value=String(found>=0?found:0);
+ chooseListOrder();document.getElementById('list-order-dialog').showModal();
+}
+function chooseListOrder(){const s=listOrderEditor;if(!s||s.busy)return;s.choice=s.choices[Number(document.getElementById('list-order-choice').value)];s.order=s.choice.items.map((_,i)=>i);document.getElementById('list-order-error').textContent='';renderListOrder();}
+function renderListOrder(){const s=listOrderEditor;if(!s)return;
+ document.getElementById('list-order-rows').innerHTML=s.order.map((index,pos)=>{const p=s.choice.items[index];return `<div class="order-row" data-pos="${pos}"><button type="button" class="order-grip" aria-label="Drag ${esc(p.title||p.name)}" onpointerdown="startListOrderDrag(event)">⠿</button><span>${esc(p.title||p.name||'Untitled')}</span><button type="button" aria-label="Move up" onclick="moveListOrder(${pos},${pos-1})" ${pos===0||s.busy?'disabled':''}>↑</button><button type="button" aria-label="Move down" onclick="moveListOrder(${pos},${pos+1})" ${pos===s.order.length-1||s.busy?'disabled':''}>↓</button></div>`;}).join('');
+}
+function moveListOrder(from,to){const s=listOrderEditor;if(!s||s.busy||to<0||to>=s.order.length||from===to)return;const [item]=s.order.splice(from,1);s.order.splice(to,0,item);renderListOrder();}
+function startListOrderDrag(e){
+ const s=listOrderEditor;if(!s||s.busy||e.button>0)return;e.preventDefault();const before=[...s.order];let pos=Number(e.currentTarget.parentElement.dataset.pos);const pointer=e.pointerId;
+ function move(ev){if(ev.pointerId!==pointer)return;ev.preventDefault();const row=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('#list-order-rows .order-row');if(row){const next=Number(row.dataset.pos);moveListOrder(pos,next);pos=next;}const box=document.getElementById('list-order-rows'),r=box.getBoundingClientRect();if(ev.clientY<r.top+40)box.scrollTop-=16;else if(ev.clientY>r.bottom-40)box.scrollTop+=16;}
+ function end(ev){if(ev.pointerId!==pointer)return;window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',end);window.removeEventListener('pointercancel',end);if(ev.type==='pointercancel'&&listOrderEditor===s){s.order=before;renderListOrder();}}
+ window.addEventListener('pointermove',move,{passive:false});window.addEventListener('pointerup',end);window.addEventListener('pointercancel',end);
+}
+function closeListOrder(){if(listOrderEditor?.busy)return;document.getElementById('list-order-dialog').close();listOrderEditor=null;}
+async function saveListOrder(){
+ const s=listOrderEditor;if(!s||s.busy||s.userId!==currentUser?.id)return;
+ s.busy=true;document.getElementById('list-order-save').disabled=true;document.getElementById('list-order-choice').disabled=true;
+ try{
+  if(!(await requireFreshSession()))throw Error(SESSION_EXPIRED_MESSAGE);
+  const c=s.choice,ordered=s.order.map(i=>c.items[i]);let error;
+  if(c.field){const id=c.parent.rowId||c.parent.id;({error}=await sb.from(c.table).update({[c.field]:ordered}).eq('id',id).eq('user_id',s.userId).select('id').single());}
+  else {const ids=ordered.map(p=>p.rowId||p.id);if(ids.some(id=>!id))throw Error('Reload this list before reordering.');({error}=await sb.rpc('reorder_tastelist_items',{target_table:c.table,item_ids:ids,shared_list_id:c.table==='taste_list_items'?s.listId:null}));}
+  if(error)throw error;
+  if(currentUser?.id!==s.userId)throw Error('Account changed. Reload to see the saved order.');
+  c.items.splice(0,c.items.length,...ordered);
+  if(c.key.startsWith('shared|'))tripPlaylistViewMode[c.key.slice(7)]='grid';
+  c.refresh();renderProfileTab();s.busy=false;closeListOrder();showToast('Order saved');
+ }catch(e){document.getElementById('list-order-error').textContent=e.message||'Could not save the order. Your changes are still here.';}
+ finally{s.busy=false;document.getElementById('list-order-save').disabled=false;document.getElementById('list-order-choice').disabled=false;}
+}
+let deletingSharedList=false;
+async function deleteSharedTasteList(id){
+ const list=allTasteLists.find(l=>l.id===id);if(!list?.isOwner||list.user_id!==currentUser?.id||deletingSharedList)return;
+ if(!confirm(`Delete “${list.title}”? This permanently removes the shared list, its items, and its discussion for everyone. Your profile favorites remain. This cannot be undone.`))return;
+ deletingSharedList=true;
+ try{if(!(await requireFreshSession()))throw Error(SESSION_EXPIRED_MESSAGE);const {error}=await sb.rpc('delete_owned_taste_list',{list_id:id});if(error)throw error;
+  if(currentTasteListId===id){currentTasteListId=null;canEditTasteList=false;backToTasteListsPicker();}
+  allTasteLists=allTasteLists.filter(l=>l.id!==id);renderTasteListsPicker();showToast('Shared list deleted');
+ }catch(e){showToast(e.message||'Could not delete this list.');}finally{deletingSharedList=false;}
+}
+
 function renderTasteListsPicker() {
   scheduleTasteConstellation();
   const el = document.getElementById('taste-lists-picker');
@@ -3650,7 +3715,7 @@ function renderTasteListsPicker() {
       <div class="activity-card-body">
         <div style="display:flex;align-items:center;gap:6px;">
           <div style="font-size:15px;font-weight:700;color:var(--text);">${esc(list.title || 'Untitled list')}</div>
-          ${renameBtn}
+          ${renameBtn}${list.isOwner ? `<button type="button" class="profile-control" onclick="event.stopPropagation();deleteSharedTasteList('${jsStr(list.id)}')">Delete list</button>` : ''}
         </div>
         ${list.subtitle ? `<div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(list.subtitle)}</div>` : ''}
         <div style="font-size:11.5px;color:var(--faint);margin-top:8px;">${list.itemCount} item${list.itemCount === 1 ? '' : 's'}${list.isOwner ? '' : ' · shared with you'}</div>
@@ -4434,7 +4499,7 @@ async function loadFriendRecsFromSupabase(userId) {
     const { data, error } = await sb.from('friend_recs')
       .select('*, recommended_by:profiles!recommended_by_user_id(username, display_name)')
       .eq('user_id', userId)
-      .order('created_at', { ascending: true });
+      .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
     if (error || !data) return false;
 
     // Profiles for everyone linked in any item's recommenders list.
@@ -4463,7 +4528,7 @@ async function loadFriendRecsFromSupabase(userId) {
         from: first?.name || undefined,
         fromUsername: first?.username || null,
         fromDisplayName: first?.name || null,
-        art: row.art_url || '',
+        art: row.type==='book'&&bookArtKey(row.title)==='flowersforalgernon'?'https://www.hachette.co.uk/wp-content/uploads/2022/04/hbg-title-flowers-for-algernon-3-307.jpg?w=440':row.art_url || '',
         tmdbId: row.tmdb_id || undefined,
       });
     });
@@ -5733,7 +5798,7 @@ function customListSectionHtml(tab, cat) {
       <div class="music-section-header">
         <h2 class="music-section-title">${esc(customListLabel(tab, cat))}</h2>
       </div>
-      ${listEngagementHtml(tab, cat)}
+      ${listEngagementHtml(tab, cat)}${reorderButton(tab,cat)}
       <div class="section-controls-row">
         ${editing ? `<button onclick="${esc(`openCustomAddModal('${jsStr(tab)}','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ ${addLabel}</button>` : ''}
         <button onclick="${esc(`toggleCustomListEditMode('${jsStr(tab)}','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;background:${editing ? 'var(--accent)' : 'var(--surface2)'};color:${editing ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
@@ -5998,7 +6063,7 @@ function musicListSectionHtml(cat) {
       <div class="music-section-header">
         <h2 class="music-section-title">${esc(cat)}</h2>
       </div>
-      ${listEngagementHtml('music', cat)}
+      ${listEngagementHtml('music', cat)}${reorderButton('music',cat)}
       <div class="section-controls-row">
         ${editing ? `<button onclick="${esc(`openArtistItemForm(undefined, '${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add artist</button>` : ''}
         ${editing ? `<button onclick="${esc(`openVideoItemForm('${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add YouTube link</button>` : ''}
@@ -6103,7 +6168,7 @@ function albumListSectionHtml(cat) {
       <div class="music-section-header">
         <h2 class="music-section-title">${esc(cat)}</h2>
       </div>
-      ${listEngagementHtml('albums', cat)}
+      ${listEngagementHtml('albums', cat)}${reorderButton('albums',cat)}
       <div class="section-controls-row">
         ${editing ? `<button onclick="${esc(`openAlbumItemForm(undefined, '${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add album</button>` : ''}
         <button onclick="${esc(`toggleCustomListEditMode('albums','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;background:${editing ? 'var(--accent)' : 'var(--surface2)'};color:${editing ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
@@ -11928,6 +11993,7 @@ function renderTasteListHeader(flat) {
   if (actions) actions.innerHTML = canEditTasteList ? (editMode
     ? `<button class="sl-btn" onclick="openTasteItemForm()">+ Add item</button><button class="sl-btn primary" onclick="toggleEditMode()">✓ Done</button>`
     : `<button class="sl-btn primary" onclick="openTasteItemForm()">+ Add item</button><button class="sl-btn" onclick="toggleEditMode()">✎ Edit</button>`) : '';
+  if(actions && canEditTasteList)actions.innerHTML += `<button class="sl-btn" onclick="openListOrder('shared','${TRIP_PLAYLIST_CATEGORIES.find(c=>(TRIP_PLAYLIST_ITEMS[c.key]||[]).length>1)?.key||''}')">⠿ Reorder items</button>${list?.isOwner?`<button class="sl-btn" onclick="deleteSharedTasteList('${jsStr(list.id)}')">Delete list</button>`:''}`;
   const bg = document.getElementById('sl-hero-bg');
   if (bg) {
     const pick = flat.find(i => i.backdrop) || flat.find(i => ['movies', 'tv'].includes(i.cat) && i.art) || flat.find(i => i.art);
@@ -12063,7 +12129,7 @@ function slDragStart(e) {
   if (e.pointerType === 'mouse' ? e.button !== 0 : !onHandle) return;
   if (!onHandle && e.target.closest('button, a, input')) return;
   const row = tile.parentElement;
-  slDrag = { tile, row, cat: tile.dataset.cat, startX: e.clientX, startY: e.clientY, active: false, ghost: null, offX: 0, offY: 0, pointerId: e.pointerId };
+  slDrag = { listId:currentTasteListId, tile, row, cat: tile.dataset.cat, startX: e.clientX, startY: e.clientY, active: false, ghost: null, offX: 0, offY: 0, pointerId: e.pointerId };
   window.addEventListener('pointermove', slDragMove, { passive: false });
   window.addEventListener('pointerup', slDragEnd);
   window.addEventListener('pointercancel', slDragEnd);
@@ -12107,8 +12173,10 @@ function slDragEnd(e) {
   if (!d || !d.active) return;
   d.ghost?.remove();
   d.tile.classList.remove('sl-dragging');
+  if(d.listId!==currentTasteListId)return;
   slSuppressClick = true; setTimeout(() => { slSuppressClick = false; }, 0);
   const newOrder = [...d.row.querySelectorAll(':scope > .sl-tile')].map(t => Number(t.dataset.pos));
+  if(e.type==='pointercancel'){renderTripPlaylist();return;}
   slApplyOrder(d.cat, newOrder);
 }
 document.addEventListener('click', e => { if (slSuppressClick && e.target.closest('.sl-tile')) { e.stopPropagation(); e.preventDefault(); } }, true);
@@ -12133,22 +12201,16 @@ function slApplyOrder(cat, order) {
   persistTasteListOrder();
 }
 let slOrderSaveTimer = null;
+let slOrderSaveQueue=Promise.resolve();
 function persistTasteListOrder() {
-  clearTimeout(slOrderSaveTimer);
-  slOrderSaveTimer = setTimeout(async () => {
-    if (!sb) return;
-    const updates = [];
-    let n = 0;
-    TRIP_PLAYLIST_CATEGORIES.forEach(c => (TRIP_PLAYLIST_ITEMS[c.key] || []).forEach(item => { if (item.id) updates.push({ id: item.id, sort_order: n }); n++; }));
-    try {
-      const results = await Promise.all(updates.map(u => sb.from('taste_list_items').update({ sort_order: u.sort_order }).eq('id', u.id)));
-      const failed = results.find(r => r.error);
-      if (failed) throw failed.error;
-    } catch (err) {
-      console.error('Failed to save list order:', err);
-      showToast('Couldn’t save the new order. Please try again.');
-    }
-  }, 400);
+ clearTimeout(slOrderSaveTimer);
+ const listId=currentTasteListId,userId=currentUser?.id;
+ const ids=TRIP_PLAYLIST_CATEGORIES.flatMap(c=>(TRIP_PLAYLIST_ITEMS[c.key]||[]).map(p=>p.id)).filter(Boolean);
+ slOrderSaveTimer=setTimeout(()=>{slOrderSaveQueue=slOrderSaveQueue.then(async()=>{
+  if(!sb||currentUser?.id!==userId||!ids.length)return;
+  const {error}=await sb.rpc('reorder_tastelist_items',{target_table:'taste_list_items',item_ids:ids,shared_list_id:listId});
+  if(error){showToast('Could not save order. Reloading the saved version.');if(currentTasteListId===listId)await reloadCurrentTasteListItems();}
+ }).catch(()=>showToast('Could not save order. Please reload.'));},400);
 }
 
 // Tries Open Library's search API first (structured title/author fields — the same pattern
@@ -13686,6 +13748,16 @@ function recArtMissing(idx, img) {
   r.art = '';
   loadFriendRecArt();
 }
+async function recommendationBookCover(title, author) {
+ if(bookArtKey(title)==='flowersforalgernon'&&(!author||bookArtKey(author)==='danielkeyes'))return 'https://www.hachette.co.uk/wp-content/uploads/2022/04/hbg-title-flowers-for-algernon-3-307.jpg?w=440';
+ if(author)return fetchBookCoverArt(title,author);
+ // Only infer an author when exact-title search results agree; reject study guides.
+ try{const data=await sharedCatalogJSON(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&limit=10&fields=title,author_name`);
+ const hits=(data.docs||[]).filter(b=>bookArtKey(b.title)===bookArtKey(title));
+ const names=[...new Set(hits.map(b=>b.author_name?.[0]).filter(Boolean))];
+ if(names.length===1)return fetchBookCoverArt(title,names[0]);}catch(_){}
+ return '';
+}
 async function loadFriendRecArt() {
   for (const r of FRIEND_RECOMMENDATIONS) {
     if (r.art) continue;
@@ -13709,7 +13781,7 @@ async function loadFriendRecArt() {
           if (w?.art) { r.art = w.art; renderFriendRecs(); }
         }
       } else if (r.type === 'book') {
-        let art = await fetchBookCoverArt(r.title);
+        let art = await recommendationBookCover(r.title, r.author);
         if (!art) art = (await wikiSummary(r.title, 'book'))?.art || '';
         if (art) { r.art = art; renderFriendRecs(); }
       } else if (r.type === 'podcast') {
@@ -13828,13 +13900,9 @@ function assortedTastePicks(tab, n = 4) {
     const labelOf = key => normalize(customListLabel('music', key));
     const isCore = key => /^(?:my )?(?:favou?rite|top|all time) (?:artists|musicians|bands|music)$/.test(labelOf(key))
       || /^(?:my )?(?:artists|musicians|music|bands) (?:that |who |which )?(?:have )?shaped me$/.test(labelOf(key)) || labelOf(key) === 'shaped';
-    const isFaves = key => !isCore(key) && /fav|\btop\b|\bbest\b|\blove/.test(labelOf(key));
-    const core = entries.filter(([k]) => isCore(k)).flatMap(([, items]) => items || []);
-    const faves = entries.filter(([k]) => isFaves(k)).flatMap(([, items]) => items || []);
-    const picks = take(core, n);
-    if (picks.length < n) picks.push(...take(faves, n - picks.length));
-    if (!picks.length) picks.push(...take(artists || [], n));
-    return picks;
+    const formative=entries.filter(([k])=>/shaped me$/.test(labelOf(k))).flatMap(([,items])=>items||[]);
+    const core=entries.filter(([k])=>isCore(k)).flatMap(([,items])=>items||[]);
+    return take(formative.length?formative:core,n);
   }
   if (tab === 'movies') {
     const named = fromLists('movies', ['Favorite Movies', 'Favorite Films']);
@@ -14006,6 +14074,7 @@ async function copyTasteShareLink(){
 function downloadTasteShareImage(){if(!tasteShareAsset)return;const url=URL.createObjectURL(tasteShareAsset.file),a=document.createElement('a');a.href=url;a.download='my-tastelist.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 
 function renderProfileTab() {
+  const orderControl=document.getElementById('all-list-order-control');if(orderControl)orderControl.innerHTML=isOwnProfile?'<button type="button" class="profile-control" onclick="openListOrder()">⠿ Reorder any list</button>':'';
   renderProfileOnboardingResume();
   scheduleTasteConstellation();
   // Stats bar
@@ -15387,5 +15456,6 @@ renderTasteInfluences();
   });
 })();
 </script>
+<dialog id="list-order-dialog" oncancel="event.preventDefault();closeListOrder()" aria-labelledby="list-order-title"><h2 id="list-order-title">Reorder items</h2><p>Drag the handle, or use the arrows. Save when you’re happy.</p><label>List <select id="list-order-choice" onchange="chooseListOrder()"></select></label><div id="list-order-rows"></div><p id="list-order-error" role="alert"></p><button type="button" class="profile-control" onclick="closeListOrder()">Cancel</button> <button type="button" id="list-order-save" class="ed-primary" onclick="saveListOrder()">Save order</button></dialog>
 </body>
 </html>
