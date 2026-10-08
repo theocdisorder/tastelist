@@ -1786,9 +1786,33 @@ html body .activity-title { font-weight: 650; font-size: 19px; letter-spacing: -
 .ti-dest select { min-width: 0; max-width: 100%; font: inherit; font-size: 14px; color: var(--text); background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
 @media (max-width: 480px) { .ti-row { flex-direction: column; } .ti-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .ti-title { font-size: 22px; } }
 @media (pointer: coarse) { .ob-import button, .ti-shelves button { min-height: 44px; } }
+
+/* ── Listen on your service ── */
+.stream-links[data-listen] { display: inline-flex; align-items: center; gap: 2px; }
+td.songs-table-links[data-listen] { display: table-cell; vertical-align: middle; white-space: nowrap; }  /* stay a table cell so rows line up */
+.stream-links.listen-wide[data-listen] { display: flex; }
+.listen-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--text); background: rgba(255,255,255,.07);
+  border: 1px solid var(--border); border-radius: 999px 0 0 999px; padding: 6px 10px 6px 12px; cursor: pointer; white-space: nowrap; }
+.listen-btn:hover, .listen-switch:hover { background: rgba(255,255,255,.12); }
+.listen-switch { font: inherit; font-size: 11px; color: var(--muted); background: rgba(255,255,255,.07); border: 1px solid var(--border); border-left: 0; border-radius: 0 999px 999px 0; padding: 6px 9px 6px 7px; cursor: pointer; }
+.listen-wide .listen-btn { flex: 1; padding: 10px 14px; font-size: 13.5px; border-radius: 10px 0 0 10px; }
+.listen-wide .listen-switch { padding: 10px 12px; border-radius: 0 10px 10px 0; }
+.listen-shell { max-width: 380px !important; }
+.listen-title { font-family: var(--ob-serif, Georgia, serif); font-weight: 600; font-size: 24px; margin: 0 32px 6px 0; color: #f2efe9; }
+.listen-lede { margin: 0 0 16px; font-size: 13.5px; color: var(--muted); }
+.listen-list { display: flex; flex-direction: column; gap: 6px; }
+.listen-choice { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 10px 14px; font: inherit; font-size: 15px; font-weight: 600; color: var(--text);
+  background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; text-align: left; }
+.listen-choice:hover, .listen-choice:focus-visible { border-color: rgba(255,255,255,.35); outline: none; }
+.listen-choice.current { border-color: var(--accent); }
+.listen-current { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--muted); }
+.listen-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.svc-apple { background: #fa2d48; } .svc-spotify { background: #1ed760; } .svc-youtube { background: #ff0033; } .svc-tidal { background: #fff; } .svc-amazon { background: #25d1da; } .svc-deezer { background: #a238ff; }
+.listen-remember { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 13.5px; color: var(--muted); }
+@media (pointer: coarse) { .listen-btn, .listen-switch { min-height: 44px; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
-#invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #activity-summary-modal, #activity-item-modal, .modal-bg {
+#invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
   top: var(--vvt, 0px) !important; bottom: auto !important; height: var(--vvh, 100%) !important; padding: 12px !important; overflow: hidden !important; }
 .tl-modal-shell, .modal, .update-composer, #activity-summary-content {
   max-height: calc(var(--vvh, 100dvh) - 24px) !important; overflow-y: auto !important; overscroll-behavior: contain; margin: auto !important; }
@@ -6005,7 +6029,7 @@ function artistDetailPanelHTML(a, closeOnclick) {
             <td class="songs-table-num">${si+1}</td>
             <td class="songs-table-title"><div class="songs-table-art" id="art-${a.id}-${si}">${s.art ? `<img src="${esc(s.art)}" alt="" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;" onerror="this.style.display='none'">` : '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="#26262a" rx="5"/><text x="20" y="26" font-family="sans-serif" font-size="16" fill="#45444a" text-anchor="middle">note</text></svg>'}</div><span>${esc(s.title)}</span></td>
             <td class="songs-table-album">${esc(s.album||'')}</td>
-            <td class="songs-table-links">
+            <td class="songs-table-links" data-q="${esc((s.title||'') + ' ' + (a.name||''))}">
               ${s.apple?`<a href="${esc(s.apple)}" class="stream-link apple" target="_blank" rel="noopener">Apple</a>`:''}
               ${s.spotify?`<a href="${esc(s.spotify)}" class="stream-link spotify" target="_blank" rel="noopener">Spotify</a>`:''}
             </td>
@@ -6100,7 +6124,7 @@ function albumDetailPanelHTML(a, closeOnclick) {
           <tr class="songs-table-row">
             <td class="songs-table-num">${si+1}</td>
             <td class="songs-table-title"><div class="songs-table-art" id="album-art-${a.id}-${si}">${(s.art || a.tilePhoto) ? `<img src="${esc(s.art || a.tilePhoto)}" alt="" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;" onerror="this.style.display='none'">` : '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="#26262a" rx="5"/><text x="20" y="26" font-family="sans-serif" font-size="16" fill="#45444a" text-anchor="middle">note</text></svg>'}</div><span>${esc(s.title)}</span></td>
-            <td class="songs-table-links">
+            <td class="songs-table-links" data-q="${esc((s.title||'') + ' ' + (a.artist||''))}">
               ${s.apple?`<a href="${esc(s.apple)}" class="stream-link apple" target="_blank" rel="noopener">Apple</a>`:''}
               ${s.spotify?`<a href="${esc(s.spotify)}" class="stream-link spotify" target="_blank" rel="noopener">Spotify</a>`:''}
             </td>
@@ -6801,6 +6825,147 @@ function ensureBooksImportRow() {
   }
   row.style.display = isOwnProfile ? '' : 'none';
 }
+
+
+// ── Listen on your service ───────────────────────────────────────────────────────────────────
+// Every Apple/Spotify link pair becomes one "Listen" button that opens the VIEWER's chosen service.
+// Exact links when we have them (Apple Music item, Spotify track); otherwise that service's search
+// for "title artist", which lands on the right item at or near the top.
+const MUSIC_SERVICES = {
+  apple:   { name: 'Apple Music',   search: q => `https://music.apple.com/us/search?term=${encodeURIComponent(q)}` },
+  spotify: { name: 'Spotify',       search: q => `https://open.spotify.com/search/${encodeURIComponent(q)}` },
+  youtube: { name: 'YouTube Music', search: q => `https://music.youtube.com/search?q=${encodeURIComponent(q)}` },
+  tidal:   { name: 'Tidal',         search: q => `https://listen.tidal.com/search?q=${encodeURIComponent(q)}` },
+  amazon:  { name: 'Amazon Music',  search: q => `https://music.amazon.com/search/${encodeURIComponent(q)}` },
+  deezer:  { name: 'Deezer',        search: q => `https://www.deezer.com/search/${encodeURIComponent(q)}` },
+};
+function getMusicService() {
+  const fromProfile = currentProfile?.music_service;
+  if (fromProfile && MUSIC_SERVICES[fromProfile]) return fromProfile;
+  try { const v = localStorage.getItem('tl_music_service'); return MUSIC_SERVICES[v] ? v : ''; } catch (_) { return ''; }
+}
+async function setMusicService(svc) {
+  if (!MUSIC_SERVICES[svc]) return;
+  try { localStorage.setItem('tl_music_service', svc); } catch (_) {}
+  if (currentProfile) currentProfile.music_service = svc;
+  relabelListenButtons();
+  if (sb && currentUser) { try { await sb.from('profiles').update({ music_service: svc }).eq('id', currentUser.id); } catch (_) {} }
+}
+function listenQuery(d) {
+  if (d.q && d.q.trim()) return d.q.trim();
+  const m = String(d.spotify || '').match(/open\.spotify\.com\/search\/([^?#]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+function listenUrl(svc, d) {
+  const q = listenQuery(d);
+  if (svc === 'apple' && /music\.apple\.com\/.+\/(album|song|playlist)\//.test(d.apple || '')) return d.apple;
+  if (svc === 'spotify' && /open\.spotify\.com\/(track|album|playlist)\//.test(d.spotify || '')) return d.spotify;
+  if (svc === 'apple' && !q && d.apple) return d.apple;
+  if (svc === 'spotify' && !q && d.spotify) return d.spotify;
+  return MUSIC_SERVICES[svc].search(q);
+}
+
+// Apple Music listeners get exact links even when an item only has search links: Apple's free iTunes
+// Search finds the song/album (title AND artist must match), as each button scrolls into view.
+// Two lookups at a time; results cached on this device.
+const LISTEN_APPLE_EXACT = /music\.apple\.com\/.+\/(album|song|playlist)\//;
+const listenAppleCache = (() => { try { return JSON.parse(localStorage.getItem('tl_apple_links') || '{}'); } catch (_) { return {}; } })();
+function saveListenAppleCache() {
+  try {
+    const keys = Object.keys(listenAppleCache);
+    keys.slice(0, Math.max(0, keys.length - 500)).forEach(k => delete listenAppleCache[k]);
+    localStorage.setItem('tl_apple_links', JSON.stringify(listenAppleCache));
+  } catch (_) {}
+}
+const listenNorm = v => String(v || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/\s*[\(\[].*?[\)\]]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+async function findAppleExact(q) {
+  const want = listenNorm(q);
+  for (const entity of ['song', 'album']) {
+    try {
+      const d = await sharedCatalogJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=${entity}&limit=8`);
+      const hit = (d.results || []).find(r => {
+        const name = listenNorm(entity === 'song' ? r.trackName : r.collectionName), artist = listenNorm(r.artistName);
+        return name && artist && want.includes(name) && want.includes(artist);
+      });
+      const url = hit && (entity === 'song' ? hit.trackViewUrl : hit.collectionViewUrl);
+      if (url && /music\.apple\.com|itunes\.apple\.com/.test(url)) return url.replace('itunes.apple.com', 'music.apple.com').replace(/[?&]uo=\d+/, '');
+    } catch (_) {}
+  }
+  return '';
+}
+const listenAppleQueue = []; let listenAppleActive = 0;
+function pumpListenApple() {
+  while (listenAppleActive < 2 && listenAppleQueue.length) {
+    const btn = listenAppleQueue.shift(), q = listenQuery(btn.dataset), key = listenNorm(q);
+    if (!q || LISTEN_APPLE_EXACT.test(btn.dataset.apple || '')) continue;
+    listenAppleActive++;
+    findAppleExact(q).then(url => {
+      listenAppleCache[key] = url || '';            // remember misses too, so we don't retry every visit
+      saveListenAppleCache();
+      if (url) document.querySelectorAll('.listen-btn').forEach(b => { if (listenNorm(listenQuery(b.dataset)) === key) b.dataset.apple = url; });
+    }).finally(() => { listenAppleActive--; pumpListenApple(); });
+  }
+}
+const listenAppleObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    listenAppleObserver.unobserve(e.target);
+    const svc = getMusicService();
+    if (svc && svc !== 'apple') return;          // only Apple listeners (or undecided) need it
+    listenAppleQueue.push(e.target); pumpListenApple();
+  });
+}, { rootMargin: '200px' }) : null;
+function prepareListenButton(btn) {
+  if (!btn || LISTEN_APPLE_EXACT.test(btn.dataset.apple || '')) return;
+  const key = listenNorm(listenQuery(btn.dataset));
+  if (!key) return;
+  if (key in listenAppleCache) { if (listenAppleCache[key]) btn.dataset.apple = listenAppleCache[key]; return; }
+  listenAppleObserver?.observe(btn);
+}
+
+const LISTEN_ICON = '<svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15a1 1 0 0 0 1.53.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>';
+function enhanceStreamLinks(root = document) {
+  root.querySelectorAll('.stream-links:not([data-listen]), .songs-table-links:not([data-listen])').forEach(box => {
+    const apple = box.querySelector('a.stream-link.apple')?.getAttribute('href') || '';
+    const spotify = box.querySelector('a.stream-link.spotify')?.getAttribute('href') || '';
+    box.dataset.listen = '1';
+    if (!apple && !spotify) return;
+    const svc = getMusicService();
+    box.innerHTML = `<button type="button" class="listen-btn" data-apple="${esc(apple)}" data-spotify="${esc(spotify)}" data-q="${esc(box.dataset.q || '')}" onclick="listenOpen(this, event)">${LISTEN_ICON}<span>${svc ? esc(MUSIC_SERVICES[svc].name) : 'Listen'}</span></button>`
+      + `<button type="button" class="listen-switch" aria-label="Choose music service" title="Choose music service" onclick="openListenChooser(this.previousElementSibling, event)">▾</button>`;
+    prepareListenButton(box.querySelector('.listen-btn'));
+  });
+}
+function relabelListenButtons() {
+  const svc = getMusicService();
+  document.querySelectorAll('.listen-btn span').forEach(sp => { sp.textContent = svc ? MUSIC_SERVICES[svc].name : 'Listen'; });
+}
+let listenChooserFor = null;
+function listenOpen(btn, ev) {
+  ev?.stopPropagation(); ev?.preventDefault();
+  const svc = getMusicService();
+  if (!svc) { openListenChooser(btn, ev); return; }
+  window.open(listenUrl(svc, btn.dataset), '_blank', 'noopener');
+}
+function openListenChooser(btn, ev) {
+  ev?.stopPropagation(); ev?.preventDefault();
+  listenChooserFor = btn;
+  const cur = getMusicService();
+  document.getElementById('listen-chooser-list').innerHTML = Object.entries(MUSIC_SERVICES).map(([k, v]) =>
+    `<button type="button" class="listen-choice${k === cur ? ' current' : ''}" onclick="chooseListenService('${k}')"><span class="listen-dot svc-${k}"></span>${esc(v.name)}${k === cur ? '<span class="listen-current">Current</span>' : ''}</button>`).join('');
+  document.getElementById('listen-chooser').style.display = 'flex';
+}
+function closeListenChooser() { document.getElementById('listen-chooser').style.display = 'none'; listenChooserFor = null; }
+function chooseListenService(svc) {
+  const btn = listenChooserFor;
+  const remember = document.getElementById('listen-remember').checked;
+  if (btn) window.open(listenUrl(svc, btn.dataset), '_blank', 'noopener');   // inside the tap, so it isn't blocked
+  if (remember) setMusicService(svc);
+  closeListenChooser();
+}
+new MutationObserver(() => { cancelAnimationFrame(enhanceStreamLinks._raf); enhanceStreamLinks._raf = requestAnimationFrame(() => enhanceStreamLinks()); })
+  .observe(document.documentElement, { childList: true, subtree: true });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('listen-chooser')?.style.display === 'flex') closeListenChooser(); });
 
 async function saveOnboardingItem(item,userId) {
     if(item.destination==='next'){await saveImportToWhatsNext(item);return;}
@@ -7772,7 +7937,7 @@ function toggleArtistExpand(artistId, tileIdx) {
           <td class="songs-table-num">${si+1}</td>
           <td class="songs-table-title"><div class="songs-table-art" id="art-${artistId}-${si}"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="#26262a" rx="5"/><text x="20" y="26" font-family="sans-serif" font-size="16" fill="#45444a" text-anchor="middle">♪</text></svg></div><span>${esc(s.title)}</span></td>
           <td class="songs-table-album">${esc(s.album||'')}</td>
-          <td class="songs-table-links">
+          <td class="songs-table-links" data-q="${esc((s.title||'') + ' ' + (a.name||''))}">
             ${s.apple?`<a href="${esc(s.apple)}" class="stream-link apple" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>Apple</a>`:''}
             ${s.spotify?`<a href="${esc(s.spotify)}" class="stream-link spotify" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>Spotify</a>`:''}
           </td>
@@ -7853,7 +8018,7 @@ function renderList() {
             <div class="song-title">${esc(s.title)}<span class="song-edit-hint"> ✎</span></div>
             ${s.album ? `<div class="song-album">${esc(s.album)}</div>` : ''}
           </div>
-          <div class="stream-links">
+          <div class="stream-links" data-q="${esc((s.title||'') + ' ' + (a.name||''))}">
             ${s.apple ? `<a href="${esc(s.apple)}" id="apple-${a.id}-${si}" class="stream-link apple" target="_blank" rel="noopener" onclick="event.stopPropagation()">
               <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
               Apple</a>` : ''}
@@ -7979,7 +8144,8 @@ async function selectSongResult(artistId, idx) {
     album: r.collectionName || '',
     art: (r.artworkUrl100 || '').replace('100x100bb', '300x300bb'),
     apple: r.trackViewUrl || '',
-    spotify: artists[artistIdx].songs[slotIdx]?.spotify || ''
+    // A new song needs its own Spotify link (this used to keep the replaced song's link).
+    spotify: `https://open.spotify.com/search/${encodeURIComponent(`${r.trackName || ''} ${r.artistName || artists[artistIdx].name || ''}`.trim())}`
   };
 
   // Update the song in place
@@ -7997,6 +8163,8 @@ async function selectSongResult(artistId, idx) {
   if (titleEl) titleEl.innerHTML = esc(newSong.title) + '<span class="song-edit-hint"> ✎</span>';
   if (albumEl) albumEl.textContent = newSong.album;
   if (appleEl) appleEl.href = newSong.apple;
+  const listenEl = document.querySelector(`#song-row-${artistId}-${slotIdx} .listen-btn`);
+  if (listenEl) { listenEl.dataset.apple = newSong.apple; listenEl.dataset.spotify = newSong.spotify; listenEl.dataset.q = `${newSong.title} ${r.artistName || ''}`.trim(); }
 
   // Update album art for this slot
   const artEl = document.getElementById(`art-${artistId}-${slotIdx}`);
@@ -8606,7 +8774,7 @@ function toggleAlbumExpand(albumId, tileIdx) {
           <td class="songs-table-num">${si+1}</td>
           <td class="songs-table-title"><div class="songs-table-art" id="alb-art-${albumId}-${si}"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="#26262a" rx="5"/><text x="20" y="26" font-family="sans-serif" font-size="16" fill="#45444a" text-anchor="middle">♪</text></svg></div><span>${esc(s.title)}</span></td>
           <td class="songs-table-album">${esc(s.album||a.name)}</td>
-          <td class="songs-table-links">
+          <td class="songs-table-links" data-q="${esc((s.title||'') + ' ' + (a.artist||''))}">
             ${s.apple?`<a href="${esc(s.apple)}" class="stream-link apple" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>Apple</a>`:''}
             ${s.spotify?`<a href="${esc(s.spotify)}" class="stream-link spotify" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>Spotify</a>`:''}
           </td>
@@ -12287,9 +12455,9 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
       ${item.summarySource && /^https?:\/\//.test(item.summarySource) ? `<a href="${esc(item.summarySource)}" target="_blank" rel="noopener" style="display:block;padding:0 20px 16px;color:var(--muted);font-size:12px;">Read more about this title ↗</a>` : ''}
       ${item.id ? inlineEngagementBlockHtml('taste_list_item', item.id) : ''}
       ${item.cat === 'music' && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
-      <div style="padding:0 20px 20px;display:flex;gap:8px;">
-        ${item.appleMusicUrl ? `<a href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
-        ${item.spotifyUrl ? `<a href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
+      <div class="stream-links listen-wide" style="padding:0 20px 20px;display:flex;gap:8px;" data-q="${esc((item.title||'') + ' ' + (item.sub||''))}">
+        ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
+        ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
       </div>` : ''}
     </div>`;
 }
@@ -13300,9 +13468,9 @@ function activitySummaryHtml(item, summary, loading) {
         ${loading ? `<span style="color:var(--faint);">Loading summary…</span>` : (summary ? esc(summary) : `<span style="color:var(--faint);">No summary available.</span>`)}
       </div>
       ${item.type === 'song' && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
-      <div style="padding:0 20px 14px;display:flex;gap:8px;">
-        ${item.appleMusicUrl ? `<a href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
-        ${item.spotifyUrl ? `<a href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
+      <div class="stream-links listen-wide" style="padding:0 20px 14px;display:flex;gap:8px;" data-q="${esc(item.artQuery || ((item.label||'') + ' ' + (item.sub||'')))}">
+        ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
+        ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
       </div>` : ''}
       <div style="padding:0 20px 20px;">
         <button onclick="switchTab('${item.tab}', document.getElementById('tab-btn-${item.tab}')); closeActivitySummary();" style="width:100%;background:${iconColor}18;border:1px solid ${iconColor}33;color:${iconColor};font-size:13px;font-weight:600;font-family:inherit;padding:10px;border-radius:10px;cursor:pointer;">Go to ${tabLabel}</button>
@@ -14794,6 +14962,16 @@ renderTasteInfluences();
   <div class="tl-modal-shell ti-shell" role="dialog" aria-modal="true" aria-labelledby="taste-import-title">
     <button class="tl-modal-close" onclick="closeTasteImport()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
     <div id="taste-import-body"></div>
+  </div>
+</div>
+
+<div id="listen-chooser" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1200;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeListenChooser()">
+  <div class="tl-modal-shell listen-shell" role="dialog" aria-modal="true" aria-labelledby="listen-chooser-title">
+    <button class="tl-modal-close" onclick="closeListenChooser()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
+    <h2 id="listen-chooser-title" class="listen-title">Open in…</h2>
+    <p class="listen-lede">Songs and albums on TasteList will open in the service you use.</p>
+    <div id="listen-chooser-list" class="listen-list"></div>
+    <label class="listen-remember"><input id="listen-remember" type="checkbox" checked> Remember my choice</label>
   </div>
 </div>
 
