@@ -1366,6 +1366,10 @@
 .feed-composer-input-row #feed-post-text{flex:1;min-width:0;width:0;margin-top:0}
 .feed-composer-card .feed-composer-bottom,.feed-composer-card #feed-post-status{margin-left:54px}
 @media(max-width:600px){.feed-composer-input-row{gap:10px}.feed-composer-card .feed-composer-bottom,.feed-composer-card #feed-post-status{margin-left:52px}}
+
+.feed-title-picker{margin:12px 0 0 54px}.feed-title-picker label{display:block;font-size:12px;margin-bottom:6px;color:var(--text)}.feed-title-picker label span,.feed-title-picker small,.feed-post-attachment small{color:var(--muted)}.feed-title-picker small,.feed-post-attachment small{display:block;font-size:12px;margin-top:4px}
+.feed-title-matches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:280px;overflow:auto}.feed-title-matches button,.feed-title-attached{display:flex;align-items:center;gap:12px;padding:10px;text-align:left;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit}.feed-title-matches button{cursor:pointer}.feed-title-attached>span{flex:1}.feed-title-picker img,.feed-title-placeholder{width:44px;height:60px;object-fit:contain;flex-shrink:0}.feed-title-picker p{font-size:12px;color:var(--muted)}.feed-post-attachment{display:flex;align-items:center;gap:18px;background:var(--surface);padding:16px;border:1px solid var(--border);border-radius:12px;margin-bottom:18px}.feed-post-attachment img{width:100px;height:140px;object-fit:contain}.feed-title-picker img[hidden],.feed-post-attachment img[hidden]{display:none}
+@media(max-width:600px){.feed-title-picker{margin-left:0}.feed-title-matches{grid-template-columns:1fr}}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -6876,9 +6880,9 @@ function renderOnboardingJourney() {
     footer = `${btn('← Back','onboardingAddAnother()')}${btn('Next →','advanceOnboarding(1)',true)}`;
   } else if (step === 0) {
     body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1" aria-live="polite" aria-atomic="true">${esc(onboardingQuestion().q)}</h1><button id="ob-question-switch" type="button" class="ob-question-switch" onclick="cycleOnboardingQuestion()">Try another question <span aria-hidden="true">↻</span></button><p id="ob-question-hint">${esc(onboardingQuestion().hint)}</p></div>
-      <label class="ob-search"><span aria-hidden="true">⌕</span><input id="ob-search" type="search" aria-label="Search songs, artists, movies, shows, books and podcasts" placeholder="Search a song, show, book, anything…" value="${esc(state.query)}" oninput="onOnboardingSearch(this.value)" ${!ready?'disabled':''}><button type="button" aria-label="Clear search" onclick="clearOnboardingSearch()">×</button></label>
+      <label class="ob-search"><span aria-hidden="true">⌕</span><input id="ob-search" type="search" aria-label="Search songs, artists, movies, shows, books and podcasts" placeholder="Start typing an artist, album, movie, show or book…" value="${esc(state.query)}" oninput="onOnboardingSearch(this.value)" ${!ready?'disabled':''}><button type="button" aria-label="Clear search" onclick="clearOnboardingSearch()">×</button></label>
       <div class="ob-import" role="group" aria-label="Bring picks from another app"><span>Or bring picks from</span><button type="button" onclick="openTasteImport('letterboxd','onboarding')" ${!ready?'disabled':''}>Letterboxd</button><button type="button" onclick="openTasteImport('goodreads','onboarding')" ${!ready?'disabled':''}>Goodreads</button></div>
-      <div class="ob-filters" aria-label="Search categories">${[['all','All'],['artist','Artists'],['album','Albums'],['movie','Movies'],['tv','TV shows'],['book','Books'],['comedian','Comedy'],['special','Specials'],['podcast','Podcasts'],['episode','Episodes']].map(([key,label])=>`<button type="button" data-ob-filter="${key}" aria-pressed="${state.filter===key}" onclick="filterOnboardingSearch('${key}')">${label}</button>`).join('')}</div>
+
       <p class="ob-multiselect-hint">Select as many as you like. Your selections stay here as you search.</p><div id="ob-pending" class="ob-pending" aria-live="polite"></div><div id="ob-results" aria-live="polite"></div>
       <section id="ob-starters" aria-label="Suggested picks" aria-live="polite"></section>
       <div id="ob-feedback" class="ob-feedback" role="status">${!ready?'Loading your favorites…':''}</div>`;
@@ -6901,11 +6905,11 @@ function renderOnboardingJourney() {
 }
 function onOnboardingSearch(query) {
   const state=onboardingVisualState();
-  state.query=query;state.results=[];state.error='';state.searchFailed=false;state.request++;
+  state.query=query;state.filter='all';state.results=[];state.error='';state.searchFailed=false;state.request++;
   clearTimeout(state.timer);
   const ideas=document.getElementById('ob-search-ideas');if(ideas)ideas.hidden=!!query.trim();
-  state.loading=!!query.trim();renderOnboardingSearchResults();
-  if(query.trim())state.timer=setTimeout(()=>runOnboardingSearch(),350);
+  state.loading=query.trim().length>=2;renderOnboardingSearchResults();
+  if(query.trim().length>=2)state.timer=setTimeout(()=>runOnboardingSearch(),250);
 }
 function clearOnboardingSearch(){const input=document.getElementById('ob-search');if(input)input.value='';onOnboardingSearch('');}
 function suggestOnboardingSearch(query){const input=document.getElementById('ob-search');if(input)input.value=query;onOnboardingSearch(query);input?.focus();}
@@ -6939,49 +6943,76 @@ async function searchOnboardingArtists(query) {
     return [];
   } catch(error){throw new Error('Artist search is temporarily unavailable. Please retry.');}
 }
-async function runOnboardingSearch() {
-  const state=onboardingVisualState(), request=++state.request, userId=currentUser?.id;
-  const q=state.query.trim();if(!q)return;
-  const kinds=state.filter==='all'?['artist','album','movie','tv','book','comedian','podcast']:[state.filter];
-  state.loading=true;state.error='';state.searchFailed=false;renderOnboardingSearchResults();
-  const results=await Promise.allSettled(kinds.map(async kind=>{
+const onboardingAutocompleteCache=new Map();
+function onboardingMatchRank(item,q){
+ const norm=v=>String(v||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+ const title=norm(item.title),query=norm(q),bare=title.replace(/^the /,'');
+ if(title===query)return 0;
+ if(title.startsWith(query)||bare.startsWith(query))return 1;
+ if(title.split(' ').some((_,i,words)=>words.slice(i).join(' ').startsWith(query)))return 2;
+ if(title.includes(query))return 3;
+ if(norm(item.artist||item.author).startsWith(query))return 4;
+ return 5;
+}
+async function onboardingAutocompleteProvider(kind,q){
+ const key=kind+'|'+q.toLowerCase();if(onboardingAutocompleteCache.has(key))return onboardingAutocompleteCache.get(key).map(x=>({...x}));
+ const lookup=async()=>{
     let data;
     if(['comedian','special','podcast','episode'].includes(kind))return searchExtraCatalog(kind,q);
     if(kind==='artist')return searchOnboardingArtists(q);
     if(kind==='album') {
-      const response=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=${kind==='artist'?'musicArtist':'album'}&limit=6`);
-      if(!response.ok)throw new Error('Music search unavailable');data=await response.json();
+      data=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=album&limit=12`);
       return (data.results||[]).map(r=>({kind,id:r.artistId,title:r.artistName,genre:r.primaryGenreName,artist:r.artistName,label:'Artist',...(kind==='album'?{id:r.collectionId,title:r.collectionName,label:'Album',year:r.releaseDate?.slice(0,4),art:r.artworkUrl100?.replace('100x100bb','400x400bb')}:{})}));
     }
     if(kind==='book') {
-      const response=await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=6&fields=key,title,author_name,cover_i,first_publish_year`);
-      if(!response.ok)throw new Error('Book search unavailable');data=await response.json();
+      data=await onboardingSearchJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8&fields=key,title,author_name,cover_i,first_publish_year`);
       return (data.docs||[]).map(r=>({kind,id:r.key,title:r.title,author:r.author_name?.[0]||'',label:'Book',year:String(r.first_publish_year||''),art:preferredBookCover(r.title,r.author_name?.[0]||'')||(r.cover_i?`https://covers.openlibrary.org/b/id/${r.cover_i}-L.jpg?default=false`:'')}));
     }
     const response=await tmdbFetch(`/search/${kind}?query=${encodeURIComponent(q)}&page=1`);
     if(!response.ok)throw new Error('Screen search unavailable');data=await response.json();
-    return (data.results||[]).slice(0,6).map(r=>({kind,id:r.id,title:r.title||r.name,label:kind==='tv'?'TV show':'Movie',poster:r.poster_path||'',year:(r.release_date||r.first_air_date||'').slice(0,4)}));
-  }));
-  if(request!==state.request||userId!==currentUser?.id)return;
-  const lists=results.map(r=>r.status==='fulfilled'?r.value:[]);
-  // Interleave providers so All shows a useful mix rather than six artists first.
-  state.results=Array.from({length:6},(_,i)=>lists.map(list=>list[i]).filter(Boolean)).flat();
-  state.loading=false;
-  state.searchFailed=results.some(r=>r.status==='rejected');
-  if(state.searchFailed)state.error=state.filter==='artist'?'Artist search couldn’t load. Retry without losing your selected picks.':'Some categories couldn’t load. Try searching again.';
+    return (data.results||[]).slice(0,12).map(r=>({kind,popularity:Number(r.popularity)||0,id:r.id,title:r.title||r.name,label:kind==='tv'?'TV show':'Movie',poster:r.poster_path||'',year:(r.release_date||r.first_air_date||'').slice(0,4)}));
+ };
+ let timer;
+ try{
+ const rows=await Promise.race([lookup(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Search timed out')),12000);})]);
+ const items=rows.map((r,i)=>({...r,providerRank:i}));
+ if(onboardingAutocompleteCache.size>=80)onboardingAutocompleteCache.delete(onboardingAutocompleteCache.keys().next().value);
+ onboardingAutocompleteCache.set(key,items);return items.map(x=>({...x}));
+ }finally{clearTimeout(timer);}
+}
+async function runOnboardingSearch() {
+ const state=onboardingVisualState(),request=++state.request,userId=currentUser?.id,q=state.query.trim();
+ if(q.length<2)return;
+ const kinds=['artist','album','movie','tv','book','comedian','podcast'];
+ state.filter='all';state.loading=true;state.error='';state.searchFailed=false;state.results=[];
+ renderOnboardingSearchResults();
+ const found=new Map(),enriched=new Set();let remaining=kinds.length,failed=0;
+ const current=()=>request===state.request&&userId===currentUser?.id;
+ function refresh(){
+  if(!current())return;
+  state.results=[...found.values()].sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)||
+    (a.kind===b.kind&&['movie','tv'].includes(a.kind)?(b.popularity||0)-(a.popularity||0):0)||a.providerRank-b.providerRank).slice(0,18);
+  state.loading=remaining>0;state.searchFailed=failed>0;
+  state.error=remaining===0&&failed===kinds.length?'Search is unavailable right now. Please retry.':'';
   renderOnboardingSearchResults();
-  state.results.filter(item=>item.kind==='artist'&&!item.art).slice(0,4).forEach(item=>{
-    lookupArtistArt(item.title).then(art=>{
-      if(!art || request!==state.request || userId!==currentUser?.id)return;
-      item.art=art.tilePhoto;renderOnboardingSearchResults();
-    }).catch(()=>{});
-  });
+  for(const item of state.results.filter(x=>x.kind==='artist'&&!x.art).slice(0,6)){
+   const key=onboardingSelectionKey(item);if(enriched.has(key))continue;enriched.add(key);
+   lookupArtistArt(item.title).then(art=>{if(!current()||!art)return;item.art=art.tilePhoto||art.bandPhoto||'';
+    for(const p of state.pending)if(onboardingSelectionKey(p)===key)p.art=item.art;
+    renderOnboardingSearchResults();}).catch(()=>{});
+  }
+ }
+ await Promise.all(kinds.map(async kind=>{
+  try{const items=await onboardingAutocompleteProvider(kind,q);if(!current())return;for(const item of items)found.set(onboardingSelectionKey(item),item);}
+  catch(_){if(current())failed++;}
+  finally{remaining--;refresh();}
+ }));
 }
 function renderOnboardingSearchResults() {
   renderOnboardingStarters();
   const state=onboardingVisualState(),el=document.getElementById('ob-results');if(!el)return;
   document.querySelectorAll('[data-ob-filter]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.obFilter===state.filter)));
-  el.innerHTML=state.loading?'<p class="ob-search-status">Searching…</p>':state.results.length?`<div class="ob-results-grid">${state.results.map((item,i)=>`<button type="button" class="ob-result ${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'selected':''}" aria-pressed="${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))}" onclick="selectOnboardingResult(${i})" ${state.saving?'disabled':''}>${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.artist&&item.kind==='album'?' · '+esc(item.artist):item.author?' · '+esc(item.author):''}</small>${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'<span class="ob-selected-mark" aria-hidden="true">✓</span>':'<span class="ob-select-circle" aria-hidden="true">+</span>'}</button>`).join('')}</div>`:state.query.trim()?(state.searchFailed?'<p class="ob-search-status">Search is temporarily unavailable.</p>':'<p class="ob-search-status">No matches found. Try another title or category.</p>'):'';
+  el.innerHTML=state.loading&&!state.results.length?'<p class="ob-search-status">Finding matches…</p>':state.results.length?`<div class="ob-results-grid">${state.results.map((item,i)=>`<button type="button" class="ob-result ${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'selected':''}" aria-pressed="${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))}" onclick="selectOnboardingResult(${i})" ${state.saving?'disabled':''}>${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.year?' · '+esc(item.year):''}${item.artist&&item.kind==='album'?' · '+esc(item.artist):item.author?' · '+esc(item.author):''}</small>${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'<span class="ob-selected-mark" aria-hidden="true">✓</span>':'<span class="ob-select-circle" aria-hidden="true">+</span>'}</button>`).join('')}</div>`:state.query.trim().length===1?'<p class="ob-search-status">Type at least 2 letters to see suggestions.</p>':state.query.trim()?(state.searchFailed?'<p class="ob-search-status">Search is temporarily unavailable.</p>':'<p class="ob-search-status">No matches found. Try a few more letters or add the creator’s name.</p>'):'';
   if(state.searchFailed&&!state.loading)el.innerHTML+='<button type="button" class="ob-button" onclick="runOnboardingSearch()">Retry search</button>';
   const count=document.getElementById('ob-selection-count');if(count)count.textContent=`${state.pending.length} selected`;
   const pending=document.getElementById('ob-pending');
@@ -13570,7 +13601,7 @@ function toggleProfileCardComments(itemId) {
 }
 
 function activityCardHtml(item, globalIndex) {
-  if(item.catalogItem?.kind==='text_post')return feedTextPostHtml({id:item.id,note:item.note,activity_date:item.rawDate,user_id:viewedProfile?.id,profiles:viewedProfile},true);
+  if(item.catalogItem?.kind==='text_post')return feedTextPostHtml({id:item.id,note:item.note,activity_date:item.rawDate,user_id:viewedProfile?.id,profiles:viewedProfile,catalog_item:item.catalogItem},true);
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
   const iconColor = (MEDIA_ICONS[iconType] || MEDIA_ICONS.music).color;
   const typeIcon = badgeIcon(iconType, 13);
@@ -13730,26 +13761,58 @@ function renderWelcomeBanner() {
 // Resets pagination and re-resolves who you follow (their follow list may have changed since the
 // last time the Feed was open), then loads the first page. Called every time the Feed view is
 // entered — see setTopView().
+let feedTitleSearch={seq:0,timer:null,results:[],manual:false};
+function feedTitleMarkup(){
+ const p=feedPostDraft.attachment;
+ return `<div class="feed-title-picker"><label for="feed-title-query">Add a title <span>(required)</span></label>${p?`<div class="feed-title-attached">${feedTitleArt(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span><button type="button" class="sl-btn" aria-label="Change attached title" onclick="clearFeedTitle()" ${feedPostDraft.saving?'disabled':''}>Change</button></div>`:`<input id="feed-title-query" class="tl-input" placeholder="Search a book, movie, show, artist, album or song…" autocomplete="off" oninput="searchFeedTitles(this.value,true)" ${feedPostDraft.saving?'disabled':''}><div id="feed-title-results" aria-live="polite"></div>`}</div>`;
+}
+function feedTitleArt(p){const art=onboardingArt(p);return art?`<img src="${esc(art)}" alt="" onerror="this.hidden=true">`:'<span class="feed-title-placeholder" aria-hidden="true">♫</span>';}
+function suggestedFeedTitle(text){
+ const quoted=text.match(/[“"]([^”"]{2,100})[”"]/);if(quoted)return quoted[1];
+ return text.split(/[.!?\n]/)[0].replace(/^(?:i(?:’ve|'ve| have)?\s+)?(?:just\s+)?(?:finished\s+)?(?:reading|read|watching|watched|listening to|listened to|loving|loved)\s+/i,'').split(/\s+(?:was|is|has been|really|made me)\s+/i)[0].trim().slice(0,100);
+}
+function inferFeedTitle(text){if(feedPostDraft.attachment||feedTitleSearch.manual||feedPostDraft.saving)return;const q=suggestedFeedTitle(text);const input=document.getElementById('feed-title-query');if(input)input.value=q;searchFeedTitles(q,false);}
+function searchFeedTitles(q,manual=false){
+ if(feedPostDraft.saving)return;feedTitleSearch.manual=feedTitleSearch.manual||manual;
+ clearTimeout(feedTitleSearch.timer);const seq=++feedTitleSearch.seq,userId=currentUser?.id;feedTitleSearch.results=[];
+ const el=document.getElementById('feed-title-results');if(!el)return;
+ if(q.trim().length<2){el.innerHTML='';return;}el.textContent='Finding titles…';
+ feedTitleSearch.timer=setTimeout(async()=>{
+ const kinds=['book','movie','tv','artist','album','podcast','song'];
+ const jobs=kinds.map(async kind=>kind==='song'?(await searchTasteCatalog('music',q)).map(p=>({kind,title:p.title,artist:p.sub,art:p.art,label:'Song',id:p.title+'|'+p.sub})):await onboardingAutocompleteProvider(kind,q));
+ const results=await Promise.allSettled(jobs.map(job=>new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('Timeout')),12000);job.then(resolve,reject).finally(()=>clearTimeout(t));})));
+ if(seq!==feedTitleSearch.seq||userId!==currentUser?.id||feedPostDraft.attachment)return;
+ const rows=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)).slice(0,12);feedTitleSearch.results=rows;
+ const box=document.getElementById('feed-title-results');if(!box)return;
+ box.innerHTML=rows.length?`<p>Choose the correct title to attach its artwork.</p><div class="feed-title-matches">${rows.map((p,i)=>`<button type="button" onclick="selectFeedTitle(${i})">${feedTitleArt(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span></button>`).join('')}</div>`:'<p>No matches loaded. Try the title and creator’s name.</p>';
+ },350);
+}
+function selectFeedTitle(i){if(feedPostDraft.saving)return;const p=feedTitleSearch.results[i];if(!p)return;feedPostDraft.attachment={...p};feedTitleSearch.seq++;renderFeedComposer();}
+function clearFeedTitle(){if(feedPostDraft.saving)return;feedPostDraft.attachment=null;feedTitleSearch.manual=false;feedTitleSearch.seq++;renderFeedComposer();document.getElementById('feed-title-query')?.focus();}
+function feedPostAttachmentHtml(row){const p=row.catalog_item?.attachment;if(!p)return '';return `<div class="feed-post-attachment">${feedTitleArt(p)}<div><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></div></div>`;}
+
 const FEED_POST_PROMPTS=['What have you watched, read, or listened to lately?','What’s something you loved that more people should discover?','What should your friends put on their What’s Next list?'];
 let feedPostDraft={userId:null,text:'',id:null,saving:false,requestId:null};
 function renderFeedComposer(){
  const host=document.getElementById('feed-composer');if(!host)return;
  if(!currentUser){host.innerHTML='';return;}
  if(feedPostDraft.userId!==currentUser.id)feedPostDraft={userId:currentUser.id,text:'',id:null,saving:false,requestId:null};
- host.innerHTML=`<section class="feed-composer-card" aria-label="Write a TasteList update"><div class="feed-composer-input-row">${profileAvatarHtml(currentProfile,42)}<textarea id="feed-post-text" aria-label="Write an update" rows="2" maxlength="3000" placeholder="${esc(FEED_POST_PROMPTS[0])}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea></div><div class="feed-composer-bottom"><small>Visible to people who can view your profile.<span id="feed-post-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span></small><div>${feedPostDraft.id?'<button class="sl-btn" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="ed-primary" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post'}</button></div></div><p id="feed-post-status" role="status" aria-live="polite"></p></section>`;
+ host.innerHTML=`<section class="feed-composer-card" aria-label="Write a TasteList update"><div class="feed-composer-input-row">${profileAvatarHtml(currentProfile,42)}<textarea id="feed-post-text" aria-label="Write an update" rows="2" maxlength="3000" placeholder="${esc(FEED_POST_PROMPTS[0])}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea></div>${feedTitleMarkup()}<div class="feed-composer-bottom"><small>Visible to people who can view your profile.<span id="feed-post-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span></small><div>${feedPostDraft.id?'<button class="sl-btn" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="ed-primary" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||!feedPostDraft.attachment||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post'}</button></div></div><p id="feed-post-status" role="status" aria-live="polite"></p></section>`;
  sizeFeedPostInput();
 }
 function sizeFeedPostInput(){const input=document.getElementById('feed-post-text');if(!input)return;input.style.height='auto';input.style.height=Math.min(180,Math.max(64,input.scrollHeight))+'px';input.style.overflowY=input.scrollHeight>180?'auto':'hidden';}
-function updateFeedPostDraft(text){feedPostDraft.text=text;const count=document.getElementById('feed-post-count');count.hidden=text.length<2800;count.textContent=text.length.toLocaleString()+' / 3,000';sizeFeedPostInput();document.getElementById('feed-post-submit').disabled=!text.trim()||text.length>3000||feedPostDraft.saving;}
+function updateFeedPostDraft(text){feedPostDraft.text=text;const count=document.getElementById('feed-post-count');count.hidden=text.length<2800;count.textContent=text.length.toLocaleString()+' / 3,000';sizeFeedPostInput();document.getElementById('feed-post-submit').disabled=!text.trim()||text.length>3000||!feedPostDraft.attachment||feedPostDraft.saving;inferFeedTitle(text);}
 function useFeedPostPrompt(i){const input=document.getElementById('feed-post-text');input.placeholder=FEED_POST_PROMPTS[i];input.focus();}
-function cancelFeedPostEdit(){if(feedPostDraft.saving)return;feedPostDraft.text='';feedPostDraft.id=null;feedPostDraft.requestId=null;renderFeedComposer();}
+function cancelFeedPostEdit(){if(feedPostDraft.saving)return;feedPostDraft.text='';feedPostDraft.attachment=null;feedTitleSearch.manual=false;feedTitleSearch.seq++;feedPostDraft.id=null;feedPostDraft.requestId=null;renderFeedComposer();}
 async function publishFeedPost(){
  if(!currentUser||feedPostDraft.saving||feedPostDraft.userId!==currentUser.id)return;
  const text=feedPostDraft.text.trim(),userId=currentUser.id;if(!text||text.length>3000)return;
+ if(!feedPostDraft.attachment){document.getElementById('feed-post-status').textContent='Choose a title before posting.';return;}
  feedPostDraft.saving=true;renderFeedComposer();
  try{
   if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again to post.');
-  const row={label:'Shared an update',type:'other',sub:'',note:text,art_url:null,catalog_item:{kind:'text_post'}};
+  const attachment=feedPostDraft.attachment;
+  const row={label:attachment.title,type:'other',sub:attachment.label||'',note:text,art_url:onboardingArt(attachment)||null,catalog_item:{kind:'text_post',attachment}};
   let result;
   if(feedPostDraft.id)result=await sb.from('activity_feed').update(row).eq('id',feedPostDraft.id).eq('user_id',userId).select('id').single();
   else{
@@ -13760,7 +13823,7 @@ async function publishFeedPost(){
   }
   if(result.error)throw result.error;
   if(currentUser?.id!==userId)return;
-  feedPostDraft={userId,text:'',id:null,saving:false,requestId:null};renderFeedComposer();
+  feedPostDraft={userId,text:'',id:null,saving:false,requestId:null};feedTitleSearch.manual=false;feedTitleSearch.seq++;renderFeedComposer();
   showToast('Update posted');await loadPublicFeed();
   if(viewedProfile?.id===userId)await loadActivityFeedFromSupabase(userId);
  }catch(e){if(currentUser?.id===userId){feedPostDraft.saving=false;renderFeedComposer();document.getElementById('feed-post-status').textContent=e.message||'Could not post. Your draft is still here.';}}
@@ -13770,7 +13833,7 @@ function editFeedTextPost(id){
  const r=feedRows.find(r=>r.id===id)||ACTIVITY_FEED_ITEMS.find(r=>r.id===id);
  if(!r||feedPostDraft.saving)return;
  if(feedPostDraft.text.trim()&&!confirm('Replace your current draft with this post?'))return;
- feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null};goToFeedView();renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});
+ feedTitleSearch.manual=false;feedTitleSearch.seq++;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null};goToFeedView();renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
 }
 async function deleteFeedTextPost(id){
  if(!currentUser||!confirm('Delete this update?'))return;
@@ -13781,7 +13844,7 @@ function feedTextPostHtml(row,profile=false){
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
  const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
  const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
- return `<article class="feed-text-post"><header>${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>${row.user_id===currentUser?.id?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div><footer>${reactionBadgeHtml('activity_feed',row.id)}<button class="sl-btn" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')">Comment${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?' · '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}</button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
+ return `<article class="feed-text-post"><header>${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>${row.user_id===currentUser?.id?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div>${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button class="sl-btn" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')">Comment${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?' · '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}</button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
 }
 
 async function loadPublicFeed() {
