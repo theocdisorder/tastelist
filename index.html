@@ -1334,6 +1334,29 @@
 .feed-composer-bottom{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:18px}.feed-composer-bottom small{color:var(--muted);font-size:11px;line-height:1.6}#feed-post-submit:disabled{opacity:.45;cursor:default}#feed-post-status:empty{display:none}#feed-post-status{color:var(--muted);font-size:13px}
 .feed-text-post{margin-bottom:0;min-width:0}.feed-author{color:var(--text);font-weight:600;font-size:14px;font-family:inherit;background:none;border:0;padding:0;cursor:pointer}.feed-text-post header small{display:block;color:var(--muted);font-size:11px;margin-top:4px}.feed-post-owner{display:flex;gap:6px;margin-left:auto}.feed-post-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:16px;line-height:1.7;color:var(--text);margin:22px 0}.feed-text-post footer{display:flex;align-items:center;gap:16px;border-top:1px solid var(--border);padding-top:14px}
 @media(max-width:600px){.feed-composer-card,.feed-text-post{padding:18px}.feed-composer-top h2{font-size:17px}.feed-post-body{font-size:15px}}
+
+/* Compact composer: one prompt, expanding only as someone writes. */
+.feed-composer-card{padding:18px 20px;margin-bottom:18px}
+.feed-composer-top h2{font-size:17px}
+#feed-post-text{display:block;min-height:64px;height:64px;max-height:180px;resize:none;margin-top:12px;padding:10px 12px;line-height:1.45;font-size:14px;overflow-y:hidden}
+.feed-composer-bottom{margin-top:10px}
+#feed-post-count{display:block;margin-top:3px;color:var(--muted)}
+#feed-post-count[hidden]{display:none}
+@media(max-width:600px){.feed-composer-card{padding:14px}.feed-composer-bottom{gap:10px}.feed-composer-bottom small{font-size:10px}}
+
+.sl-icon-control{width:40px;height:40px;background:transparent;color:var(--text)}
+#sl-actions{align-items:center;flex-wrap:wrap;gap:10px}
+
+/* Keep section titles readable; actions move below rather than squeeze the heading. */
+.recs-section-heading{flex-wrap:wrap;row-gap:12px}
+.recs-section-heading .ed-title{flex:1 0 180px;min-width:0}
+.recs-title-text{white-space:nowrap}
+#recs-head-controls{flex:0 0 auto;max-width:100%}
+#recs-head-controls .ed-primary{white-space:nowrap}
+.defining-picks-panel{margin-bottom:2rem}
+.defining-picks-heading{flex-wrap:wrap;margin-bottom:24px}
+.defining-picks-heading .ed-title{flex:1 1 260px}
+.defining-picks-heading>button{flex:0 0 auto;margin:0}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -2196,10 +2219,13 @@ async function landingArtistArtFallback(imgEl, artistName) {
     </div>
 
     <!-- Defining picks -->
-    <div style="border-radius:14px;padding:22px 24px;background:var(--surface);border:1px solid var(--border);margin-bottom:2rem;">
-      <div id="defining-picks-header" style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:16px;">Sreya&rsquo;s Defining Picks &mdash; tap a box to explore that section</div>
-      <div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="ob-button ob-secondary" onclick="openTasteShare()">Share my TasteList ↗</button></div><div id="profile-picks"></div>
-    </div>
+    <section class="ed-panel defining-picks-panel">
+      <div class="ed-head defining-picks-heading">
+        <h2 id="defining-picks-header" class="ed-title">Your Defining Picks<span class="ed-sub">Tap a box to explore that section</span></h2>
+        <button class="ob-button ob-secondary" onclick="openTasteShare()">Share my TasteList ↗</button>
+      </div>
+      <div id="profile-picks"></div>
+    </section>
 
     <!-- What's New feed + Recommendations -->
     <div class="whatsnew-rec-grid">
@@ -2212,7 +2238,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
       </div>
 
       <div class="ed-panel">
-        <div class="ed-head"><h2 class="ed-title">What’s Next <span class="ed-sub">Things I want to check out</span></h2><div id="recs-head-controls"></div></div>
+        <div class="ed-head recs-section-heading"><h2 class="ed-title"><span class="recs-title-text">What’s Next</span> <span class="ed-sub">Things I want to check out</span></h2><div id="recs-head-controls"></div></div>
         <div id="friend-recs" style="display:flex;flex-direction:column;gap:12px;max-height:640px;overflow-y:auto;padding-right:6px;"></div>
       </div>
     </div>
@@ -4116,7 +4142,7 @@ function profileAvatarSource(profile) {
 function profileAvatarHtml(profile,size=36) {
  const name=profile?.display_name||profile?.name||profile?.username||'?';
  const src=profileAvatarSource(profile);
- return `<span style="position:relative;width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#7C4DFF,#a78bfa);color:#fff;font-weight:700;font-size:${Math.round(size*.4)}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;" aria-label="${esc(name)}">${esc(initials(name))}${src?`<img src="${esc(src)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.remove()">`:''}</span>`;
+ return `<span style="position:relative;width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#7C4DFF,#a78bfa);color:#fff;font-weight:700;font-size:${Math.round(size*.4)}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;" aria-label="${esc(name)}">${esc(initials(name))}${src?`<img src="${esc(src)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;${src===TRANSFERRED_SREYA_AVATAR?'transform:rotate(180deg);':''}" onerror="this.remove()">`:''}</span>`;
 }
 
 function personAvatarHtml(p,size=36){return profileAvatarHtml(p,size);}
@@ -5140,6 +5166,7 @@ function updateProfileHeaderAndBanner() {
     avatarImg.onerror=()=>{avatarImg.style.display='none';avatarBlank.style.display='';};
     avatarBlank.textContent=initials(viewedProfile?.display_name||viewedProfile?.username||'?');
     avatarImg.style.display=src?'':'none';avatarBlank.style.display=src?'none':'';
+    avatarImg.style.transform=src===TRANSFERRED_SREYA_AVATAR?'rotate(180deg)':'';
     if(src)avatarImg.src=src;else avatarImg.removeAttribute('src');
   }
 
@@ -12187,11 +12214,9 @@ function renderTasteListHeader(flat) {
     byline.innerHTML = `${avatar}<div><div class="sl-byline-name">${owner?.username ? `<a href="javascript:void(0)" onclick="goToProfile('${esc(owner.username)}')" style="color:inherit;text-decoration:none;">${esc(name)}</a>` : esc(name)}</div><div class="sl-byline-meta">${meta}</div></div>`;
   }
   const actions = document.getElementById('sl-actions');
-  if (actions) actions.innerHTML = canEditTasteList ? (editMode
-    ? `<button class="sl-btn" onclick="openTasteItemForm()">+ Add item</button><button class="sl-btn primary" onclick="toggleEditMode()">✓ Done</button>`
-    : `<button class="sl-btn primary" onclick="openTasteItemForm()">+ Add item</button><button class="sl-btn" onclick="toggleEditMode()">✎ Edit</button>`) : '';
-  if(actions && list?.isOwner)actions.innerHTML += `<button class="sl-btn" onclick="deleteSharedTasteList('${jsStr(list.id)}')">Delete list</button>`;
-  if(actions && list)actions.innerHTML += `<button type="button" class="sl-btn" onclick="openSharedListShare()">Share list ↗</button>`;
+  if (actions) actions.innerHTML = (canEditTasteList ? `<button type="button" class="sl-btn primary" onclick="openTasteItemForm()">+ Add item</button><button type="button" class="list-icon-control sl-icon-control" aria-label="${editMode?'Done editing':'Edit list'}" title="${editMode?'Done editing':'Edit list'}" aria-pressed="${editMode}" onclick="toggleEditMode()">${listActionIcon(editMode?'done':'edit')}</button>` : '')
+    + (list?.isOwner ? `<button type="button" class="list-icon-control sl-icon-control" aria-label="Delete list" title="Delete list" onclick="deleteSharedTasteList('${jsStr(list.id)}')">${listActionIcon('trash')}</button>` : '')
+    + (list ? `<button type="button" class="sl-btn" onclick="openSharedListShare()">Share list ↗</button>` : '');
   const bg = document.getElementById('sl-hero-bg');
   if (bg) {
     const pick = flat.find(i => i.backdrop) || flat.find(i => ['movies', 'tv'].includes(i.cat) && i.art) || flat.find(i => i.art);
@@ -13415,9 +13440,11 @@ function renderFeedComposer(){
  const host=document.getElementById('feed-composer');if(!host)return;
  if(!currentUser){host.innerHTML='';return;}
  if(feedPostDraft.userId!==currentUser.id)feedPostDraft={userId:currentUser.id,text:'',id:null,saving:false,requestId:null};
- host.innerHTML=`<section class="feed-composer-card" aria-label="Write a TasteList update"><div class="feed-composer-top">${profileAvatarHtml(currentProfile,42)}<div><h2>${feedPostDraft.id?'Edit your update':'Share what you love'}</h2><p>A good recommendation starts a conversation.</p></div></div><label class="sr-only" for="feed-post-text">Your update</label><textarea id="feed-post-text" rows="3" maxlength="3000" placeholder="${esc(FEED_POST_PROMPTS[0])}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea><div class="feed-post-prompts" aria-label="Ideas for your update">${FEED_POST_PROMPTS.slice(1).map((p,i)=>`<button type="button" onclick="useFeedPostPrompt(${i+1})">${esc(p)}</button>`).join('')}</div><div class="feed-composer-bottom"><small>Visible to people who can view your profile.<br><span id="feed-post-count">${feedPostDraft.text.length}</span>/3,000</small><div>${feedPostDraft.id?'<button class="sl-btn" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="ed-primary" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post'}</button></div></div><p id="feed-post-status" role="status" aria-live="polite"></p></section>`;
+ host.innerHTML=`<section class="feed-composer-card" aria-label="Write a TasteList update"><div class="feed-composer-top">${profileAvatarHtml(currentProfile,42)}<div><h2>${feedPostDraft.id?'Edit your update':'Share what you love'}</h2></div></div><textarea id="feed-post-text" aria-label="Write an update" rows="2" maxlength="3000" placeholder="${esc(FEED_POST_PROMPTS[0])}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea><div class="feed-composer-bottom"><small>Visible to people who can view your profile.<span id="feed-post-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span></small><div>${feedPostDraft.id?'<button class="sl-btn" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="ed-primary" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post'}</button></div></div><p id="feed-post-status" role="status" aria-live="polite"></p></section>`;
+ sizeFeedPostInput();
 }
-function updateFeedPostDraft(text){feedPostDraft.text=text;document.getElementById('feed-post-count').textContent=text.length;document.getElementById('feed-post-submit').disabled=!text.trim()||text.length>3000||feedPostDraft.saving;}
+function sizeFeedPostInput(){const input=document.getElementById('feed-post-text');if(!input)return;input.style.height='auto';input.style.height=Math.min(180,Math.max(64,input.scrollHeight))+'px';input.style.overflowY=input.scrollHeight>180?'auto':'hidden';}
+function updateFeedPostDraft(text){feedPostDraft.text=text;const count=document.getElementById('feed-post-count');count.hidden=text.length<2800;count.textContent=text.length.toLocaleString()+' / 3,000';sizeFeedPostInput();document.getElementById('feed-post-submit').disabled=!text.trim()||text.length>3000||feedPostDraft.saving;}
 function useFeedPostPrompt(i){const input=document.getElementById('feed-post-text');input.placeholder=FEED_POST_PROMPTS[i];input.focus();}
 function cancelFeedPostEdit(){if(feedPostDraft.saving)return;feedPostDraft.text='';feedPostDraft.id=null;feedPostDraft.requestId=null;renderFeedComposer();}
 async function publishFeedPost(){
@@ -13945,10 +13972,10 @@ function renderFriendRecs() {
   if (!el) return;
   // Always available to the owner — adding a recommendation shouldn't require finding Edit first.
   const addBtnHtml = isOwnProfile ? `
-    <button class="list-create-cta" onclick="openPasteRecommendations()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Paste a recommendation</button>` : '';
+    <button class="list-create-cta" onclick="openPasteRecommendations()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
   if (!FRIEND_RECOMMENDATIONS.length) {
     const hc = document.getElementById('recs-head-controls');
-    if (hc) hc.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Paste a recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Paste a recommendation</button>` : '';
+    if (hc) hc.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add recommendation</button>` : '';
     el.innerHTML = `
       <div style="text-align:center;padding:36px 16px;">
         <div style="width:44px;height:44px;border-radius:12px;background:#7C4DFF1c;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
@@ -13960,7 +13987,7 @@ function renderFriendRecs() {
     return;
   }
   const headCtl = document.getElementById('recs-head-controls');
-  if (headCtl) headCtl.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Paste a recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Paste a recommendation</button>` : '';
+  if (headCtl) headCtl.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add recommendation</button>` : '';
   // Collapsed view: one compact strip of covers per category so the panel fits beside What's New.
   // "See all" opens the expanded view, styled like a shared list page.
   const groups = friendRecGroups();
@@ -14532,7 +14559,7 @@ function renderProfileTab() {
   if (headerEl) {
     const rawName = firstNameOnly(viewedProfile?.display_name) || viewedProfile?.username || 'Your';
     headerEl.hidden=false;
-    headerEl.textContent = `${isOwnProfile ? 'Your' : possessiveName(rawName)} Defining Picks — tap a box to explore that section`;
+    headerEl.innerHTML = `${esc(isOwnProfile ? 'Your' : possessiveName(rawName))} Defining Picks<span class="ed-sub">Tap a box to explore that section</span>`;
   }
 
   // Render placeholders immediately
