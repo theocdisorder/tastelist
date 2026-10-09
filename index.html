@@ -1370,6 +1370,9 @@
 .feed-title-picker{margin:12px 0 0 54px}.feed-title-picker label{display:block;font-size:12px;margin-bottom:6px;color:var(--text)}.feed-title-picker label span,.feed-title-picker small,.feed-post-attachment small{color:var(--muted)}.feed-title-picker small,.feed-post-attachment small{display:block;font-size:12px;margin-top:4px}
 .feed-title-matches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:280px;overflow:auto}.feed-title-matches button,.feed-title-attached{display:flex;align-items:center;gap:12px;padding:10px;text-align:left;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit}.feed-title-matches button{cursor:pointer}.feed-title-attached>span{flex:1}.feed-title-picker img,.feed-title-placeholder{width:44px;height:60px;object-fit:contain;flex-shrink:0}.feed-title-picker p{font-size:12px;color:var(--muted)}.feed-post-attachment{display:flex;align-items:center;gap:18px;background:var(--surface);padding:16px;border:1px solid var(--border);border-radius:12px;margin-bottom:18px}.feed-post-attachment img{width:100px;height:140px;object-fit:contain}.feed-title-picker img[hidden],.feed-post-attachment img[hidden]{display:none}
 @media(max-width:600px){.feed-title-picker{margin-left:0}.feed-title-matches{grid-template-columns:1fr}}
+
+.status-card-controls{display:flex;gap:6px;float:right;margin:0 0 8px 12px;position:relative;z-index:2}
+.status-card-controls .list-icon-control{width:30px;height:30px}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -2244,7 +2247,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div id="profile-locked-message" style="display:none;"></div>
 
     <div id="profile-onboarding-resume" hidden style="margin:0 0 24px;">
-      <button type="button" class="ob-button" onclick="resumeOnboarding()">Finish setting up your profile →</button>
+      <button type="button" class="ob-button" onclick="openProfileMediaPicker()">Add more favorites →</button>
     </div>
     <div id="profile-loading-placeholder" style="padding:64px 24px;text-align:center;color:var(--faint);font-size:13px;">Loading…</div>
     <div id="profile-welcome-banner" style="display:none;"></div>
@@ -4671,9 +4674,30 @@ function handleOAuthReturnError() {
 }
 document.addEventListener('DOMContentLoaded', () => setTimeout(handleOAuthReturnError, 0));
 
+let returningToSignedOutHome = false;
+function returnToSignedOutHome() {
+  if (returningToSignedOutHome) return;
+  returningToSignedOutHome = true;
+  // A fresh page clears the old feed, profile banner, and in-flight account UI.
+  try {
+    sessionStorage.removeItem('tl_join_intent');
+    sessionStorage.removeItem('tl_onboarding_return_list');
+  } catch (_) {}
+  const home = location.protocol === 'file:'
+    ? location.href.split(/[?#]/)[0]
+    : location.origin + '/';
+  location.replace(home);
+}
+
 async function signOut() {
   if (!sb) return;
-  await sb.auth.signOut();
+  try {
+    const { error } = await sb.auth.signOut();
+    if (error) throw error;
+    returnToSignedOutHome();
+  } catch (error) {
+    showToast('Could not sign out. Please try again.');
+  }
 }
 
 async function loadCurrentProfile() {
@@ -7489,8 +7513,7 @@ function renderProfileOnboardingResume() {
   const el = document.getElementById('profile-onboarding-resume');
   if (!el) return;
   el.hidden = !(profileFavoritesLoaded && collectConstellationFavorites().length > 0 &&
-    currentUser && isOwnProfile && viewedProfile?.id === currentUser.id &&
-    onboardingUserId === currentUser.id && ['pending', 'skipped'].includes(onboardingState?.status));
+    currentUser && isOwnProfile && viewedProfile?.id === currentUser.id);
 }
 async function resumeOnboarding() {
   if (!currentUser || onboardingUserId !== currentUser.id ||
@@ -7573,6 +7596,14 @@ async function initAuth() {
     const isRealUserChange = newUserId !== lastAuthUserId;
     lastAuthUserId = newUserId;
     currentUser = session?.user || null;
+
+    // Also reset this tab when sign-out happens in another tab. Initial anonymous
+    // visits must still be able to open profile and shared-list invitation links.
+    if (event === 'SIGNED_OUT' && isRealUserChange && !newUserId) {
+      returnToSignedOutHome();
+      return;
+    }
+    if (returningToSignedOutHome) return;
 
     if (!isRealUserChange && event !== 'SIGNED_OUT') {
       // Nothing actually changed about who's signed in — just keep the displayed name current
@@ -13727,11 +13758,24 @@ async function onboardingGoAddFavorites() {
   goToFavorites('music');
 }
 
-// Used only by the welcome takeover below, which is already showing on the Profile tab — opens
-// the real add-artist modal directly rather than navigating to Music (whose tab button is
-// hidden while the welcome takeover is up anyway; see renderProfileTab).
+// The same mixed-media picker is available after setup, including emptied accounts.
+async function openProfileMediaPicker() {
+  if (!currentUser || !isOwnProfile || viewedProfile?.id !== currentUser.id) return;
+  if (onboardingVisualState().saving) return;
+  const userId = currentUser.id;
+  await goToMyProfileView();
+  if (currentUser?.id !== userId || viewedProfile?.id !== userId) return;
+  // Returning users can add more picks without changing their normal Feed landing page.
+  if (onboardingState?.status === 'completed') onboardingState.defaultToFeed = true;
+  saveOnboardingProgress('pending', 0);
+  onboardingAddAnother();
+  const el = document.getElementById('view-onboarding-container');
+  if (el) delete el.dataset.signature;
+  setTopView('onboarding');
+  document.getElementById('ob-search')?.focus();
+}
 function onboardingOpenArtistModal() {
-  openArtistItemForm(undefined, 'top5');
+  return openProfileMediaPicker();
 }
 
 async function onboardingGoAddMovies() {
@@ -13748,13 +13792,11 @@ async function onboardingGoAddUpdate() {
 function renderWelcomeBanner() {
   const el = document.getElementById('profile-welcome-banner');
   if (!el) return;
-  const canResume = currentUser && onboardingUserId === currentUser.id &&
-    ['pending', 'skipped'].includes(onboardingState?.status);
   el.innerHTML = `
     <div class="profile-setup-panel" style="text-align:center;padding:52px 24px 56px;">
       <div style="font-size:26px;font-weight:700;letter-spacing:-0.3px;color:var(--text);margin-bottom:8px;">Let's build your taste list</div>
-      <div style="font-size:14px;color:var(--muted);max-width:420px;margin:0 auto 24px;line-height:1.6;">Add a few things you love and your profile will start to feel like yours.</div>
-      <button type="button" class="ob-button ob-primary" onclick="${canResume ? 'resumeOnboarding()' : 'onboardingOpenArtistModal()'}">${canResume ? 'Finish setting up your profile' : 'Add your first favorite'} →</button>
+      <div style="font-size:14px;color:var(--muted);max-width:420px;margin:0 auto 24px;line-height:1.6;">Search artists, albums, movies, TV shows, books and podcasts. Choose a few things you love to make this profile yours.</div>
+      <button type="button" class="ob-button ob-primary" onclick="openProfileMediaPicker()">Add your first favorites →</button>
     </div>`;
 }
 
@@ -13841,6 +13883,12 @@ async function deleteFeedTextPost(id){
  await loadPublicFeed();if(viewedProfile?.id===currentUser.id)await loadActivityFeedFromSupabase(currentUser.id);
 }
 function feedTextPostHtml(row,profile=false){
+ const attachment=row.catalog_item?.attachment;
+ if(attachment){
+  const type=['artist','album'].includes(attachment.kind)?'song':attachment.kind;
+  return publicActivityCardHtml({...row,type,label:attachment.title,sub:[attachment.label,attachment.artist||attachment.author,attachment.year].filter(Boolean).join(' · '),art_url:onboardingArt(attachment)||row.art_url||'',catalog_item:{...row.catalog_item,kind:'attached_status_display'},_editableStatus:true},profile);
+ }
+
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
  const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
  const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
@@ -14043,8 +14091,8 @@ function activityArtWrap(src, inner) {
     : `<div class="activity-card-art">${inner}</div>`;
 }
 
-function publicActivityCardHtml(row) {
-  if(row.catalog_item?.kind==='text_post')return feedTextPostHtml(row);
+function publicActivityCardHtml(row,profile=false) {
+  if(row.catalog_item?.kind==='text_post')return feedTextPostHtml(row,profile);
   const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
   const typeIcon = badgeIcon(meta.icon, 13);
   const note = row.note ? `<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:8px;">${renderActivityNote(row.note)}</div>` : '';
@@ -14053,7 +14101,7 @@ function publicActivityCardHtml(row) {
       Array(Math.max(0, 4 - row._mosaicArt.length)).fill(`<div style="background:${meta.color}18;"></div>`).join('')
     : '';
   const art = row.art_url
-    ? `<img src="${row.art_url}" class="activity-card-art-img" style="display:block;" onerror="this.style.display='none'">`
+    ? `<img src="${esc(row.art_url)}" class="activity-card-art-img" style="display:block;" onerror="this.style.display='none'">`
     : mosaicCells
       ? `<div class="activity-card-art-img activity-card-mosaic" style="display:grid;gap:2px;">${mosaicCells}</div>`
       : `<div class="activity-card-art-img activity-card-art-empty" style="background:${meta.color}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(meta.icon,42)}</div>`;
@@ -14062,11 +14110,14 @@ function publicActivityCardHtml(row) {
   const whoDisplay = firstNameOnly(who);
   const uname = row.profiles.username;
   const commentCount = (COMMENT_CACHE[engagementKey('activity_feed', row.id)] || {}).count || '';
-  const commentsOpen = openFeedCommentPanels.has(row.id);
+  const commentsOpen = (profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
+  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
+  const ownerControls=row._editableStatus&&row.user_id===currentUser?.id?`<div class="status-card-controls" onclick="event.stopPropagation()"><button type="button" class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button type="button" class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:'';
   return `<div class="activity-card" style="position:relative;cursor:pointer;background:var(--surface2);border:1px solid var(--border);" onclick="goToProfile('${esc(uname)}')" onmouseover="this.style.borderColor='${meta.color}55'" onmouseout="this.style.borderColor='var(--border)'">
     ${activityArtWrap(ART_SRC, art)}
     <div class="activity-card-body">
-      <table style="border-collapse:collapse;width:100%;"><tr><td style="vertical-align:middle;width:38px;padding:0;">${publicFeedAvatarHtml(who)}</td><td style="vertical-align:middle;padding:0 0 0 10px;">
+      ${ownerControls}
+      <table style="border-collapse:collapse;width:100%;${ownerControls?'padding-right:88px;':''}"><tr><td style="vertical-align:middle;width:38px;padding:0;">${publicFeedAvatarHtml(who)}</td><td style="vertical-align:middle;padding:0 0 0 10px;">
         <div style="font-size:13.5px;font-weight:600;color:var(--text);">${esc(whoDisplay)}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);">${formatActivityDate(row.activity_date)}</div>
       </td></tr></table>
@@ -14078,11 +14129,11 @@ function publicActivityCardHtml(row) {
       ${note}
       <div style="display:flex;align-items:center;gap:14px;margin-top:8px;" onclick="event.stopPropagation()">
         ${reactionBadgeHtml('activity_feed', row.id)}
-        <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;" onclick="toggleFeedComments('${row.id}')">
+        <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;" role="button" tabindex="0" aria-label="Comments" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${row.id}')">
           <span>💬</span><span>${commentCount}</span>
         </span>
       </div>
-      <div id="inline-comments-activity_feed-${row.id}" style="display:${commentsOpen ? 'block' : 'none'};margin:8px -20px -18px;" onclick="event.stopPropagation()">${commentsOpen ? commentsSectionHtml('activity_feed', row.id) : ''}</div>
+      <div id="${panelId}" style="display:${commentsOpen ? 'block' : 'none'};margin:8px -20px -18px;" onclick="event.stopPropagation()">${commentsOpen ? commentsSectionHtml('activity_feed', row.id) : ''}</div>
     </div>
   </div>`;
 }
@@ -14604,10 +14655,10 @@ function renderTastePoster() {
 }
 async function shareTastePoster() {
  const username=viewedProfile?.username;if(!username)return;
- const url='https://tastelist.app/?u='+encodeURIComponent(username);
+ const url=tasteShareUrl();
  const title=(firstNameOnly(viewedProfile.display_name)||username)+"’s Taste List";
- try{if(navigator.share)await navigator.share({title,text:'You are what you love.',url});else {await navigator.clipboard.writeText(url);document.getElementById('taste-poster-share-status').textContent='Profile link copied';}}
- catch(error){if(error.name!=='AbortError')document.getElementById('taste-poster-share-status').textContent='Could not share. Your profile link: '+url;}
+ try{if(navigator.share)await navigator.share({title,text:'You are what you love.',url});else {await navigator.clipboard.writeText(url);document.getElementById('taste-poster-share-status').textContent='TasteList signup link copied';}}
+ catch(error){if(error.name!=='AbortError')document.getElementById('taste-poster-share-status').textContent='Could not share. TasteList signup link: '+url;}
 }
 
 let activeListInvite=null,joinedInviteList=null;
@@ -14735,7 +14786,7 @@ async function openSharedListRoute(){
 }
 
 let tasteShareAsset=null,tasteShareRevision=0;
-function tasteShareUrl(){return 'https://tastelist.app/?u='+encodeURIComponent(viewedProfile?.username||'');}
+function tasteShareUrl(){return 'https://tastelist.app/';}
 function openTasteShare() {
  if(isLockedProfile()||!viewedProfile?.username)return;
  const host=document.getElementById('profile-picks');
