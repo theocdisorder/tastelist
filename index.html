@@ -1933,6 +1933,14 @@ td.songs-table-links[data-listen] { display: table-cell; vertical-align: middle;
 /* Section summaries: AI taste portrait */
 .bio-portrait-headline { font-family: var(--ob-serif) !important; font-size: clamp(19px, 2vw, 22px); font-weight: 600; line-height: 1.25; letter-spacing: -.01em; color: #f2efe9; margin: 0 0 8px !important; text-wrap: balance; }
 .bio-portrait-summary { margin: 0 !important; line-height: 1.6; text-wrap: pretty; }
+
+/* Name links on feed cards: 44px tap area on touch screens without shifting the layout */
+@media (pointer: coarse) { .activity-card a[href^="?u="] { display: inline-block; padding: 15px 6px; margin: -15px -6px; } }
+/* Activity cards open their summary from anywhere on the card */
+.activity-card:has(.activity-summary-title) { cursor: pointer; }
+/* Listen button: ▶ Listen and the service switcher stay on one row (phones were stacking them) */
+.stream-links[data-listen] { flex-direction: row !important; flex-wrap: nowrap; align-items: stretch; }
+.stream-links[data-listen] .listen-switch { flex: 0 0 auto; }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -4877,6 +4885,7 @@ async function loadActivityFeedFromSupabase(userId) {
         note: row.note || '',
         timestamp: formatActivityDate(row.activity_date),
         rawDate: row.activity_date,
+        user_id: row.user_id || viewedProfile?.id,
         art: row.art_url || '',
         catalogItem: row.catalog_item || null,
       };
@@ -14136,6 +14145,18 @@ function activityArtWrap(src, inner) {
     : `<div class="activity-card-art">${inner}</div>`;
 }
 
+
+// Clicking anywhere on an activity card opens its summary (not only the title). Anything inside the
+// card that does its own thing — names, likes, comments, edit/delete, links, form fields — keeps it.
+document.addEventListener('click', e => {
+  if (e.defaultPrevented || e.button !== 0) return;
+  const card = e.target.closest('.activity-card');
+  if (!card) return;
+  if (e.target.closest('button, a, input, textarea, select, label, summary, [contenteditable="true"], [role="button"], .tl-sort-handle, [id*="comment"], [class*="comment"]')) return;
+  if (String(window.getSelection?.() || '').trim()) return;          // they were selecting text
+  card.querySelector('.activity-summary-title')?.click();
+});
+
 const summaryFeedRows = new Map();
 function openFeedItemSummary(id) {
   const row=summaryFeedRows.get(id);if(!row)return;
@@ -14265,10 +14286,39 @@ function activitySummaryHtml(item, summary, loading) {
     </div>`;
 }
 
+// List announcements navigate to their actual list; media titles open a synopsis.
+let listAnnouncementRequest = 0;
+async function openAnnouncedSharedList(item) {
+  const request=++listAnnouncementRequest;
+  const catalog=item.catalog_item||item.catalogItem||{};
+  let listId=catalog.list_id||catalog.listId||item.list_id||item.listId;
+  try {
+    if(!listId){
+      const ownerId=item.user_id;
+      const title=String(item.label||item.title||'').trim();
+      if(!ownerId||!title||!sb)throw Error('This list link is unavailable.');
+      // Older announcements store only the title. Resolve within that author's lists,
+      // under normal database permissions, never their newest or someone else's list.
+      const {data,error}=await sb.from('taste_lists').select('id,title').eq('user_id',ownerId).eq('title',title).limit(2);
+      if(error)throw error;
+      if(!data?.length)throw Error('This list is unavailable or you do not have access.');
+      if(data.length!==1)throw Error('More than one list has this title. Open the author’s Shared Lists to choose it.');
+      listId=data[0].id;
+    }
+    if(request!==listAnnouncementRequest)return;
+    location.assign(sharedListUrl(listId));
+  } catch(error) {
+    if(request===listAnnouncementRequest)showToast(error.message||'Could not open this shared list. Please try again.');
+  }
+}
+
 async function openActivitySummary(globalIndex) {
   const sharedModal=document.getElementById('activity-summary-modal');if(sharedModal)delete sharedModal.dataset.sharedRequest;
   const item = typeof globalIndex==='object'?globalIndex:ACTIVITY_FEED_ITEMS[globalIndex];
   if (!item) return;
+  if(item.type==='list'||summaryIdentity(item).kind==='list') {
+    return openAnnouncedSharedList(item);
+  }
   const modal = document.getElementById('activity-summary-modal');
   const content = document.getElementById('activity-summary-content');
   if (!modal || !content) return;
