@@ -1357,6 +1357,9 @@
 .defining-picks-heading{flex-wrap:wrap;margin-bottom:24px}
 .defining-picks-heading .ed-title{flex:1 1 260px}
 .defining-picks-heading>button{flex:0 0 auto;margin:0}
+
+.ob-art img[hidden]{display:none!important}
+.ob-book-art{position:relative}.ob-book-art img{position:absolute;inset:0;object-fit:contain}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -6783,7 +6786,34 @@ function onboardingArt(item) {
 }
 function onboardingArtwork(item, extra = '') {
   const art = onboardingArt(item);
+  if(item.kind==='book'||item.medium==='Books') {
+   const title=item.title||item.name||'',author=item.author||'';
+   if(!art)requestAnimationFrame(()=>document.querySelectorAll('img[data-ob-book][data-needs-cover]').forEach(img=>onboardingCoverFallback(img)));
+   return `<div class="ob-art ob-book-art ${extra}"><span>${esc(title.slice(0,1))}</span><img ${art?`src="${esc(art)}"`:'data-needs-cover="1" hidden'} data-ob-book="${esc(title)}" data-ob-author="${esc(author)}" alt="" loading="lazy" onerror="onboardingCoverFallback(this)" onload="if(this.naturalWidth<10)onboardingCoverFallback(this)"></div>`;
+  }
   return `<div class="ob-art ${extra}">${art ? `<img src="${esc(art)}" alt="" loading="lazy" onerror="this.style.display='none'">` : `<span>${esc((item.title || item.name || '?').slice(0,1))}</span>`}</div>`;
+}
+const onboardingBookFallbackCache=new Map();
+async function onboardingCoverFallback(img){
+ if(img.dataset.tried)return;img.dataset.tried='1';img.hidden=true;
+ const title=img.dataset.obBook,author=img.dataset.obAuthor||'';
+ const key=JSON.stringify([title,author]);
+ if(!onboardingBookFallbackCache.has(key))onboardingBookFallbackCache.set(key,(async()=>{
+  try{
+   const d=await onboardingSearchJSON('https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent('intitle:'+title+(author?' inauthor:'+author:''))+'&maxResults=6');
+   const v=(d.items||[]).map(x=>x.volumeInfo).find(x=>starterNorm(x.title)===starterNorm(title)&&(!author||(x.authors||[]).some(a=>starterNorm(a)===starterNorm(author))));
+   return (v?.imageLinks?.thumbnail||'').replace('http:','https:');
+  }catch(_){return '';}
+ })());
+ const url=await onboardingBookFallbackCache.get(key);if(!url){onboardingBookFallbackCache.delete(key);return;}
+ if(!img.isConnected)return;
+ img.onerror=()=>{img.hidden=true;};img.onload=()=>{
+  if(img.naturalWidth<10){img.hidden=true;return;}img.hidden=false;
+  // A selected result is a copy: update both the result and its pending selection.
+  const state=onboardingVisualState();
+  for(const item of [...state.results,...state.pending,...(onboardingStarterView.rows||[]).map(r=>r.item).filter(Boolean)])if(item.kind==='book'&&item.title===title&&(item.author||'')===author)item.art=url;
+ };
+ img.src=url;
 }
 function renderOnboardingJourney() {
   const el = document.getElementById('view-onboarding-container');
@@ -6887,7 +6917,7 @@ async function runOnboardingSearch() {
     if(kind==='book') {
       const response=await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=6&fields=key,title,author_name,cover_i,first_publish_year`);
       if(!response.ok)throw new Error('Book search unavailable');data=await response.json();
-      return (data.docs||[]).map(r=>({kind,id:r.key,title:r.title,author:r.author_name?.[0]||'',label:'Book',year:String(r.first_publish_year||''),art:preferredBookCover(r.title,r.author_name?.[0]||'')}));
+      return (data.docs||[]).map(r=>({kind,id:r.key,title:r.title,author:r.author_name?.[0]||'',label:'Book',year:String(r.first_publish_year||''),art:preferredBookCover(r.title,r.author_name?.[0]||'')||(r.cover_i?`https://covers.openlibrary.org/b/id/${r.cover_i}-L.jpg?default=false`:'')}));
     }
     const response=await tmdbFetch(`/search/${kind}?query=${encodeURIComponent(q)}&page=1`);
     if(!response.ok)throw new Error('Screen search unavailable');data=await response.json();
@@ -7325,7 +7355,7 @@ async function saveOnboardingItem(item,userId) {
       table='favorite_albums';row={user_id:userId,category,name:item.title,artist:item.artist,genre:item.genre||null,year:item.year||null,sort_order:(CUSTOM_LISTS.albums[category]||[]).length,songs:[]};
       local={name:item.title,artist:item.artist,genre:item.genre||'',year:item.year||'',coverPhoto:item.art,tilePhoto:item.art,songs:[]};
     } else if(item.kind==='book') {
-      item.art=await fetchBookCover(item.title,item.author);
+      if(!item.art){try{item.art=await fetchBookCover(item.title,item.author);}catch(_){item.art='';}}
       table='favorite_books';row={user_id:userId,category,title:item.title,author:item.author,year:item.year||null,cover_url:item.art||null,sort_order:(CUSTOM_LISTS.books[category]||[]).length};
       local={title:item.title,author:item.author,year:item.year,cover:item.art};
     } else {
