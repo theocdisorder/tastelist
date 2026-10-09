@@ -1373,6 +1373,9 @@
 
 .status-card-controls{display:flex;gap:6px;float:right;margin:0 0 8px 12px;position:relative;z-index:2}
 .status-card-controls .list-icon-control{width:30px;height:30px}
+.activity-summary-title{font:inherit;color:inherit;text-align:left;background:none;border:0;padding:0;cursor:pointer;line-height:inherit;}
+.activity-summary-title:hover{text-decoration:underline;text-underline-offset:3px;}
+.activity-summary-title:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:3px;}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -4861,7 +4864,8 @@ async function loadActivityFeedFromSupabase(userId) {
 
     ACTIVITY_FEED_ITEMS.length = 0;
     data.forEach(row => {
-      const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
+      summaryFeedRows.set(String(row.id),row);
+  const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
       const item = {
         id: row.id,
         label: row.label,
@@ -6763,7 +6767,7 @@ const starterNorm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,
 async function resolveOnboardingStarter(seed) {
  const [kind,title,year,creator]=seed;let candidates=[];
  if(kind==='movie'||kind==='tv') {
-  const response=await tmdbFetch(`/search/${kind}?query=${encodeURIComponent(title)}&page=1`);
+  const response=await tmdbFetch(`/search/${screenKind}?query=${encodeURIComponent(title)}&page=1`);
   if(!response.ok)throw Error('Catalog unavailable');const data=await response.json();
   candidates=(data.results||[]).map(r=>({kind,id:r.id,title:r.title||r.name,year:(r.release_date||r.first_air_date||'').slice(0,4),poster:r.poster_path||'',label:kind==='movie'?'Movie':'TV show'}));
  } else if(kind==='book') {
@@ -12815,14 +12819,16 @@ function sharedBookKey(value) {
   return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 }
 function sharedBookMatches(title, author, foundTitle, foundAuthors) {
-  const key = sharedBookKey(title), actual = sharedBookKey(String(foundTitle || '').split(':')[0]);
+  const normalizeTitle = value => sharedBookKey(String(value || '').split(':')[0].replace(/^the\s+/i, ''));
+  const key = normalizeTitle(title), actual = normalizeTitle(foundTitle);
   return key === actual && (!author || (foundAuthors || []).some(a => sharedBookKey(a) === sharedBookKey(author)));
 }
 const SHARED_BOOK_FALLBACKS = {
+  lionwomenoftehran: {author:'Marjan Kamali', art:'https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1719409771i/199798217.jpg', summary:'Ellie and Homa form a close friendship as girls in Tehran. Across decades of social and political change in Iran, their lives take different paths, testing their bond through questions of loyalty, courage, and the lasting influence of childhood friendships.', source:'https://www.simonandschuster.com/books/The-Lion-Women-of-Tehran/Marjan-Kamali/9781668036587'},
   sooldsoyoung: {author:'Grant Ginder', art:'https://d28hgpri8am2if.cloudfront.net/book_images/onix/cvr9781668051771/so-old-so-young-9781668051771_lg.jpg', summary:'Six college friends reunite at five parties over twenty years. As careers, relationships, and family life change, their friendships are tested by distance, disappointment, and the effort of growing older together.', source:'https://www.simonandschuster.com/books/So-Old-So-Young/Grant-Ginder/9781668051771'}
 };
 function sharedBookFallback(title, author) {
-  const hit = SHARED_BOOK_FALLBACKS[sharedBookKey(title)];
+  const hit = SHARED_BOOK_FALLBACKS[sharedBookKey(title)] || SHARED_BOOK_FALLBACKS[sharedBookKey(String(title||'').split(':')[0].replace(/^the\s+/i,''))];
   return hit && (!author || sharedBookKey(author) === sharedBookKey(hit.author)) ? hit : null;
 }
 async function sharedCatalogJSON(url) {
@@ -12837,7 +12843,8 @@ async function sharedBookMetadata(title, rawAuthor) {
   try {
     const q = `intitle:"${title}"${author ? ` inauthor:"${author}"` : ''}`;
     const data = await sharedCatalogJSON(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8`);
-    const hit = (data.items || []).map(i=>i.volumeInfo).find(i=>sharedBookMatches(title,author,i.title,i.authors));
+    const matches = (data.items || []).map(i=>i.volumeInfo).filter(i=>i&&sharedBookMatches(title,author,i.title,i.authors));
+    const hit = matches.find(i=>i.description) || matches[0];
     if (hit) { result.art=(hit.imageLinks?.thumbnail || hit.imageLinks?.smallThumbnail || '').replace('http:','https:'); result.summary=hit.description || ''; result.source=hit.infoLink || ''; }
   } catch (_) {}
   if (!result.art || !result.summary) try {
@@ -12875,6 +12882,13 @@ async function persistTasteItemArt(itemId, artUrl) {
 // the page's description fits the kind of thing (a novel, a film, a TV series…) so a same-named
 // person or place doesn't slip in.
 const WIKI_KIND = {
+  game: { re: /video game|computer game|board game|role-playing game/i, suffixes: ['(video game)', '(board game)'] },
+  special: { re: /stand.up|comedy special|comedy film/i, suffixes: ['(comedy special)', '(film)'] },
+  comedian: { re: /comedian|comic|humorist/i, suffixes: ['(comedian)'] },
+  article: { re: /article|essay/i, suffixes: ['(article)', '(essay)'] },
+  artist: { re: /band|singer|musician|rapper|musical group|duo|composer/i, suffixes: ['(band)', '(musician)', '(singer)'] },
+  album: { re: /album|extended play| EP /i, suffixes: ['(album)', '(EP)'] },
+  song: { re: /song|single/i, suffixes: ['(song)', '(single)'] },
   book: { re: /novel|novella|novelette|book|short story|story|memoir|collection|poetry|non-?fiction/i, suffixes: ['(novel)', '(book)', '(novelette)', '(short story)', '(memoir)'] },
   film: { re: /film|movie/i, suffixes: ['(film)'] },
   tv: { re: /television|tv series|series|sitcom|miniseries|show/i, suffixes: ['(TV series)', '(American TV series)', '(miniseries)'] },
@@ -12886,13 +12900,14 @@ async function wikiSummary(title, kind, creator) {
   const key = `${kind}|${title}|${creator || ''}`.toLowerCase();
   if (wikiCache.has(key)) return wikiCache.get(key);
   const job = (async () => {
-    const k = WIKI_KIND[kind] || WIKI_KIND.book;
+    const k = WIKI_KIND[kind];
+    if(!k)return null;
     const last = String(creator || '').trim().split(/\s+/).pop()?.toLowerCase() || '';
     for (const t of [title, ...k.suffixes.map(sfx => `${title} ${sfx}`)]) {
       try {
         const d = await sharedCatalogJSON(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t.replace(/ /g, '_'))}?redirect=true`);
         if (!d || d.type === 'disambiguation' || !d.extract) continue;
-        const fits = k.re.test(d.description || '') || (last.length > 2 && (d.extract || '').toLowerCase().includes(last));
+        const fits = k.re.test([d.description,d.extract].filter(Boolean).join(' ')) && (!last || last.length<3 || (d.extract||'').toLowerCase().includes(last));
         if (!fits) continue;
         return { art: d.originalimage?.source || d.thumbnail?.source || '', summary: d.extract || '', url: d.content_urls?.desktop?.page || '', source: 'Wikipedia' };
       } catch (_) {}
@@ -13092,47 +13107,76 @@ function initTripPlaylistArt() {
 }
 
 // ── Click-to-preview summary for playlist cards (reuses the same modal as the Activity Feed) ──
-async function getTripPlaylistSummary(item) {
-  if (item._summary !== undefined) return item._summary;
-  let summary = '';
-  try {
-    if (item.cat === 'movies') {
-      let movieId = item.tmdbId;
-      if (!movieId) {
-        const r = await tmdbFetch(`/search/movie?query=${encodeURIComponent(item.tmdbQuery)}&page=1`);
-        const d = await r.json();
-        movieId = d.results?.[0]?.id;
-      }
-      if (movieId) {
-        const detail = await fetchMovieDetail(movieId);
-        summary = detail.overview || '';
-        if (detail.poster && !item.art) { item.art = `${TMDB_IMG}${detail.poster}`; persistTasteItemArt(item.id, item.art); }
-      }
-    } else if (item.cat === 'books') {
-      const metadata = await sharedBookMetadata(item.title, item.sub);
-      summary = metadata.summary;
-      item.summarySource = metadata.source;
-      if (metadata.art && !item.art) { item.art=metadata.art; persistTasteItemArt(item.id,item.art); }
-    } else if (item.cat === 'music') {
-      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery || [item.title,item.sub].filter(Boolean).join(' '))}&media=music&entity=song&limit=1`);
-      const data = await res.json();
-      const hit = data.results?.[0];
-      if (hit) {
-        const parts = [];
-        if (hit.collectionName) parts.push(`from the album "${hit.collectionName}"`);
-        if (hit.primaryGenreName) parts.push(hit.primaryGenreName);
-        summary = parts.length ? `Song ${parts.join(' · ')}.` : '';
-        if (hit.trackViewUrl) item.appleMusicUrl = hit.trackViewUrl;
-      }
-      if (!item.spotifyUrl) item.spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(item.artQuery)}`;
-    }
-  } catch (e) {}
-  if (!summary) return 'A summary isn’t available for this title yet.';
-  const plain = summary.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
-  const words=plain.split(' '); summary=words.slice(0,90).join(' ')+(words.length>90?'…':'');
-  item._summary = summary;
-  return summary;
+function summaryIdentity(item) {
+  const catalog=item.catalog_item||item.catalogItem||{};
+  const pick=catalog.attachment||catalog;
+  const raw=pick.kind && !['text_post','attached_status_display'].includes(pick.kind)?pick.kind:(item.cat||item.type);
+  const kind=({movies:'movie',books:'book',albums:'album',music:'song',podcasts:'podcast',artists:'artist',comedy:'special',articles:'article',games:'game'})[raw]||raw;
+  return {kind,title:pick.title||item.title||item.label||'',creator:pick.artist||pick.author||item.bookAuthor||(!item.type&&['song','album','book'].includes(kind)?String(item.sub||'').split('·')[0].trim():''),
+    id:pick.id||item.tmdb_id||item.tmdbId||item.tmdbTvId,year:pick.year||item.year,
+    description:pick.description||pick.overview||item.description||'',pick};
 }
+function musicSummaryLinks(item, identity) {
+  if(!['artist','album','song'].includes(identity.kind))return;
+  const query=[identity.title,identity.creator||(!item.type?item.sub:'')].filter(Boolean).join(' ');
+  item.spotifyUrl ||= 'https://open.spotify.com/search/'+encodeURIComponent(query);
+  item.appleMusicUrl ||= 'https://music.apple.com/us/search?term='+encodeURIComponent(query);
+}
+async function lookupItemSummary(item) {
+  const info=summaryIdentity(item),{kind,title,creator,id,year}=info;
+  musicSummaryLinks(item,info);
+  if(item._summary && !/^(No summary|A summary isn’t available)/.test(item._summary))return item._summary;
+  let summary=info.description;
+  try {
+    if(['movie','tv','special'].includes(kind)) {
+      const screenKind=kind==='special'?'movie':kind;
+      let catalogId=id;
+      if(!catalogId){
+        const response=await tmdbFetch(`/search/${kind}?query=${encodeURIComponent(title)}&page=1`);
+        const data=await response.json();
+        const normalize=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+        const matches=(data.results||[]).filter(r=>normalize(r.title||r.name)===normalize(title));
+        const hit=matches.find(r=>!year||String(r.release_date||r.first_air_date||'').startsWith(String(year)))||matches[0];
+        catalogId=hit?.id;
+      }
+      if(catalogId){const detail=await (kind==='tv'?fetchTVDetail(catalogId):fetchMovieDetail(catalogId));summary=detail.overview||summary;}
+    } else if(kind==='book') {
+      const metadata=await sharedBookMetadata(title,creator||(!item.type?item.sub:''));
+      summary=metadata.summary||summary;item.summarySource=metadata.source;
+    } else if(['song','album','artist','podcast','episode'].includes(kind)) {
+      const entity={song:'song',album:'album',artist:'musicArtist',podcast:'podcast',episode:'podcastEpisode'}[kind];
+      const data=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent([title,creator].filter(Boolean).join(' '))}&entity=${entity}&limit=12`);
+      const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+      const name=r=>kind==='artist'?r.artistName:kind==='album'||kind==='podcast'?r.collectionName:r.trackName;
+      const hit=(data.results||[]).find(r=>id!=null&&String(r.trackId||r.collectionId||r.artistId)===String(id))||
+        (data.results||[]).find(r=>norm(name(r))===norm(title)&&(!creator||norm(r.artistName)===norm(creator)));
+      if(hit){
+        summary=hit.description||hit.shortDescription||summary||[
+          `${{song:'Song',album:'Album',artist:'Artist',podcast:'Podcast',episode:'Podcast episode'}[kind]}${kind!=='artist'&&hit.artistName?' by '+hit.artistName:''}.`,
+          kind==='song'&&hit.collectionName?'From '+hit.collectionName+'.':'',
+          hit.primaryGenreName?hit.primaryGenreName+'.':'',hit.releaseDate?'Released '+hit.releaseDate.slice(0,4)+'.':''
+        ].filter(Boolean).join(' ');
+        if(['artist','album','song'].includes(kind))item.appleMusicUrl=hit.trackViewUrl||hit.collectionViewUrl||hit.artistLinkUrl||item.appleMusicUrl;
+      }
+    } else if(kind==='list') summary=item.note||'A shared TasteList.';
+  } catch (_) {}
+  // All shared items use the same fallback chain; catalog failures aren't cached as summaries.
+  const wikiKind=kind==='movie'?'film':kind==='episode'?'podcast':kind;
+  if(!summary || ['song','album','artist'].includes(kind)) {
+    try {
+      const result=await wikiSummary(title,wikiKind,creator);
+      if(result?.summary){summary=result.summary;item.summarySource=result.url;}
+    } catch (_) {}
+  }
+  if(!summary){
+    item._summaryMissing=true;
+    return 'A summary isn’t available from the catalogs for this item yet.';
+  }
+  item._summaryMissing=false;
+  summary=String(summary).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+  item._summary=summary;return summary;
+}
+async function getTripPlaylistSummary(item) {return lookupItemSummary(item);}
 
 function tripPlaylistSummaryHtml(item, summary, loading) {
   const color = tasteTypeMeta(item.cat).color;
@@ -13155,8 +13199,9 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
         ${loading ? `<span style="color:var(--faint);">Loading summary…</span>` : (summary ? esc(summary) : `<span style="color:var(--faint);">No summary available.</span>`)}
       </div>
       ${item.summarySource && /^https?:\/\//.test(item.summarySource) ? `<a href="${esc(item.summarySource)}" target="_blank" rel="noopener" style="display:block;padding:0 20px 16px;color:var(--muted);font-size:12px;">Read more about this title ↗</a>` : ''}
+      ${!loading && item._summaryMissing ? `<div style="padding:0 20px 16px;font-size:13px;">${item.link && /^https?:\/\//i.test(item.link) ? `<a href="${esc(item.link)}" target="_blank" rel="noopener">Open original item ↗</a> · ` : ''}<button type="button" class="activity-summary-title" onclick="openTripPlaylistSummary(tripPlaylistFlatItems.findIndex(item=>String(item.id)==='${jsStr(String(item.id))}'))">Retry summary</button></div>` : ''}
       ${item.id ? inlineEngagementBlockHtml('taste_list_item', item.id) : ''}
-      ${item.cat === 'music' && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
+      ${['artist','album','song'].includes(summaryIdentity(item).kind) && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
       <div class="stream-links listen-wide" style="padding:0 20px 20px;display:flex;gap:8px;" data-q="${esc((item.title||'') + ' ' + (item.sub||''))}">
         ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
         ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
@@ -13653,7 +13698,7 @@ function activityCardHtml(item, globalIndex) {
     ${editControls}
     ${activityArtWrap(ART_SRC, art)}
     <div class="activity-card-body">
-            <h3 class="activity-title">${esc(item.label)}</h3>
+            <h3 class="activity-title"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openActivitySummary(${globalIndex})">${esc(item.label)}</button></h3>
       <div class="activity-meta">${item.sub ? `<span style="color:${iconColor}">${esc(item.sub)}</span>` : ''}${item.sub && item.timestamp ? '<span aria-hidden="true">·</span>' : ''}${item.timestamp ? `<span>${item.timestamp}</span>` : ''}</div>
       ${note}
       ${item.id ? `<div style="display:flex;align-items:center;gap:14px;margin-top:8px;">
@@ -14091,8 +14136,16 @@ function activityArtWrap(src, inner) {
     : `<div class="activity-card-art">${inner}</div>`;
 }
 
+const summaryFeedRows = new Map();
+function openFeedItemSummary(id) {
+  const row=summaryFeedRows.get(id);if(!row)return;
+  const type=summaryIdentity(row).kind;
+  return openActivitySummary({ ...row, label:row.label, art:row.art_url||'', icon:type,
+    tab:({movie:'movies',tv:'tv',book:'books',song:'music',album:'albums',artist:'music',podcast:'podcasts'})[type]||'profile'});
+}
 function publicActivityCardHtml(row,profile=false) {
   if(row.catalog_item?.kind==='text_post')return feedTextPostHtml(row,profile);
+  summaryFeedRows.set(String(row.id),row);
   const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
   const typeIcon = badgeIcon(meta.icon, 13);
   const note = row.note ? `<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:8px;">${renderActivityNote(row.note)}</div>` : '';
@@ -14113,15 +14166,15 @@ function publicActivityCardHtml(row,profile=false) {
   const commentsOpen = (profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
   const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
   const ownerControls=row._editableStatus&&row.user_id===currentUser?.id?`<div class="status-card-controls" onclick="event.stopPropagation()"><button type="button" class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button type="button" class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:'';
-  return `<div class="activity-card" style="position:relative;cursor:pointer;background:var(--surface2);border:1px solid var(--border);" onclick="goToProfile('${esc(uname)}')" onmouseover="this.style.borderColor='${meta.color}55'" onmouseout="this.style.borderColor='var(--border)'">
+  return `<div class="activity-card" style="position:relative;background:var(--surface2);border:1px solid var(--border);">
     ${activityArtWrap(ART_SRC, art)}
     <div class="activity-card-body">
       ${ownerControls}
       <table style="border-collapse:collapse;width:100%;${ownerControls?'padding-right:88px;':''}"><tr><td style="vertical-align:middle;width:38px;padding:0;">${publicFeedAvatarHtml(who)}</td><td style="vertical-align:middle;padding:0 0 0 10px;">
-        <div style="font-size:13.5px;font-weight:600;color:var(--text);">${esc(whoDisplay)}</div>
+        <div style="font-size:13.5px;font-weight:600;color:var(--text);"><a href="?u=${encodeURIComponent(uname)}" onclick="event.stopPropagation();goToProfile('${jsStr(uname)}');return false" style="color:inherit;text-decoration:none;">${esc(whoDisplay)}</a></div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);">${formatActivityDate(row.activity_date)}</div>
       </td></tr></table>
-      <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;line-height:1.3;overflow-wrap:anywhere;">${esc(row.label)}</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;line-height:1.3;overflow-wrap:anywhere;"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openFeedItemSummary('${jsStr(String(row.id))}')">${esc(row.label)}</button></div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
         <span title="${esc(row.type)}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:${meta.color}18;color:${meta.color};flex-shrink:0;">${typeIcon}</span>
         <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(row.sub)}</span>
@@ -14179,85 +14232,7 @@ function renderPublicFeed(rows, mode, hasMore) {
 // Quick "what is this?" summary popup for an activity feed item — fetched lazily on first click
 // and cached on the item afterward. Movies pull their overview from TMDB, books from Google Books,
 // songs get a lightweight fact line (album/genre) since full descriptions aren't available for songs.
-async function getActivitySummary(item) {
-  if (item._summary !== undefined) return item._summary;
-  let summary = '';
-  try {
-    if (item.type === 'movie' && (item.tmdbId || item.tmdbQuery)) {
-      // Same helper used by Favorite Movies/Dramas/Thrillers/Comedies. Normally initActivityFeedArt
-      // has already populated item._summary by the time this runs (caught by the cache check above) —
-      // this only runs if someone opens the modal before that background fetch finishes.
-      let movieId = item.tmdbId;
-      if (!movieId) {
-        const res = await tmdbFetch(`/search/movie?query=${encodeURIComponent(item.tmdbQuery)}&page=1`);
-        const data = await res.json();
-        movieId = data.results?.[0]?.id;
-      }
-      if (movieId) {
-        const detail = await fetchMovieDetail(movieId);
-        summary = detail.overview || '';
-        if (detail.poster && !item.art) { item.art = `${TMDB_IMG}${detail.poster}`; refreshActivityFeeds(); }
-      }
-    } else if (item.type === 'book') {
-      async function tryBookSearch(q) {
-        try {
-          const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=3&fields=items(volumeInfo(description))`);
-          const data = await res.json();
-          return (data.items || []).find(it => it.volumeInfo?.description)?.volumeInfo?.description || '';
-        } catch (e) { return ''; }
-      }
-      // Strict title+author search first, then fall back to a looser query if that finds nothing —
-      // Google Books' intitle: operator can miss on exact quoted phrases.
-      const author = item.sub?.split('·')[0]?.trim();
-      summary = await tryBookSearch(`intitle:"${item.label}"${author ? ` inauthor:"${author}"` : ''}`);
-      if (!summary) summary = await tryBookSearch(`${item.label} ${author || ''}`.trim());
-    } else if (item.type === 'tv' && (item.tmdbTvId || item.tmdbTvQuery)) {
-      let tvId = item.tmdbTvId;
-      if (!tvId) {
-        const res = await tmdbFetch(`/search/tv?query=${encodeURIComponent(item.tmdbTvQuery)}&page=1`);
-        const data = await res.json();
-        tvId = data.results?.[0]?.id;
-      }
-      if (tvId) {
-        const detail = await fetchTVDetail(tvId);
-        summary = detail.overview || '';
-        if (detail.poster && !item.art) { item.art = `${TMDB_IMG}${detail.poster}`; refreshActivityFeeds(); }
-      }
-    } else if (item.type === 'song' && item.artQuery) {
-      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artQuery || [item.title,item.sub].filter(Boolean).join(' '))}&media=music&entity=song&limit=1`);
-      const data = await res.json();
-      const hit = data.results?.[0];
-      if (hit) {
-        const parts = [];
-        if (hit.collectionName) parts.push(`from the album "${hit.collectionName}"`);
-        if (hit.primaryGenreName) parts.push(hit.primaryGenreName);
-        summary = parts.length ? `Song ${parts.join(' · ')}.` : '';
-        if (hit.trackViewUrl && !item.appleMusicUrl) item.appleMusicUrl = hit.trackViewUrl;
-      }
-      if (!item.spotifyUrl) item.spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(item.artQuery)}`;
-    }
-  } catch (e) {}
-  // If nothing came back from the API (song not in iTunes' catalog, book search came up empty, etc.),
-  // fall back to a natural sentence built from what we already know locally, rather than a bare
-  // "no summary" dead end or just repeating the subtitle that's already shown above.
-  if (!summary) {
-    if (item.type === 'song') {
-      const artist = item.sub?.split('·')[0]?.trim();
-      summary = artist ? `A song by ${artist}.` : '';
-    } else if (item.type === 'book') {
-      const author = item.sub?.split('·')[0]?.trim();
-      summary = author ? `A book by ${author}.` : '';
-    } else if (item.type === 'movie') {
-      summary = 'No summary available for this title.';
-    } else if (item.type === 'tv') {
-      summary = 'No summary available for this title.';
-    } else if (item.type === 'list') {
-      summary = item.note || 'A new list.';
-    }
-  }
-  item._summary = summary;
-  return summary;
-}
+async function getActivitySummary(item) {return lookupItemSummary(item);}
 
 function activitySummaryHtml(item, summary, loading) {
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
@@ -14278,7 +14253,7 @@ function activitySummaryHtml(item, summary, loading) {
       <div style="padding:0 20px 20px;font-size:13.5px;line-height:1.6;color:var(--text);min-height:20px;">
         ${loading ? `<span style="color:var(--faint);">Loading summary…</span>` : (summary ? esc(summary) : `<span style="color:var(--faint);">No summary available.</span>`)}
       </div>
-      ${item.type === 'song' && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
+      ${['artist','album','song'].includes(summaryIdentity(item).kind) && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
       <div class="stream-links listen-wide" style="padding:0 20px 14px;display:flex;gap:8px;" data-q="${esc(item.artQuery || ((item.label||'') + ' ' + (item.sub||'')))}">
         ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
         ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
@@ -14292,18 +14267,21 @@ function activitySummaryHtml(item, summary, loading) {
 
 async function openActivitySummary(globalIndex) {
   const sharedModal=document.getElementById('activity-summary-modal');if(sharedModal)delete sharedModal.dataset.sharedRequest;
-  const item = ACTIVITY_FEED_ITEMS[globalIndex];
+  const item = typeof globalIndex==='object'?globalIndex:ACTIVITY_FEED_ITEMS[globalIndex];
   if (!item) return;
   const modal = document.getElementById('activity-summary-modal');
   const content = document.getElementById('activity-summary-content');
   if (!modal || !content) return;
+  const request=String(++sharedSummaryRequest);
+  modal.dataset.sharedRequest=request;
+  const active=()=>modal.style.display==='flex'&&modal.dataset.sharedRequest===request;
   modal.style.display = 'flex';
   content.innerHTML = activitySummaryHtml(item, '', true);
 
   // Re-render just this modal (used by the comment composer/delete buttons via
   // window.__refreshModalEngagement) without re-running the summary fetch above.
   window.__refreshModalEngagement = () => {
-    if (modal.style.display === 'flex') content.innerHTML = activitySummaryHtml(item, item._summary || '', false);
+    if (active()) content.innerHTML = activitySummaryHtml(item, item._summary || '', false);
   };
 
   if (item.id && sb) {
@@ -14312,15 +14290,15 @@ async function openActivitySummary(globalIndex) {
         .then(({ data }) => {
           LIKE_CACHE[engagementKey('activity_feed', item.id)] = emptyLikeState();
           absorbLikeRows('activity_feed', (data || []).map(r => ({ target_id: item.id, user_id: r.user_id, reaction: r.reaction })));
-          window.__refreshModalEngagement();
+          if(active())window.__refreshModalEngagement?.();
         }).catch(() => {});
     }
-    loadComments('activity_feed', item.id).then(() => window.__refreshModalEngagement());
+    loadComments('activity_feed', item.id).then(() => {if(active())window.__refreshModalEngagement?.();});
   }
 
   const summary = await getActivitySummary(item);
   // Guard against the modal having been closed (or a different item opened) while the fetch was in flight
-  if (modal.style.display === 'flex') content.innerHTML = activitySummaryHtml(item, summary, false);
+  if (active()) content.innerHTML = activitySummaryHtml(item, summary, false);
 }
 
 function closeActivitySummary() {
@@ -16272,7 +16250,7 @@ renderTasteInfluences();
 </div>
 
 <div id="activity-summary-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1000;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeActivitySummary()">
-  <div id="activity-summary-content" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;overflow:hidden;"></div>
+  <div id="activity-summary-content" style="max-height:85vh;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;overflow-x:hidden;"></div>
 </div>
 
 <dialog id="creator-picks-dialog" style="width:min(640px,calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid var(--border);border-radius:20px;padding:28px;background:var(--surface);color:var(--text)" oncancel="event.preventDefault();closeCreatorPicks()"><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="creator-picks-title"></h2><button aria-label="Close" onclick="closeCreatorPicks()">×</button></div><p style="color:var(--muted)">Search, select your favorites, and put them in your order.</p><div id="creator-picks-selected"></div><form onsubmit="event.preventDefault();searchCreatorPicks()" style="display:flex;gap:8px;margin:20px 0"><input id="creator-picks-query" aria-label="Search titles" placeholder="Search titles…" style="flex:1;min-width:0;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px"><button type="submit" class="ob-button ob-secondary">Search</button></form><div id="creator-picks-results"></div><p id="creator-picks-error" role="alert" style="color:#f2a69a"></p><div class="creator-picks-footer"><button id="creator-picks-save" class="ob-button ob-primary" onclick="saveCreatorPicks()">Save favorites</button></div></dialog>
