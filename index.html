@@ -1795,7 +1795,7 @@ img.recs-tag-avatar { object-fit: cover; }
 
 /* Display serif. The site-wide font lock (html body * { font-family: Inter !important }) overrode every
    heading meant to use the serif; this list is the one place serif headings are declared. */
-html body :is(.ed-title, .sl-title, .ob-card-title, .ob-frame h1, .ob-landing-copy h1, .ob-wordmark,
+html body :is(.ed-title, .ed-title .recs-title-text, .sl-title, .ob-card-title, .ob-frame h1, .ob-landing-copy h1, .ob-wordmark,
   .rec-detail-title, .invite-title, #auth-modal .tl-modal-title) { font-family: var(--ob-serif) !important; }
 html body :is(.ed-title, .ob-card-title, .rec-detail-title, .invite-title) { font-weight: 600; letter-spacing: -.015em; }
 /* Post titles share the review's sans so each post reads as one voice; serif is for section headings. */
@@ -1889,6 +1889,34 @@ td.songs-table-links[data-listen] { display: table-cell; vertical-align: middle;
 .list-import-link:hover { color: var(--text); text-decoration-color: currentColor; }
 #new-list-ideas button.is-on { border-color: var(--accent); color: var(--text); background: rgba(124,77,255,.16); }
 @media (pointer: coarse) { .list-import-link { min-height: 44px; } }
+
+/* ── Reordering in profile lists / What's Next, and removing shared lists ── */
+.tl-sortable-item { position: relative; cursor: grab; user-select: none; -webkit-user-select: none; }
+.tl-sortable-item > .tl-sort-handle { position: absolute; top: 8px; left: 8px; z-index: 4; }
+.sl-danger { color: #F97360 !important; border-color: rgba(249,115,96,.45) !important; }
+.sl-danger-solid { background: #d9534f !important; border-color: #d9534f !important; color: #fff !important; }
+.sl-confirm-text { font-size: 13.5px; color: var(--text); max-width: 360px; }
+
+/* The text-link style sets display, which would override the hidden attribute. */
+#shared-share-copy[hidden], #shared-share-reset[hidden], #taste-share-copy-link[hidden] { display: none !important; }
+.shared-share-fineprint { margin: 14px 0 0; text-align: center; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+.shared-share-fineprint .ob-text-link { font: inherit; font-size: 12.5px; color: var(--muted); background: none; border: 0; padding: 0 2px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.shared-share-fineprint .ob-text-link:hover { color: var(--text); }
+#shared-share-preview img { display: block; width: 100%; height: auto; border-radius: 10px; }
+
+/* ── List headers: edit button beside the name; tight gap down to the items ── */
+.music-section-header.has-edit-toggle { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.music-section-header.has-edit-toggle .music-section-title { margin: 0; }
+.list-edit-slot { display: inline-flex; }
+.list-edit-slot .list-icon-control { width: 34px; height: 34px; }
+.section-controls-row:not(:has(button)) { display: none; }       /* nothing to show outside edit mode */
+.list-engage { padding-bottom: 4px !important; }
+.section-controls-row { margin-bottom: 10px !important; }
+.music-section > section.top5-section { padding-top: 14px !important; }   /* was 40px: the gap under the like/comment row */
+
+/* Section summaries: AI taste portrait */
+.bio-portrait-headline { font-family: var(--ob-serif) !important; font-size: clamp(19px, 2vw, 22px); font-weight: 600; line-height: 1.25; letter-spacing: -.01em; color: #f2efe9; margin: 0 0 8px !important; text-wrap: balance; }
+.bio-portrait-summary { margin: 0 !important; line-height: 1.6; text-wrap: pretty; }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -2789,7 +2817,7 @@ function renderRecsExpanded() {
     }).join('');
     return `<section class="sl-section">
       <div class="sl-section-head"><h3 style="color:${g.color};">${esc(g.label)}<span>${g.items.length}</span></h3></div>
-      <div class="sl-row${g.shape === 'landscape' ? ' sl-row-landscape' : ''}" role="list">${tiles}</div>
+      <div class="sl-row${g.shape === 'landscape' ? ' sl-row-landscape' : ''}" role="list" data-next-group="${esc(g.label)}" id="recs-row-${esc(g.type)}">${tiles}</div>
     </section>`;
   }).join('');
   el.innerHTML = `
@@ -2804,7 +2832,8 @@ function renderRecsExpanded() {
       <p class="sl-desc" style="margin-bottom:6px;">Things ${isOwnProfile ? 'I want' : esc(owner || 'they') + ' wants'} to check out</p>
       <div class="sl-byline-meta">${total} item${total === 1 ? '' : 's'}${friends ? ` <span style="opacity:.5;margin:0 4px;">•</span> recommended by ${friends} friend${friends === 1 ? '' : 's'}` : ''}</div>
     </header>
-    ${total ? `<div class="sl-sections">${sections}</div>` : `<p style="color:var(--muted);">Nothing here yet.</p>`}`;
+    ${total ? `${editing ? '<p class="sl-reorder-hint">Drag items to reorder them within a section.</p>' : ''}<div class="sl-sections">${sections}</div>` : `<p style="color:var(--muted);">Nothing here yet.</p>`}`;
+  if (editing) el.querySelectorAll('[data-next-group]').forEach(row => makeSortable(row, 'next', { group: row.dataset.nextGroup }));
 }
 
 function toggleFriendRecsEditMode() {
@@ -3092,6 +3121,7 @@ async function saveFriendRecForm() {
       if (error) throw error;
     } else {
       row.user_id = currentUser.id;
+      row.sort_order = FRIEND_RECOMMENDATIONS.length;   // new picks go to the end of What's Next
       const { error } = await sb.from('friend_recs').insert(row);
       if (error) throw error;
     }
@@ -3343,6 +3373,7 @@ async function deleteActivityItem(globalIndex) {
 }
 
 function toggleEditMode() {
+  slConfirmingRemove = false;
   editMode = !editMode;
   renderTripPlaylist();
 }
@@ -5744,6 +5775,7 @@ async function loadExtraLists(userId){
   renderExtraLists();scheduleTasteConstellation();recoverPodcastArtwork(userId);
 }
 function renderExtraLists(){
+ setTimeout(enableExtraListSorting, 0);
  for(const type of ['movie','tv']){
    const el=document.getElementById('extra-specials-'+type);if(!el)continue;
    const picks=extraItems().filter(i=>i.kind==='special'&&i.mediaType===type);
@@ -6009,6 +6041,7 @@ function renderCustomLists(tab) {
       : addListHtml.replace(/(<\/button>)(<\/div>)$/, `$1${extras}${importLine}$2`);
   }
   container.innerHTML = addListHtml + sectionsHtml;
+  enableCustomListSorting();
 }
 
 function customListSectionHtml(tab, cat) {
@@ -7141,7 +7174,7 @@ function tasteImportToItem(it) {
 async function saveImportToWhatsNext(item) {
   const type = item.kind === 'book' ? 'book' : item.kind === 'tv' ? 'tv' : 'film';
   if (FRIEND_RECOMMENDATIONS.some(r => r.type === type && r.title.toLowerCase() === item.title.toLowerCase())) return;
-  const { data, error } = await sb.from('friend_recs').insert({ user_id: currentUser.id, title: item.title, type, art_url: item.art || null, recommenders: [] }).select().single();
+  const { data, error } = await sb.from('friend_recs').insert({ user_id: currentUser.id, title: item.title, type, art_url: item.art || null, recommenders: [], sort_order: FRIEND_RECOMMENDATIONS.length }).select().single();
   if (error) throw error;
   FRIEND_RECOMMENDATIONS.push({ id: data.id, title: data.title, type, recommenders: [], art: data.art_url || '' });
   renderFriendRecs();
@@ -8615,12 +8648,50 @@ function updateMusicProfile() {
   const albumGenres = albumList.map(a => a.genre).filter(Boolean);
   const genres = [...new Set([...artistGenres, ...albumGenres])].slice(0, 8);
   tagsEl.innerHTML = genres.map(g => `<span class="bio-tag">${esc(g)}</span>`).join('');
-  const topFiveNames = artists.slice(0, 5).map(a => esc(a.name)).filter(Boolean);
-  let paras = [];
-  if (topFiveNames.length) paras.push(`Most influential artists: ${topFiveNames.join(', ')}.`);
-  if (genres.length) paras.push(`Genres that come up most: ${genres.slice(0, 5).join(', ')}.`);
-  if (albumList.length) paras.push(`${albumList.length} album${albumList.length === 1 ? '' : 's'} favorited, including ${albumList.slice(0, 4).map(a => esc(a.name)).join(', ')}.`);
+  const portrait = sectionPortrait('music');
+  if (portrait) { textEl.innerHTML = portraitHtml(portrait); return; }
+  const lean = topCounts([...artistGenres, ...albumGenres], 2);
+  const anchors = artists.slice(0, 3).map(a => esc(a.name)).filter(Boolean);
+  const paras = [];
+  if (anchors.length) paras.push(`Your music taste is anchored by ${joinNatural(anchors)}${lean.length ? `, with a lean toward ${joinNatural(lean.map(g => esc(g)))}` : ''}.`);
+  if (albumList.length) paras.push(`Records you keep close: ${joinNatural(albumList.slice(0, 3).map(a => `<em>${esc(a.name)}</em>`))}.`);
   textEl.innerHTML = paras.map(p => `<p>${p}</p>`).join('');
+}
+
+
+// ── Section summaries ("My film taste list" etc.) ─────────────────────────────────────────────────
+// Prefer the AI-written taste portrait for the section (from the same Taste Insights analysis);
+// otherwise a short written summary of what the picks lean toward — never just a count and titles.
+function sectionPortrait(section) {
+  const st = typeof tasteAnalysisState === 'function' ? tasteAnalysisState() : null;
+  if (!st || st.status !== 'ready' || !viewedProfile?.id || !String(st.key || '').includes(viewedProfile.id)) return null;
+  return (st.result?.portraits || []).find(p => p.section === section && p.headline && p.summary) || null;
+}
+function portraitHtml(p) {
+  return `<p class="bio-portrait-headline">${esc(p.headline)}</p><p class="bio-portrait-summary">${esc(p.summary)}</p>`;
+}
+function refreshSectionPortraits() {
+  for (const fn of [updateFilmProfile, updateTVProfile, updateMusicProfile, updateBooksProfile]) { try { fn(); } catch (_) {} }
+}
+function joinNatural(list) {
+  const a = list.filter(Boolean);
+  return a.length <= 1 ? (a[0] || '') : a.length === 2 ? `${a[0]} and ${a[1]}` : `${a.slice(0, -1).join(', ')}, and ${a[a.length - 1]}`;
+}
+// "mostly from the 1990s and 2000s" — only when the years actually cluster.
+function eraPhrase(years) {
+  const ys = years.map(y => parseInt(String(y).slice(0, 4), 10)).filter(y => y > 1850 && y < 2100);
+  if (ys.length < 3) return '';
+  const counts = {}; ys.forEach(y => { const d = Math.floor(y / 10) * 10; counts[d] = (counts[d] || 0) + 1; });
+  const decades = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const [d1, n1] = decades[0], second = decades[1];
+  if (n1 / ys.length >= 0.6) return `mostly from the ${d1}s`;
+  if (second && (n1 + second[1]) / ys.length >= 0.7) { const [a, b] = [d1, second[0]].map(Number).sort((x, y) => x - y); return `mostly from the ${a}s and ${b}s`; }
+  const span = Math.max(...ys) - Math.min(...ys);
+  return span >= 40 ? `spanning ${Math.min(...ys)} to ${Math.max(...ys)}` : '';
+}
+function topCounts(values, n) {
+  const counts = new Map(); values.filter(Boolean).forEach(v => counts.set(v, (counts.get(v) || 0) + 1));
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([v]) => v);
 }
 
 function updateFilmProfile() {
@@ -8631,12 +8702,16 @@ function updateFilmProfile() {
   if (!allMovies.length) { textEl.innerHTML = ''; tagsEl.innerHTML = ''; return; }
   const genres = [...new Set(allMovies.flatMap(m => m.genres || []))].slice(0, 8);
   tagsEl.innerHTML = genres.map(g => `<span class="bio-tag">${esc(g)}</span>`).join('');
-  const titles = allMovies.map(m => esc(m.title)).filter(Boolean);
-  let paras = [];
-  paras.push(`${allMovies.length} film${allMovies.length === 1 ? '' : 's'} favorited so far${titles.length ? `, including ${titles.slice(0, 4).join(', ')}` : ''}.`);
-  if (genres.length) paras.push(`Genres that come up most: ${genres.slice(0, 5).join(', ')}.`);
+  const portrait = sectionPortrait('film');
+  if (portrait) { textEl.innerHTML = portraitHtml(portrait); return; }
+  const lean = topCounts(allMovies.flatMap(m => m.genres || []), 2).map(g => g.toLowerCase());
+  const era = eraPhrase(allMovies.map(m => m.year));
+  const anchors = allMovies.slice(0, 3).map(m => esc(m.title)).filter(Boolean);
   const directorNames = (typeof directors !== 'undefined') ? directors.map(d => esc(d.name)).filter(Boolean) : [];
-  if (directorNames.length) paras.push(`Favorite directors: ${directorNames.join(', ')}.`);
+  const paras = [];
+  if (lean.length || era) paras.push(`Your film picks lean toward ${lean.length ? joinNatural(lean.map(esc)) : 'a wide mix'}${era ? `, ${era}` : ''}${anchors.length ? ` — think ${joinNatural(anchors)}` : ''}.`);
+  else if (anchors.length) paras.push(`Anchored by ${joinNatural(anchors)}.`);
+  if (directorNames.length) paras.push(`Directors you return to: ${joinNatural(directorNames.slice(0, 4))}.`);
   textEl.innerHTML = paras.map(p => `<p>${p}</p>`).join('');
 }
 
@@ -8648,10 +8723,14 @@ function updateTVProfile() {
   if (!allTV.length) { textEl.innerHTML = ''; tagsEl.innerHTML = ''; return; }
   const genres = [...new Set(allTV.flatMap(t => t.genres || []))].slice(0, 8);
   tagsEl.innerHTML = genres.map(g => `<span class="bio-tag">${esc(g)}</span>`).join('');
-  const titles = allTV.map(t => esc(t.title)).filter(Boolean);
-  let paras = [];
-  paras.push(`${allTV.length} show${allTV.length === 1 ? '' : 's'} favorited so far${titles.length ? `, including ${titles.slice(0, 4).join(', ')}` : ''}.`);
-  if (genres.length) paras.push(`Genres that come up most: ${genres.slice(0, 5).join(', ')}.`);
+  const portrait = sectionPortrait('tv');
+  if (portrait) { textEl.innerHTML = portraitHtml(portrait); return; }
+  const lean = topCounts(allTV.flatMap(t => t.genres || []), 2).map(g => g.toLowerCase());
+  const era = eraPhrase(allTV.map(t => t.year));
+  const anchors = allTV.slice(0, 3).map(t => esc(t.title)).filter(Boolean);
+  const paras = [];
+  if (lean.length || era) paras.push(`Your TV picks lean toward ${lean.length ? joinNatural(lean.map(esc)) : 'a wide mix'}${era ? `, ${era}` : ''}${anchors.length ? ` — think ${joinNatural(anchors)}` : ''}.`);
+  else if (anchors.length) paras.push(`Anchored by ${joinNatural(anchors)}.`);
   textEl.innerHTML = paras.map(p => `<p>${p}</p>`).join('');
 }
 
@@ -8664,11 +8743,15 @@ function updateBooksProfile() {
   // Books don't carry a genre field the way movies/TV do, so there's nothing real to build tags
   // from — left empty rather than inventing genres that were never actually chosen.
   if (tagsEl) tagsEl.innerHTML = '';
-  const titles = allBooks.map(b => esc(b.title)).filter(Boolean);
-  const authors = [...new Set(allBooks.map(b => esc(b.author)).filter(Boolean))];
-  let paras = [];
-  paras.push(`${allBooks.length} book${allBooks.length === 1 ? '' : 's'} favorited so far${titles.length ? `, including ${titles.slice(0, 4).join(', ')}` : ''}.`);
-  if (authors.length) paras.push(`Authors that show up: ${authors.slice(0, 5).join(', ')}.`);
+  const portrait = sectionPortrait('books');
+  if (portrait) { textEl.innerHTML = portraitHtml(portrait); return; }
+  const repeatAuthors = topCounts(allBooks.map(b => b.author), 6).filter(a => allBooks.filter(b => b.author === a).length > 1);
+  const authors = [...new Set(allBooks.map(b => b.author).filter(Boolean))];
+  const anchors = allBooks.slice(0, 3).map(b => `<em>${esc(b.title)}</em>`).filter(Boolean);
+  const paras = [];
+  if (anchors.length) paras.push(`Your bookshelf is anchored by ${joinNatural(anchors)}.`);
+  if (repeatAuthors.length) paras.push(`Authors you keep coming back to: ${joinNatural(repeatAuthors.slice(0, 3).map(esc))}.`);
+  else if (authors.length > 2) paras.push(`A wide range of voices, from ${esc(authors[0])} to ${esc(authors[authors.length - 1])}.`);
   textEl.innerHTML = paras.map(p => `<p>${p}</p>`).join('');
 }
 
@@ -10705,6 +10788,35 @@ function toggleMovieEditMode() {
   renderMovieControls();
 }
 
+
+// Each list's edit button sits next to the list's name. Sections render it in their controls row
+// (with Add / Rename / Delete while editing); move it up into the header, wherever it's rendered.
+function placeEditToggles() {
+  document.querySelectorAll('.section-controls-row').forEach(row => {
+    const toggle = row.querySelector('button.list-icon-control[aria-pressed]');
+    if (!toggle) return;
+    let header = row.previousElementSibling;
+    while (header && !header.classList.contains('music-section-header')) header = header.previousElementSibling;
+    if (!header) return;
+    header.classList.add('has-edit-toggle');
+    header.querySelector(':scope > .list-edit-slot')?.remove();
+    const slot = document.createElement('span');
+    slot.className = 'list-edit-slot';
+    slot.appendChild(toggle);
+    header.appendChild(slot);
+  });
+}
+(() => {
+  let queued = false;
+  const run = () => { queued = false; placeEditToggles(); };
+  const start = () => {
+    const root = document.getElementById('app-content') || document.body;
+    new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(root, { childList: true, subtree: true });
+    placeEditToggles();
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 function renderMovieControls() {
   const el = document.getElementById('movie-controls');
   if (!el) return;
@@ -10712,9 +10824,7 @@ function renderMovieControls() {
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;">
       ${movieEditMode ? `<button onclick="openMovieSearch()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add movie or show</button>` : ''}
-      <button onclick="toggleMovieEditMode()" style="font-size:11px;font-weight:600;background:${movieEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${movieEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
-        ${movieEditMode ? '✓ Done editing' : '✎ Edit movies'}
-      </button>
+      <button type="button" class="list-icon-control" title="${movieEditMode ? 'Done editing' : 'Edit list'}" aria-label="${movieEditMode ? 'Done editing' : 'Edit list'}" aria-pressed="${movieEditMode}" onclick="toggleMovieEditMode()">${listActionIcon(movieEditMode ? 'done' : 'edit')}</button>
       ${movieEditMode ? `<button onclick="renameHardcodedSection('movies_top5','Movies That Shaped Me','movies-top5-heading')" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">Rename</button>` : ''}
     </div>`;
 }
@@ -11099,9 +11209,7 @@ function renderDirectorControls() {
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;">
       ${directorEditMode ? `<button onclick="openDirectorSearch()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add director</button>` : ''}
-      <button onclick="toggleDirectorEditMode()" style="font-size:11px;font-weight:600;background:${directorEditMode ? 'var(--accent)' : 'var(--surface2)'};color:${directorEditMode ? '#fff' : 'var(--muted)'};border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">
-        ${directorEditMode ? '✓ Done editing' : '✎ Edit directors'}
-      </button>
+      <button type="button" class="list-icon-control" title="${directorEditMode ? 'Done editing' : 'Edit list'}" aria-label="${directorEditMode ? 'Done editing' : 'Edit list'}" aria-pressed="${directorEditMode}" onclick="toggleDirectorEditMode()">${listActionIcon(directorEditMode ? 'done' : 'edit')}</button>
       ${directorEditMode ? `<button onclick="renameHardcodedSection('movies_directors','Favorite Directors','movies-directors-heading')" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">Rename</button>` : ''}
     </div>`;
 }
@@ -11826,7 +11934,7 @@ function tasteAnalysisState(){return tasteAnalysisState.value||(tasteAnalysisSta
 function renderInterpretiveConstellation(items) {
  const el=document.getElementById('taste-constellation-cards');if(!el)return;
  const state=tasteAnalysisState();
- const key=JSON.stringify(['by-domain-v1',viewedProfile?.id,items.map(constellationIdentity).sort()]);
+ const key=JSON.stringify(['by-domain-v2',viewedProfile?.id,items.map(constellationIdentity).sort()]);
  if(state.key!==key){state.key=key;state.version++;state.status='idle';state.result=null;}
  state.items=items;
  if(items.length<2){el.innerHTML='<p class="taste-analysis-status">Add another pick to a Favorites or Shaped Me list to start finding connections.</p>';return;}
@@ -11873,6 +11981,7 @@ async function requestTasteAnalysis(){
   if(state.version!==version||viewedProfile?.id!==profileId)return;
   if(!Array.isArray(result?.connections))throw Error('Invalid analysis');
   state.result=result;state.status='ready';
+  refreshSectionPortraits();
  }catch(_){if(state.version===version&&viewedProfile?.id===profileId)state.status='error';}
  if(state.version===version&&viewedProfile?.id===profileId)renderInterpretiveConstellation(state.items);
 }
@@ -12231,6 +12340,157 @@ function slArtFailed(img, idx) {
   tripPlaylistArtFetched = false;
   initTripPlaylistArt();
 }
+
+// ── Drag to reorder: profile lists, comedy/podcast lists, What's Next ─────────────────────────────
+// Same interaction as shared lists: mouse drags the whole tile; touch/pen uses the ⠿ handle (so
+// swiping elsewhere still scrolls); arrow keys on the handle move one step. Order saves automatically.
+const TL_SORT_APPLY = {};
+let tlDrag = null, tlSortSuppressClick = false;
+function makeSortable(container, type, data, count) {
+  if (!container) return;
+  container.dataset.sortable = type;
+  Object.entries(data).forEach(([k, v]) => { container.dataset[k] = v; });
+  const items = [...container.children].slice(0, count ?? container.children.length);
+  items.forEach((el, i) => {
+    el.dataset.pos = i;
+    el.classList.add('tl-sortable-item');
+    if (!el.querySelector(':scope > .tl-sort-handle')) {
+      const h = document.createElement('button');
+      h.type = 'button'; h.className = 'sl-drag-handle tl-sort-handle'; h.textContent = '⠿';
+      h.setAttribute('aria-label', 'Reorder: drag, or press arrow keys');
+      h.addEventListener('keydown', tlSortKey);
+      h.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
+      el.appendChild(h);
+    }
+  });
+  if (!container._tlSortBound) { container._tlSortBound = true; container.addEventListener('pointerdown', tlSortStart); }
+}
+function tlSortStart(e) {
+  const item = e.target.closest('.tl-sortable-item');
+  const container = item?.parentElement;
+  if (!item || !container?.dataset.sortable) return;
+  const onHandle = !!e.target.closest('.tl-sort-handle');
+  if (e.pointerType === 'mouse' ? e.button !== 0 : !onHandle) return;
+  if (!onHandle && e.target.closest('button, a, input, select, textarea')) return;
+  tlDrag = { item, container, startX: e.clientX, startY: e.clientY, active: false, ghost: null, pointerId: e.pointerId };
+  window.addEventListener('pointermove', tlSortMove, { passive: false });
+  window.addEventListener('pointerup', tlSortEnd);
+  window.addEventListener('pointercancel', tlSortEnd);
+}
+function tlSortMove(e) {
+  const d = tlDrag;
+  if (!d || e.pointerId !== d.pointerId) return;
+  if (!d.active) {
+    if (Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < 6) return;
+    d.active = true;
+    const r = d.item.getBoundingClientRect();
+    d.offX = d.startX - r.left; d.offY = d.startY - r.top;
+    d.ghost = d.item.cloneNode(true);
+    d.ghost.classList.add('sl-drag-ghost'); d.ghost.style.width = r.width + 'px';
+    document.body.appendChild(d.ghost);
+    d.item.classList.add('sl-dragging');
+    document.body.style.userSelect = 'none';
+  }
+  e.preventDefault();
+  d.ghost.style.left = (e.clientX - d.offX) + 'px';
+  d.ghost.style.top = (e.clientY - d.offY) + 'px';
+  const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.tl-sortable-item');
+  if (over && over !== d.item && over.parentElement === d.container) {
+    const r = over.getBoundingClientRect();
+    const sameLine = Math.abs(r.top - d.item.getBoundingClientRect().top) < r.height / 2;
+    const after = sameLine ? e.clientX > r.left + r.width / 2 : e.clientY > r.top + r.height / 2;
+    d.container.insertBefore(d.item, after ? over.nextSibling : over);
+  }
+  if (e.clientY < 70) window.scrollBy(0, -14); else if (e.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
+}
+function tlSortEnd(e) {
+  const d = tlDrag;
+  window.removeEventListener('pointermove', tlSortMove);
+  window.removeEventListener('pointerup', tlSortEnd);
+  window.removeEventListener('pointercancel', tlSortEnd);
+  tlDrag = null; document.body.style.userSelect = '';
+  if (!d || !d.active) return;
+  d.ghost?.remove(); d.item.classList.remove('sl-dragging');
+  tlSortSuppressClick = true; setTimeout(() => { tlSortSuppressClick = false; }, 0);
+  const order = [...d.container.querySelectorAll(':scope > .tl-sortable-item')].map(el => Number(el.dataset.pos));
+  tlSortApply(d.container, order);
+}
+document.addEventListener('click', e => { if (tlSortSuppressClick && e.target.closest('.tl-sortable-item')) { e.stopPropagation(); e.preventDefault(); } }, true);
+function tlSortKey(e) {
+  const delta = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key];
+  if (!delta) return;
+  e.preventDefault(); e.stopPropagation();
+  const item = e.target.closest('.tl-sortable-item'), container = item?.parentElement;
+  if (!container) return;
+  const n = container.querySelectorAll(':scope > .tl-sortable-item').length, pos = Number(item.dataset.pos), to = pos + delta;
+  if (to < 0 || to >= n) return;
+  const order = [...Array(n).keys()]; [order[pos], order[to]] = [order[to], order[pos]];
+  const key = container.id;
+  tlSortApply(container, order);
+  requestAnimationFrame(() => document.getElementById(key)?.querySelector(`:scope > [data-pos="${to}"] .tl-sort-handle`)?.focus());
+}
+function tlSortApply(container, order) {
+  if (order.every((p, i) => p === i)) return;
+  const fn = TL_SORT_APPLY[container.dataset.sortable];
+  if (fn) fn({ ...container.dataset }, order);
+}
+async function tlPersistOrder(table, rows) {
+  if (!sb || !currentUser || !rows.length) return;
+  try {
+    const results = await Promise.all(rows.map(([id, n]) => sb.from(table).update({ sort_order: n }).eq('id', id).eq('user_id', currentUser.id)));
+    const bad = results.find(r => r.error); if (bad) throw bad.error;
+  } catch (err) { console.error('Failed to save order:', err); showToast('Couldn’t save the new order. Please try again.'); }
+}
+const CUSTOM_SORT_TABLE = { music: 'favorite_artists', albums: 'favorite_albums', movies: 'favorite_media_lists', tv: 'favorite_media_lists', books: 'favorite_books' };
+TL_SORT_APPLY.custom = ({ tab, cat }, order) => {
+  const items = CUSTOM_LISTS[tab]?.[cat]; if (!items) return;
+  CUSTOM_LISTS[tab][cat] = order.map(p => items[p]);
+  if (CUSTOM_LIST_EXPANDED[tab]) CUSTOM_LIST_EXPANDED[tab][cat] = null;
+  if (tab === 'music') artists = Object.values(CUSTOM_LISTS.music).flat().filter(a => !a.videoId);
+  renderCustomLists(tab === 'albums' ? 'albums' : tab);
+  try { renderProfileTab(); } catch (_) {}
+  tlPersistOrder(CUSTOM_SORT_TABLE[tab], CUSTOM_LISTS[tab][cat].map((it, n) => [it.rowId || it.id, n]).filter(([id]) => id));
+};
+TL_SORT_APPLY.extra = async ({ listId }, order) => {
+  const list = extraLists.find(l => String(l.id) === String(listId)); if (!list) return;
+  const before = list.items;
+  list.items = order.map(p => before[p]);
+  renderExtraLists();
+  if (!sb || !currentUser) return;
+  const { error } = await sb.from('taste_extra_lists').update({ items: list.items }).eq('id', list.id).eq('user_id', currentUser.id);
+  if (error) { list.items = before; renderExtraLists(); showToast('Couldn’t save the new order. Please try again.'); }
+};
+TL_SORT_APPLY.next = ({ group }, order) => {
+  const g = friendRecGroups().find(x => x.label === group); if (!g) return;
+  const slots = g.items.map(r => FRIEND_RECOMMENDATIONS.indexOf(r)).sort((a, b) => a - b);
+  const moved = order.map(p => g.items[p]);
+  slots.forEach((slot, k) => { FRIEND_RECOMMENDATIONS[slot] = moved[k]; });
+  renderFriendRecs();
+  tlPersistOrder('friend_recs', FRIEND_RECOMMENDATIONS.map((r, n) => [r.id, n]).filter(([id]) => id));
+};
+// Profile lists: sortable while that list is in edit mode (where ✕ remove buttons appear).
+function enableCustomListSorting() {
+  if (!isOwnProfile) return;
+  for (const tab of ['music', 'albums', 'movies', 'tv', 'books']) {
+    for (const [cat, on] of Object.entries(CUSTOM_LIST_EDIT[tab] || {})) {
+      if (!on) continue;
+      const grid = document.getElementById(`custom-grid-${tab}-${customListSlug(cat)}`);
+      makeSortable(grid, 'custom', { tab, cat }, (CUSTOM_LISTS[tab]?.[cat] || []).length);
+    }
+  }
+}
+// Comedy / podcast lists: owners can always reorder.
+function enableExtraListSorting() {
+  if (!isOwnProfile) return;
+  document.querySelectorAll('.extra-list').forEach(sec => {
+    const grid = sec.querySelector(':scope > .ob-pick-grid'), id = sec.querySelector('[data-id]')?.dataset.id;
+    if (!grid || !id) return;
+    grid.id = 'extra-grid-' + id;
+    makeSortable(grid, 'extra', { listId: id });
+  });
+}
+
+let slConfirmingRemove = false;
 function renderTasteListHeader(flat) {
   const list = allTasteLists.find(l => l.id === currentTasteListId);
   const byline = document.getElementById('sl-byline');
@@ -14005,7 +14265,7 @@ function renderFriendRecs() {
     <button class="list-create-cta" onclick="openPasteRecommendations()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
   if (!FRIEND_RECOMMENDATIONS.length) {
     const hc = document.getElementById('recs-head-controls');
-    if (hc) hc.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add recommendation</button>` : '';
+    if (hc) hc.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a rec</button>` : '';
     el.innerHTML = `
       <div style="text-align:center;padding:36px 16px;">
         <div style="width:44px;height:44px;border-radius:12px;background:#7C4DFF1c;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
@@ -14017,7 +14277,7 @@ function renderFriendRecs() {
     return;
   }
   const headCtl = document.getElementById('recs-head-controls');
-  if (headCtl) headCtl.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add recommendation</button>` : '';
+  if (headCtl) headCtl.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a rec</button>` : '';
   // Collapsed view: one compact strip of covers per category so the panel fits beside What's New.
   // "See all" opens the expanded view, styled like a shared list page.
   const groups = friendRecGroups();
@@ -14348,35 +14608,47 @@ async function openSharedListShare(){
  sharedShareState={id:list.id,title:list.title||'Shared TasteList',url:inviteUrl||sharedListUrl(list.id),file:null};
  document.getElementById('shared-share-title').textContent=sharedShareState.title;
  document.getElementById('shared-share-reset').hidden=!list.isOwner;
- document.getElementById('shared-share-note').textContent=inviteUrl?'Anyone with this invitation link can sign up and join this list. It expires in 30 days. Replacing the link stops old invitations from working; existing members stay.':list.is_public?'Recipients can open this list if they have access to the owner’s profile.':'Private list: only the owner and invited members can open the link. Sharing the image sends a copy of the pictured items.';
- document.getElementById('shared-share-status').textContent='Preparing image…';
+ document.getElementById('shared-share-note').textContent=inviteUrl?'Anyone with the link can join. It expires in 30 days.':list.is_public?'Anyone who can see your profile can open this list.':'Only members can open this list.';
+ document.getElementById('shared-share-status').textContent='';
  document.getElementById('shared-share-preview').innerHTML='';document.getElementById('shared-share-download').disabled=true;
- document.getElementById('shared-share-native').textContent=navigator.share?'Share via…':'Copy link';
- const message=(inviteUrl?'Join my ':'')+sharedShareState.title+' on TasteList — '+sharedShareState.url;
- document.getElementById('shared-share-sms').href='sms:?body='+encodeURIComponent(message);
- document.getElementById('shared-share-whatsapp').href='https://wa.me/?text='+encodeURIComponent(message);
+ document.getElementById('shared-share-native').textContent=navigator.share?'Share':'Copy link';
+ document.getElementById('shared-share-copy').hidden=!navigator.share;
  document.getElementById('shared-share-dialog').showModal();
  const groups=sharedShareGroups(tripPlaylistFlatItems);
  try{
-  const canvas=document.createElement('canvas');canvas.width=900;canvas.height=groups.length>2?1500:950;const ctx=canvas.getContext('2d');
+  // Layout first, so the image is exactly as tall as its content (no empty band above the footer).
+  const TILE_W=185, TILE_H=188, ROW_H=235, COL_W=425, LABEL_H=22, GROUP_GAP=44, TOP=150;
+  const groupRows=[]; for(let i=0;i<groups.length;i+=2) groupRows.push(groups.slice(i,i+2));
+  const rowTops=[]; let yCursor=TOP;
+  groupRows.forEach(row=>{ rowTops.push(yCursor); const tileRows=Math.max(...row.map(g=>Math.ceil(g.items.length/2)||1)); yCursor+=LABEL_H+tileRows*ROW_H+GROUP_GAP; });
+  const contentEnd=groups.length?yCursor-GROUP_GAP:TOP;
+  const LOGO_W=340, LOGO_H=Math.round(LOGO_W*180/870), FOOTER_TOP=contentEnd+64, FOOTER_H=LOGO_H+58;
+  const canvas=document.createElement('canvas');canvas.width=900;canvas.height=FOOTER_TOP+FOOTER_H;const ctx=canvas.getContext('2d');
+  const fontUI=getComputedStyle(document.body).fontFamily||'Arial';
   ctx.fillStyle='#0c0d0e';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f5f1e9';
   const line=(text,x,y,width)=>{let t=String(text||'');while(t.length>1&&ctx.measureText(t).width>width)t=t.slice(0,-2)+'…';ctx.fillText(t,x,y);};
-  ctx.font='bold 44px Arial';line(list.title||'Shared TasteList',45,72,810);ctx.font='20px Arial';ctx.fillStyle='#bbb';line(list.subtitle||'Good things, shared.',45,112,810);
+  ctx.font=`bold 44px ${fontUI}`;line(list.title||'Shared TasteList',45,80,810);
   const assets=await Promise.all(groups.map(g=>Promise.all(g.items.map(p=>p.art?loadShareImageDirect(slArtUrl(p)).then(async img=>img||await loadShareImageViaProxy(slArtUrl(p))):null))));
+  const logoImg=await loadShareImageDirect(TL_LOGO_SRC);
   if(revision!==sharedShareRevision)return;
-  groups.forEach((g,i)=>{const x=45+i%2*425,y=175+Math.floor(i/2)*560;ctx.fillStyle=['#a970ff','#ff795f','#32a6ff','#29cc80'][i];ctx.font='bold 24px Arial';line(g.label.toUpperCase(),x,y,390);
-   g.items.forEach((p,j)=>{const ix=x+j%2*197,iy=y+22+Math.floor(j/2)*235;ctx.fillStyle='#222';ctx.fillRect(ix,iy,185,188);const img=assets[i][j];if(img){const scale=Math.min(185/img.naturalWidth,188/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;ctx.drawImage(img,ix+(185-w)/2,iy+(188-h)/2,w,h);}ctx.fillStyle='#eee';ctx.font='17px Arial';line(p.title,ix,iy+210,185);});
+  groups.forEach((g,i)=>{const x=45+i%2*COL_W,y=rowTops[Math.floor(i/2)];ctx.fillStyle=['#a970ff','#ff795f','#32a6ff','#29cc80'][i];ctx.font=`bold 24px ${fontUI}`;line(g.label.toUpperCase(),x,y,390);
+   g.items.forEach((p,j)=>{const ix=x+j%2*197,iy=y+LABEL_H+Math.floor(j/2)*ROW_H;ctx.fillStyle='#222';ctx.fillRect(ix,iy,TILE_W,TILE_H);const img=assets[i][j];if(img){const scale=Math.min(TILE_W/img.naturalWidth,TILE_H/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;ctx.drawImage(img,ix+(TILE_W-w)/2,iy+(TILE_H-h)/2,w,h);}ctx.fillStyle='#eee';ctx.font=`17px ${fontUI}`;line(p.title,ix,iy+210,TILE_W);});
   });
-  ctx.fillStyle='#f5f1e9';ctx.font='bold 34px Arial';ctx.fillText('TasteList',45,canvas.height-80);ctx.font='17px Arial';ctx.fillStyle='#bbb';ctx.fillText('You are what you love. • tastelist.app',45,canvas.height-44);
+  // Footer: matches the "Share your TasteList" image — centered wordmark, small caps line beneath.
+  ctx.fillStyle='#f5f1e9';ctx.textAlign='center';
+  if(logoImg){const lh=LOGO_W*logoImg.naturalHeight/logoImg.naturalWidth;ctx.drawImage(logoImg,450-LOGO_W/2,FOOTER_TOP,LOGO_W,lh);}
+  else{ctx.font=`700 54px ${fontUI}`;ctx.fillText('tastelist',450,FOOTER_TOP+LOGO_H-12);}
+  ctx.font=`400 17px ${fontUI}`;ctx.fillText('MAKE YOURS AT TASTELIST.APP',450,FOOTER_TOP+LOGO_H+28);
+  ctx.textAlign='left';
   const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));if(!blob)throw Error('Image unavailable');if(revision!==sharedShareRevision)return;
   sharedShareState.file=new File([blob],'shared-tastelist.png',{type:'image/png'});
   const img=document.createElement('img');img.alt=list.title+' — shared list preview';img.src=URL.createObjectURL(blob);img.onload=()=>URL.revokeObjectURL(img.src);document.getElementById('shared-share-preview').replaceChildren(img);
-  document.getElementById('shared-share-download').disabled=false;document.getElementById('shared-share-status').textContent='Preview shows up to four picks from each of the first four categories. The link opens the full list.';
+  document.getElementById('shared-share-download').disabled=false;document.getElementById('shared-share-status').textContent='';
  }catch(_){if(revision===sharedShareRevision)document.getElementById('shared-share-status').textContent='Image unavailable. You can still share the list link.';}
 }
 function closeSharedListShare(){sharedShareRevision++;sharedShareState=null;document.getElementById('shared-share-dialog').close();}
-async function shareSharedList(){if(!sharedShareState)return;const {title,url,file}=sharedShareState;try{if(navigator.share){const data={title,text:(url.includes('?join=')?'Join my ':'')+title+' on TasteList',url};if(file&&navigator.canShare?.({files:[file]}))data.files=[file];await navigator.share(data);}else await copySharedListLink();}catch(e){if(e.name!=='AbortError')document.getElementById('shared-share-status').textContent='Sharing could not open. Try Copy link or Download image.';}}
-async function copySharedListLink(){if(!sharedShareState)return;try{await navigator.clipboard.writeText(sharedShareState.url);document.getElementById('shared-share-status').textContent='Link copied';}catch(_){document.getElementById('shared-share-status').textContent=sharedShareState.url;}}
+async function shareSharedList(){if(!sharedShareState)return;const {title,url,file}=sharedShareState;try{if(navigator.share){const data={title,text:(url.includes('?join=')?'Join my ':'')+title+' on TasteList',url};if(file&&navigator.canShare?.({files:[file]}))data.files=[file];await navigator.share(data);}else await copySharedListLink();}catch(e){if(e.name!=='AbortError')document.getElementById('shared-share-status').textContent='Couldn’t open sharing — try Copy link instead.';}}
+async function copySharedListLink(){if(!sharedShareState)return;const st=document.getElementById('shared-share-status');try{await navigator.clipboard.writeText(sharedShareState.url);st.textContent='✓ Link copied';setTimeout(()=>{if(st.textContent==='✓ Link copied')st.textContent='';},2000);}catch(_){st.textContent=sharedShareState.url;}}
 function downloadSharedListImage(){if(!sharedShareState?.file)return;const a=document.createElement('a'),url=URL.createObjectURL(sharedShareState.file);a.href=url;a.download='shared-tastelist.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 async function openSharedListRoute(){
  if(await showListInvitation())return;
@@ -15550,9 +15822,7 @@ renderTasteInfluences();
 </div>
 
 <dialog id="list-invite-dialog" style="background:#181818;color:#eee;border:1px solid #444;border-radius:20px;padding:28px;width:min(480px,90vw)"><h2 id="list-invite-heading"></h2><p id="list-invite-note" role="status" style="line-height:1.6"></p><button class="sl-btn primary" id="list-invite-join" onclick="acceptListInvitation()">Join list</button><div id="list-invite-after" hidden><button class="sl-btn primary" onclick="continueJoinedList(true)">Make your TasteList</button><button class="sl-btn" onclick="continueJoinedList(false)">Go straight to the club</button></div><button class="sl-btn" onclick="document.getElementById('list-invite-dialog').close()">Close</button></dialog>
-<dialog id="shared-share-dialog" oncancel="closeSharedListShare()" style="background:#181818;color:#eee;border:1px solid #444;border-radius:18px;padding:24px;width:min(540px,90vw);max-height:90vh;overflow:auto">
-<button class="sl-btn" style="float:right" aria-label="Close" onclick="closeSharedListShare()">×</button><h2 id="shared-share-title"></h2><p id="shared-share-note"></p><div id="shared-share-preview"></div>
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="sl-btn primary" id="shared-share-native" onclick="shareSharedList()">Share via…</button><button class="sl-btn" onclick="copySharedListLink()">Copy link</button><button class="sl-btn" id="shared-share-download" onclick="downloadSharedListImage()">Download image</button><a class="sl-btn" id="shared-share-sms">Text message</a><a class="sl-btn" id="shared-share-whatsapp" target="_blank" rel="noopener">WhatsApp</a></div><p id="shared-share-status" role="status"></p><button type="button" id="shared-share-reset" class="sl-btn" onclick="replaceSharedInvite()">Replace invitation link</button></dialog>
+<dialog id="shared-share-dialog" aria-labelledby="shared-share-title" oncancel="closeSharedListShare()" style="width:min(680px,calc(100% - 24px));max-height:90dvh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:24px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px"><h2 id="shared-share-title" style="margin:0"></h2><button aria-label="Close sharing" onclick="closeSharedListShare()" class="ob-text-link">✕</button></div><div id="shared-share-preview"></div><div class="taste-share-actions" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px"><button id="shared-share-native" class="ob-button ob-primary" style="min-width:160px" onclick="shareSharedList()">Share</button><button id="shared-share-download" class="ob-button ob-secondary" onclick="downloadSharedListImage()">Save image</button></div><div style="text-align:center;margin-top:12px"><button id="shared-share-copy" class="ob-text-link" onclick="copySharedListLink()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:inherit">Copy link</button></div><p id="shared-share-status" role="status" style="font-size:13px;color:var(--muted);line-height:1.5;text-align:center;min-height:1.5em;margin:6px 0 0"></p><p class="shared-share-fineprint"><span id="shared-share-note"></span> <button type="button" id="shared-share-reset" class="ob-text-link" onclick="replaceSharedInvite()">Replace link</button></p></dialog>
 <dialog id="shared-route-dialog" style="background:#181818;color:#eee;padding:24px;border-radius:16px;max-width:90vw"><p id="shared-route-message"></p><button class="sl-btn primary" id="shared-route-signin" onclick="document.getElementById('shared-route-dialog').close();openAuthModal('signin')">Sign in</button><button class="sl-btn" onclick="document.getElementById('shared-route-dialog').close()">Close</button></dialog>
 
 <div id="friend-rec-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeFriendRecModal()">
