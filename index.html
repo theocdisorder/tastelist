@@ -1360,6 +1360,12 @@
 
 .ob-art img[hidden]{display:none!important}
 .ob-book-art{position:relative}.ob-book-art img{position:absolute;inset:0;object-fit:contain}
+
+.feed-composer-input-row{display:flex;align-items:flex-start;gap:12px;min-width:0}
+.feed-composer-input-row>span{margin-top:10px}
+.feed-composer-input-row #feed-post-text{flex:1;min-width:0;width:0;margin-top:0}
+.feed-composer-card .feed-composer-bottom,.feed-composer-card #feed-post-status{margin-left:54px}
+@media(max-width:600px){.feed-composer-input-row{gap:10px}.feed-composer-card .feed-composer-bottom,.feed-composer-card #feed-post-status{margin-left:52px}}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -13730,7 +13736,7 @@ function renderFeedComposer(){
  const host=document.getElementById('feed-composer');if(!host)return;
  if(!currentUser){host.innerHTML='';return;}
  if(feedPostDraft.userId!==currentUser.id)feedPostDraft={userId:currentUser.id,text:'',id:null,saving:false,requestId:null};
- host.innerHTML=`<section class="feed-composer-card" aria-label="Write a TasteList update"><div class="feed-composer-top">${profileAvatarHtml(currentProfile,42)}<div><h2>${feedPostDraft.id?'Edit your update':"Share what you're into right now"}</h2></div></div><textarea id="feed-post-text" aria-label="Write an update" rows="2" maxlength="3000" placeholder="${esc(FEED_POST_PROMPTS[0])}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea><div class="feed-composer-bottom"><small>Visible to people who can view your profile.<span id="feed-post-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span></small><div>${feedPostDraft.id?'<button class="sl-btn" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="ed-primary" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post'}</button></div></div><p id="feed-post-status" role="status" aria-live="polite"></p></section>`;
+ host.innerHTML=`<section class="feed-composer-card" aria-label="Write a TasteList update"><div class="feed-composer-input-row">${profileAvatarHtml(currentProfile,42)}<textarea id="feed-post-text" aria-label="Write an update" rows="2" maxlength="3000" placeholder="${esc(FEED_POST_PROMPTS[0])}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea></div><div class="feed-composer-bottom"><small>Visible to people who can view your profile.<span id="feed-post-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span></small><div>${feedPostDraft.id?'<button class="sl-btn" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="ed-primary" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post'}</button></div></div><p id="feed-post-status" role="status" aria-live="polite"></p></section>`;
  sizeFeedPostInput();
 }
 function sizeFeedPostInput(){const input=document.getElementById('feed-post-text');if(!input)return;input.style.height='auto';input.style.height=Math.min(180,Math.max(64,input.scrollHeight))+'px';input.style.overflowY=input.scrollHeight>180?'auto':'hidden';}
