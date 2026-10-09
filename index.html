@@ -1313,6 +1313,27 @@
 [data-inline-order]{touch-action:none;user-select:none;cursor:grab!important}
 [data-inline-order] img{-webkit-user-drag:none;user-select:none}
 [data-inline-order] button{display:inline-flex;align-items:center;justify-content:center}
+
+#paste-rec-modal[hidden]{display:none}
+#paste-rec-modal{position:fixed;inset:0;z-index:1200;background:#000b;display:flex;align-items:center;justify-content:center;padding:16px}
+.paste-rec-dialog{background:var(--surface,#181818);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:24px;width:min(720px,100%);max-height:90dvh;overflow:auto}
+.paste-rec-dialog h2{font-size:24px;margin:0 40px 12px 0}.paste-rec-dialog p{font-size:13px;color:var(--muted);line-height:1.5}
+.paste-rec-dialog textarea{resize:vertical}.paste-rec-help{margin:8px 0 18px}.paste-rec-actions{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}
+.paste-rec-group{border-top:1px solid var(--border);padding:18px 0}.paste-rec-search{display:flex;gap:8px}.paste-rec-search input{min-width:0;flex:1}.paste-rec-search select{width:130px}
+.paste-rec-matches{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;max-height:340px;overflow:auto}
+.paste-rec-match{display:flex;align-items:center;gap:10px;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;cursor:pointer;font:inherit;min-width:0}
+.paste-rec-match[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}.paste-rec-match img,.paste-rec-noart{width:48px;height:65px;object-fit:contain;flex-shrink:0;background:#222;border-radius:4px}.paste-rec-match strong{display:block;font-size:13px}.paste-rec-match small{display:block;color:var(--muted);font-size:11px;margin-top:4px}.paste-rec-match span:nth-child(2){flex:1;min-width:0}
+#paste-rec-save{margin-top:16px}#paste-rec-modal button:disabled{opacity:.45;cursor:default}
+@media(max-width:540px){.paste-rec-dialog{padding:18px}.paste-rec-matches{grid-template-columns:1fr}.paste-rec-search{flex-wrap:wrap}.paste-rec-search input{flex-basis:100%}}
+#shared-share-preview img{display:block;width:100%;height:auto}#shared-share-note,#shared-share-status{font-size:13px;line-height:1.5;color:#bbb}#shared-share-dialog::backdrop,#shared-route-dialog::backdrop{background:#000b}
+.feed-composer-card,.feed-text-post{background:var(--surface2);border:1px solid var(--border);border-radius:18px;padding:24px;margin-bottom:22px}
+.feed-composer-top,.feed-text-post header{display:flex;align-items:center;gap:12px}.feed-composer-top h2{font-size:19px;margin:0;color:var(--text)}.feed-composer-top p{margin:4px 0 0;font-size:12px;color:var(--muted)}
+#feed-post-text{box-sizing:border-box;width:100%;min-height:110px;resize:vertical;margin-top:18px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);font:inherit;line-height:1.6}
+#feed-post-text::placeholder{font-style:italic;color:var(--muted)}#feed-post-text:focus{outline:2px solid var(--accent);outline-offset:2px}
+.feed-post-prompts{display:flex;flex-wrap:wrap;gap:8px}.feed-post-prompts button{line-height:1.5;font-family:inherit;font-style:italic;font-size:12px;background:none;color:var(--muted);border:0;text-align:left;padding:4px 0;cursor:pointer}.feed-post-prompts button:hover{color:var(--accent)}
+.feed-composer-bottom{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:18px}.feed-composer-bottom small{color:var(--muted);font-size:11px;line-height:1.6}#feed-post-submit:disabled{opacity:.45;cursor:default}#feed-post-status:empty{display:none}#feed-post-status{color:var(--muted);font-size:13px}
+.feed-text-post{margin-bottom:0;min-width:0}.feed-author{color:var(--text);font-weight:600;font-size:14px;font-family:inherit;background:none;border:0;padding:0;cursor:pointer}.feed-text-post header small{display:block;color:var(--muted);font-size:11px;margin-top:4px}.feed-post-owner{display:flex;gap:6px;margin-left:auto}.feed-post-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:16px;line-height:1.7;color:var(--text);margin:22px 0}.feed-text-post footer{display:flex;align-items:center;gap:16px;border-top:1px solid var(--border);padding-top:14px}
+@media(max-width:600px){.feed-composer-card,.feed-text-post{padding:18px}.feed-composer-top h2{font-size:17px}.feed-post-body{font-size:15px}}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -2095,6 +2116,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
       <div id="feed-heading" style="font-size:22px;font-weight:700;color:var(--text);">What's New</div>
       <div id="feed-context" style="font-size:12px;color:var(--muted);">From people you follow</div>
     </div>
+    <div id="feed-composer"></div>
     <div id="onboarding-checklist" style="display:none;"></div>
     <div id="public-feed-items" style="display:flex;flex-direction:column;gap:16px;">
       <div style="padding:40px 0;text-align:center;color:var(--muted);font-size:13px;">Loading feed…</div>
@@ -2591,6 +2613,7 @@ function renderRecDetail() {
         <div class="rec-detail-kind" style="color:${g.color}">${esc(g.label)}</div>
         <h2 id="rec-detail-title" class="rec-detail-title">${esc(r.title)}</h2>
         ${r.note ? `<p class="rec-detail-note">“${esc(r.note)}”</p>` : ''}
+        ${r.sourceUrl ? `<a href="${esc(r.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open original link ↗</a>` : ''}
       </div>
     </div>
     <div id="rec-detail-summary" class="rec-detail-summary${r.summary ? '' : ' is-loading'}" aria-live="polite">${r.summary
@@ -2761,6 +2784,128 @@ function toggleFriendRecsEditMode() {
 }
 
 let friendRecFormState = { id: null };
+
+// Paste recommendations: editable extraction, explicit catalog choice, one atomic save.
+const pasteRecTypes={film:'Movie',tv:'TV',book:'Book',song:'Song',album:'Album',artist:'Artist',podcast:'Podcast'};
+let pasteRecs={version:0,items:[],busy:false,source:''};
+function parseRecommendationText(text){
+ const links=[];let rest=text.replace(/https?:\/\/[^\s<>]+/g,u=>{links.push(u.replace(/[.,!?;)]+$/,''));return '\n';});
+ const from=rest.match(/^\s*([\p{L}][\p{L} .'-]{0,45}?)\s+(?:said|recommended|suggested|told me)\b/iu)?.[1]||'';
+ rest=rest.replace(/^\s*[\p{L}][\p{L} .'-]{0,45}?\s+(?:said|recommended|suggested|told me)\s*[:,]?\s*/iu,'');
+ // Split on clear recommendation verbs, never on "and" within a title.
+ rest=rest.replace(/(?:,?\s+and\s+|,\s*|\s+)(?=(?:watch|read|listen to|check out)\s+)/gi,'\n');
+ const parts=rest.split(/[\n;]+/).map(v=>v.trim()).filter(Boolean);
+ const items=parts.map(raw=>{
+  let types=Object.keys(pasteRecTypes);
+  if(/^(?:you (?:should|must|have to)\s+)?read\b/i.test(raw))types=['book'];
+  else if(/^(?:you (?:should|must|have to)\s+)?watch\b/i.test(raw))types=['film','tv'];
+  else if(/^(?:you (?:should|must|have to)\s+)?listen to\b/i.test(raw))types=['song','album','artist','podcast'];
+  const q=raw.replace(/^(?:[-•]\s*|\d+[.)]\s+)/,'').replace(/^(?:you (?:should|must|have to)\s+)?(?:watch|read|listen to|check out)\s+/i,'').replace(/^["“]|["”]$/g,'').replace(/[.!]+$/,'').trim();
+  return {q,types,url:''};
+ }).filter(v=>v.q);
+ links.forEach(url=>items.push({q:url,types:Object.keys(pasteRecTypes),url}));
+ return {from,items};
+}
+function openPasteRecommendations(){
+ if(!isOwnProfile||!currentUser)return;
+ pasteRecs={version:pasteRecs.version+1,items:[],busy:false,source:''};
+ document.getElementById('paste-rec-text').value='';document.getElementById('paste-rec-from').value='';
+ document.getElementById('paste-rec-results').innerHTML='';document.getElementById('paste-rec-status').textContent='';
+ document.getElementById('paste-rec-modal').hidden=false;document.getElementById('paste-rec-save').disabled=true;
+ document.getElementById('paste-rec-text').focus();
+}
+function closePasteRecommendations(){if(pasteRecs.busy)return;pasteRecs.version++;document.getElementById('paste-rec-modal').hidden=true;document.querySelector('#recs-head-controls button')?.focus();}
+function pasteRecDialogKey(e){
+ if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closePasteRecommendations();return;}
+ if(e.key!=='Tab')return;
+ const focusable=[...e.currentTarget.querySelectorAll('button,input,select,textarea,a[href]')].filter(el=>!el.matches(':disabled')&&el.getClientRects().length);
+ const first=focusable[0],last=focusable[focusable.length-1];
+ if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}
+}
+async function findPastedRecommendations(){
+ if(pasteRecs.busy)return;
+ const source=document.getElementById('paste-rec-text').value.trim();if(!source)return;
+ const parsed=parseRecommendationText(source);if(parsed.items.length>12){document.getElementById('paste-rec-status').textContent='Please paste up to 12 recommendations at a time.';return;}
+ const version=++pasteRecs.version;pasteRecs.source=source;
+ if(!document.getElementById('paste-rec-from').value.trim())document.getElementById('paste-rec-from').value=parsed.from;
+ pasteRecs.items=parsed.items.map(p=>({...p,results:[],selected:null,loading:true,request:0}));
+ document.getElementById('paste-rec-status').textContent='Choose the correct match for each recommendation. You can edit a search or skip an item.';
+ renderPastedRecommendations();
+ // Sequential groups keep catalog traffic bounded.
+ for(let i=0;i<pasteRecs.items.length;i++){if(version!==pasteRecs.version)return;await searchPastedRecommendation(i,version);}
+}
+async function pasteRecLink(url){
+ const u=new URL(url);if(u.protocol!=='https:')return null;
+ if(u.hostname==='open.spotify.com'){
+  const kind=u.pathname.split('/').filter(Boolean).filter(x=>!x.startsWith('intl-'))[0];
+  const type={track:'song',album:'album',artist:'artist',show:'podcast',episode:'podcast'}[kind];if(!type)return null;
+  const d=await sharedCatalogJSON('https://open.spotify.com/oembed?url='+encodeURIComponent(url));
+  if(d.title)return {title:d.title,art:d.thumbnail_url||'',sub:'Spotify',type,url,id:url};
+ }
+ if(['music.apple.com','podcasts.apple.com'].includes(u.hostname)){
+  const id=u.searchParams.get('i')||u.pathname.match(/(?:id)?(\d+)\/?$/)?.[1];if(!id)return null;
+  const d=await sharedCatalogJSON('https://itunes.apple.com/lookup?id='+encodeURIComponent(id));
+  const r=(d.results||[]).find(x=>String(x.trackId||x.collectionId)===id);if(!r)return null;
+  const type=u.hostname==='podcasts.apple.com'?'podcast':u.pathname.includes('/artist/')?'artist':u.searchParams.has('i')?'song':'album';
+  return {title:r.trackName||r.collectionName||r.artistName,sub:r.artistName||'',art:r.artworkUrl600||(r.artworkUrl100||'').replace('100x100bb','600x600bb'),type,url,id:'apple:'+id};
+ }
+ return null;
+}
+async function searchPastedRecommendation(i,version=pasteRecs.version){
+ const p=pasteRecs.items[i];if(!p||pasteRecs.busy)return;
+ const request=++p.request;p.loading=true;p.selected=null;p.error='';renderPastedRecommendations();
+ try{
+  let results=[];
+  if(/^https?:\/\//i.test(p.q)){
+   p.url=p.q;const hit=await pasteRecLink(p.q);if(hit)results=[hit];
+   if(!hit)p.error='Could not read this link. Replace the search with its title to find a match; the original link is kept.';
+  }else{
+   const settled=await Promise.allSettled(p.types.map(async type=>{
+    const catalog={film:'movies',tv:'tv',book:'books',song:'music',album:'albums',podcast:'podcasts'};
+    const found=type==='artist'?(await searchOnboardingArtists(p.q)).map(a=>({title:a.title,art:a.art,sub:a.genre||'Artist',id:a.id})):await searchTasteCatalog(catalog[type],p.q);
+    return found.map(r=>({...r,type}));
+   }));
+   results=settled.filter(r=>r.status==='fulfilled').flatMap(r=>r.value);
+   if(settled.some(r=>r.status==='rejected'))p.error='Some catalogs could not load. Try again if your title is missing.';
+   const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+   results.sort((a,b)=>Number(norm(b.title)===norm(p.q))-Number(norm(a.title)===norm(p.q)));
+   results=results.filter((r,j,a)=>a.findIndex(x=>x.type===r.type&&x.title===r.title&&x.sub===r.sub&&x.meta===r.meta)===j).slice(0,18);
+  }
+  if(version!==pasteRecs.version||p.request!==request)return;
+  p.results=results;
+ }catch(_){if(version!==pasteRecs.version||p.request!==request)return;p.results=[];p.error='Search could not load. Please try again, or search by title.';}
+ if(version!==pasteRecs.version||p.request!==request)return;
+ p.loading=false;renderPastedRecommendations();
+}
+function updatePasteRecQuery(i,value){const p=pasteRecs.items[i];p.q=value;p.selected=null;p.results=[];p.request++;p.loading=false;document.getElementById('paste-rec-results').children[i]?.querySelectorAll('.paste-rec-match').forEach(b=>b.disabled=true);document.getElementById('paste-rec-save').disabled=!pasteRecs.items.some(p=>p.selected!==null);}
+function retryPasteRec(i){const p=pasteRecs.items[i];const type=document.getElementById('paste-rec-type-'+i).value;p.types=type?[type]:Object.keys(pasteRecTypes);searchPastedRecommendation(i);}
+function choosePastedRec(i,j){pasteRecs.items[i].selected=j;renderPastedRecommendations();}
+function renderPastedRecommendations(){
+ const box=document.getElementById('paste-rec-results');
+ document.getElementById('paste-rec-fields').disabled=pasteRecs.busy;
+ box.innerHTML=pasteRecs.items.map((p,i)=>`<section class="paste-rec-group"><div class="paste-rec-search"><input class="tl-input" aria-label="Title to search" value="${esc(p.q)}" oninput="updatePasteRecQuery(${i},this.value)" onkeydown="if(event.key==='Enter')retryPasteRec(${i})"><select class="tl-select" id="paste-rec-type-${i}" aria-label="Category">${['',...Object.keys(pasteRecTypes)].map(t=>`<option value="${t}" ${p.types.length===1&&p.types[0]===t?'selected':''}>${pasteRecTypes[t]||'All categories'}</option>`).join('')}</select><button type="button" class="sl-btn" onclick="retryPasteRec(${i})">Search</button></div>${p.loading?'<p role="status">Finding matches…</p>':`${p.error?`<p>${esc(p.error)}</p>`:''}<div class="paste-rec-matches">${p.results.map((r,j)=>`<button type="button" class="paste-rec-match" aria-pressed="${p.selected===j}" onclick="choosePastedRec(${i},${j})">${r.art?`<img src="${esc(r.art)}" alt="" onerror="this.style.visibility='hidden'">`:'<span class="paste-rec-noart">♪</span>'}<span><strong>${esc(r.title)}</strong><small>${esc([pasteRecTypes[r.type],r.sub,r.meta].filter(Boolean).join(' · '))}</small></span><span aria-hidden="true">${p.selected===j?'✓':'+'}</span></button>`).join('')}</div>${!p.results.length?'<p>No matches yet. Try a shorter title or a different category.</p>':''}<button type="button" class="ob-text-link" onclick="choosePastedRec(${i},null)">${p.selected===null?'Skipped — choose a match to include':'Skip this recommendation'}</button>`}</section>`).join('');
+ const count=pasteRecs.items.filter(p=>p.selected!==null).length;const btn=document.getElementById('paste-rec-save');btn.disabled=!count||pasteRecs.busy;btn.textContent=pasteRecs.busy?'Saving…':`Save ${count||''} to What’s Next`;
+}
+async function savePastedRecommendations(){
+ if(pasteRecs.busy||!isOwnProfile||!currentUser)return;
+ const picks=pasteRecs.items.filter(p=>p.selected!==null).map(p=>({item:p.results[p.selected],url:p.url})).filter(p=>p.item);if(!picks.length)return;
+ pasteRecs.busy=true;renderPastedRecommendations();const userId=currentUser.id,status=document.getElementById('paste-rec-status');
+ try{
+  if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again before saving.');
+  const from=document.getElementById('paste-rec-from').value.trim();
+  const existing=await sb.from('friend_recs').select('title,type,catalog_item').eq('user_id',userId);if(existing.error)throw existing.error;
+  const key=r=>JSON.stringify([r.type,tasteNorm(r.title),tasteNorm(r.catalog_item?.sub||'')]);
+  const seen=new Set((existing.data||[]).map(key));const rows=[];
+  for(const {item:r,url} of picks){
+   const row={user_id:userId,title:r.title,type:r.type,art_url:r.art||null,from_name:from||null,recommenders:from?[{name:from}]:[],source_text:pasteRecs.source,source_url:url||r.url||null,catalog_item:r};
+   if(seen.has(key(row)))continue;seen.add(key(row));rows.push(row);
+  }
+  if(!rows.length){status.textContent='These selections are already in What’s Next.';return;}
+  const result=await sb.from('friend_recs').insert(rows);if(result.error)throw result.error;
+  pasteRecs.busy=false;closePasteRecommendations();await loadFriendRecsFromSupabase(userId);showToast(`Added ${rows.length} recommendation${rows.length===1?'':'s'}`);
+ }catch(e){status.textContent=/column|schema cache/.test(e.message||'')?'The recommendation update needs its database setup before saving. Your selections are still here.':(e.message||'Could not save. Your selections are still here; please try again.');}
+ finally{pasteRecs.busy=false;renderPastedRecommendations();}
+}
 
 function openFriendRecForm(idx) {
   friendRecFormState = { id: null };
@@ -4318,7 +4463,7 @@ async function submitAuthForm() {
   try {
     const { error } = authMode === 'signin'
       ? await sb.auth.signInWithPassword({ email, password })
-      : await sb.auth.signUp({ email, password, options: { emailRedirectTo: inviteSignupPending ? inviteReturnUrl() : location.origin + '/' } });
+      : await sb.auth.signUp({ email, password, options: { emailRedirectTo: listInviteToken() ? location.origin+'/?join='+encodeURIComponent(listInviteToken()) : inviteSignupPending ? inviteReturnUrl() : location.origin + '/' } });
     if (error) throw error;
     if (authMode === 'signup') {
       errEl.style.color = '#22C55E';
@@ -4569,7 +4714,10 @@ async function loadFriendRecsFromSupabase(userId) {
         fromUsername: first?.username || null,
         fromDisplayName: first?.name || null,
         art: row.type==='book'&&bookArtKey(row.title)==='flowersforalgernon'?'https://www.hachette.co.uk/wp-content/uploads/2022/04/hbg-title-flowers-for-algernon-3-307.jpg?w=440':row.art_url || '',
-        tmdbId: row.tmdb_id || undefined,
+        tmdbId: row.tmdb_id || row.catalog_item?.tmdbId || undefined,
+        note: row.source_text || '',
+        sourceUrl: /^https:\/\//i.test(row.source_url||'') ? row.source_url : '',
+        catalogItem: row.catalog_item || null,
       });
     });
     renderFriendRecs();
@@ -4690,7 +4838,12 @@ async function loadLandingMovieTiles() {
 // the URL (works whether the viewer is signed in or not), or the signed-in user's own profile
 // as the default, or nothing (landing page shows) if signed out with no ?u= param.
 async function resolveViewedProfile() {
-  const usernameParam = new URLSearchParams(window.location.search).get('u');
+  let usernameParam = new URLSearchParams(window.location.search).get('u');
+  const sharedId=new URLSearchParams(location.search).get('list');
+  if(sharedId&&sb){
+   const {data:list}=await sb.from('taste_lists').select('user_id').eq('id',sharedId).maybeSingle();
+   if(list){const {data:owner}=await sb.from('profile_directory').select('username').eq('id',list.user_id).maybeSingle();if(owner?.username)usernameParam=owner.username;}
+  }
 
   if (usernameParam && sb) {
     try {
@@ -7200,6 +7353,8 @@ function finishOnboarding(status) {
   if(onboardingVisualState().saving)return;
   if (!['completed','skipped'].includes(status)) return;
   saveOnboardingProgress(status, onboardingState?.step || 0);
+  let returnList;try{returnList=sessionStorage.getItem('tl_onboarding_return_list');sessionStorage.removeItem('tl_onboarding_return_list');}catch(_){}
+  if(returnList){location.href=sharedListUrl(returnList);return;}
   setTopView('feed');
   checkAndRenderOnboarding();
 }
@@ -7226,6 +7381,7 @@ async function resumeOnboarding() {
 }
 
 function decideInitialView() {
+  if(new URLSearchParams(location.search).has('list')||new URLSearchParams(location.search).has('join')){setTopView('profile');return;}
   const params = new URLSearchParams(window.location.search);
   const usernameParam = params.get('u');
   // Arrived by signing up from a friend's profile: new accounts set up their own first.
@@ -7275,6 +7431,7 @@ async function initAuth() {
     await loadViewedProfileData();
     renderProfileTab();
   }
+  await openSharedListRoute();
   startNotificationPolling();
 
   // Tracks the signed-in user id across auth events so a refired SIGNED_IN for the SAME already-
@@ -7320,7 +7477,8 @@ async function initAuth() {
       friendRecsEditMode = false;
       activityEditMode = false;
     }
-    startNotificationPolling();
+    await openSharedListRoute();
+  startNotificationPolling();
   });
 }
 
@@ -12033,6 +12191,7 @@ function renderTasteListHeader(flat) {
     ? `<button class="sl-btn" onclick="openTasteItemForm()">+ Add item</button><button class="sl-btn primary" onclick="toggleEditMode()">✓ Done</button>`
     : `<button class="sl-btn primary" onclick="openTasteItemForm()">+ Add item</button><button class="sl-btn" onclick="toggleEditMode()">✎ Edit</button>`) : '';
   if(actions && list?.isOwner)actions.innerHTML += `<button class="sl-btn" onclick="deleteSharedTasteList('${jsStr(list.id)}')">Delete list</button>`;
+  if(actions && list)actions.innerHTML += `<button type="button" class="sl-btn" onclick="openSharedListShare()">Share list ↗</button>`;
   const bg = document.getElementById('sl-hero-bg');
   if (bg) {
     const pick = flat.find(i => i.backdrop) || flat.find(i => ['movies', 'tv'].includes(i.cat) && i.art) || flat.find(i => i.art);
@@ -13090,6 +13249,7 @@ function toggleProfileCardComments(itemId) {
 }
 
 function activityCardHtml(item, globalIndex) {
+  if(item.catalogItem?.kind==='text_post')return feedTextPostHtml({id:item.id,note:item.note,activity_date:item.rawDate,user_id:viewedProfile?.id,profiles:viewedProfile},true);
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
   const iconColor = (MEDIA_ICONS[iconType] || MEDIA_ICONS.music).color;
   const typeIcon = badgeIcon(iconType, 13);
@@ -13249,7 +13409,60 @@ function renderWelcomeBanner() {
 // Resets pagination and re-resolves who you follow (their follow list may have changed since the
 // last time the Feed was open), then loads the first page. Called every time the Feed view is
 // entered — see setTopView().
+const FEED_POST_PROMPTS=['What have you watched, read, or listened to lately?','What’s something you loved that more people should discover?','What should your friends put on their What’s Next list?'];
+let feedPostDraft={userId:null,text:'',id:null,saving:false,requestId:null};
+function renderFeedComposer(){
+ const host=document.getElementById('feed-composer');if(!host)return;
+ if(!currentUser){host.innerHTML='';return;}
+ if(feedPostDraft.userId!==currentUser.id)feedPostDraft={userId:currentUser.id,text:'',id:null,saving:false,requestId:null};
+ host.innerHTML=`<section class="feed-composer-card" aria-label="Write a TasteList update"><div class="feed-composer-top">${profileAvatarHtml(currentProfile,42)}<div><h2>${feedPostDraft.id?'Edit your update':'Share what you love'}</h2><p>A good recommendation starts a conversation.</p></div></div><label class="sr-only" for="feed-post-text">Your update</label><textarea id="feed-post-text" rows="3" maxlength="3000" placeholder="${esc(FEED_POST_PROMPTS[0])}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea><div class="feed-post-prompts" aria-label="Ideas for your update">${FEED_POST_PROMPTS.slice(1).map((p,i)=>`<button type="button" onclick="useFeedPostPrompt(${i+1})">${esc(p)}</button>`).join('')}</div><div class="feed-composer-bottom"><small>Visible to people who can view your profile.<br><span id="feed-post-count">${feedPostDraft.text.length}</span>/3,000</small><div>${feedPostDraft.id?'<button class="sl-btn" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="ed-primary" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post'}</button></div></div><p id="feed-post-status" role="status" aria-live="polite"></p></section>`;
+}
+function updateFeedPostDraft(text){feedPostDraft.text=text;document.getElementById('feed-post-count').textContent=text.length;document.getElementById('feed-post-submit').disabled=!text.trim()||text.length>3000||feedPostDraft.saving;}
+function useFeedPostPrompt(i){const input=document.getElementById('feed-post-text');input.placeholder=FEED_POST_PROMPTS[i];input.focus();}
+function cancelFeedPostEdit(){if(feedPostDraft.saving)return;feedPostDraft.text='';feedPostDraft.id=null;feedPostDraft.requestId=null;renderFeedComposer();}
+async function publishFeedPost(){
+ if(!currentUser||feedPostDraft.saving||feedPostDraft.userId!==currentUser.id)return;
+ const text=feedPostDraft.text.trim(),userId=currentUser.id;if(!text||text.length>3000)return;
+ feedPostDraft.saving=true;renderFeedComposer();
+ try{
+  if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again to post.');
+  const row={label:'Shared an update',type:'other',sub:'',note:text,art_url:null,catalog_item:{kind:'text_post'}};
+  let result;
+  if(feedPostDraft.id)result=await sb.from('activity_feed').update(row).eq('id',feedPostDraft.id).eq('user_id',userId).select('id').single();
+  else{
+   feedPostDraft.requestId ||= crypto.randomUUID();
+   result=await sb.from('activity_feed').insert({...row,id:feedPostDraft.requestId,user_id:userId,activity_date:new Date().toISOString()}).select('id').single();
+   // A lost response may hide a successful insert. Confirm this exact owned post before retrying.
+   if(result.error?.code==='23505')result=await sb.from('activity_feed').select('id').eq('id',feedPostDraft.requestId).eq('user_id',userId).single();
+  }
+  if(result.error)throw result.error;
+  if(currentUser?.id!==userId)return;
+  feedPostDraft={userId,text:'',id:null,saving:false,requestId:null};renderFeedComposer();
+  showToast('Update posted');await loadPublicFeed();
+  if(viewedProfile?.id===userId)await loadActivityFeedFromSupabase(userId);
+ }catch(e){if(currentUser?.id===userId){feedPostDraft.saving=false;renderFeedComposer();document.getElementById('feed-post-status').textContent=e.message||'Could not post. Your draft is still here.';}}
+ finally{if(feedPostDraft.userId===userId)feedPostDraft.saving=false;}
+}
+function editFeedTextPost(id){
+ const r=feedRows.find(r=>r.id===id)||ACTIVITY_FEED_ITEMS.find(r=>r.id===id);
+ if(!r||feedPostDraft.saving)return;
+ if(feedPostDraft.text.trim()&&!confirm('Replace your current draft with this post?'))return;
+ feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null};goToFeedView();renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});
+}
+async function deleteFeedTextPost(id){
+ if(!currentUser||!confirm('Delete this update?'))return;
+ const {error}=await sb.from('activity_feed').delete().eq('id',id).eq('user_id',currentUser.id);if(error){showToast('Could not delete this update.');return;}
+ await loadPublicFeed();if(viewedProfile?.id===currentUser.id)await loadActivityFeedFromSupabase(currentUser.id);
+}
+function feedTextPostHtml(row,profile=false){
+ const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
+ const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
+ const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
+ return `<article class="feed-text-post"><header>${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>${row.user_id===currentUser?.id?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div><footer>${reactionBadgeHtml('activity_feed',row.id)}<button class="sl-btn" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')">Comment${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?' · '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}</button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
+}
+
 async function loadPublicFeed() {
+  renderFeedComposer();
   ++peopleSuggestionsRevision;
   feedRows = [];
   feedOffset = 0;
@@ -13274,18 +13487,18 @@ async function fetchFeedPage(isFirstPage) {
   if (isFirstPage) el.innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--muted);font-size:13px;">Loading feed…</div>';
   try {
     if (feedAudienceIds === null) feedAudienceIds = await resolveFeedAudience();
-    const followedIds=feedAudienceIds.filter(id=>id!==currentUser?.id);
-    if(!followedIds.length){feedMode='suggestions';feedHasMore=false;await showPeopleToFollow();return;}
+    const followedIds=[...new Set([...feedAudienceIds,currentUser?.id].filter(Boolean))];
     document.getElementById('feed-heading').textContent="What's New";
-    document.getElementById('feed-context').textContent=feedFollowCount?'From people you follow':'Featured on TasteList — follow friends to see their picks here too';
+    document.getElementById('feed-context').textContent='Your updates and people you follow';
     let query = sb.from('activity_feed')
       .select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, user_id, profiles!activity_feed_user_id_fkey(username, display_name, is_public)')
-      .order('activity_date', { ascending: false })
+      .order('activity_date', { ascending: false }).order('created_at', { ascending: false })
       .range(feedOffset, feedOffset + FEED_PAGE_SIZE - 1);
     query = query.in('user_id', followedIds);
     const { data, error } = await query;
     if (error || !data) throw error || new Error('No data');
     const pageRows=data.filter(row=>row.profiles?.username && followedIds.includes(row.user_id));
+    if(isFirstPage&&!pageRows.length&&feedFollowCount===0){feedMode='suggestions';feedHasMore=false;await showPeopleToFollow();return;}
     feedMode='following';
     feedHasMore = data.length === FEED_PAGE_SIZE;
     feedOffset += data.length;
@@ -13445,6 +13658,7 @@ function activityArtWrap(src, inner) {
 }
 
 function publicActivityCardHtml(row) {
+  if(row.catalog_item?.kind==='text_post')return feedTextPostHtml(row);
   const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
   const typeIcon = badgeIcon(meta.icon, 13);
   const note = row.note ? `<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:8px;">${renderActivityNote(row.note)}</div>` : '';
@@ -13731,10 +13945,10 @@ function renderFriendRecs() {
   if (!el) return;
   // Always available to the owner — adding a recommendation shouldn't require finding Edit first.
   const addBtnHtml = isOwnProfile ? `
-    <button class="list-create-cta" onclick="openFriendRecForm()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
+    <button class="list-create-cta" onclick="openPasteRecommendations()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Paste a recommendation</button>` : '';
   if (!FRIEND_RECOMMENDATIONS.length) {
     const hc = document.getElementById('recs-head-controls');
-    if (hc) hc.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openFriendRecForm()" aria-label="Add recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</button>` : '';
+    if (hc) hc.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Paste a recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Paste a recommendation</button>` : '';
     el.innerHTML = `
       <div style="text-align:center;padding:36px 16px;">
         <div style="width:44px;height:44px;border-radius:12px;background:#7C4DFF1c;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
@@ -13746,7 +13960,7 @@ function renderFriendRecs() {
     return;
   }
   const headCtl = document.getElementById('recs-head-controls');
-  if (headCtl) headCtl.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openFriendRecForm()" aria-label="Add recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</button>` : '';
+  if (headCtl) headCtl.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Paste a recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Paste a recommendation</button>` : '';
   // Collapsed view: one compact strip of covers per category so the panel fits beside What's New.
   // "See all" opens the expanded view, styled like a shared list page.
   const groups = friendRecGroups();
@@ -14000,6 +14214,118 @@ async function shareTastePoster() {
  const title=(firstNameOnly(viewedProfile.display_name)||username)+"’s Taste List";
  try{if(navigator.share)await navigator.share({title,text:'You are what you love.',url});else {await navigator.clipboard.writeText(url);document.getElementById('taste-poster-share-status').textContent='Profile link copied';}}
  catch(error){if(error.name!=='AbortError')document.getElementById('taste-poster-share-status').textContent='Could not share. Your profile link: '+url;}
+}
+
+let activeListInvite=null,joinedInviteList=null;
+function listInviteToken(){const t=new URLSearchParams(location.search).get('join');return /^[0-9a-f-]{36}$/i.test(t||'')?t:null;}
+async function showListInvitation(){
+ const token=listInviteToken();if(!token||!sb)return false;
+ activeListInvite=token;
+ const {data,error}=await sb.rpc('preview_taste_list_invite',{invite_token:token});
+ const title=data?.[0]?.title;
+ document.getElementById('list-invite-heading').textContent=title?'You’re invited to '+title:'Invitation unavailable';
+ document.getElementById('list-invite-note').textContent=title?'Join this shared list to see the picks and add your own. You can create your TasteList afterward.':'This invitation may have expired or been turned off. Ask the owner for a new link.';
+ document.getElementById('list-invite-join').hidden=!title||!!error;
+ document.getElementById('list-invite-after').hidden=true;
+ document.getElementById('list-invite-dialog').showModal();
+ let pending=false;try{pending=sessionStorage.getItem('tl_join_intent')===token;}catch(_){}
+ if(title&&currentUser&&pending)await acceptListInvitation();
+ return true;
+}
+async function acceptListInvitation(){
+ if(!activeListInvite)return;
+ if(!currentUser){try{sessionStorage.setItem('tl_join_intent',activeListInvite);}catch(_){}document.getElementById('list-invite-dialog').close();openAuthModal('signup');return;}
+ const btn=document.getElementById('list-invite-join');if(btn.disabled)return;btn.disabled=true;
+ try{
+ const {data,error}=await sb.rpc('accept_taste_list_invite',{invite_token:activeListInvite});if(error)throw error;
+ joinedInviteList=data;try{sessionStorage.removeItem('tl_join_intent');}catch(_){}
+ document.getElementById('list-invite-heading').textContent='You’re in!';
+ document.getElementById('list-invite-note').textContent='Now make your TasteList so your friends can discover what you love—or go straight to the club.';
+ btn.hidden=true;document.getElementById('list-invite-after').hidden=false;
+ }catch(e){document.getElementById('list-invite-note').textContent=e.message||'Could not join. Please try again.';}
+ finally{btn.disabled=false;}
+}
+async function continueJoinedList(buildProfile){
+ if(!joinedInviteList)return;
+ const id=joinedInviteList;document.getElementById('list-invite-dialog').close();
+ if(buildProfile){
+  try{sessionStorage.setItem('tl_onboarding_return_list',id);}catch(_){}
+  // Switch to their own profile before using the existing onboarding journey.
+  const clean=new URL(location.href);clean.searchParams.delete('join');clean.searchParams.delete('list');clean.searchParams.delete('u');history.replaceState(null,'',clean);
+  await goToMyProfileView();
+  if(shouldShowOnboarding()||['pending','skipped'].includes(onboardingState?.status))await resumeOnboarding();
+  else {try{sessionStorage.removeItem('tl_onboarding_return_list');}catch(_){}showToast('Your TasteList is ready. Your new list is in Shared Lists.');}
+ }else location.href=sharedListUrl(id);
+}
+async function replaceSharedInvite(){
+ const id=sharedShareState?.id;if(!id)return;
+ const {error}=await sb.rpc('revoke_taste_list_invites',{target_list:id});
+ if(error){document.getElementById('shared-share-status').textContent=error.message;return;}
+ closeSharedListShare();await openSharedListShare();
+}
+
+let sharedShareState=null,sharedShareRevision=0;
+function sharedListUrl(id){return 'https://tastelist.app/?list='+encodeURIComponent(id);}
+function sharedShareGroups(items){
+ const groups=new Map();for(const p of items){if(!groups.has(p.cat))groups.set(p.cat,{label:tasteTypeMeta(p.cat)?.label||p.cat||'Picks',items:[]});const g=groups.get(p.cat);if(g.items.length<4)g.items.push(p);}
+ return [...groups.values()].slice(0,4);
+}
+async function openSharedListShare(){
+ const list=allTasteLists.find(l=>l.id===currentTasteListId);if(!list)return;
+ const revision=++sharedShareRevision;
+ let inviteUrl='';
+ if(list.isOwner){
+  const {data,error}=await sb.rpc('create_taste_list_invite',{target_list:list.id});
+  if(error||!data){showToast('Could not create an invitation. Check that the invitation SQL setup has been run.');return;}
+  if(revision!==sharedShareRevision)return;
+  inviteUrl='https://tastelist.app/?join='+encodeURIComponent(data);
+ }
+ sharedShareState={id:list.id,title:list.title||'Shared TasteList',url:inviteUrl||sharedListUrl(list.id),file:null};
+ document.getElementById('shared-share-title').textContent=sharedShareState.title;
+ document.getElementById('shared-share-reset').hidden=!list.isOwner;
+ document.getElementById('shared-share-note').textContent=inviteUrl?'Anyone with this invitation link can sign up and join this list. It expires in 30 days. Replacing the link stops old invitations from working; existing members stay.':list.is_public?'Recipients can open this list if they have access to the owner’s profile.':'Private list: only the owner and invited members can open the link. Sharing the image sends a copy of the pictured items.';
+ document.getElementById('shared-share-status').textContent='Preparing image…';
+ document.getElementById('shared-share-preview').innerHTML='';document.getElementById('shared-share-download').disabled=true;
+ document.getElementById('shared-share-native').textContent=navigator.share?'Share via…':'Copy link';
+ const message=(inviteUrl?'Join my ':'')+sharedShareState.title+' on TasteList — '+sharedShareState.url;
+ document.getElementById('shared-share-sms').href='sms:?body='+encodeURIComponent(message);
+ document.getElementById('shared-share-whatsapp').href='https://wa.me/?text='+encodeURIComponent(message);
+ document.getElementById('shared-share-dialog').showModal();
+ const groups=sharedShareGroups(tripPlaylistFlatItems);
+ try{
+  const canvas=document.createElement('canvas');canvas.width=900;canvas.height=groups.length>2?1500:950;const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0c0d0e';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f5f1e9';
+  const line=(text,x,y,width)=>{let t=String(text||'');while(t.length>1&&ctx.measureText(t).width>width)t=t.slice(0,-2)+'…';ctx.fillText(t,x,y);};
+  ctx.font='bold 44px Arial';line(list.title||'Shared TasteList',45,72,810);ctx.font='20px Arial';ctx.fillStyle='#bbb';line(list.subtitle||'Good things, shared.',45,112,810);
+  const assets=await Promise.all(groups.map(g=>Promise.all(g.items.map(p=>p.art?loadShareImageDirect(slArtUrl(p)).then(async img=>img||await loadShareImageViaProxy(slArtUrl(p))):null))));
+  if(revision!==sharedShareRevision)return;
+  groups.forEach((g,i)=>{const x=45+i%2*425,y=175+Math.floor(i/2)*560;ctx.fillStyle=['#a970ff','#ff795f','#32a6ff','#29cc80'][i];ctx.font='bold 24px Arial';line(g.label.toUpperCase(),x,y,390);
+   g.items.forEach((p,j)=>{const ix=x+j%2*197,iy=y+22+Math.floor(j/2)*235;ctx.fillStyle='#222';ctx.fillRect(ix,iy,185,188);const img=assets[i][j];if(img){const scale=Math.min(185/img.naturalWidth,188/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;ctx.drawImage(img,ix+(185-w)/2,iy+(188-h)/2,w,h);}ctx.fillStyle='#eee';ctx.font='17px Arial';line(p.title,ix,iy+210,185);});
+  });
+  ctx.fillStyle='#f5f1e9';ctx.font='bold 34px Arial';ctx.fillText('TasteList',45,canvas.height-80);ctx.font='17px Arial';ctx.fillStyle='#bbb';ctx.fillText('You are what you love. • tastelist.app',45,canvas.height-44);
+  const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));if(!blob)throw Error('Image unavailable');if(revision!==sharedShareRevision)return;
+  sharedShareState.file=new File([blob],'shared-tastelist.png',{type:'image/png'});
+  const img=document.createElement('img');img.alt=list.title+' — shared list preview';img.src=URL.createObjectURL(blob);img.onload=()=>URL.revokeObjectURL(img.src);document.getElementById('shared-share-preview').replaceChildren(img);
+  document.getElementById('shared-share-download').disabled=false;document.getElementById('shared-share-status').textContent='Preview shows up to four picks from each of the first four categories. The link opens the full list.';
+ }catch(_){if(revision===sharedShareRevision)document.getElementById('shared-share-status').textContent='Image unavailable. You can still share the list link.';}
+}
+function closeSharedListShare(){sharedShareRevision++;sharedShareState=null;document.getElementById('shared-share-dialog').close();}
+async function shareSharedList(){if(!sharedShareState)return;const {title,url,file}=sharedShareState;try{if(navigator.share){const data={title,text:(url.includes('?join=')?'Join my ':'')+title+' on TasteList',url};if(file&&navigator.canShare?.({files:[file]}))data.files=[file];await navigator.share(data);}else await copySharedListLink();}catch(e){if(e.name!=='AbortError')document.getElementById('shared-share-status').textContent='Sharing could not open. Try Copy link or Download image.';}}
+async function copySharedListLink(){if(!sharedShareState)return;try{await navigator.clipboard.writeText(sharedShareState.url);document.getElementById('shared-share-status').textContent='Link copied';}catch(_){document.getElementById('shared-share-status').textContent=sharedShareState.url;}}
+function downloadSharedListImage(){if(!sharedShareState?.file)return;const a=document.createElement('a'),url=URL.createObjectURL(sharedShareState.file);a.href=url;a.download='shared-tastelist.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
+async function openSharedListRoute(){
+ if(await showListInvitation())return;
+ const id=new URLSearchParams(location.search).get('list');if(!id||!sb)return;
+ // Only database-authorized rows enter allTasteLists; a URL is never an invitation.
+ let list=allTasteLists.find(l=>l.id===id);
+ if(!list){
+  const {data,error}=await sb.from('taste_lists').select('id,user_id,title,subtitle,is_public,created_at').eq('id',id).maybeSingle();
+  if(data&&!error){const {data:members}=await sb.from('taste_list_collaborators').select('user_id').eq('list_id',id);list={...data,isOwner:data.user_id===currentUser?.id,collaborators:members||[]};allTasteLists.push(list);}
+ }
+ if(list){switchTab('playlist');await openTasteList(id);return;}
+ document.getElementById('shared-route-message').textContent=currentUser?'This list is unavailable to this account. It may be private, removed, or require access to its owner’s profile. Ask the owner to invite you.':'Sign in to check access to this shared list. Private lists require an invitation.';
+ document.getElementById('shared-route-signin').hidden=!!currentUser;
+ document.getElementById('shared-route-dialog').showModal();
 }
 
 let tasteShareAsset=null,tasteShareRevision=0;
@@ -15136,6 +15462,32 @@ renderTasteInfluences();
     <label class="listen-remember"><input id="listen-remember" type="checkbox" checked> Remember my choice</label>
   </div>
 </div>
+
+
+<div id="paste-rec-modal" hidden onclick="if(event.target===this)closePasteRecommendations()">
+ <div class="paste-rec-dialog" role="dialog" aria-modal="true" aria-labelledby="paste-rec-heading" onkeydown="pasteRecDialogKey(event)">
+ <button type="button" class="sl-btn" style="float:right" aria-label="Close" onclick="closePasteRecommendations()">×</button>
+ <h2 id="paste-rec-heading">What did your friend recommend?</h2>
+ <p>Paste a text, a link, or a few titles. Choose the right matches, then save them together.</p>
+ <fieldset id="paste-rec-fields" style="border:0;padding:0;margin:0;min-width:0">
+ <label class="tl-label" for="paste-rec-text">Message or links</label>
+ <textarea class="tl-input" id="paste-rec-text" maxlength="5000" rows="4" placeholder="Jenny said watch Severance, listen to All-In, and read Tomorrow and Tomorrow and Tomorrow."></textarea>
+ <p class="paste-rec-help">For a list of titles, put each on its own line. The original message is saved as a note with your recommendations.</p>
+ <label class="tl-label" for="paste-rec-from">Recommended by (optional)</label>
+ <input class="tl-input" id="paste-rec-from" maxlength="120" placeholder="e.g. Jenny">
+ <div class="paste-rec-actions"><button type="button" class="ed-primary" onclick="findPastedRecommendations()">Find recommendations</button><button type="button" class="ob-text-link" onclick="closePasteRecommendations();openFriendRecForm()">Add manually</button></div>
+ <p id="paste-rec-status" role="status" aria-live="polite"></p>
+ <div id="paste-rec-results"></div>
+ </fieldset>
+ <button type="button" id="paste-rec-save" class="ed-primary" disabled onclick="savePastedRecommendations()">Save to What’s Next</button>
+ </div>
+</div>
+
+<dialog id="list-invite-dialog" style="background:#181818;color:#eee;border:1px solid #444;border-radius:20px;padding:28px;width:min(480px,90vw)"><h2 id="list-invite-heading"></h2><p id="list-invite-note" role="status" style="line-height:1.6"></p><button class="sl-btn primary" id="list-invite-join" onclick="acceptListInvitation()">Join list</button><div id="list-invite-after" hidden><button class="sl-btn primary" onclick="continueJoinedList(true)">Make your TasteList</button><button class="sl-btn" onclick="continueJoinedList(false)">Go straight to the club</button></div><button class="sl-btn" onclick="document.getElementById('list-invite-dialog').close()">Close</button></dialog>
+<dialog id="shared-share-dialog" oncancel="closeSharedListShare()" style="background:#181818;color:#eee;border:1px solid #444;border-radius:18px;padding:24px;width:min(540px,90vw);max-height:90vh;overflow:auto">
+<button class="sl-btn" style="float:right" aria-label="Close" onclick="closeSharedListShare()">×</button><h2 id="shared-share-title"></h2><p id="shared-share-note"></p><div id="shared-share-preview"></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="sl-btn primary" id="shared-share-native" onclick="shareSharedList()">Share via…</button><button class="sl-btn" onclick="copySharedListLink()">Copy link</button><button class="sl-btn" id="shared-share-download" onclick="downloadSharedListImage()">Download image</button><a class="sl-btn" id="shared-share-sms">Text message</a><a class="sl-btn" id="shared-share-whatsapp" target="_blank" rel="noopener">WhatsApp</a></div><p id="shared-share-status" role="status"></p><button type="button" id="shared-share-reset" class="sl-btn" onclick="replaceSharedInvite()">Replace invitation link</button></dialog>
+<dialog id="shared-route-dialog" style="background:#181818;color:#eee;padding:24px;border-radius:16px;max-width:90vw"><p id="shared-route-message"></p><button class="sl-btn primary" id="shared-route-signin" onclick="document.getElementById('shared-route-dialog').close();openAuthModal('signin')">Sign in</button><button class="sl-btn" onclick="document.getElementById('shared-route-dialog').close()">Close</button></dialog>
 
 <div id="friend-rec-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeFriendRecModal()">
   <div class="tl-modal-shell" style="max-width:400px;">
