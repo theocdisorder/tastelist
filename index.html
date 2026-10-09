@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+<script>
+// Opening a shared-list link: cover the app with "Opening list…" until the list itself is drawn,
+// so the profile never flashes in between. Cleared by openSharedListRoute(); 10s safety net.
+if (new URLSearchParams(location.search).has('list')) {
+  document.documentElement.classList.add('opening-list');
+  setTimeout(function () { document.documentElement.classList.remove('opening-list'); }, 10000);
+}
+</script>
 <title>TasteList — You are what you love</title>
 <meta name="description" content="Share the music, movies, TV and books that made you — and see what your friends love. Make your own taste list in a couple of minutes.">
 <meta property="og:site_name" content="TasteList">
@@ -1941,6 +1949,14 @@ td.songs-table-links[data-listen] { display: table-cell; vertical-align: middle;
 /* Listen button: ▶ Listen and the service switcher stay on one row (phones were stacking them) */
 .stream-links[data-listen] { flex-direction: row !important; flex-wrap: nowrap; align-items: stretch; }
 .stream-links[data-listen] .listen-switch { flex: 0 0 auto; }
+
+/* Shared-list links: covering screen while the list loads (see the head script) */
+#list-route-loader { display: none; }
+html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0; z-index: 3000; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: var(--bg, #0c0c0d); color: var(--muted, #9a968f); font: 500 14px/1.4 var(--font-site, system-ui, sans-serif); }
+.list-route-spinner { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.14); border-top-color: var(--accent, #7C4DFF); animation: list-route-spin .8s linear infinite; }
+@keyframes list-route-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .list-route-spinner { animation-duration: 2.4s; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -2024,6 +2040,7 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 </style>
 </head>
 <body>
+<div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
 <div id="app-startup-status" role="status" aria-live="polite">Loading…</div>
 
 <script>
@@ -14799,6 +14816,10 @@ async function shareSharedList(){if(!sharedShareState)return;const {title,url,fi
 async function copySharedListLink(){if(!sharedShareState)return;const st=document.getElementById('shared-share-status');try{await navigator.clipboard.writeText(sharedShareState.url);st.textContent='✓ Link copied';setTimeout(()=>{if(st.textContent==='✓ Link copied')st.textContent='';},2000);}catch(_){st.textContent=sharedShareState.url;}}
 function downloadSharedListImage(){if(!sharedShareState?.file)return;const a=document.createElement('a'),url=URL.createObjectURL(sharedShareState.file);a.href=url;a.download='shared-tastelist.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 async function openSharedListRoute(){
+ try { return await openSharedListRouteInner(); }
+ finally { document.documentElement.classList.remove('opening-list'); }
+}
+async function openSharedListRouteInner(){
  if(await showListInvitation())return;
  const id=new URLSearchParams(location.search).get('list');if(!id||!sb)return;
  // Only database-authorized rows enter allTasteLists; a URL is never an invitation.
