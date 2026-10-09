@@ -14190,12 +14190,16 @@ function assortedTastePicks(tab, n = 4) {
       wanted.includes(normalize(key)) || wanted.includes(normalize(customListLabel(kind, key)))
     ).flatMap(([, items]) => items || []);
   };
+  const fallback = kind => Object.entries(CUSTOM_LISTS[kind] || {})
+    .filter(([key])=>tasteListTier(kind,key,customListLabel(kind,key))<4&&!/recommend|want to|what.?s next|watchlist|to read/i.test(customListLabel(kind,key)))
+    .sort(([a],[b])=>tasteListTier(kind,a,customListLabel(kind,a))-tasteListTier(kind,b,customListLabel(kind,b)))
+    .flatMap(([,items])=>items||[]);
   const seen = new Set();
   const take = (items, limit) => {
     const picks = [];
     for (const item of items) {
       if (!item || item.videoId) continue;
-      const key = normalize(item.title || item.name);
+      const key = normalize(item.title || item.name)+(item._tasteKind==='album'?'|album|'+normalize(item.artist):'');
       if (!key || seen.has(key)) continue;
       seen.add(key); picks.push(item);
       if (picks.length >= limit) break;
@@ -14212,18 +14216,22 @@ function assortedTastePicks(tab, n = 4) {
       || /^(?:my )?(?:artists|musicians|music|bands) (?:that |who |which )?(?:have )?shaped me$/.test(labelOf(key)) || labelOf(key) === 'shaped';
     const formative=entries.filter(([k])=>/shaped me$/.test(labelOf(k))).flatMap(([,items])=>items||[]);
     const core=entries.filter(([k])=>isCore(k)).flatMap(([,items])=>items||[]);
-    return take(formative.length?formative:core,n);
+    const chosenArtists=formative.length?formative:core;
+    const albumPicks=fallback('albums').map(x=>({...x,_tasteKind:'album'}));
+    const artistPicks=chosenArtists.length?chosenArtists:fallback('music');
+    const selected=take(artistPicks,n);
+    return [...selected,...take(albumPicks,n-selected.length)];
   }
   if (tab === 'movies') {
     const named = fromLists('movies', ['Favorite Movies', 'Favorite Films']);
-    return take(named.length ? named : (movies || []), n);
+    return take(named.length ? named : (movies?.length ? movies : fallback('movies')), n);
   }
-  if (tab === 'books') return take(fromLists('books', ['Books That Shaped Me', 'shaped']), n);
+  if (tab === 'books') {const defining=fromLists('books', ['Books That Shaped Me', 'shaped']);return take(defining.length?defining:fallback('books'),n);}
   if (tab === 'tv') {
     const dramas = fromLists('tv', ['Favorite Dramas', 'Top Dramas', 'Dramas', 'tv_drama']);
     const comedies = fromLists('tv', ['Favorite Comedies', 'Top Comedies', 'Comedies', 'tv_comedy']);
     // A short list stays short; unrelated shows never fill its reserved slots.
-    return [...take(dramas, 2), ...take(comedies, 2)].slice(0, n);
+    return dramas.length||comedies.length ? [...take(dramas, 2), ...take(comedies, 2)].slice(0, n) : take(fallback('tv'),n);
   }
   return [];
 }
@@ -14239,7 +14247,7 @@ function summaryArtistPhoto(name) {
   return summaryArtistPhotoCache.get(key);
 }
 function tastePickArt(tab, x) {
-  if (tab === 'music') return x.tilePhoto || x.bandPhoto || x.tile_photo || x.band_photo || x.art || '';
+  if (tab === 'music') return x.coverPhoto || x.cover_photo || x.tilePhoto || x.bandPhoto || x.tile_photo || x.band_photo || x.art || '';
   if (tab === 'books') return preferredBookCover(x.title, x.author) || x.cover || '';
   return x.poster ? (x.poster.startsWith('http') ? x.poster : TMDB_IMG + x.poster) : '';
 }
@@ -14249,7 +14257,7 @@ function tastePosterGroups() {
  const dedupe=items=>{const seen=new Set();return items.filter(x=>{const key=String(x.title||x.name||'').trim().toLowerCase();if(!key||seen.has(key))return false;seen.add(key);return true;}).slice(0,4);};
  const poster=x=>x.poster?(x.poster.startsWith('http')?x.poster:TMDB_IMG+x.poster):'';
  return [
-  {label:'Music',tab:'music',color:'#a26aff',items:assortedTastePicks('music').map(x=>({title:x.name||x.title,art:tastePickArt('music',x)}))},
+  {label:'Music',tab:'music',color:'#a26aff',items:assortedTastePicks('music').map(x=>({title:x.name||x.title,art:tastePickArt('music',x),musicKind:x._tasteKind||'artist',artist:x.artist}))},
   {label:'Movies',tab:'movies',color:'#ff7864',items:assortedTastePicks('movies').map(x=>({title:x.title,art:tastePickArt('movies',x),tmdbId:x.tmdbId,tmdbType:x.type==='tv'?'tv':'movie'}))},
   {label:'TV',tab:'tv',color:'#35a8ff',items:assortedTastePicks('tv').map(x=>({title:x.title,art:tastePickArt('tv',x),tmdbId:x.tmdbId,tmdbType:'tv'}))},
   {label:'Books',tab:'books',color:'#32cf83',items:assortedTastePicks('books').map(x=>({title:x.title,art:tastePickArt('books',x)}))}
@@ -14409,6 +14417,7 @@ function closeTasteShare(){++tasteShareRevision;tasteShareAsset=null;document.ge
 // Movie/TV posters are normally fetched only when their tab is opened, so fill any gaps here.
 async function fillMissingSharePosters(groups) {
  const jobs=[];
+ for(const p of groups.find(g=>g.tab==='music')?.items||[])if(!p.art)jobs.push((p.musicKind==='album'?lookupAlbumCover(p.title,p.artist):summaryArtistPhoto(p.title)).then(art=>{p.art=art||'';}));
  for(const g of groups)for(const p of g.items){
   if(p.art||!p.tmdbType)continue;
   jobs.push((async()=>{
@@ -14594,7 +14603,7 @@ function renderProfileTab() {
 
   // Render placeholders immediately
   const picksData = [
-    { id: 'pick-music', label: 'My Music Taste', icon: 'music', name: topArtist?.name || topArtist?.title || '', sub: 'Most influential artist', color: '#7C4DFF', tab: 'music', art: '', mosaic: musicPicks.map(x => tastePickArt('music', x)) },
+    { id: 'pick-music', label: 'My Music Taste', icon: 'music', name: topArtist?.name || topArtist?.title || '', sub: topArtist?._tasteKind==='album'?'Favorite album':'Favorite artist', color: '#7C4DFF', tab: 'music', art: '', mosaic: musicPicks.map(x => tastePickArt('music', x)) },
     { id: 'pick-film',  label: 'My Movie Taste', icon: 'film',  name: topFilmObj?.title || '', sub: 'Top favorite film', color: '#F97360', tab: 'movies', art: tastePickArt('movies', topFilmObj || {}), mosaic: filmPicks.map(x => tastePickArt('movies', x)) },
     { id: 'pick-tv',    label: 'My TV Taste',    icon: 'tv',    name: topTVObj?.title || '', sub: 'Top TV pick', color: '#3B82F6', tab: 'tv', art: tastePickArt('tv', topTVObj || {}), mosaic: tvPicks.map(x => tastePickArt('tv', x)) },
     { id: 'pick-book',  label: 'My Book Taste',  icon: 'books', name: topBookObj?.title || '', sub: 'Top book pick', color: '#22C55E', tab: 'books', art: tastePickArt('books', topBookObj || {}), mosaic: bookPicks.map(x => tastePickArt('books', x)) },
@@ -14638,7 +14647,7 @@ function renderProfileTab() {
   // Fill all four artist photos, including for visitors. Keep the selected artists/order.
   musicPicks.forEach((artist,index) => {
     if(tastePickArt('music',artist))return;
-    summaryArtistPhoto(artist.name || artist.title).then(art => {
+    (artist._tasteKind==='album'?lookupAlbumCover(artist.name||artist.title,artist.artist):summaryArtistPhoto(artist.name || artist.title)).then(art => {
       if(!art || picksEl._tasteRenderToken !== picksRenderToken)return;
       artist.tilePhoto=art;
       picksData[0].mosaic[index]=art;
