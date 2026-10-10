@@ -2027,6 +2027,22 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
   .ob-footer.has-selection > div { flex: 1 1 100%; }
   .ob-footer.has-selection #ob-add-button { flex: 1; }
 }
+
+/* Add item: confirmation of the chosen catalog title */
+#taste-item-title.is-picked { border-color: #22C55E; box-shadow: 0 0 0 1px #22C55E inset; }
+.ti-picked { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.35); }
+.ti-picked[hidden] { display: none; }
+.ti-picked-art { position: relative; flex: 0 0 auto; width: 40px; height: 58px; border-radius: 5px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--c) 22%, var(--surface2)); color: var(--c); font-weight: 700; }
+.ti-picked-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ti-picked-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ti-picked-text strong { font-size: 14.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ti-picked-text small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ti-picked-badge { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #22C55E; }
+.ti-picked-change { flex: 0 0 auto; font: inherit; font-size: 12.5px; color: var(--muted); background: none; border: 0; padding: 4px 2px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.ti-picked-change:hover { color: var(--text); }
+@media (max-width: 420px) { .ti-picked { flex-wrap: wrap; } .ti-picked-badge { order: 3; } }
+@media (pointer: coarse) { .ti-picked-change { min-height: 44px; min-width: 44px; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -3570,7 +3586,7 @@ async function canonicalizeTasteItem(category, title, sub) {
 function onTasteTitleInput() {
   const q = document.getElementById('taste-item-title').value.trim();
   // Typing after picking a suggestion means it's no longer that exact item.
-  if (tasteItemFormState.picked && q !== tasteItemFormState.picked.title) { tasteItemFormState.picked = null; tasteItemFormState.tmdbId = null; if (!document.getElementById('taste-item-link').value.trim()) setTasteItemArt(''); }
+  if (tasteItemFormState.picked && q !== tasteItemFormState.picked.title) { tasteItemFormState.picked = null; tasteItemFormState.tmdbId = null; if (!document.getElementById('taste-item-link').value.trim()) setTasteItemArt(''); renderTasteItemPicked(); }
   clearTimeout(tasteSuggest.timer);
   const type = document.getElementById('taste-item-category').value;
   if (q.length < 2 || !TASTE_SEARCHABLE.includes(type)) { hideTasteSuggestions(); return; }
@@ -3600,6 +3616,38 @@ function onTasteTitleKeydown(e) {
   else if (e.key === 'Enter' && tasteSuggest.active >= 0) { e.preventDefault(); pickTasteSuggestion(tasteSuggest.active); }
   else if (e.key === 'Escape') { hideTasteSuggestions(); }
 }
+
+// After choosing a catalog suggestion, show clearly what's selected (art, title, details, ✓ Selected),
+// outline the title box, and name the item on the Save button.
+function renderTasteItemPicked() {
+  const box = document.getElementById('taste-item-picked'); if (!box) return;
+  const r = tasteItemFormState.picked, title = document.getElementById('taste-item-title'), save = document.getElementById('taste-item-save-btn');
+  const preview = document.getElementById('taste-item-art-preview');
+  title?.classList.toggle('is-picked', !!r);
+  if (!r) {
+    box.hidden = true; box.innerHTML = '';
+    if (save && !tasteItemFormState.id) save.textContent = 'Save';
+    return;
+  }
+  if (preview) preview.style.display = 'none';     // the card shows the artwork instead
+  const type = document.getElementById('taste-item-category')?.value;
+  const meta = (typeof tasteTypeMeta === 'function' && type) ? tasteTypeMeta(type) : null;
+  const typeLabel = meta?.chip || meta?.singular || '';
+  const details = [typeLabel, r.sub, r.year || r.meta].filter(Boolean).map(String).join(' · ');
+  box.innerHTML = `<span class="ti-picked-art" style="--c:${meta?.color || '#7C4DFF'}">${r.art ? `<img src="${esc(r.art)}" alt="" onerror="this.remove()">` : ''}<span>${esc((typeLabel || '•').charAt(0))}</span></span>
+    <span class="ti-picked-text"><strong>${esc(r.title)}</strong>${details ? `<small>${esc(details)}</small>` : ''}</span>
+    <span class="ti-picked-badge">✓ Selected</span>
+    <button type="button" class="ti-picked-change" onclick="clearTasteItemPick()">Change</button>`;
+  box.hidden = false;
+  if (save && !tasteItemFormState.id) save.textContent = `Add “${r.title.length > 28 ? r.title.slice(0, 27) + '…' : r.title}”`;
+}
+function clearTasteItemPick() {
+  tasteItemFormState.picked = null; tasteItemFormState.tmdbId = null;
+  if (!document.getElementById('taste-item-link').value.trim()) setTasteItemArt('');
+  const t = document.getElementById('taste-item-title'); if (t) { t.value = ''; t.focus(); }
+  renderTasteItemPicked();
+}
+
 function pickTasteSuggestion(i) {
   const r = tasteSuggest.results[i]; if (!r) return;
   tasteSuggest.seq++;
@@ -3608,6 +3656,7 @@ function pickTasteSuggestion(i) {
   tasteItemFormState.picked = r; tasteItemFormState.tmdbId = r.tmdbId || null;
   if (r.art) setTasteItemArt(r.art);
   hideTasteSuggestions();
+  renderTasteItemPicked();
 }
 function setTasteItemArt(url) {
   document.getElementById('taste-item-art').value = url || '';
@@ -3715,6 +3764,7 @@ function openTasteItemForm(category, flatIdx) {
   renderTasteTypeChips();
   { const k = document.getElementById('taste-item-category').value, t = document.getElementById('taste-item-title'); t.placeholder = TASTE_SEARCHABLE.includes(k) ? `Start typing to search ${tasteTypeMeta(k).label.toLowerCase()}…` : ''; }
   document.getElementById('taste-item-modal').style.display = 'flex';
+  renderTasteItemPicked();
   if (flatIdx === undefined && category !== '__other') setTimeout(() => document.getElementById('taste-item-title').focus(), 0);
   if (document.getElementById('taste-item-category').value === '__other') document.getElementById('taste-item-custom-type').focus();
 }
@@ -3729,7 +3779,7 @@ function closeTasteItemModal() {
 async function reloadCurrentTasteListItems() {
   if (!sb || !currentTasteListId) return;
   try {
-    const { data: items } = await sb.from('taste_list_items').select('*').eq('list_id', currentTasteListId).order('sort_order', { ascending: true });
+    const { data: items } = await sb.from('taste_list_items').select('*').eq('list_id', currentTasteListId).order('sort_order', { ascending: true }).order('created_at', { ascending: true });
     setTripPlaylistItemsFromRows(items);
     tripPlaylistArtFetched = false;
     renderTripPlaylist();
@@ -3940,7 +3990,7 @@ async function loadAllTasteLists(profileId) {
     await Promise.all(lists.map(async (list) => {
       const [{ data: collabs }, { data: previewItems }, { count }] = await Promise.all([
         sb.from('taste_list_collaborators').select('user_id, profiles(username, display_name)').eq('list_id', list.id),
-        sb.from('taste_list_items').select('art_url').eq('list_id', list.id).not('art_url', 'is', null).order('sort_order', { ascending: true }).limit(4),
+        sb.from('taste_list_items').select('art_url').eq('list_id', list.id).not('art_url', 'is', null).order('sort_order', { ascending: true }).order('created_at', { ascending: true }).limit(4),
         sb.from('taste_list_items').select('id', { count: 'exact', head: true }).eq('list_id', list.id),
       ]);
       list.collaborators = (collabs || []).map(c => ({ user_id: c.user_id, username: c.profiles?.username, display_name: c.profiles?.display_name }));
@@ -4107,7 +4157,22 @@ async function openTasteList(listId) {
   await reloadCurrentTasteListItems();
 }
 
+// The overview card (count + cover of the first four items with artwork) mirrors the open list.
+function syncCurrentTasteListSummary() {
+  const list = allTasteLists.find(l => l.id === currentTasteListId);
+  if (!list || typeof tripPlaylistFlatItems === 'undefined') return;
+  const flat = tripPlaylistFlatItems || [];
+  list.itemCount = flat.length;
+  list.previewArt = flat.map(i => i.art).filter(Boolean).slice(0, 4);
+}
 function backToTasteListsPicker() {
+  // Leaving an open list: refresh its overview card. (Also called while loading another profile's
+  // lists, when no list is open — then there's nothing to refresh.)
+  const openSection = document.getElementById('trip-playlist-section');
+  if (openSection && openSection.style.display !== 'none' && currentTasteListId) {
+    syncCurrentTasteListSummary();
+    try { renderTasteListsPicker(); } catch (_) {}
+  }
   const picker = document.getElementById('taste-lists-picker');
   const section = document.getElementById('trip-playlist-section');
   if (section) section.style.display = 'none';
@@ -4483,6 +4548,9 @@ async function saveTasteItemForm() {
       if (error) throw error;
     } else {
       row.list_id = currentTasteListId;
+      // New items go to the end of the list (otherwise every item shares position 0).
+      const { data: last } = await sb.from('taste_list_items').select('sort_order').eq('list_id', currentTasteListId).order('sort_order', { ascending: false, nullsFirst: false }).limit(1);
+      row.sort_order = ((last?.[0]?.sort_order) ?? -1) + 1;
       const { error } = await sb.from('taste_list_items').insert(row);
       if (error) throw error;
     }
@@ -16716,6 +16784,7 @@ renderTasteInfluences();
         <input id="taste-item-title" class="tl-input" type="text" autocomplete="off" oninput="onTasteTitleInput()" onkeydown="onTasteTitleKeydown(event)" onblur="setTimeout(hideTasteSuggestions,150)" style="flex:1;">
       </div>
       <div id="taste-item-suggestions" role="listbox" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:5;background:var(--surface2);border:1px solid var(--border2, var(--border));border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);overflow:hidden;max-height:320px;overflow-y:auto;"></div>
+      <div id="taste-item-picked" class="ti-picked" hidden aria-live="polite"></div>
     </div>
 
     <div class="tl-field">
