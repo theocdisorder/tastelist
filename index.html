@@ -5995,7 +5995,7 @@ async function loadCustomLists(userId, tab) {
       const cat = row.category || 'Untitled';
       if (!CUSTOM_LISTS[tab][cat]) CUSTOM_LISTS[tab][cat] = [];
       if (tab === 'books') {
-        CUSTOM_LISTS[tab][cat].push({ rowId: row.id, title: row.title, author: row.author, year: row.year || '', cover: preferredBookCover(row.title,row.author) || row.cover_url || '', whyInfluential: row.why_influential || '' });
+        CUSTOM_LISTS[tab][cat].push({ rowId: row.id, title: row.title, author: row.author, year: row.year || '', cover: preferredBookCover(row.title,row.author) || row.cover_url || '', savedCover: row.cover_url || '', whyInfluential: row.why_influential || '' });
       } else {
         CUSTOM_LISTS[tab][cat].push({ rowId: row.id, tmdbId: row.tmdb_id, type: row.type, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, seasons: null, director: '', creator: '' });
       }
@@ -6005,9 +6005,16 @@ async function loadCustomLists(userId, tab) {
     if (tab === 'books') {
       await runInBatches(allItems, 3, 300, async (item) => {
         if (item.cover && !item.cover.includes('covers.openlibrary.org')) return;
-        item.cover = await fetchBookCover(item.title, item.author);
+        const found = await fetchBookCover(item.title, item.author);
+        if (found) item.cover = found;                     // keep a saved cover if the lookup comes up empty
         renderCustomLists(tab);
+        if (found && !item.savedCover && item.rowId && userId === currentUser?.id) {
+          item.savedCover = found;
+          sb.from('favorite_books').update({ cover_url: found }).eq('id', item.rowId).eq('user_id', userId).then(() => {}, () => {});
+        }
       });
+      // The profile's "My Book Taste" box is drawn separately; refresh it if it's showing.
+      if (document.getElementById('tab-profile')?.classList.contains('active')) { try { renderProfileTab(); } catch (_) {} }
     } else {
       await runInBatches(allItems, 3, 250, async (item) => {
         const isTV = tab === 'tv';
@@ -12986,9 +12993,10 @@ async function wikiSummary(title, kind, creator) {
   return job;
 }
 
-async function sharedBookCoverLookup(title, rawAuthor) {
+async function sharedBookCoverLookup(title, rawAuthor, opts = {}) {
   const author = sharedBookAuthor(rawAuthor);
-  if (author) { const art = await fetchBookCoverArt(title, author); if (art) return { art, author }; }
+  // skipPrimary: called as the fallback *from* the primary lookup — don't call back into it (loop).
+  if (author && !opts.skipPrimary) { const art = await fetchBookCoverArt(title, author); if (art) return { art, author }; }
   const key = sharedBookKey(title);
   try {
     const d = await sharedCatalogJSON(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}${author ? '&author=' + encodeURIComponent(author) : ''}&limit=10&fields=title,author_name,cover_i,edition_count&sort=editions`);
@@ -15679,6 +15687,11 @@ async function fetchBookCoverCandidates(title, author) {
       if (image) candidates.push(image.replace('http:','https:').replace('zoom=1','zoom=2'));
     }
   } catch (_) {}
+  if (!candidates.length) {
+    // Google Books had no matching edition (or was rate-limiting): try Open Library, Apple Books and
+    // Wikipedia, each requiring the title (and author, when known) to match.
+    try { const found = await sharedBookCoverLookup(title, author, { skipPrimary: true }); if (found?.art) candidates.push(found.art); } catch (_) {}
+  }
   return [...new Set(candidates)];
 }
 async function fetchBookCover(title, author) {
