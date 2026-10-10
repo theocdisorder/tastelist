@@ -1970,6 +1970,31 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 
 .list-links-sep { color: var(--muted); font-size: 12.5px; }
 .list-create-import:has(.list-links-sep) { gap: 4px; align-items: center; }
+
+/* Followers / following */
+.profile-follow-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; font-size: 14px; color: var(--muted); min-height: 20px; }
+.follow-stat { font: inherit; color: var(--muted); background: none; border: 0; padding: 2px 0; cursor: pointer; }
+.follow-stat strong { color: var(--text); font-weight: 650; }
+.follow-stat:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+#follow-list-dialog { width: min(440px, calc(100% - 24px)); max-height: min(80dvh, 640px); padding: 0; overflow: hidden; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 18px; }
+#follow-list-dialog[open] { display: flex; flex-direction: column; }
+#follow-list-dialog::backdrop { background: rgba(0,0,0,.6); }
+.follow-list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px 6px; }
+.follow-list-head h2 { margin: 0; font-size: 18px; flex: 1; min-width: 0; }
+.follow-list-head > button { margin-left: auto; flex: 0 0 auto; }
+.follow-list-tabs { display: flex; gap: 6px; padding: 8px 20px 12px; border-bottom: 1px solid var(--border); }
+.follow-list-tabs button { font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; color: var(--muted); background: none; border: 1px solid var(--border); }
+.follow-list-tabs button[aria-selected="true"] { color: var(--text); background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.35); }
+.follow-list-body { overflow-y: auto; padding: 6px 8px 12px; }
+.follow-list { list-style: none; margin: 0; padding: 0; }
+.follow-row { width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 12px; font: inherit; color: var(--text); background: none; border: 0; border-radius: 12px; cursor: pointer; text-align: left; min-height: 56px; }
+.follow-row:hover, .follow-row:focus-visible { background: rgba(255,255,255,.06); outline: none; }
+.follow-row-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.follow-row-text strong { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.follow-row-text small { font-size: 12.5px; color: var(--muted); }
+.follow-row-you { font-style: normal; font-size: 12px; color: var(--muted); }
+.follow-list-note { margin: 18px 14px; font-size: 14px; color: var(--muted); line-height: 1.5; }
+@media (pointer: coarse) { .follow-stat { min-height: 44px; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -2280,6 +2305,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
           <div id="profile-card-location" style="font-size:14px;color:var(--muted);">San Francisco, CA</div>
           <button id="edit-location-btn" onclick="editBio()" style="display:none;box-sizing:border-box;width:20px;height:20px;padding:0;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:10px;line-height:1;cursor:pointer;flex-shrink:0;">✎</button>
         </div>
+        <div id="profile-follow-stats" class="profile-follow-stats" aria-live="polite"></div>
       </div>
       <p class="profile-tagline">The arts and culture that shaped me</p>
     </div>
@@ -5024,6 +5050,70 @@ async function checkFollowStatus() {
   } catch (e) {}
 }
 
+
+// ── Followers / following: counts in the profile header, lists in a dialog ───────────────────────
+// Read through security-definer functions (profile_follow_counts / profile_follow_list) because the
+// follows table only lets people see follows they're part of. Private profiles: counts for everyone,
+// lists only for the owner and approved followers (the function enforces it; the UI explains it).
+let followStats = { profileId: null, followers: 0, following: 0 };
+let followListState = { dir: 'followers', seq: 0 };
+async function loadFollowStats() {
+  const el = document.getElementById('profile-follow-stats');
+  const pid = viewedProfile?.id;
+  if (!el) return;
+  if (!pid || !sb) { el.innerHTML = ''; return; }
+  if (followStats.profileId !== pid) el.innerHTML = '';
+  try {
+    const { data, error } = await sb.rpc('profile_follow_counts', { target: pid });
+    if (error) throw error;
+    if (viewedProfile?.id !== pid) return;
+    const row = Array.isArray(data) ? data[0] : data;
+    followStats = { profileId: pid, followers: Number(row?.followers || 0), following: Number(row?.following || 0) };
+    renderFollowStats();
+  } catch (_) { el.innerHTML = ''; }
+}
+function renderFollowStats() {
+  const el = document.getElementById('profile-follow-stats');
+  if (!el) return;
+  const f = followStats.followers, g = followStats.following;
+  el.innerHTML = `<button type="button" class="follow-stat" onclick="openFollowList('followers')"><strong>${f.toLocaleString()}</strong> ${f === 1 ? 'follower' : 'followers'}</button><span aria-hidden="true">·</span><button type="button" class="follow-stat" onclick="openFollowList('following')"><strong>${g.toLocaleString()}</strong> following</button>`;
+}
+function followListLocked() {
+  return !!viewedProfile && viewedProfile.is_public === false && !isOwnProfile && followStatus !== 'accepted';
+}
+async function openFollowList(dir) {
+  const dlg = document.getElementById('follow-list-dialog');
+  if (!dlg || !viewedProfile) return;
+  followListState.dir = dir;
+  const name = firstNameOnly(viewedProfile.display_name) || viewedProfile.username || '';
+  document.getElementById('follow-list-title').textContent = name;
+  for (const d of ['followers', 'following']) {
+    const t = document.getElementById('follow-tab-' + d);
+    t.setAttribute('aria-selected', String(d === dir));
+    t.textContent = `${d === 'followers' ? 'Followers' : 'Following'} · ${(d === 'followers' ? followStats.followers : followStats.following).toLocaleString()}`;
+  }
+  if (!dlg.open) dlg.showModal();
+  const body = document.getElementById('follow-list-body');
+  if (followListLocked()) {
+    body.innerHTML = `<p class="follow-list-note">${esc(name)}’s profile is private. Only people ${esc(name)} has approved can see who ${dir === 'followers' ? 'follows them' : 'they follow'}.</p>`;
+    return;
+  }
+  body.innerHTML = '<p class="follow-list-note">Loading…</p>';
+  const seq = ++followListState.seq, pid = viewedProfile.id;
+  try {
+    const { data, error } = await sb.rpc('profile_follow_list', { target: pid, direction: dir });
+    if (error) throw error;
+    if (seq !== followListState.seq) return;
+    const rows = data || [];
+    body.innerHTML = rows.length ? `<ul class="follow-list">${rows.map(u => `<li><button type="button" class="follow-row" onclick="closeFollowList();goToProfile('${jsStr(u.username)}')">
+        ${profileAvatarHtml(u, 40)}<span class="follow-row-text"><strong>${esc(u.display_name || u.username)}</strong><small>@${esc(u.username)}</small></span>${u.id === currentUser?.id ? '<em class="follow-row-you">You</em>' : ''}</button></li>`).join('')}</ul>`
+      : `<p class="follow-list-note">${dir === 'followers' ? `No followers yet.` : `${esc(name)} isn’t following anyone yet.`}</p>`;
+  } catch (_) {
+    if (seq === followListState.seq) body.innerHTML = '<p class="follow-list-note">Couldn’t load this list. Please try again.</p>';
+  }
+}
+function closeFollowList() { document.getElementById('follow-list-dialog')?.close(); }
+
 async function toggleFollow() {
   if (!currentUser || !viewedProfile || isOwnProfile) return;
   const btn = document.getElementById('follow-btn');
@@ -5053,6 +5143,7 @@ async function toggleFollow() {
   } catch (e) {
     alert('Something went wrong: ' + (e.message || 'unknown error'));
   } finally {
+    loadFollowStats();
     if (btn) btn.disabled = false;
   }
 }
@@ -5096,6 +5187,7 @@ async function respondToFollowRequest(requestId, accept) {
   } catch (e) {
     alert('Failed to respond to request: ' + (e.message || 'unknown error'));
   }
+  if (isOwnProfile) loadFollowStats();
 }
 
 // ── NOTIFICATIONS ──
@@ -5266,6 +5358,7 @@ function possessiveName(name) {
 
 function updateProfileHeaderAndBanner() {
   renderProfileOnboardingResume();
+  loadFollowStats();
   clearTasteConstellation();
   scheduleTasteConstellation();
   updateGlobalNavHighlight();
@@ -6165,7 +6258,7 @@ function customListGridInnerHtml(tab, cat, items) {
   const tiles = items.map((item, i) => {
     const removeBtn = editing ? `<button onclick="${esc(`event.stopPropagation(); removeCustomListItem('${jsStr(tab)}','${jsStr(cat)}', ${i})`)}" style="position:absolute;top:6px;right:6px;z-index:3;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:10px;cursor:pointer;">✕</button>` : '';
     const art = tab === 'books'
-      ? (item.cover ? `<img class="tile-img" src="${esc(item.cover)}" alt="${esc(item.title)}" style="object-fit:contain;object-position:center;background:var(--card);" onerror="this.style.display='none'">` : `<div class="tile-placeholder" style="aspect-ratio:2/3;height:auto;font-size:11px;color:var(--faint);">No cover</div>`)
+      ? (item.cover ? `<img class="tile-img" src="${esc(item.cover)}" alt="${esc(item.title)}" style="object-fit:contain;object-position:center;background:var(--card);" onerror="bookCoverFailed(this,'${jsStr(tab)}','${jsStr(cat)}',${i})" onload="if(this.naturalWidth<10)bookCoverFailed(this,'${jsStr(tab)}','${jsStr(cat)}',${i})">` : `<div class="tile-placeholder" style="aspect-ratio:2/3;height:auto;font-size:11px;color:var(--faint);">No cover</div>`)
       : (item.poster ? `<img class="tile-img" src="${TMDB_IMG}${item.poster}" alt="${esc(item.title)}" style="object-position:center top;">` : `<div class="tile-placeholder" style="aspect-ratio:2/3;height:auto;font-size:11px;color:var(--faint);">No poster</div>`);
     const sub = tab === 'books' ? esc(item.author || '') : esc(item.year || '');
     return `<div ${inlineOrderAttrs(tab+'|'+cat,i,editing)} class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="${customListSlug(cat)}-tile-${i}" style="cursor:pointer;position:relative;" onclick="${esc(`toggleCustomListExpand('${jsStr(tab)}','${jsStr(cat)}', ${i})`)}">
@@ -13000,7 +13093,7 @@ async function sharedBookCoverLookup(title, rawAuthor, opts = {}) {
   // skipPrimary: called as the fallback *from* the primary lookup — don't call back into it (loop).
   if (author && !opts.skipPrimary) { const art = await fetchBookCoverArt(title, author); if (art) return { art, author }; }
   const key = sharedBookKey(title);
-  try {
+  if (!opts.skipOpenLibrary) try {
     const d = await sharedCatalogJSON(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}${author ? '&author=' + encodeURIComponent(author) : ''}&limit=10&fields=title,author_name,cover_i,edition_count&sort=editions`);
     const hit = (d.docs || []).find(b => b.cover_i && sharedBookKey(String(b.title).split(':')[0]) === key);
     if (hit) return { art: `https://covers.openlibrary.org/b/id/${hit.cover_i}-L.jpg?default=false`, author: (hit.author_name || [])[0] || '' };
@@ -15672,6 +15765,37 @@ function bookCoverMatches(title, author, candidate) {
   return bookArtKey(actual.split(':')[0])===bookArtKey(String(title).split(':')[0]) &&
     !!author && (candidate.authors || []).some(a=>bookArtKey(a)===bookArtKey(author));
 }
+
+// A saved book cover that won't load (or loads blank): show "No cover", look for a different cover
+// — skipping the source that failed — and save the replacement. One retry per book per visit.
+function bookCoverFailed(img, tab, cat, i) {
+  const ph = document.createElement('div');
+  ph.className = 'tile-placeholder';
+  ph.style.cssText = 'aspect-ratio:2/3;height:auto;font-size:11px;color:var(--faint);';
+  ph.textContent = 'No cover';
+  img.replaceWith(ph);
+  const item = CUSTOM_LISTS[tab]?.[cat]?.[i];
+  if (!item || item._coverRetried) return;
+  item._coverRetried = true;
+  const broken = item.cover || '';
+  (async () => {
+    let alt = '';
+    try { alt = (await fetchBookCoverCandidates(item.title, item.author)).find(c => c && c !== broken) || ''; } catch (_) {}
+    if (!alt) {
+      try {
+        const r = await sharedBookCoverLookup(item.title, item.author, { skipPrimary: true, skipOpenLibrary: /openlibrary\.org/.test(broken) });
+        if (r?.art && r.art !== broken) alt = r.art;
+      } catch (_) {}
+    }
+    item.cover = alt;
+    renderCustomLists(tab);
+    if (alt && item.rowId && currentUser && sb) {
+      item.savedCover = alt;
+      sb.rpc('fill_missing_book_cover', { book_id: item.rowId, cover: alt, broken }).then(() => {}, () => {});
+    }
+  })();
+}
+
 async function fetchBookCoverCandidates(title, author) {
   const preferred=preferredBookCover(title,author);
   if (preferred) return [preferred];
@@ -16132,6 +16256,12 @@ renderTasteInfluences();
 <dialog id="list-invite-dialog" style="background:#181818;color:#eee;border:1px solid #444;border-radius:20px;padding:28px;width:min(480px,90vw)"><h2 id="list-invite-heading"></h2><p id="list-invite-note" role="status" style="line-height:1.6"></p><button class="sl-btn primary" id="list-invite-join" onclick="acceptListInvitation()">Join list</button><div id="list-invite-after" hidden><button class="sl-btn primary" onclick="continueJoinedList(true)">Make your TasteList</button><button class="sl-btn" onclick="continueJoinedList(false)">Go straight to the club</button></div><button class="sl-btn" onclick="document.getElementById('list-invite-dialog').close()">Close</button></dialog>
 <dialog id="shared-share-dialog" aria-labelledby="shared-share-title" oncancel="closeSharedListShare()" style="width:min(680px,calc(100% - 24px));max-height:90dvh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:24px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px"><h2 id="shared-share-title" style="margin:0"></h2><button aria-label="Close sharing" onclick="closeSharedListShare()" class="ob-text-link">✕</button></div><div id="shared-share-preview"></div><div class="taste-share-actions" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px"><button id="shared-share-native" class="ob-button ob-primary" style="min-width:160px" onclick="shareSharedList()">Share</button><button id="shared-share-download" class="ob-button ob-secondary" onclick="downloadSharedListImage()">Save image</button></div><div style="text-align:center;margin-top:12px"><button id="shared-share-copy" class="ob-text-link" onclick="copySharedListLink()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:inherit">Copy link</button></div><p id="shared-share-status" role="status" style="font-size:13px;color:var(--muted);line-height:1.5;text-align:center;min-height:1.5em;margin:6px 0 0"></p><p class="shared-share-fineprint"><span id="shared-share-note"></span> <button type="button" id="shared-share-reset" class="ob-text-link" onclick="replaceSharedInvite()">Replace link</button></p></dialog>
 <dialog id="shared-route-dialog" style="background:#181818;color:#eee;padding:24px;border-radius:16px;max-width:90vw"><p id="shared-route-message"></p><button class="sl-btn primary" id="shared-route-signin" onclick="document.getElementById('shared-route-dialog').close();openAuthModal('signin')">Sign in</button><button class="sl-btn" onclick="document.getElementById('shared-route-dialog').close()">Close</button></dialog>
+
+<dialog id="follow-list-dialog" aria-labelledby="follow-list-title" onclick="if(event.target===this)closeFollowList()">
+  <div class="follow-list-head"><h2 id="follow-list-title"></h2><button type="button" class="ob-text-link" aria-label="Close" onclick="closeFollowList()">✕</button></div>
+  <div class="follow-list-tabs" role="tablist"><button type="button" role="tab" id="follow-tab-followers" onclick="openFollowList('followers')">Followers</button><button type="button" role="tab" id="follow-tab-following" onclick="openFollowList('following')">Following</button></div>
+  <div id="follow-list-body" class="follow-list-body"></div>
+</dialog>
 
 <div id="friend-rec-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);z-index:1100;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this) closeFriendRecModal()">
   <div class="tl-modal-shell" style="max-width:400px;">
