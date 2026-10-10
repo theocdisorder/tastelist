@@ -6008,9 +6008,11 @@ async function loadCustomLists(userId, tab) {
         const found = await fetchBookCover(item.title, item.author);
         if (found) item.cover = found;                     // keep a saved cover if the lookup comes up empty
         renderCustomLists(tab);
-        if (found && !item.savedCover && item.rowId && userId === currentUser?.id) {
+        if (found && !item.savedCover && item.rowId && currentUser) {
+          // Save it so it's found once and then sticks for everyone. The database function only fills
+          // an empty cover, and only with an image from a known cover site — any signed-in viewer can.
           item.savedCover = found;
-          sb.from('favorite_books').update({ cover_url: found }).eq('id', item.rowId).eq('user_id', userId).then(() => {}, () => {});
+          sb.rpc('fill_missing_book_cover', { book_id: item.rowId, cover: found }).then(() => {}, () => {});
         }
       });
       // The profile's "My Book Taste" box is drawn separately; refresh it if it's showing.
@@ -15678,7 +15680,7 @@ async function fetchBookCoverCandidates(title, author) {
   try {
     const q=`intitle:"${title}" inauthor:"${author}"`;
     const res=await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=12`,{signal:AbortSignal.timeout(10000)});
-    if (!res.ok) return candidates;
+    if (!res.ok) throw Error('Google Books ' + res.status);   // e.g. 429 rate limit → use the fallbacks below
     const data=await res.json();
     for (const item of data.items || []) {
       const v=item.volumeInfo || {};
