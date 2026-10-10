@@ -1384,6 +1384,12 @@ if (new URLSearchParams(location.search).has('list')) {
 .activity-summary-title{font:inherit;color:inherit;text-align:left;background:none;border:0;padding:0;cursor:pointer;line-height:inherit;}
 .activity-summary-title:hover{text-decoration:underline;text-underline-offset:3px;}
 .activity-summary-title:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:3px;}
+#extra-podcasts > .extra-heading{display:flex;flex-direction:column;align-items:center;gap:12px;}
+#extra-podcasts > .extra-heading > h2{display:none;}
+#extra-podcasts > .list-start{display:flex;flex-direction:column;text-align:center;align-items:center;}
+#music-picker-results{display:grid;gap:8px;margin-top:16px;max-height:55vh;overflow:auto;}
+#music-picker{width:min(600px,calc(100vw - 32px));background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:18px;padding:24px;}
+#music-picker .extra-result{width:100%;text-align:left;}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -2447,7 +2453,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
   </div>
 
 <div style="display:none" id="favorites-section-comedy" class="extra-category"><div id="extra-comedy"></div></div>
-<div style="display:none" id="favorites-section-podcasts" class="extra-category"><div id="extra-podcasts"></div></div>
+<div style="display:none" id="favorites-section-podcasts"><div class="music-layout"><aside class="bio-sidebar"><div class="bio-card"><div class="bio-label">My Podcast Taste List</div><div id="podcast-bio-text" class="bio-text"></div></div></aside><div class="music-main"><div id="extra-podcasts"></div></div></div></div>
 <div id="favorites-section-music">
 <div class="music-layout">
 
@@ -2466,7 +2472,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
   <div class="music-section-divider"></div>
 
-  <div id="album-lists-container"></div>
+  <div id="album-lists-container"></div><div id="extra-music"></div>
 
   <div id="music-lists-container-late"></div>
 
@@ -6043,8 +6049,8 @@ function customListLabel(tab, cat) { if(tab==='tv'&&cat==='movies')return 'Favor
 
 let extraLists=[],extraLoadError='',extraBusy=false;
 let extraPicker={listId:null,category:null,results:[],request:0,timer:null};
-function extraCategory(kind){return ['comedian','special'].includes(kind)?'comedy':'podcasts';}
-function extraItems(){return extraLists.flatMap(list=>(list.items||[]).map(item=>({...item,medium:list.category==='comedy'?'Comedy':'Podcasts'})));}
+function extraCategory(kind){return kind==='song'?'music':['comedian','special'].includes(kind)?'comedy':'podcasts';}
+function extraItems(){return extraLists.flatMap(list=>(list.items||[]).map(item=>({...item,medium:list.category==='music'?'Music':list.category==='comedy'?'Comedy':'Podcasts'})));}
 async function loadExtraLists(userId){
   extraLists=[];extraLoadError='';
   try{const {data,error}=await sb.from('taste_extra_lists').select('*').eq('user_id',userId).order('created_at');if(error)throw error;if(viewedProfile?.id!==userId)return;extraLists=data||[];}
@@ -6058,10 +6064,12 @@ function renderExtraLists(){
    const picks=extraItems().filter(i=>i.kind==='special'&&i.mediaType===type);
    el.innerHTML=picks.length?`<section class="extra-list"><h3>Comedy specials</h3><div class="ob-pick-grid">${picks.map(i=>`<div class="ob-pick-card">${onboardingArtwork(i)}<strong>${esc(i.title)}</strong><small>${esc(i.year||'')}</small></div>`).join('')}</div></section>`:'';
  }
- for(const category of ['comedy','podcasts']){
+ for(const category of ['comedy','podcasts','music']){
   const el=document.getElementById('extra-'+category);if(!el)continue;
   const lists=extraLists.filter(l=>l.category===category);
-  el.innerHTML=`<div class="extra-heading"><h2>${category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
+  if(category==='music'&&!lists.length){el.innerHTML='';continue;}
+  if(category==='podcasts'){const bio=document.getElementById('podcast-bio-text');const picks=lists.flatMap(l=>l.items||[]);if(bio)bio.innerHTML=picks.length?'<p>'+picks.slice(0,6).map(p=>esc(p.title)).join(' · ')+'</p>':'<p>The shows and episodes you love, in one place.</p>';}
+  el.innerHTML=`<div class="extra-heading"><h2>${category==='music'?'Favorite Songs':category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
    lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div><button class="profile-control" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">Rename</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">Delete list</button></div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile?`${list.category==='podcasts'?`<button class="ob-text-link" data-id="${esc(list.id)}" onclick="choosePodcastShow(this.dataset.id,${i})">${item.art?'Change show / artwork':'Choose show / add artwork'}</button>`:''}<button class="ob-text-link" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">Remove</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}</section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
  }
 }
@@ -6080,7 +6088,7 @@ async function updateExtraList(list,changes){
 async function renameExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;const title=prompt('Rename list',list.title);if(!title?.trim())return;extraBusy=true;try{await updateExtraList(list,{title:title.trim().slice(0,120)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
 async function removeExtraItem(id,index){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;extraBusy=true;try{await updateExtraList(list,{items:list.items.filter((_,i)=>i!==index)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
 async function deleteExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile||extraBusy||!confirm('Delete this list and its picks?'))return;extraBusy=true;try{const {error}=await sb.from('taste_extra_lists').delete().eq('id',id).eq('user_id',currentUser.id);if(error)throw error;extraLists=extraLists.filter(l=>l.id!==id);renderExtraLists();scheduleTasteConstellation();renderProfileTab();}catch(_){alert('Could not delete the list.');}finally{extraBusy=false;}}
-function openExtraPicker(id){extraPicker.replaceItem=null;document.getElementById('extra-picker-kind').disabled=false;const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile)return;extraPicker.request++;extraPicker.listId=id;extraPicker.category=list.category;extraPicker.results=[];document.getElementById('extra-picker-query').value='';document.getElementById('extra-picker-results').innerHTML='';document.getElementById('extra-picker-title').textContent='Add to '+list.title;document.getElementById('extra-picker-kind').innerHTML=(list.category==='comedy'?[['comedian','Comedians / performers'],['special','Stand-up specials']]:[['podcast','Podcast shows'],['episode','Podcast episodes']]).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');document.getElementById('extra-picker').showModal();}
+function openExtraPicker(id){const musicList=extraLists.find(l=>l.id===id&&l.category==='music');if(musicList){openFlexibleMusicPicker(musicList.title);return;}extraPicker.replaceItem=null;document.getElementById('extra-picker-kind').disabled=false;const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile)return;extraPicker.request++;extraPicker.listId=id;extraPicker.category=list.category;extraPicker.results=[];document.getElementById('extra-picker-query').value='';document.getElementById('extra-picker-results').innerHTML='';document.getElementById('extra-picker-title').textContent='Add to '+list.title;document.getElementById('extra-picker-kind').innerHTML=(list.category==='comedy'?[['comedian','Comedians / performers'],['special','Stand-up specials']]:[['podcast','Podcast shows'],['episode','Podcast episodes']]).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');document.getElementById('extra-picker').showModal();}
 function queueExtraSearch(){clearTimeout(extraPicker.timer);extraPicker.request++;extraPicker.timer=setTimeout(runExtraSearch,350);}
 async function runExtraSearch(){const request=++extraPicker.request,el=document.getElementById('extra-picker-results'),query=document.getElementById('extra-picker-query').value.trim(),kind=document.getElementById('extra-picker-kind').value;if(!query){el.innerHTML='';return;}el.innerHTML='<p>Searching…</p>';try{const items=await searchExtraCatalog(kind,query);if(request!==extraPicker.request)return;extraPicker.results=items;el.innerHTML=items.length?items.map((item,i)=>`<button class="extra-result" onclick="addExtraResult(${i})">${onboardingArtwork(item)}<span><strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.artist?' · '+esc(item.artist):''}</small></span><span>+</span></button>`).join(''):'<p>No matching results.</p>';}catch(_){if(request===extraPicker.request)el.innerHTML='<p>Search couldn’t load. Please try again.</p>';}}
 // Catalog IDs are preferred; title-only matches must be unambiguous.
@@ -6424,6 +6432,41 @@ let newListCategory='music';
 
 // What each tab's list button says: what goes in the list, not just "a new list".
 const LIST_CTA_NOUN = { books: 'books', movies: 'movies', tv: 'shows', music: 'music', albums: 'albums', comedy: 'comedy', podcasts: 'podcasts' };
+let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null};
+function openFlexibleMusicPicker(category=null){
+ if(!isOwnProfile||!currentUser||flexibleMusic.saving)return;
+ flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.category=category;
+ document.getElementById('music-picker-query').value='';document.getElementById('music-picker-results').innerHTML='';document.getElementById('music-picker-status').textContent='';
+ document.getElementById('music-picker').showModal();document.getElementById('music-picker-query').focus();
+}
+function queueFlexibleMusic(q){
+ clearTimeout(flexibleMusic.timer);const request=++flexibleMusic.request;flexibleMusic.results=[];
+ document.getElementById('music-picker-results').innerHTML='';
+ if(q.trim().length<2)return;
+ flexibleMusic.timer=setTimeout(()=>searchFlexibleMusic(q.trim(),request),250);
+}
+async function searchFlexibleMusic(q,request){
+ const userId=currentUser?.id,el=document.getElementById('music-picker-results');el.innerHTML='<p>Searching songs, albums and artists…</p>';
+ const results=await Promise.allSettled(['song','album','artist'].map(kind=>onboardingAutocompleteProvider(kind,q)));
+ if(request!==flexibleMusic.request||userId!==currentUser?.id)return;
+ flexibleMusic.results=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)).slice(0,30);
+ el.innerHTML=flexibleMusic.results.map((p,i)=>`<button type="button" class="extra-result" onclick="saveFlexibleMusic(${i})">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist,p.album,p.year].filter(Boolean).join(' · '))}</small></span><span>+</span></button>`).join('')||'<p>No results. Try another title or artist.</p>';
+ if(results.some(r=>r.status==='rejected'))el.innerHTML+='<p>Some music results could not load. Please search again to retry.</p>';
+}
+async function saveFlexibleMusic(index){
+ const p=flexibleMusic.results[index];if(!p||flexibleMusic.saving||!isOwnProfile)return;
+ const userId=currentUser?.id;flexibleMusic.saving=true;
+ const status=document.getElementById('music-picker-status');status.textContent='Saving…';
+ try{
+  if(!await requireFreshSession()||currentUser?.id!==userId||viewedProfile?.id!==userId)throw Error('Please sign in to your own profile.');
+  const category=p.kind==='song'?(flexibleMusic.category||'Favorite Songs'):mainListFor(p.kind==='album'?'albums':'music');
+  await saveOnboardingItem({...p,category},userId);
+  if(currentUser?.id!==userId)return;
+  status.textContent=p.title+' added.';renderExtraLists();renderProfileTab();scheduleTasteConstellation();
+ }catch(e){status.textContent=e.message||'Could not save. Please try again.';}
+ finally{flexibleMusic.saving=false;}
+}
+
 function listCtaLabel(tab) { return `Add ${LIST_CTA_NOUN[tab] || 'things'} you love`; }
 
 // ── "Add [things] you love" adds items to the person's main list for that tab ────────────────────
@@ -6436,6 +6479,7 @@ function mainListFor(tab) {
 }
 async function addToMainList(tab) {
   if (!isOwnProfile) return;
+  if (tab === 'music') { openFlexibleMusicPicker(); return; }
   if (tab === 'comedy' || tab === 'podcasts') {
     const lists = extraLists.filter(l => l.category === tab);
     const main = lists.find(l => /fav|top|best|love/i.test(l.title || '')) || lists[0];
@@ -7350,6 +7394,10 @@ async function onboardingAutocompleteProvider(kind,q){
     let data;
     if(['comedian','special','podcast','episode'].includes(kind))return searchExtraCatalog(kind,q);
     if(kind==='artist')return searchOnboardingArtists(q);
+    if(kind==='song') {
+      const d=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=12`);
+      return (d.results||[]).filter(r=>r.trackId).map(r=>({kind:'song',id:r.trackId,title:r.trackName,artist:r.artistName,album:r.collectionName,year:r.releaseDate?.slice(0,4),genre:r.primaryGenreName,label:'Song',art:r.artworkUrl100?.replace('100x100bb','400x400bb'),url:r.trackViewUrl}));
+    }
     if(kind==='album') {
       data=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=album&limit=12`);
       return (data.results||[]).map(r=>({kind,id:r.artistId,title:r.artistName,genre:r.primaryGenreName,artist:r.artistName,label:'Artist',...(kind==='album'?{id:r.collectionId,title:r.collectionName,label:'Album',year:r.releaseDate?.slice(0,4),art:r.artworkUrl100?.replace('100x100bb','400x400bb')}:{})}));
@@ -7839,7 +7887,7 @@ async function saveOnboardingItem(item,userId) {
     const picks=onboardingPicks();
     if(picks.some(p=>p.kind===item.kind && (p.title||p.name).toLowerCase()===item.title.toLowerCase() && (item.kind!=='album'||(p.artist||'').toLowerCase()===(item.artist||'').toLowerCase()) && (item.kind!=='book'||(p.author||'').toLowerCase()===(item.author||'').toLowerCase())))throw new Error('This is already in your favorites. Choose another pick.');
     const category=item.category||onboardingQuestion().list;
-    if(['comedian','special','podcast','episode'].includes(item.kind)){await saveExtraPick(item,category);return;}
+    if(['song','comedian','special','podcast','episode'].includes(item.kind)){await saveExtraPick(item,category);return;}
     let table,row,local;
     if(item.kind==='artist') {
       table='favorite_artists';row={user_id:userId,category,name:item.title,genre:item.genre||null,band_photo:item.art||null,tile_photo:item.art||null,sort_order:(CUSTOM_LISTS.music[category]||[]).length};
@@ -12367,7 +12415,7 @@ function collectConstellationFavorites() {
   selected.push(...(directors||[]).map(item=>({...item,kind:'director',medium:'Movies'})));
   for(const list of extraLists||[]) {
     if(!constellationListEligible(list.category,list.title||''))continue;
-    selected.push(...(list.items||[]).map(item=>({...item,medium:list.category==='comedy'?'Comedy':'Podcasts'})));
+    selected.push(...(list.items||[]).map(item=>({...item,medium:list.category==='music'?'Music':list.category==='comedy'?'Comedy':'Podcasts'})));
   }
   return selected;
 }
@@ -15160,7 +15208,8 @@ function assortedTastePicks(tab, n = 4) {
     const albumPicks=fallback('albums').map(x=>({...x,_tasteKind:'album'}));
     const artistPicks=chosenArtists.length?chosenArtists:fallback('music');
     const selected=take(artistPicks,n);
-    return [...selected,...take(albumPicks,n-selected.length)];
+    const songs=extraItems().filter(p=>p.kind==='song').map(p=>({...p,_tasteKind:'song'}));
+    return [...selected,...take([...albumPicks,...songs],n-selected.length)];
   }
   if (tab === 'movies') {
     const named = fromLists('movies', ['Favorite Movies', 'Favorite Films']);
@@ -15559,7 +15608,7 @@ function renderProfileTab() {
 
   // Render placeholders immediately
   const picksData = [
-    { id: 'pick-music', label: 'My Music Taste', icon: 'music', name: topArtist?.name || topArtist?.title || '', sub: topArtist?._tasteKind==='album'?'Favorite album':'Favorite artist', color: '#7C4DFF', tab: 'music', art: '', mosaic: musicPicks.map(x => tastePickArt('music', x)) },
+    { id: 'pick-music', label: 'My Music Taste', icon: 'music', name: topArtist?.name || topArtist?.title || '', sub: topArtist?._tasteKind==='song'?'Favorite song':topArtist?._tasteKind==='album'?'Favorite album':'Favorite artist', color: '#7C4DFF', tab: 'music', art: '', mosaic: musicPicks.map(x => tastePickArt('music', x)) },
     { id: 'pick-film',  label: 'My Movie Taste', icon: 'film',  name: topFilmObj?.title || '', sub: 'Top favorite film', color: '#F97360', tab: 'movies', art: tastePickArt('movies', topFilmObj || {}), mosaic: filmPicks.map(x => tastePickArt('movies', x)) },
     { id: 'pick-tv',    label: 'My TV Taste',    icon: 'tv',    name: topTVObj?.title || '', sub: 'Top TV pick', color: '#3B82F6', tab: 'tv', art: tastePickArt('tv', topTVObj || {}), mosaic: tvPicks.map(x => tastePickArt('tv', x)) },
     { id: 'pick-book',  label: 'My Book Taste',  icon: 'books', name: topBookObj?.title || '', sub: 'Top book pick', color: '#22C55E', tab: 'books', art: tastePickArt('books', topBookObj || {}), mosaic: bookPicks.map(x => tastePickArt('books', x)) },
@@ -16906,5 +16955,6 @@ renderTasteInfluences();
 })();
 </script>
 
+<dialog id="music-picker"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2>Add music you love</h2><button type="button" class="profile-control" aria-label="Close music search" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p>Search a song, album or artist, then choose the right match.</p><input id="music-picker-query" class="tl-input" type="search" aria-label="Search songs, albums and artists" placeholder="Start typing a title or artist…" oninput="queueFlexibleMusic(this.value)"><div id="music-picker-results" aria-live="polite"></div><p id="music-picker-status" role="status"></p></dialog>
 </body>
 </html>
