@@ -1995,6 +1995,15 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .follow-row-you { font-style: normal; font-size: 12px; color: var(--muted); }
 .follow-list-note { margin: 18px 14px; font-size: 14px; color: var(--muted); line-height: 1.5; }
 @media (pointer: coarse) { .follow-stat { min-height: 44px; } }
+
+/* Onboarding search: type filters */
+#ob-search::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }   /* the app has its own clear button */
+.ob-type-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.ob-type-filters button { font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; color: var(--muted); background: none; border: 1px solid var(--border); }
+.ob-type-filters button[aria-pressed="true"] { color: var(--text); background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.4); }
+.ob-type-note { margin: -2px 0 10px; font-size: 13px; color: var(--muted); }
+.ob-type-note-link { font: inherit; font-size: 13px; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+@media (pointer: coarse) { .ob-type-filters button, .ob-type-note-link { min-height: 44px; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -7100,17 +7109,45 @@ function renderOnboardingJourney() {
     if (focused) {const next=document.getElementById('ob-search');next?.focus();try{next?.setSelectionRange(cursor,cursor)}catch(_){}}
   }
 }
+
+// Type words at the end of a search act as a filter: "diplomat book", "dune movie", "the bear show".
+const OB_SEARCH_KINDS = ['artist', 'album', 'movie', 'tv', 'book', 'comedian', 'podcast'];
+const OB_FILTER_LABELS = { all: 'All', artist: 'Artists', album: 'Albums', movie: 'Movies', tv: 'TV shows', book: 'Books', podcast: 'Podcasts', comedian: 'Comedy' };
+const OB_TYPE_WORDS = [
+  [/\s+(?:tv\s+shows?|tv\s+series)$/i, 'tv'], [/\s+(?:books?|novels?|memoirs?)$/i, 'book'], [/\s+(?:movies?|films?)$/i, 'movie'],
+  [/\s+(?:shows?|series|tv)$/i, 'tv'], [/\s+(?:albums?|records?|lps?)$/i, 'album'], [/\s+(?:artists?|bands?|singers?|musicians?)$/i, 'artist'],
+  [/\s+(?:podcasts?|pods?)$/i, 'podcast'], [/\s+(?:comedians?|comedy|stand-?up|specials?)$/i, 'comedian'],
+];
+function parseOnboardingQuery(raw) {
+  const full = String(raw || '').trim();
+  for (const [re, kind] of OB_TYPE_WORDS) {
+    if (!re.test(full)) continue;
+    const q = full.replace(re, '').trim();
+    if (q.length >= 2) return { q, kind, full };
+  }
+  return { q: full, kind: null, full };
+}
+
 function onOnboardingSearch(query) {
   const state=onboardingVisualState();
-  state.query=query;state.filter='all';state.results=[];state.error='';state.searchFailed=false;state.request++;
+  state.query=query;state.results=[];state.error='';state.searchFailed=false;state.request++;
+  if(!state.filter)state.filter='all';
+  const parsed=parseOnboardingQuery(query);
+  if(!state.manualFilter){
+    if(parsed.kind){state.filter=parsed.kind;state.autoFilter=true;}
+    else if(state.autoFilter){state.filter='all';state.autoFilter=false;}
+  }
   clearTimeout(state.timer);
   const ideas=document.getElementById('ob-search-ideas');if(ideas)ideas.hidden=!!query.trim();
   state.loading=query.trim().length>=2;renderOnboardingSearchResults();
   if(query.trim().length>=2)state.timer=setTimeout(()=>runOnboardingSearch(),250);
 }
-function clearOnboardingSearch(){const input=document.getElementById('ob-search');if(input)input.value='';onOnboardingSearch('');}
+function clearOnboardingSearch(){const input=document.getElementById('ob-search');if(input)input.value='';const st=onboardingVisualState();st.filter='all';st.manualFilter=false;st.autoFilter=false;onOnboardingSearch('');}
 function suggestOnboardingSearch(query){const input=document.getElementById('ob-search');if(input)input.value=query;onOnboardingSearch(query);input?.focus();}
-function filterOnboardingSearch(filter){const state=onboardingVisualState();state.filter=filter;onOnboardingSearch(state.query);}
+function filterOnboardingSearch(filter){const state=onboardingVisualState();state.filter=filter;state.autoFilter=false;state.manualFilter=filter!=='all';
+  // "Search everything instead" after a type word: search the full text across all types.
+  if(filter==='all')state.manualFilter=true;
+  onOnboardingSearch(state.query);if(filter==='all'&&!parseOnboardingQuery(state.query).kind)state.manualFilter=false;}
 async function onboardingSearchJSON(url) {
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),8000);
@@ -7180,17 +7217,22 @@ async function onboardingAutocompleteProvider(kind,q){
 async function runOnboardingSearch() {
  const state=onboardingVisualState(),request=++state.request,userId=currentUser?.id,q=state.query.trim();
  if(q.length<2)return;
- const kinds=['artist','album','movie','tv','book','comedian','podcast'];
- state.filter='all';state.loading=true;state.error='';state.searchFailed=false;state.results=[];
+ const parsed=parseOnboardingQuery(state.query);
+ const filter=state.filter&&state.filter!=='all'?state.filter:'all';
+ const kinds=filter==='all'?OB_SEARCH_KINDS:[filter];
+ const useParsed=!!parsed.kind&&parsed.kind===filter;
+ const queries=useParsed?[parsed.q,parsed.full]:[parsed.full];
+ const rankQ=useParsed?parsed.q:q;
+ state.loading=true;state.error='';state.searchFailed=false;state.results=[];
  renderOnboardingSearchResults();
- const found=new Map(),enriched=new Set();let remaining=kinds.length,failed=0;
+ const found=new Map(),enriched=new Set();let remaining=kinds.length*queries.length,failed=0;
  const current=()=>request===state.request&&userId===currentUser?.id;
  function refresh(){
   if(!current())return;
-  state.results=[...found.values()].sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)||
+  state.results=[...found.values()].sort((a,b)=>onboardingMatchRank(a,rankQ)-onboardingMatchRank(b,rankQ)||
     (a.kind===b.kind&&['movie','tv'].includes(a.kind)?(b.popularity||0)-(a.popularity||0):0)||a.providerRank-b.providerRank).slice(0,18);
   state.loading=remaining>0;state.searchFailed=failed>0;
-  state.error=remaining===0&&failed===kinds.length?'Search is unavailable right now. Please retry.':'';
+  state.error=remaining===0&&failed===kinds.length*queries.length?'Search is unavailable right now. Please retry.':'';
   renderOnboardingSearchResults();
   for(const item of state.results.filter(x=>x.kind==='artist'&&!x.art).slice(0,6)){
    const key=onboardingSelectionKey(item);if(enriched.has(key))continue;enriched.add(key);
@@ -7199,17 +7241,20 @@ async function runOnboardingSearch() {
     renderOnboardingSearchResults();}).catch(()=>{});
   }
  }
- await Promise.all(kinds.map(async kind=>{
-  try{const items=await onboardingAutocompleteProvider(kind,q);if(!current())return;for(const item of items)found.set(onboardingSelectionKey(item),item);}
+ await Promise.all(kinds.flatMap(kind=>queries.map(async query=>{
+  try{const items=await onboardingAutocompleteProvider(kind,query);if(!current())return;for(const item of items)found.set(onboardingSelectionKey(item),item);}
   catch(_){if(current())failed++;}
   finally{remaining--;refresh();}
- }));
+ })));
 }
 function renderOnboardingSearchResults() {
   renderOnboardingStarters();
   const state=onboardingVisualState(),el=document.getElementById('ob-results');if(!el)return;
   document.querySelectorAll('[data-ob-filter]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.obFilter===state.filter)));
-  el.innerHTML=state.loading&&!state.results.length?'<p class="ob-search-status">Finding matches…</p>':state.results.length?`<div class="ob-results-grid">${state.results.map((item,i)=>`<button type="button" class="ob-result ${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'selected':''}" aria-pressed="${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))}" onclick="selectOnboardingResult(${i})" ${state.saving?'disabled':''}>${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.year?' · '+esc(item.year):''}${item.artist&&item.kind==='album'?' · '+esc(item.artist):item.author?' · '+esc(item.author):''}</small>${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'<span class="ob-selected-mark" aria-hidden="true">✓</span>':'<span class="ob-select-circle" aria-hidden="true">+</span>'}</button>`).join('')}</div>`:state.query.trim().length===1?'<p class="ob-search-status">Type at least 2 letters to see suggestions.</p>':state.query.trim()?(state.searchFailed?'<p class="ob-search-status">Search is temporarily unavailable.</p>':'<p class="ob-search-status">No matches found. Try a few more letters or add the creator’s name.</p>'):'';
+  const qNow=state.query.trim(), parsedNow=parseOnboardingQuery(qNow), f=state.filter||'all';
+  const chips=qNow.length>=2?`<div class="ob-type-filters" role="group" aria-label="Filter by type">${['all',...['artist','album','movie','tv','book','podcast','comedian']].map(k=>`<button type="button" data-ob-filter="${k}" aria-pressed="${k===f}" onclick="filterOnboardingSearch('${k}')">${OB_FILTER_LABELS[k]}</button>`).join('')}</div>`
+    +(state.autoFilter&&parsedNow.kind?`<p class="ob-type-note">Showing ${esc(parsedNow.kind==='tv'?'TV shows':OB_FILTER_LABELS[parsedNow.kind].toLowerCase())} for “${esc(parsedNow.q)}” · <button type="button" class="ob-type-note-link" onclick="filterOnboardingSearch('all')">Search everything instead</button></p>`:''):'';
+  el.innerHTML=chips+(state.loading&&!state.results.length?'<p class="ob-search-status">Finding matches…</p>':state.results.length?`<div class="ob-results-grid">${state.results.map((item,i)=>`<button type="button" class="ob-result ${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'selected':''}" aria-pressed="${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))}" onclick="selectOnboardingResult(${i})" ${state.saving?'disabled':''}>${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.year?' · '+esc(item.year):''}${item.artist&&item.kind==='album'?' · '+esc(item.artist):item.author?' · '+esc(item.author):''}</small>${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'<span class="ob-selected-mark" aria-hidden="true">✓</span>':'<span class="ob-select-circle" aria-hidden="true">+</span>'}</button>`).join('')}</div>`:state.query.trim().length===1?'<p class="ob-search-status">Type at least 2 letters to see suggestions.</p>':state.query.trim()?(state.searchFailed?'<p class="ob-search-status">Search is temporarily unavailable.</p>':'<p class="ob-search-status">No matches found. Try a few more letters or add the creator’s name.</p>'):'');
   if(state.searchFailed&&!state.loading)el.innerHTML+='<button type="button" class="ob-button" onclick="runOnboardingSearch()">Retry search</button>';
   const count=document.getElementById('ob-selection-count');if(count)count.textContent=`${state.pending.length} selected`;
   const pending=document.getElementById('ob-pending');
