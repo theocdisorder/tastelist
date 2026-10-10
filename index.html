@@ -2004,6 +2004,29 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .ob-type-note { margin: -2px 0 10px; font-size: 13px; color: var(--muted); }
 .ob-type-note-link { font: inherit; font-size: 13px; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 @media (pointer: coarse) { .ob-type-filters button, .ob-type-note-link { min-height: 44px; } }
+
+/* Onboarding: make the next step obvious once something is selected */
+.ob-footer { transition: box-shadow .2s ease, border-color .2s ease, background .2s ease; }
+.ob-footer.has-selection { position: sticky; bottom: 12px; z-index: 6; margin-top: 16px; padding: 12px 14px 12px 16px;
+  background: rgba(20,20,24,.92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid rgba(124,77,255,.5); border-radius: 16px; box-shadow: 0 14px 34px rgba(0,0,0,.5); }
+.ob-footer.has-selection #ob-add-button { background: #7C4DFF; border-color: #7C4DFF; color: #fff; font-weight: 650; box-shadow: 0 8px 20px rgba(124,77,255,.4); }
+.ob-footer.has-selection #ob-add-button:hover { filter: brightness(1.08); }
+.ob-footer.has-selection .ob-saved-count { display: flex; align-items: center; gap: 12px; }
+.ob-selection-tray { display: none; }
+.ob-footer.has-selection .ob-selection-tray { display: inline-flex; padding-left: 8px; }
+.ob-tray-art { position: relative; width: 30px; height: 44px; margin-left: -8px; border-radius: 4px; overflow: hidden; border: 2px solid #141418;
+  background: #2b2738; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #b9a6e8; }
+.ob-tray-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+@keyframes ob-pulse { 0% { transform: scale(1); } 35% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.ob-pulse { animation: ob-pulse .45s ease-out; }
+@media (prefers-reduced-motion: reduce) { .ob-pulse { animation: none; } .ob-footer { transition: none; } }
+@media (max-width: 720px) {
+  .ob-footer.has-selection { bottom: 0; border-radius: 16px 16px 0 0; border-left: 0; border-right: 0; border-bottom: 0;
+    margin: 16px calc(-1 * var(--gutter)) 0; padding: 12px var(--gutter) calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .ob-footer.has-selection > div { flex: 1 1 100%; }
+  .ob-footer.has-selection #ob-add-button { flex: 1; }
+}
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -5839,7 +5862,14 @@ async function loadFavoriteAlbumsFromSupabase(userId) {
 // short pause between batches — enough concurrency to load a profile's movies/TV noticeably
 // faster, while still staying well under TMDB's rate limit (unlike firing every request at once,
 // which is what caused the original one-at-a-time throttling in the first place).
+// While a profile is loading, artwork/detail batches run in the background (collected here) so the
+// profile appears as soon as its lists are loaded; posters and covers fill in as they arrive.
+let PROFILE_ART_JOBS = null;
 async function runInBatches(items, batchSize, delayMs, workFn) {
+  if (PROFILE_ART_JOBS) { PROFILE_ART_JOBS.push(runInBatchesNow(items, batchSize, delayMs, workFn)); return; }
+  return runInBatchesNow(items, batchSize, delayMs, workFn);
+}
+async function runInBatchesNow(items, batchSize, delayMs, workFn) {
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
     await Promise.all(batch.map((item, j) => workFn(item, i + j).catch(() => {})));
@@ -6762,10 +6792,13 @@ async function loadFavoriteDirectorsFromSupabase(userId) {
 
     // Same throttled, sequential approach as the original preloadDirectors() — a burst of
     // concurrent requests across a whole filmography is what silently rate-limits some posters.
-    for (const m of posterQueue) {
-      await loadDirectorMoviePoster(m);
-      await new Promise(res => setTimeout(res, 150));
-    }
+    const posters = (async () => {
+      for (const m of posterQueue) {
+        await loadDirectorMoviePoster(m);
+        await new Promise(res => setTimeout(res, 150));
+      }
+    })();
+    if (PROFILE_ART_JOBS) PROFILE_ART_JOBS.push(posters); else await posters;
     return true;
   } catch (e) {
     console.error('Failed to load favorite directors from Supabase, keeping hardcoded fallback:', e);
@@ -6790,6 +6823,8 @@ async function loadViewedProfileData() {
   CUSTOM_LISTS = { movies: {}, tv: {}, books: {}, music: {}, albums: {} };
   allTasteLists = [];extraLists=[];renderExtraLists();
   const id = viewedProfile.id;
+  const artJobs = [];
+  PROFILE_ART_JOBS = artJobs;
   // Each of these categories is independent (separate tables, separate arrays) and already
   // throttles its own per-item art/detail fetches internally (the 150–400ms delays inside each
   // loader's for-loop) — the only thing sequential awaiting bought us was extra wall-clock time,
@@ -6810,9 +6845,16 @@ async function loadViewedProfileData() {
     loadCustomLists(id, 'tv'),
     loadCustomLists(id, 'books'),
     loadFavoriteAuthors(id),
-  ]);
+  ]).finally(() => { if (PROFILE_ART_JOBS === artJobs) PROFILE_ART_JOBS = null; });
   if (viewedProfile?.id !== id) return;
   profileFavoritesLoaded = true;
+  // When the background artwork has all arrived, refresh what's drawn from it (once).
+  Promise.allSettled(artJobs).then(() => {
+    if (viewedProfile?.id !== id || !artJobs.length) return;
+    updateMusicProfile(); updateFilmProfile(); updateTVProfile(); updateBooksProfile();
+    scheduleTasteConstellation();
+    if (document.getElementById('tab-profile')?.classList.contains('active')) { try { renderProfileTab(); } catch (_) {} }
+  });
   scheduleTasteConstellation();
   updateMusicProfile();
   updateFilmProfile();
@@ -6903,7 +6945,7 @@ function onboardingPicks() {
 // name the picks are saved under on the profile; `ideas` are tap-to-search examples.
 const ONBOARDING_QUESTIONS = [
   { q: 'What have you been obsessed with lately?', list: 'Recent obsessions',
-    hint: 'A song on repeat, a show you binged, a book you couldn’t put down. Anything counts.',
+    hint: 'A song on repeat, a show you binged, a movie you keep recommending, a book you couldn’t put down.',
     ideas: ['Sabrina Carpenter', 'The Bear', 'Severance', 'Fourth Wing', 'Chappell Roan', 'Dune: Part Two'] },
   { q: 'What are you watching, reading or listening to right now?', list: 'Currently into',
     hint: 'It doesn’t have to be a favorite yet. Whatever’s in rotation.',
@@ -6945,6 +6987,7 @@ const starterNorm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,
 async function resolveOnboardingStarter(seed) {
  const [kind,title,year,creator]=seed;let candidates=[];
  if(kind==='movie'||kind==='tv') {
+  const screenKind=kind==='tv'?'tv':'movie';
   const response=await tmdbFetch(`/search/${screenKind}?query=${encodeURIComponent(title)}&page=1`);
   if(!response.ok)throw Error('Catalog unavailable');const data=await response.json();
   candidates=(data.results||[]).map(r=>({kind,id:r.id,title:r.title||r.name,year:(r.release_date||r.first_air_date||'').slice(0,4),poster:r.poster_path||'',label:kind==='movie'?'Movie':'TV show'}));
@@ -6987,15 +7030,27 @@ function renderOnboardingStarters() {
  const rows=onboardingStarterView.rows.map((r,i)=>({...r,index:i})).filter(r=>state.filter==='all'||r.seed[0]===state.filter);
  const ready=profileFavoritesLoaded&&isOwnProfile&&viewedProfile?.id===currentUser?.id;
  el.innerHTML=`<p class="ob-starter-heading">A few ideas to get you started</p><p class="ob-starter-caption">Curated suggestions — pick any that feel like you, or search for your own.</p><div class="ob-results-grid">${rows.map(row=>{
- const p=row.item||{title:row.seed[1],kind:row.seed[0],label:row.seed[0],year:row.seed[2]||'',author:row.seed[3]||''};
+ const p=row.item||{title:row.seed[1],kind:row.seed[0],label:({movie:'Movie',tv:'TV show',book:'Book',artist:'Artist',album:'Album',podcast:'Podcast'})[row.seed[0]]||row.seed[0],year:row.seed[2]||'',author:row.seed[3]||''};
  const selected=row.item&&state.pending.some(x=>onboardingSelectionKey(x)===onboardingSelectionKey(p));
- return `<button type="button" class="ob-result ${selected?'selected':''}" aria-pressed="${!!selected}" onclick="selectOnboardingStarter(${row.index})" ${!ready||state.saving||!row.done?'disabled':''}>${onboardingArtwork(p)}<strong>${esc(p.title)}</strong><small>${esc([p.label,p.author||p.artist,p.year].filter(Boolean).join(' · '))}</small>${row.item?`<span class="ob-selected-mark">${selected?'✓':'+'}</span>`:`<small>${row.done?'Search for this title':'Loading…'}</small>`}</button>`;
+ return `<button type="button" class="ob-result ${selected?'selected':''}" aria-pressed="${!!selected}" onclick="selectOnboardingStarter(${row.index})" ${!ready||state.saving||!row.done?'disabled':''}>${onboardingArtwork(p)}<strong>${esc(p.title)}</strong><small>${esc([p.label,p.author||p.artist,p.year].filter(Boolean).join(' · '))}</small>${row.item?`<span class="ob-selected-mark">${selected?'✓':'+'}</span>`:row.done?`<span class="ob-selected-mark" aria-hidden="true">${row.retrying?'…':'+'}</span>`:'<small>Loading…</small>'}</button>`;
  }).join('')}</div>${!rows.length?'<p>No starter picks for this category on this question. Search above to find your own.</p>':''}${!onboardingStarterView.loading&&rows.some(r=>!r.item)?'<button type="button" class="ob-button" onclick="loadOnboardingStarters(true)">Retry suggestions</button>':''}`;
 }
-function selectOnboardingStarter(index) {
+async function selectOnboardingStarter(index) {
  const state=onboardingVisualState(),row=onboardingStarterView.rows[index];
  if(!row?.done||state.saving||!profileFavoritesLoaded||!isOwnProfile)return;
- if(!row.item){state.filter=row.seed[0];suggestOnboardingSearch(row.seed[1]);return;}
+ if(!row.item){
+  // Its catalog lookup failed earlier: retry now, add it if found, otherwise search for the title.
+  if(row.retrying)return;
+  row.retrying=true;renderOnboardingStarters();
+  try{const item=await resolveOnboardingStarter(row.seed);if(item){row.item=item;onboardingStarterCache.set(JSON.stringify(row.seed),item);}}catch(_){}
+  row.retrying=false;
+  if(row.item){
+   const key=onboardingSelectionKey(row.item);
+   if(!state.pending.some(p=>onboardingSelectionKey(p)===key))state.pending.push({...row.item,category:onboardingQuestion().list});
+   renderOnboardingSearchResults();renderOnboardingStarters();return;
+  }
+  renderOnboardingStarters();state.filter=row.seed[0];suggestOnboardingSearch(row.seed[1]);return;
+ }
  const item=row.item,key=onboardingSelectionKey(item),found=state.pending.findIndex(p=>onboardingSelectionKey(p)===key);
  if(found>=0)state.pending.splice(found,1);else state.pending.push({...item,category:onboardingQuestion().list});
  renderOnboardingSearchResults();
@@ -7144,7 +7199,9 @@ function onOnboardingSearch(query) {
 }
 function clearOnboardingSearch(){const input=document.getElementById('ob-search');if(input)input.value='';const st=onboardingVisualState();st.filter='all';st.manualFilter=false;st.autoFilter=false;onOnboardingSearch('');}
 function suggestOnboardingSearch(query){const input=document.getElementById('ob-search');if(input)input.value=query;onOnboardingSearch(query);input?.focus();}
-function filterOnboardingSearch(filter){const state=onboardingVisualState();state.filter=filter;state.autoFilter=false;state.manualFilter=filter!=='all';
+function filterOnboardingSearch(filter){const state=onboardingVisualState();
+  if(filter!=='all'&&filter===state.filter)filter='all';   // tapping the selected chip again turns the filter off
+  state.filter=filter;state.autoFilter=false;state.manualFilter=filter!=='all';
   // "Search everything instead" after a type word: search the full text across all types.
   if(filter==='all')state.manualFilter=true;
   onOnboardingSearch(state.query);if(filter==='all'&&!parseOnboardingQuery(state.query).kind)state.manualFilter=false;}
@@ -7264,7 +7321,32 @@ function renderOnboardingSearchResults() {
   }
   const review=document.getElementById('ob-review-button');if(review)review.disabled=state.saving||!!state.pending.length||!onboardingPicks().length;
   const feedback=document.getElementById('ob-feedback');if(feedback)feedback.textContent=state.error;
-  const button=document.getElementById('ob-add-button');if(button){button.disabled=!state.pending.length||state.saving;button.textContent=state.saving?'Adding…':state.pending.length ? `Add ${state.pending.length} ${state.pending.length===1?'pick':'picks'} to my list` : 'Select picks to add';}
+  const button=document.getElementById('ob-add-button');if(button){button.disabled=!state.pending.length||state.saving;button.textContent=state.saving?'Adding…':state.pending.length ? `Add ${state.pending.length} ${state.pending.length===1?'pick':'picks'} to my list →` : 'Select picks to add';}
+  updateOnboardingFooterHighlight(state);
+}
+// Once something is selected, the footer becomes a floating bar pinned to the bottom of the screen,
+// with thumbnails of the selection and a solid "Add … →" button that pulses when a pick is added.
+function updateOnboardingFooterHighlight(state) {
+  const footer = document.querySelector('.ob-footer');
+  if (!footer) return;
+  const n = state.pending.length, before = Number(footer.dataset.count || 0);
+  footer.dataset.count = n;
+  footer.classList.toggle('has-selection', n > 0);
+  const countEl = document.getElementById('ob-selection-count');
+  let tray = document.getElementById('ob-selection-tray');
+  if (!tray && countEl) {
+    tray = document.createElement('span');
+    tray.id = 'ob-selection-tray'; tray.className = 'ob-selection-tray'; tray.setAttribute('aria-hidden', 'true');
+    countEl.parentElement.prepend(tray);
+  }
+  if (tray) tray.innerHTML = state.pending.slice(-4).map(p => {
+    const src = p.art || (p.poster ? (String(p.poster).startsWith('http') ? p.poster : TMDB_IMG + p.poster) : '');
+    return `<span class="ob-tray-art">${src ? `<img src="${esc(src)}" alt="" onerror="this.remove()">` : ''}<span>${esc(String(p.title || '?').trim().charAt(0).toUpperCase())}</span></span>`;
+  }).join('');
+  if (n > before) {
+    const btn = document.getElementById('ob-add-button');
+    if (btn) { btn.classList.remove('ob-pulse'); void btn.offsetWidth; btn.classList.add('ob-pulse'); }
+  }
 }
 function onboardingSelectionKey(item) {
   return JSON.stringify([item.kind, item.kind==='artist'?item.title.trim().toLowerCase():item.id ?? item.title, item.kind==='book'?item.author:item.kind==='album'?item.artist:'']);
@@ -10927,7 +11009,37 @@ const TMDB_KEY = 'c685dcf202d23bfd35ff2e96a637cb22';
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
 const TMDB_IMG_FULL = 'https://image.tmdb.org/t/p/w780';
 
-function tmdbFetch(path, options = {}) {
+// TMDB details for a specific title or person rarely change, so they're cached for this browser tab
+// (memory + sessionStorage): returning to a profile reuses them instead of refetching every poster.
+const TMDB_DETAIL_CACHE = new Map();
+const TMDB_CACHEABLE = /^\/(movie|tv|person)\/\d+(\/credits)?$/;
+function trimTmdbCredits(json) {
+  try {
+    const d = JSON.parse(json);
+    if (Array.isArray(d.cast)) d.cast = d.cast.slice(0, 15);
+    if (Array.isArray(d.crew)) d.crew = d.crew.filter(c => ['Directing', 'Writing'].includes(c.department) || ['Director', 'Creator', 'Executive Producer'].includes(c.job)).slice(0, 40);
+    return JSON.stringify(d);
+  } catch (_) { return json; }
+}
+async function tmdbFetch(path, options = {}) {
+  if (!TMDB_CACHEABLE.test(path)) return tmdbFetchNow(path, options);
+  const key = 'tmdb:' + path;
+  let text = TMDB_DETAIL_CACHE.get(key);
+  if (text == null) { try { text = sessionStorage.getItem(key); } catch (_) {} }
+  if (text == null) {
+    const res = await tmdbFetchNow(path, options);
+    if (!res.ok) return res;
+    text = await res.text();
+    if (path.endsWith('/credits')) text = trimTmdbCredits(text);
+    try { sessionStorage.setItem(key, text); }
+    catch (_) {   // storage full: drop older cached details and carry on
+      try { Object.keys(sessionStorage).filter(k => k.startsWith('tmdb:')).slice(0, 200).forEach(k => sessionStorage.removeItem(k)); sessionStorage.setItem(key, text); } catch (_) {}
+    }
+  }
+  TMDB_DETAIL_CACHE.set(key, text);
+  return new Response(text, { status: 200, headers: { 'Content-Type': 'application/json' } });
+}
+function tmdbFetchNow(path, options = {}) {
   const sep = path.includes('?') ? '&' : '?';
   return fetch(`https://api.themoviedb.org/3${path}${sep}language=en-US`, {
     signal: options.signal,
@@ -14075,6 +14187,7 @@ function parseFeedTitleQuery(raw){
  return parseOnboardingQuery(full);
 }
 function setFeedTitleFilter(filter){
+ if(filter!=='all'&&filter===feedTitleSearch.filter)filter='all';   // tapping the selected chip again turns the filter off
  feedTitleSearch.filter=filter;feedTitleSearch.filterManual=true;
  const input=document.getElementById('feed-title-query');searchFeedTitles(input?input.value:feedTitleSearch.lastQuery,true);
  if(filter==='all'&&!parseFeedTitleQuery(feedTitleSearch.lastQuery).kind)feedTitleSearch.filterManual=false;
