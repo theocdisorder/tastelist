@@ -14065,10 +14065,30 @@ function renderWelcomeBanner() {
 // Resets pagination and re-resolves who you follow (their follow list may have changed since the
 // last time the Feed was open), then loads the first page. Called every time the Feed view is
 // entered — see setTopView().
-let feedTitleSearch={seq:0,timer:null,results:[],manual:false};
+let feedTitleSearch={seq:0,timer:null,results:[],manual:false,filter:'all',filterManual:false,lastQuery:''};
+// Composer title search: filter chips + type words ("diplomat book", "espresso song"), like onboarding.
+const FEED_TITLE_KINDS=['book','movie','tv','song','album','artist','podcast'];
+const FEED_FILTER_LABELS={all:'All',book:'Books',movie:'Movies',tv:'TV',song:'Songs',album:'Albums',artist:'Artists',podcast:'Podcasts',screen:'Movies & TV'};
+function parseFeedTitleQuery(raw){
+ const full=String(raw||'').trim(),m=full.match(/\s+(?:songs?|tracks?|singles?)$/i);
+ if(m){const q=full.slice(0,m.index).trim();if(q.length>=2)return{q,kind:'song',full};}
+ return parseOnboardingQuery(full);
+}
+function setFeedTitleFilter(filter){
+ feedTitleSearch.filter=filter;feedTitleSearch.filterManual=true;
+ const input=document.getElementById('feed-title-query');searchFeedTitles(input?input.value:feedTitleSearch.lastQuery,true);
+ if(filter==='all'&&!parseFeedTitleQuery(feedTitleSearch.lastQuery).kind)feedTitleSearch.filterManual=false;
+}
+function renderFeedTitleFilters(q){
+ const el=document.getElementById('feed-title-filters');if(!el)return;
+ if(q.trim().length<2){el.innerHTML='';return;}
+ const parsed=parseFeedTitleQuery(q),f=feedTitleSearch.filter;
+ el.innerHTML=`<div class="ob-type-filters" role="group" aria-label="Filter by type">${['all',...FEED_TITLE_KINDS].map(k=>`<button type="button" aria-pressed="${k===f}" onclick="setFeedTitleFilter('${k}')">${FEED_FILTER_LABELS[k]}</button>`).join('')}</div>`
+  +(!feedTitleSearch.filterManual&&parsed.kind&&f===parsed.kind?`<p class="ob-type-note">Showing ${esc(parsed.kind==='tv'?'TV shows':parsed.kind==='screen'?'movies and TV':FEED_FILTER_LABELS[parsed.kind].toLowerCase())} for “${esc(parsed.q)}” · <button type="button" class="ob-type-note-link" onclick="setFeedTitleFilter('all')">Search everything instead</button></p>`:'');
+}
 function feedTitleMarkup(){
  const p=feedPostDraft.attachment;
- return `<div class="feed-title-picker"><label for="feed-title-query">Add a title <span>(required)</span></label>${p?`<div class="feed-title-attached">${feedTitleArt(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span><button type="button" class="sl-btn" aria-label="Change attached title" onclick="clearFeedTitle()" ${feedPostDraft.saving?'disabled':''}>Change</button></div>`:`<input id="feed-title-query" class="tl-input" placeholder="Search a book, movie, show, artist, album or song…" autocomplete="off" oninput="searchFeedTitles(this.value,true)" ${feedPostDraft.saving?'disabled':''}><div id="feed-title-results" aria-live="polite"></div>`}</div>`;
+ return `<div class="feed-title-picker"><label for="feed-title-query">Add a title <span>(required)</span></label>${p?`<div class="feed-title-attached">${feedTitleArt(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span><button type="button" class="sl-btn" aria-label="Change attached title" onclick="clearFeedTitle()" ${feedPostDraft.saving?'disabled':''}>Change</button></div>`:`<input id="feed-title-query" class="tl-input" placeholder="Search a book, movie, show, artist, album or song…" autocomplete="off" oninput="searchFeedTitles(this.value,true)" ${feedPostDraft.saving?'disabled':''}><div id="feed-title-filters"></div><div id="feed-title-results" aria-live="polite"></div>`}</div>`;
 }
 function feedTitleArt(p){const art=onboardingArt(p);return art?`<img src="${esc(art)}" alt="" onerror="this.hidden=true">`:'<span class="feed-title-placeholder" aria-hidden="true">♫</span>';}
 function suggestedFeedTitle(text){
@@ -14077,22 +14097,31 @@ function suggestedFeedTitle(text){
 }
 function inferFeedTitle(text){if(feedPostDraft.attachment||feedTitleSearch.manual||feedPostDraft.saving)return;const q=suggestedFeedTitle(text);const input=document.getElementById('feed-title-query');if(input)input.value=q;searchFeedTitles(q,false);}
 function searchFeedTitles(q,manual=false){
- if(feedPostDraft.saving)return;feedTitleSearch.manual=feedTitleSearch.manual||manual;
+ if(feedPostDraft.saving)return;feedTitleSearch.manual=feedTitleSearch.manual||manual;feedTitleSearch.lastQuery=q;
  clearTimeout(feedTitleSearch.timer);const seq=++feedTitleSearch.seq,userId=currentUser?.id;feedTitleSearch.results=[];
  const el=document.getElementById('feed-title-results');if(!el)return;
- if(q.trim().length<2){el.innerHTML='';return;}el.textContent='Finding titles…';
+ const parsed=parseFeedTitleQuery(q);
+ if(!feedTitleSearch.filterManual)feedTitleSearch.filter=parsed.kind||'all';   // a trailing type word sets the filter
+ if(q.trim().length<2){el.innerHTML='';renderFeedTitleFilters('');if(!q.trim()){feedTitleSearch.filter='all';feedTitleSearch.filterManual=false;}return;}
+ renderFeedTitleFilters(q);el.textContent='Finding titles…';
  feedTitleSearch.timer=setTimeout(async()=>{
- const kinds=['book','movie','tv','artist','album','podcast','song'];
- const jobs=kinds.map(async kind=>kind==='song'?(await searchTasteCatalog('music',q)).map(p=>({kind,title:p.title,artist:p.sub,art:p.art,label:'Song',id:p.title+'|'+p.sub})):await onboardingAutocompleteProvider(kind,q));
+ const f=feedTitleSearch.filter;
+ const kinds=f==='all'?FEED_TITLE_KINDS:f==='screen'?['movie','tv']:[f];
+ const useParsed=!!parsed.kind&&parsed.kind===f;
+ const queries=useParsed?[parsed.q,parsed.full]:[parsed.full];
+ const rankQ=useParsed?parsed.q:q;
+ const jobs=kinds.flatMap(kind=>queries.map(async query=>kind==='song'?(await searchTasteCatalog('music',query)).map(p=>({kind,title:p.title,artist:p.sub,art:p.art,label:'Song',id:p.title+'|'+p.sub})):await onboardingAutocompleteProvider(kind,query)));
  const results=await Promise.allSettled(jobs.map(job=>new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('Timeout')),12000);job.then(resolve,reject).finally(()=>clearTimeout(t));})));
  if(seq!==feedTitleSearch.seq||userId!==currentUser?.id||feedPostDraft.attachment)return;
- const rows=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)).slice(0,12);feedTitleSearch.results=rows;
+ const seen=new Set();
+ const rows=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).filter(p=>{const k=[p.kind,String(p.id||''),String(p.title||'').toLowerCase()].join('|');if(seen.has(k))return false;seen.add(k);return true;})
+   .sort((a,b)=>onboardingMatchRank(a,rankQ)-onboardingMatchRank(b,rankQ)).slice(0,12);feedTitleSearch.results=rows;
  const box=document.getElementById('feed-title-results');if(!box)return;
- box.innerHTML=rows.length?`<p>Choose the correct title to attach its artwork.</p><div class="feed-title-matches">${rows.map((p,i)=>`<button type="button" onclick="selectFeedTitle(${i})">${feedTitleArt(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span></button>`).join('')}</div>`:'<p>No matches loaded. Try the title and creator’s name.</p>';
+ box.innerHTML=rows.length?`<p>Choose the correct title to attach its artwork.</p><div class="feed-title-matches">${rows.map((p,i)=>`<button type="button" onclick="selectFeedTitle(${i})">${feedTitleArt(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span></button>`).join('')}</div>`:`<p>No matches${f!=='all'?` in ${esc(FEED_FILTER_LABELS[f].toLowerCase())}`:''}. Try the title and creator’s name${f!=='all'?', or search everything':''}.</p>`;
  },350);
 }
-function selectFeedTitle(i){if(feedPostDraft.saving)return;const p=feedTitleSearch.results[i];if(!p)return;feedPostDraft.attachment={...p};feedTitleSearch.seq++;renderFeedComposer();}
-function clearFeedTitle(){if(feedPostDraft.saving)return;feedPostDraft.attachment=null;feedTitleSearch.manual=false;feedTitleSearch.seq++;renderFeedComposer();document.getElementById('feed-title-query')?.focus();}
+function selectFeedTitle(i){if(feedPostDraft.saving)return;const p=feedTitleSearch.results[i];if(!p)return;feedPostDraft.attachment={...p};feedTitleSearch.seq++;feedTitleSearch.filter='all';feedTitleSearch.filterManual=false;renderFeedComposer();}
+function clearFeedTitle(){if(feedPostDraft.saving)return;feedPostDraft.attachment=null;feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.filter='all';feedTitleSearch.filterManual=false;renderFeedComposer();document.getElementById('feed-title-query')?.focus();}
 function feedPostAttachmentHtml(row){const p=row.catalog_item?.attachment;if(!p)return '';return `<div class="feed-post-attachment">${feedTitleArt(p)}<div><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></div></div>`;}
 
 const FEED_POST_PROMPTS=['What have you watched, read, or listened to lately?','What’s something you loved that more people should discover?','What should your friends put on their What’s Next list?'];
