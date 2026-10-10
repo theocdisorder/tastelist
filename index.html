@@ -1957,6 +1957,19 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .list-route-spinner { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.14); border-top-color: var(--accent, #7C4DFF); animation: list-route-spin .8s linear infinite; }
 @keyframes list-route-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .list-route-spinner { animation-duration: 2.4s; } }
+
+/* "Add to my What's Next" */
+.wn-add { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 0 20px 14px; }
+.wn-add-btn { font: inherit; font-size: 13.5px; font-weight: 600; color: #fff; background: var(--accent); border: 1px solid var(--accent); border-radius: 10px; padding: 11px 14px; cursor: pointer; }
+.wn-add-btn:hover { filter: brightness(1.08); }
+.wn-add-btn.is-done { background: rgba(255,255,255,.06); border-color: var(--border); color: var(--text); cursor: default; filter: none; }
+.wn-add-btn:disabled:not(.is-done) { opacity: .7; cursor: progress; }
+.wn-add-note { font-size: 12px; color: var(--muted); text-align: center; }
+.wn-panel-strip { grid-column: 1 / -1; display: flex; justify-content: center; margin: -4px 0 8px; }
+.wn-panel-strip .wn-add { padding: 0; width: min(100%, 360px); }
+
+.list-links-sep { color: var(--muted); font-size: 12.5px; }
+.list-create-import:has(.list-links-sep) { gap: 4px; align-items: center; }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -2402,7 +2415,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
 <div class="music-main">
 
-  <div id="movies-create-list-row" class="list-create-row" style="display:none;"><button type="button" class="ed-primary" onclick="promptNewCustomList('movies')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add movies you love</button><div class="list-create-import"><button type="button" class="list-import-link" onclick="openTasteImport('letterboxd','profile')">or import from Letterboxd</button></div></div>
+  <div id="movies-create-list-row" class="list-create-row" style="display:none;"><button type="button" class="ed-primary" onclick="addToMainList('movies')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add movies you love</button><div class="list-create-import"><button type="button" class="list-import-link" onclick="promptNewCustomList('movies')">or start a new list</button> <span class="list-links-sep" aria-hidden="true">·</span> <button type="button" class="list-import-link" onclick="openTasteImport('letterboxd','profile')">import from Letterboxd</button></div></div>
 
   <div class="music-section">
     <div class="music-section-header">
@@ -5848,8 +5861,8 @@ function renderExtraLists(){
  for(const category of ['comedy','podcasts']){
   const el=document.getElementById('extra-'+category);if(!el)continue;
   const lists=extraLists.filter(l=>l.category===category);
-  el.innerHTML=`<div class="extra-heading"><h2>${category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button type="button" class="ed-primary" onclick="promptNewCustomList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
-   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div><button class="profile-control" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">Rename</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">Delete list</button></div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile?`${list.category==='podcasts'?`<button class="ob-text-link" data-id="${esc(list.id)}" onclick="choosePodcastShow(this.dataset.id,${i})">${item.art?'Change show / artwork':'Choose show / add artwork'}</button>`:''}<button class="ob-text-link" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">Remove</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="promptNewCustomList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button></section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
+  el.innerHTML=`<div class="extra-heading"><h2>${category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
+   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div><button class="profile-control" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">Rename</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">Delete list</button></div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile?`${list.category==='podcasts'?`<button class="ob-text-link" data-id="${esc(list.id)}" onclick="choosePodcastShow(this.dataset.id,${i})">${item.art?'Change show / artwork':'Choose show / add artwork'}</button>`:''}<button class="ob-text-link" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">Remove</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}</section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
  }
 }
 async function createExtraList(category, suppliedTitle){
@@ -6072,8 +6085,9 @@ function renderCustomLists(tab) {
     if (isOwnProfile) {
       const hasLists = allCats.length || Object.values(CUSTOM_LISTS.albums).some(items => items.length);
       addListHtml = hasLists ? `<div class="list-create-row"><button type="button" class="ed-primary" onclick="promptNewCustomList('music')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel('music')}</button></div>` :
-        `<section class="list-start"><div><h3>Your music favorites start here</h3><p>Give your list a name, then add a few things you love.</p></div><button type="button" class="ed-primary" onclick="promptNewCustomList('music')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel('music')}</button></section>`;
+        `<section class="list-start"><div><h3>Your music favorites start here</h3><p>Add a few things you love to get started.</p></div><button type="button" class="ed-primary" onclick="promptNewCustomList('music')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel('music')}</button></section>`;
     }
+    addListHtml = applyListCta('music', addListHtml);
     container.innerHTML = addListHtml + earlyHtml;
     if (lateContainer) {
       lateContainer.innerHTML = lateHtml;
@@ -6092,18 +6106,9 @@ function renderCustomLists(tab) {
     const hasLists=categories.length || (tab==='music'&&Object.values(CUSTOM_LISTS.albums).some(items=>items.length));
     const noun={music:'music',movies:'movie',tv:'TV',books:'book'}[tab];
     addListHtml=hasLists?`<div class="list-create-row"><button type="button" class="ed-primary" onclick="promptNewCustomList('${tab}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(tab)}</button></div>`:
-      `<section class="list-start"><div><h3>Your ${noun} favorites start here</h3><p>Give your list a name, then add a few things you love.</p></div><button type="button" class="ed-primary" onclick="promptNewCustomList('${tab}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(tab)}</button></section>`;
+      `<section class="list-start"><div><h3>Your ${noun} favorites start here</h3><p>Add a few things you love to get started.</p></div><button type="button" class="ed-primary" onclick="promptNewCustomList('${tab}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(tab)}</button></section>`;
   }
-  if (isOwnProfile && tab === 'books' && addListHtml) {
-    // Books: [main button][Add author], with "Import from Goodreads" on its own line below.
-    const extras = '';
-    const _unused = `<button type="button" class="ed-secondary" onclick="addFavoriteAuthor()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add author</button>`;
-    const importLine = `<div class="list-create-import"><button type="button" class="list-import-link" onclick="openTasteImport('goodreads','profile')">or import from Goodreads</button></div>`;
-    addListHtml = addListHtml.endsWith('</section>')
-      // Empty state: keep the import link directly under the button.
-      ? addListHtml.replace(/(<button type="button" class="ed-primary"[\s\S]*?<\/button>)(<\/section>)$/, `<div class="list-start-actions">$1${importLine}</div>$2`)
-      : addListHtml.replace(/(<\/button>)(<\/div>)$/, `$1${extras}${importLine}$2`);
-  }
+  addListHtml = applyListCta(tab, addListHtml);
   container.innerHTML = addListHtml + sectionsHtml;
   enableCustomListSorting();
 }
@@ -6177,7 +6182,9 @@ function customListPanelHtml(tab, cat, items) {
   return tab === 'books' ? bookDetailPanelHTML(item, closeCall) : tab === 'tv' ? tvDetailPanelHTML(item, closeCall) : movieDetailPanelHTML(item, closeCall);
 }
 function gridPanelHtml(tab, cat, items) {
-  return tab === 'music' ? musicPanelHtml(cat, items) : tab === 'albums' ? albumPanelHtml(cat, items) : customListPanelHtml(tab, cat, items);
+  const panel = tab === 'music' ? musicPanelHtml(cat, items) : tab === 'albums' ? albumPanelHtml(cat, items) : customListPanelHtml(tab, cat, items);
+  const open = CUSTOM_LIST_EXPANDED[tab]?.[cat];
+  return panel && open != null ? panel + favoritesWhatsNextHtml(tab, items[open]) : panel;
 }
 
 function toggleCustomListExpand(tab, cat, index) {
@@ -6209,6 +6216,40 @@ let newListCategory='music';
 // What each tab's list button says: what goes in the list, not just "a new list".
 const LIST_CTA_NOUN = { books: 'books', movies: 'movies', tv: 'shows', music: 'music', albums: 'albums', comedy: 'comedy', podcasts: 'podcasts' };
 function listCtaLabel(tab) { return `Add ${LIST_CTA_NOUN[tab] || 'things'} you love`; }
+
+// ── "Add [things] you love" adds items to the person's main list for that tab ────────────────────
+// (Starting a separately named list is the quieter "or start a new list" link underneath.)
+const MAIN_LIST_DEFAULT = { music: 'Favorite Artists', albums: 'Favorite Albums', movies: 'Favorite Movies', tv: 'Favorite Shows', books: 'Favorite Books', comedy: 'Favorite Comedy', podcasts: 'Favorite Podcasts' };
+function mainListFor(tab) {
+  const keys = Object.keys(CUSTOM_LISTS[tab] || {});
+  const label = k => (typeof customListLabel === 'function' ? customListLabel(tab, k) : k);
+  return keys.find(k => tasteListTier(tab, k, label(k)) === 1) || keys.find(k => tasteListTier(tab, k, label(k)) === 2) || keys[0] || MAIN_LIST_DEFAULT[tab] || 'Favorites';
+}
+async function addToMainList(tab) {
+  if (!isOwnProfile) return;
+  if (tab === 'comedy' || tab === 'podcasts') {
+    const lists = extraLists.filter(l => l.category === tab);
+    const main = lists.find(l => /fav|top|best|love/i.test(l.title || '')) || lists[0];
+    if (main) { openExtraPicker(main.id); return; }
+    await createExtraList(tab, MAIN_LIST_DEFAULT[tab]);     // creates it, then opens the picker
+    return;
+  }
+  createSuggestedList(tab, mainListFor(tab));              // opens the search for that list (creating it if needed)
+}
+// Main button adds to the main list; "or start a new list" (and import, where available) underneath.
+function applyListCta(tab, html) {
+  if (!isOwnProfile || !html) return html;
+  html = html.replace(/onclick="promptNewCustomList\('([^']+)'\)"/g, (m, t) => `onclick="addToMainList('${t}')"`);
+  const links = listCtaLinksHtml(tab === 'albums' ? 'music' : tab, tab === 'books' ? 'goodreads' : '');
+  return html.endsWith('</section>')
+    ? html.replace(/(<button type="button" class="ed-primary"[\s\S]*?<\/button>)(<\/section>)$/, `<div class="list-start-actions">$1${links}</div>$2`)
+    : html.replace(/(<\/button>)(<\/div>)$/, `$1${links}$2`);
+}
+function listCtaLinksHtml(tab, importSource) {
+  const imp = importSource ? ` <span class="list-links-sep" aria-hidden="true">·</span> <button type="button" class="list-import-link" onclick="openTasteImport('${importSource}','profile')">import from ${importSource === 'goodreads' ? 'Goodreads' : 'Letterboxd'}</button>` : '';
+  return `<div class="list-create-import"><button type="button" class="list-import-link" onclick="promptNewCustomList('${tab}')">or start a new list</button>${imp}</div>`;
+}
+
 function promptNewCustomList(tab) {
   if(!isOwnProfile)return;
   newListCategory=tab;
@@ -13232,6 +13273,7 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
         ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
         ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
       </div>` : ''}
+      ${tripItemWhatsNextHtml(item)}
     </div>`;
 }
 
@@ -14174,6 +14216,87 @@ document.addEventListener('click', e => {
   card.querySelector('.activity-summary-title')?.click();
 });
 
+
+// ── "Add to my What's Next" from someone else's post, shared list, or favorites ───────────────────
+// Adds the item to the signed-in person's own What's Next, credited ("Rec'd by") to the person they
+// found it from. If it's already there, that person is added as another recommender instead.
+const WN_PAYLOADS = new Map(); let wnSeq = 0;
+function wnRecType(kind) {
+  return ({ movie: 'film', film: 'film', tv: 'tv', book: 'book', song: 'song', album: 'album', artist: 'artist', podcast: 'podcast', episode: 'podcast', article: 'article' })[kind] || 'other';
+}
+function whatsNextButtonHtml(p) {
+  if (!p || !String(p.title || '').trim() || ['list', 'text_post'].includes(p.kind)) return '';
+  if (!p.fromId || p.fromId === currentUser?.id) return '';           // nothing to credit, or it's your own pick
+  const key = 'wn' + (++wnSeq);
+  WN_PAYLOADS.set(key, { title: String(p.title).trim(), type: wnRecType(p.kind), art: p.art || '', tmdbId: p.tmdbId || null, fromId: p.fromId, fromName: p.fromName || '' });
+  const first = String(p.fromName || '').trim().split(/\s+/)[0];
+  return `<div class="wn-add"><button type="button" class="wn-add-btn" onclick="addToWhatsNext('${key}', this)">+ Add to my What’s Next</button>${first ? `<span class="wn-add-note">We’ll note it was rec’d by ${esc(first)}</span>` : ''}</div>`;
+}
+function personFromId(id) {
+  if (!id) return null;
+  const p = (typeof tasteListPeople !== 'undefined' && tasteListPeople.get?.(id)) || (viewedProfile?.id === id ? viewedProfile : null);
+  return { id, name: p?.display_name || p?.username || '' };
+}
+// Feed / What's New post summary
+function activityWhatsNextHtml(item) {
+  const id = summaryIdentity(item);
+  const owner = item.user_id ? { id: item.user_id, name: item.profiles?.display_name || item.profiles?.username || '' } : (viewedProfile ? personFromId(viewedProfile.id) : null);
+  return whatsNextButtonHtml({ title: id.title, kind: id.kind, art: item.art || item.art_url || id.pick?.art || '', tmdbId: id.id && /^\d+$/.test(String(id.id)) ? Number(id.id) : null, fromId: owner?.id, fromName: owner?.name });
+}
+// Shared list item summary: credit whoever added it, else the list's owner
+function tripItemWhatsNextHtml(item) {
+  const list = allTasteLists.find(l => l.id === currentTasteListId);
+  const owner = personFromId(item.added_by || item.addedBy || list?.user_id);
+  const id = summaryIdentity(item);
+  return whatsNextButtonHtml({ title: item.title, kind: id.kind, art: item.art || '', tmdbId: item.tmdbId || null, fromId: owner?.id, fromName: owner?.name });
+}
+// Favorites detail panel on someone else's profile
+function favoritesWhatsNextHtml(tab, item) {
+  if (isOwnProfile || !item || !viewedProfile) return '';
+  const kind = ({ music: 'artist', albums: 'album', movies: item.type === 'tv' ? 'tv' : 'movie', tv: 'tv', books: 'book' })[tab] || 'other';
+  const poster = item.poster ? (String(item.poster).startsWith('http') ? item.poster : TMDB_IMG + item.poster) : '';
+  const art = tab === 'books' ? (item.cover || '') : tab === 'music' ? (item.tilePhoto || item.bandPhoto || '') : tab === 'albums' ? (item.art || item.cover || item.artwork || '') : poster;
+  const html = whatsNextButtonHtml({ title: item.title || item.name, kind, art, tmdbId: item.tmdbId || null, fromId: viewedProfile.id, fromName: viewedProfile.display_name || viewedProfile.username });
+  return html ? `<div class="wn-panel-strip">${html}</div>` : '';
+}
+async function addToWhatsNext(key, btn) {
+  const p = WN_PAYLOADS.get(key); if (!p) return;
+  if (!currentUser || !sb) { openAuthModal('signup'); return; }
+  if (!(await requireFreshSession())) { showToast(SESSION_EXPIRED_MESSAGE); return; }
+  const label = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = 'Adding…'; }
+  const tag = { user_id: p.fromId, name: p.fromName || '' };
+  const first = String(p.fromName || '').split(/\s+/)[0] || 'them';
+  try {
+    const pattern = p.title.replace(/[\\%_]/g, m => '\\' + m);
+    const { data: existing, error: findErr } = await sb.from('friend_recs').select('id, recommenders').eq('user_id', currentUser.id).eq('type', p.type).ilike('title', pattern).limit(1);
+    if (findErr) throw findErr;
+    let message;
+    if (existing?.length) {
+      const row = existing[0], list = Array.isArray(row.recommenders) ? row.recommenders : [];
+      if (list.some(r => r.user_id === tag.user_id)) message = `Already on your What’s Next, rec’d by ${first}.`;
+      else {
+        const { error } = await sb.from('friend_recs').update({ recommenders: [...list, tag].slice(0, 20) }).eq('id', row.id).eq('user_id', currentUser.id);
+        if (error) throw error;
+        message = `Already on your What’s Next — added ${first} as a recommender.`;
+      }
+    } else {
+      const { data: last } = await sb.from('friend_recs').select('sort_order').eq('user_id', currentUser.id).order('sort_order', { ascending: false, nullsFirst: false }).limit(1);
+      const row = { user_id: currentUser.id, title: p.title, type: p.type, art_url: p.art || null, recommenders: [tag], from_name: p.fromName || null, recommended_by_user_id: p.fromId, sort_order: ((last?.[0]?.sort_order) ?? -1) + 1 };
+      if (p.tmdbId && (p.type === 'film' || p.type === 'tv')) row.tmdb_id = p.tmdbId;
+      const { error } = await sb.from('friend_recs').insert(row);
+      if (error) throw error;
+      message = `Added to your What’s Next, rec’d by ${first}.`;
+    }
+    if (btn) { btn.textContent = '✓ On your What’s Next'; btn.classList.add('is-done'); }
+    if (isOwnProfile) { try { await loadFriendRecsFromSupabase(currentUser.id); renderFriendRecs(); } catch (_) {} }
+    showToast(message);
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+    showToast('Couldn’t add it to your What’s Next: ' + (e.message || 'please try again'));
+  }
+}
+
 const summaryFeedRows = new Map();
 function openFeedItemSummary(id) {
   const row=summaryFeedRows.get(id);if(!row)return;
@@ -14296,6 +14419,7 @@ function activitySummaryHtml(item, summary, loading) {
         ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
         ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
       </div>` : ''}
+      ${activityWhatsNextHtml(item)}
       <div style="padding:0 20px 20px;">
         <button onclick="switchTab('${item.tab}', document.getElementById('tab-btn-${item.tab}')); closeActivitySummary();" style="width:100%;background:${iconColor}18;border:1px solid ${iconColor}33;color:${iconColor};font-size:13px;font-weight:600;font-family:inherit;padding:10px;border-radius:10px;cursor:pointer;">Go to ${tabLabel}</button>
       </div>
