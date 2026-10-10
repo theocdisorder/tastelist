@@ -2404,7 +2404,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <button class="fav-chip" id="fav-chip-music" onclick="switchFavoritesFilter('music')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Music</button>
     <button class="fav-chip" id="fav-chip-movies" onclick="switchFavoritesFilter('movies')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Movies</button>
     <button class="fav-chip" id="fav-chip-tv" onclick="switchFavoritesFilter('tv')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">TV</button>
-    <button class="fav-chip" id="fav-chip-books" onclick="switchFavoritesFilter('books')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Books</button><details class="extra-more" id="favorites-more"><summary class="profile-control">More</summary><div><button id="fav-chip-comedy" onclick="switchFavoritesFilter('comedy');document.getElementById('favorites-more').open=false">Comedy</button><button id="fav-chip-podcasts" onclick="switchFavoritesFilter('podcasts');document.getElementById('favorites-more').open=false">Podcasts</button></div></details>
+    <button class="fav-chip" id="fav-chip-books" onclick="switchFavoritesFilter('books')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Books</button><button class="fav-chip" id="fav-chip-podcasts" onclick="switchFavoritesFilter('podcasts')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Podcasts</button>
   </div>
 
 <div style="display:none" id="favorites-section-comedy" class="extra-category"><div id="extra-comedy"></div></div>
@@ -3632,7 +3632,7 @@ function renderTasteTypeChips() {
   const current = document.getElementById('taste-item-category').value;
   const isCustom = current.startsWith('custom:') || current === '__other';
   const chip = (key, label, color, active) => `<button type="button" onclick="setTasteItemType('${key}')" aria-pressed="${active}" style="font:inherit;font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;cursor:pointer;border:1px solid ${active ? color : 'var(--border)'};background:${active ? color + '26' : 'transparent'};color:${active ? color : 'var(--muted)'};">${label}</button>`;
-  el.innerHTML = TASTE_ITEM_TYPES.map(t => chip(t.key, t.chip, t.color, current === t.key)).join('')
+  el.innerHTML = TASTE_ITEM_TYPES.filter(t => !t.hidden || current === t.key).map(t => chip(t.key, t.chip, t.color, current === t.key)).join('')
     + chip('__other', '+ Something else', '#A8A29E', isCustom);
   const customInput = document.getElementById('taste-item-custom-type');
   customInput.style.display = isCustom ? 'block' : 'none';
@@ -7111,12 +7111,12 @@ function renderOnboardingJourney() {
 }
 
 // Type words at the end of a search act as a filter: "diplomat book", "dune movie", "the bear show".
-const OB_SEARCH_KINDS = ['artist', 'album', 'movie', 'tv', 'book', 'comedian', 'podcast'];
-const OB_FILTER_LABELS = { all: 'All', artist: 'Artists', album: 'Albums', movie: 'Movies', tv: 'TV shows', book: 'Books', podcast: 'Podcasts', comedian: 'Comedy' };
+const OB_SEARCH_KINDS = ['artist', 'album', 'movie', 'tv', 'book', 'podcast'];   // comedy specials come up as movies / TV
+const OB_FILTER_LABELS = { all: 'All', artist: 'Artists', album: 'Albums', movie: 'Movies', tv: 'TV shows', book: 'Books', podcast: 'Podcasts', screen: 'Movies & TV' };
 const OB_TYPE_WORDS = [
   [/\s+(?:tv\s+shows?|tv\s+series)$/i, 'tv'], [/\s+(?:books?|novels?|memoirs?)$/i, 'book'], [/\s+(?:movies?|films?)$/i, 'movie'],
   [/\s+(?:shows?|series|tv)$/i, 'tv'], [/\s+(?:albums?|records?|lps?)$/i, 'album'], [/\s+(?:artists?|bands?|singers?|musicians?)$/i, 'artist'],
-  [/\s+(?:podcasts?|pods?)$/i, 'podcast'], [/\s+(?:comedians?|comedy|stand-?up|specials?)$/i, 'comedian'],
+  [/\s+(?:podcasts?|pods?)$/i, 'podcast'], [/\s+(?:comedians?|comedy|stand-?up|specials?)$/i, 'screen'],   // specials live under movies & TV
 ];
 function parseOnboardingQuery(raw) {
   const full = String(raw || '').trim();
@@ -7219,7 +7219,7 @@ async function runOnboardingSearch() {
  if(q.length<2)return;
  const parsed=parseOnboardingQuery(state.query);
  const filter=state.filter&&state.filter!=='all'?state.filter:'all';
- const kinds=filter==='all'?OB_SEARCH_KINDS:[filter];
+ const kinds=filter==='all'?OB_SEARCH_KINDS:filter==='screen'?['movie','tv']:[filter];
  const useParsed=!!parsed.kind&&parsed.kind===filter;
  const queries=useParsed?[parsed.q,parsed.full]:[parsed.full];
  const rankQ=useParsed?parsed.q:q;
@@ -7252,8 +7252,8 @@ function renderOnboardingSearchResults() {
   const state=onboardingVisualState(),el=document.getElementById('ob-results');if(!el)return;
   document.querySelectorAll('[data-ob-filter]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.obFilter===state.filter)));
   const qNow=state.query.trim(), parsedNow=parseOnboardingQuery(qNow), f=state.filter||'all';
-  const chips=qNow.length>=2?`<div class="ob-type-filters" role="group" aria-label="Filter by type">${['all',...['artist','album','movie','tv','book','podcast','comedian']].map(k=>`<button type="button" data-ob-filter="${k}" aria-pressed="${k===f}" onclick="filterOnboardingSearch('${k}')">${OB_FILTER_LABELS[k]}</button>`).join('')}</div>`
-    +(state.autoFilter&&parsedNow.kind?`<p class="ob-type-note">Showing ${esc(parsedNow.kind==='tv'?'TV shows':OB_FILTER_LABELS[parsedNow.kind].toLowerCase())} for “${esc(parsedNow.q)}” · <button type="button" class="ob-type-note-link" onclick="filterOnboardingSearch('all')">Search everything instead</button></p>`:''):'';
+  const chips=qNow.length>=2?`<div class="ob-type-filters" role="group" aria-label="Filter by type">${['all',...['artist','album','movie','tv','book','podcast']].map(k=>`<button type="button" data-ob-filter="${k}" aria-pressed="${k===f}" onclick="filterOnboardingSearch('${k}')">${OB_FILTER_LABELS[k]}</button>`).join('')}</div>`
+    +(state.autoFilter&&parsedNow.kind?`<p class="ob-type-note">Showing ${esc(parsedNow.kind==='tv'?'TV shows':parsedNow.kind==='screen'?'movies and TV':OB_FILTER_LABELS[parsedNow.kind].toLowerCase())} for “${esc(parsedNow.q)}” · <button type="button" class="ob-type-note-link" onclick="filterOnboardingSearch('all')">Search everything instead</button></p>`:''):'';
   el.innerHTML=chips+(state.loading&&!state.results.length?'<p class="ob-search-status">Finding matches…</p>':state.results.length?`<div class="ob-results-grid">${state.results.map((item,i)=>`<button type="button" class="ob-result ${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'selected':''}" aria-pressed="${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))}" onclick="selectOnboardingResult(${i})" ${state.saving?'disabled':''}>${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.year?' · '+esc(item.year):''}${item.artist&&item.kind==='album'?' · '+esc(item.artist):item.author?' · '+esc(item.author):''}</small>${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'<span class="ob-selected-mark" aria-hidden="true">✓</span>':'<span class="ob-select-circle" aria-hidden="true">+</span>'}</button>`).join('')}</div>`:state.query.trim().length===1?'<p class="ob-search-status">Type at least 2 letters to see suggestions.</p>':state.query.trim()?(state.searchFailed?'<p class="ob-search-status">Search is temporarily unavailable.</p>':'<p class="ob-search-status">No matches found. Try a few more letters or add the creator’s name.</p>'):'');
   if(state.searchFailed&&!state.loading)el.innerHTML+='<button type="button" class="ob-button" onclick="runOnboardingSearch()">Retry search</button>';
   const count=document.getElementById('ob-selection-count');if(count)count.textContent=`${state.pending.length} selected`;
@@ -10026,6 +10026,7 @@ function switchTab(tab, btn) {
 // type needs its own destination. "all" shows every section stacked; picking one hides the rest.
 let favoritesFilter = 'music';
 function switchFavoritesFilter(filter) {
+  if(filter==='comedy')filter='movies';   // Comedy isn't its own category any more; specials live under Movies / TV
   if(!['music','movies','tv','books','comedy','podcasts'].includes(filter))filter='music';
   favoritesFilter = filter;
   ['music', 'movies', 'tv', 'books', 'comedy', 'podcasts'].forEach(k => {
@@ -12428,7 +12429,7 @@ const TASTE_ITEM_TYPES = [
   { key: 'music',    label: 'Songs',     singular: 'song',     chip: 'Song',     subLabel: 'Artist',             color: '#7C4DFF' },
   { key: 'albums',   label: 'Albums',    singular: 'album',    chip: 'Album',    subLabel: 'Artist',             color: '#A78BFA' },
   { key: 'podcasts', label: 'Podcasts',  singular: 'podcast',  chip: 'Podcast',  subLabel: 'Host',               color: '#F59E0B' },
-  { key: 'comedy',   label: 'Comedy',    singular: 'special',  chip: 'Comedy',   subLabel: 'Comedian',           color: '#FB7185' },
+  { key: 'comedy',   hidden: true, label: 'Comedy',    singular: 'special',  chip: 'Comedy',   subLabel: 'Comedian',           color: '#FB7185' },
   { key: 'articles', label: 'Articles',  singular: 'article',  chip: 'Article',  subLabel: 'Publication / author', color: '#64748B' },
   { key: 'games',    label: 'Games',     singular: 'game',     chip: 'Game',     subLabel: 'Studio',             color: '#EC4899' },
 ];
