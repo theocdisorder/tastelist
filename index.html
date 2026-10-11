@@ -2161,7 +2161,22 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .expand-actions .wn-add:hover .wn-add-note,.expand-actions .wn-add:focus-within .wn-add-note,.wn-detail-bookmark .wn-add:hover .wn-add-note,.wn-detail-bookmark .wn-add:focus-within .wn-add-note{opacity:1;}
 .wn-detail-wrap{position:relative;}.wn-detail-bookmark{position:absolute;top:12px;right:54px;z-index:3;}
 </style>
-</head>
+<style>
+.rec-finish-prompt{justify-content:flex-start;align-items:center;flex-wrap:wrap;gap:12px;}
+.rec-finish-prompt>span{font-size:15px;font-weight:600;color:var(--text);}
+.rec-finish-prompt .ed-primary{font-size:14px;padding:10px 16px;}
+</style>
+<style>
+#activity-finish-skip[hidden],#activity-finish-help[hidden]{display:none!important;}
+#activity-finish-skip{background:transparent;border:1px solid var(--border);color:var(--text);}
+#activity-finish-help{color:var(--muted);font-size:14px;line-height:1.5;}
+.update-composer-footer{flex-wrap:wrap;gap:12px;}
+</style>
+<style>
+.rec-remove-button{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:50%;background:transparent;color:var(--muted);cursor:pointer;}
+.rec-remove-button:hover,.rec-remove-button:focus-visible{color:#ff7569;border-color:currentColor;}
+.rec-remove-button:disabled{opacity:.5;cursor:wait;}
+</style></head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
 <div id="app-startup-status" role="status" aria-live="polite">Loading…</div>
@@ -2825,7 +2840,7 @@ function renderRecDetail() {
   if (!r || !el) return;
   const g = friendRecGroups().find(x => x.items.includes(r)) || { label: '', color: '#7C4DFF', shape: 'portrait' };
   const people = recPeople(r);
-  const own = isOwnProfile;
+  const own = !!currentUser && isOwnProfile && viewedProfile?.id === currentUser.id;
   el.innerHTML = `
     <div class="rec-detail-head">
       <div class="rec-detail-art recs-${g.shape}" style="--c:${g.color}">
@@ -2838,6 +2853,7 @@ function renderRecDetail() {
         ${r.sourceUrl ? `<a href="${esc(r.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open original link ↗</a>` : ''}
       </div>
     </div>
+    ${own?`<div class="rec-detail-actions rec-finish-prompt"><button type="button" class="ed-primary" onclick="finishWhatsNext(${recDetailIdx})">Mark as ${completionWord(r.type)}</button></div>`:''}
     <div id="rec-detail-summary" class="rec-detail-summary${r.summary ? '' : ' is-loading'}" aria-live="polite">${r.summary
       ? `<p>${esc(shortSummary(r.summary.text))}</p>${r.summary.url ? `<a href="${esc(r.summary.url)}" target="_blank" rel="noopener">From ${esc(r.summary.source)} ↗</a>` : `<span>From ${esc(r.summary.source)}</span>`}`
       : (r.summary === false ? '<p class="rec-detail-empty">No summary found for this one.</p>' : '<p>Loading summary…</p>')}</div>
@@ -2853,7 +2869,7 @@ function renderRecDetail() {
         <div id="rec-detail-results" role="listbox" aria-label="Suggestions"></div>
       </div>` : ''}
     </div>
-    ${own ? `<div class="rec-detail-actions"><button type="button" class="sl-btn" onclick="const i=recDetailIdx; closeRecDetail(); openFriendRecForm(i)">✎ Edit details</button></div>` : ''}`;
+    ${own ? `<div class="rec-detail-actions"><button type="button" class="rec-remove-button" title="Remove from What’s Next" aria-label="Remove ${esc(r.title)} from What’s Next" onclick="deleteFriendRec(recDetailIdx,this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button></div>` : ''}`;
 }
 function onRecDetailSearch() {
   clearTimeout(recDetailSearch.timer);
@@ -3298,17 +3314,34 @@ async function saveFriendRecForm() {
   }
 }
 
-async function deleteFriendRec(idx) {
+const deletingFriendRecs = new Set();
+async function deleteFriendRec(idx,button) {
   const item = FRIEND_RECOMMENDATIONS[idx];
-  if (!item || !item.id) return;
-  if (!confirm(`Remove "${item.title}"?`)) return;
-  if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
+  if (!item?.id || !currentUser || !isOwnProfile || viewedProfile?.id!==currentUser.id || deletingFriendRecs.has(item.id)) return;
+  const userId=currentUser.id;
+  if (!confirm(`Remove "${item.title}" from What’s Next?`)) return;
+  deletingFriendRecs.add(item.id);
+  if(button)button.disabled=true;
   try {
-    const { error } = await sb.from('friend_recs').delete().eq('id', item.id);
-    if (error) throw error;
-    await loadFriendRecsFromSupabase(currentUser.id);
+    if (!(await requireFreshSession())) throw Error(SESSION_EXPIRED_MESSAGE);
+    if(currentUser?.id!==userId)throw Error('Account changed. Please reopen your What’s Next list.');
+    const { data,error } = await sb.from('friend_recs').delete().eq('id',item.id).eq('user_id',userId).select('id');
+    if(error)throw error;
+    if(!data?.length)throw Error('The item could not be removed. Please refresh and try again.');
+    wnSaved.delete(JSON.stringify([userId,item.type,item.title.toLowerCase()]));
+    if(currentUser?.id===userId && isOwnProfile && viewedProfile?.id===userId){
+      if(FRIEND_RECOMMENDATIONS[recDetailIdx]?.id===item.id)closeRecDetail();
+      const position=FRIEND_RECOMMENDATIONS.findIndex(r=>r.id===item.id);
+      if(position>=0)FRIEND_RECOMMENDATIONS.splice(position,1);
+      renderFriendRecs();
+      if(document.getElementById('recs-expanded')?.classList.contains('open'))renderRecsExpanded();
+      showToast('Removed from What’s Next.');
+    }
   } catch (e) {
-    alert('Failed to delete: ' + (e.message || 'unknown error'));
+    alert('Couldn’t remove item: ' + (e.message || 'Please try again.'));
+  } finally {
+    deletingFriendRecs.delete(item.id);
+    if(button)button.disabled=false;
   }
 }
 function toggleActivityEditMode() {
@@ -3425,9 +3458,52 @@ function searchActivityTags(value) {
   },250);
 }
 
+function completionWord(type){
+ return ['movie','film','tv'].includes(type)?'watched':['book','article'].includes(type)?'read':['song','album','artist','music','podcast','episode'].includes(type)?'listened':'done';
+}
+async function markWithoutPosting(){
+ if(!activityItemFormState.finishedRecId||activityItemFormState.saving)return;
+ activityItemFormState.saving=true;
+ const button=document.getElementById('activity-save-button'),skip=document.getElementById('activity-finish-skip');
+ button.disabled=skip.disabled=true;
+ const errEl=document.getElementById('activity-item-modal-error');errEl.style.display='none';
+ try{
+  if(!(await requireFreshSession()))throw Error(SESSION_EXPIRED_MESSAGE);
+  if(currentUser?.id!==activityItemFormState.finishedUserId)throw Error('Account changed. Please reopen your What’s Next list.');
+  const {error}=await sb.rpc('finish_whats_next',{p_rec_id:activityItemFormState.finishedRecId,p_update:null});
+  if(error)throw error;
+  closeActivityItemModal(true);
+  await loadFriendRecsFromSupabase(currentUser.id);renderFriendRecs();
+  showToast('Removed from What’s Next without posting.');
+ }catch(e){errEl.textContent=e.message||'Couldn’t save. Please try again.';errEl.style.display='block';}
+ finally{activityItemFormState.saving=false;button.disabled=skip.disabled=false;}
+}
+function finishWhatsNext(index){
+ const rec=FRIEND_RECOMMENDATIONS[index];if(!rec?.id||!currentUser||!isOwnProfile||viewedProfile?.id!==currentUser.id)return;
+ closeRecDetail();if(typeof closeRecsExpanded==='function')closeRecsExpanded();
+ openActivityItemForm();
+ const type=rec.type==='film'?'movie':['album','artist'].includes(rec.type)?'song':rec.type;
+ activityItemFormState.finishedRecId=rec.id;activityItemFormState.finishedUserId=currentUser.id;
+ activityItemFormState.tmdbId=rec.tmdbId||null;
+ activityCatalog.selected={...(rec.catalogItem||{}),title:rec.title,art:rec.art||'',type,tmdbId:rec.tmdbId||null};
+ document.getElementById('activity-item-label').value=rec.title;
+ document.getElementById('activity-item-type').value=type;
+ document.getElementById('activity-item-art').value=rec.art||'';
+ document.getElementById('activity-item-sub').value=type==='book'?'Read':['song','podcast'].includes(type)?'Listened':'Watched';
+ document.getElementById('activity-item-modal-title').textContent='Share an update to What’s New?'
+ document.getElementById('activity-finish-help').hidden=false;
+ document.getElementById('activity-finish-skip').hidden=false;
+ document.getElementById('activity-finish-skip').textContent='Mark without posting';
+ document.getElementById('activity-item-note').placeholder='How did you feel about it? Would you recommend it?';
+ document.getElementById('activity-save-button').textContent='Post update & mark as '+completionWord(rec.type);
+ renderActivityTypes();activityCatalogPreview();document.getElementById('activity-item-note').focus();
+}
+
 function openActivityItemForm(globalIndex) {
   resetActivityCatalog();
   activityItemFormState = { id: null };
+  document.getElementById('activity-finish-help').hidden=true;
+  document.getElementById('activity-finish-skip').hidden=true;
   clearTimeout(activityTagState.timer);activityTagState.request++;activityTagState.selected=[];activityTagState.results=[];
   document.getElementById('activity-tag-search').value='';document.getElementById('activity-tag-results').innerHTML='';
   document.getElementById('activity-update-details').open=false;
@@ -3465,7 +3541,8 @@ function openActivityItemForm(globalIndex) {
   document.getElementById('activity-item-label').focus();
 }
 
-function closeActivityItemModal() {
+function closeActivityItemModal(force=false) {
+  if(activityItemFormState.saving&&!force)return;
   resetActivityCatalog();
   clearTimeout(activityTagState.timer);activityTagState.request++;
   document.getElementById('activity-item-modal').style.display = 'none';
@@ -3473,9 +3550,10 @@ function closeActivityItemModal() {
 
 async function saveActivityItemForm() {
   const button=document.getElementById('activity-save-button');
-  if(button.disabled)return;
-  button.disabled=true;
-  try {await persistActivityItemForm();} finally {button.disabled=false;}
+  if(button.disabled||activityItemFormState.saving)return;
+  activityItemFormState.saving=true;button.disabled=true;
+  document.getElementById('activity-finish-skip').disabled=true;
+  try {await persistActivityItemForm();} finally {activityItemFormState.saving=false;button.disabled=false;document.getElementById('activity-finish-skip').disabled=false;}
 }
 async function persistActivityItemForm() {
   const label = document.getElementById('activity-item-label').value.trim();
@@ -3506,7 +3584,13 @@ async function persistActivityItemForm() {
   const row = { label, type, sub: sub || null, note: note || null, activity_date: date, art_url: art || null, tmdb_id: activityItemFormState.tmdbId || null, catalog_item: activityCatalog.selected ? {...activityCatalog.selected, type} : null };
 
   try {
-    if (activityItemFormState.id) {
+    if(activityItemFormState.finishedRecId){
+      if(currentUser?.id!==activityItemFormState.finishedUserId)throw Error('Account changed. Please reopen your What’s Next list.');
+      const {error}=await sb.rpc('finish_whats_next',{p_rec_id:activityItemFormState.finishedRecId,p_update:row});
+      if(error)throw error;
+      await loadFriendRecsFromSupabase(currentUser.id);renderFriendRecs();
+      showToast('Posted to What’s New and removed from What’s Next.');
+    } else if (activityItemFormState.id) {
       const { error } = await sb.from('activity_feed').update(row).eq('id', activityItemFormState.id).eq('user_id', currentUser.id);
       if (error) throw error;
     } else {
@@ -3514,7 +3598,7 @@ async function persistActivityItemForm() {
       const { error } = await sb.from('activity_feed').insert(row);
       if (error) throw error;
     }
-    closeActivityItemModal();
+    closeActivityItemModal(true);
     activityFeedArtFetched = false;
     await loadActivityFeedFromSupabase(currentUser.id);
   } catch (e) {
@@ -16614,6 +16698,7 @@ renderTasteInfluences();
 <div id="activity-item-modal" style="display:none;" onclick="if(event.target===this) closeActivityItemModal()">
   <section class="update-composer" role="dialog" aria-modal="true" aria-labelledby="activity-item-modal-title">
     <header class="update-composer-header"><div><span class="update-eyebrow">YOUR CULTURE, LATELY</span><h2 id="activity-item-modal-title">Add update</h2></div><button type="button" class="update-close" aria-label="Close" onclick="closeActivityItemModal()">×</button></header>
+    <p id="activity-finish-help" hidden>Sharing is optional. Post an update or mark without posting to remove this item from What’s Next. Closing keeps it on your list.</p>
     <div id="activity-item-modal-error" class="tl-modal-error" role="alert" style="display:none;"></div>
     <div class="update-types" id="activity-type-options" aria-label="Update type"></div>
     <select id="activity-item-type" hidden><option value="movie">Movie</option><option value="tv">TV Show</option><option value="book">Book</option><option value="song">Song</option><option value="artist">Artist</option><option value="podcast">Podcast</option><option value="article">Article</option><option value="other">Other</option></select>
@@ -16622,7 +16707,7 @@ renderTasteInfluences();
     <label class="update-sr" for="activity-item-note">Your note</label><textarea id="activity-item-note" class="update-note" rows="4" placeholder="The scene that stuck with you. The song on repeat. Tell us about it."></textarea>
     <div class="update-tag-area"><label for="activity-tag-search">With / recommended by</label><div id="activity-tag-chips"></div><input id="activity-tag-search" autocomplete="off" placeholder="Tag someone…" oninput="searchActivityTags(this.value)"><div id="activity-tag-results" aria-live="polite"></div></div>
     <details id="activity-update-details"><summary>More details <span>Date, status & artwork</span></summary><div class="update-detail-grid"><label>Date<input id="activity-item-date" type="date"></label><label>Status<input id="activity-item-sub" placeholder="Watched, finished reading…"></label></div><label>Artwork link <span>(optional)</span><input id="activity-item-art" type="url" placeholder="https://…"></label></details>
-    <footer class="update-composer-footer"><span>Share a little of your taste.</span><button id="activity-save-button" type="button" onclick="saveActivityItemForm()">Post update <span aria-hidden="true">↑</span></button></footer>
+    <footer class="update-composer-footer"><span>Share a little of your taste.</span><button id="activity-finish-skip" type="button" hidden onclick="markWithoutPosting()">Mark without posting</button><button id="activity-save-button" type="button" onclick="saveActivityItemForm()">Post update <span aria-hidden="true">↑</span></button></footer>
   </section>
 </div>
 
