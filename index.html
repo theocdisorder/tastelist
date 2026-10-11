@@ -1394,6 +1394,7 @@ if (new URLSearchParams(location.search).has('list')) {
 #music-picker::backdrop{background:rgba(0,0,0,.65);backdrop-filter:blur(3px);}
 #music-picker h2{margin:0;font-size:26px;}#music-picker label{display:block;margin:16px 0 8px;color:var(--muted);font-size:14px;}
 #music-picker select,#music-picker input{width:100%;box-sizing:border-box;}#music-picker [hidden]{display:none!important;}
+.favorite-friend-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;color:var(--accent);font-size:12px;}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -5966,7 +5967,7 @@ async function loadFavoriteMediaList(userId, category, arr, idPrefix, gridId) {
     if (error || !data) return false;
 
     arr.length = 0;
-    data.forEach(row => arr.push({ rowId: row.id, tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' }));
+    data.forEach(row => arr.push({ rowId: row.id, friend_tags: row.friend_tags || [], tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' }));
     makeStaticGrid(arr, idPrefix, gridId);
     // A few at a time rather than all at once or strictly one at a time — with several
     // sections' worth of items all loading together, firing every request simultaneously risks
@@ -5998,7 +5999,7 @@ async function loadFavoriteMoviesFromSupabase(userId) {
       // Matches the exact shape/id-assignment the original preloadMovies() used — id stays a
       // plain sequential integer (not the Supabase row UUID), since existing code interpolates
       // it directly into onclick="toggleMovieExpand(...)" and a UUID would break that.
-      movies.push({ id: i + 1, rowId: row.id, tmdbId: row.tmdb_id, type: row.type, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' });
+      movies.push({ id: i + 1, rowId: row.id, friend_tags: row.friend_tags || [], tmdbId: row.tmdb_id, type: row.type, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, director: '' });
     });
     renderMovieGrid();
     // A few at a time rather than all at once or strictly one at a time — with several other
@@ -6074,7 +6075,7 @@ function renderExtraLists(){
   if(category==='music'&&!lists.length){el.innerHTML='';continue;}
   if(category==='podcasts'){const bio=document.getElementById('podcast-bio-text');const picks=lists.flatMap(l=>l.items||[]);if(bio)bio.innerHTML=picks.length?'<p>'+picks.slice(0,6).map(p=>esc(p.title)).join(' · ')+'</p>':'<p>The shows and episodes you love, in one place.</p>';}
   el.innerHTML=`<div class="extra-heading"><h2>${category==='music'?'Favorite Songs':category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
-   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div class="list-edit-slot"><button type="button" class="list-icon-control" aria-label="${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${listActionIcon(inlineListEditing.has('extra|'+list.id)?'done':'edit')}</button>${inlineListEditing.has('extra|'+list.id)?`<button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button><button class="list-icon-control" aria-label="Rename list" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete list" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">${listActionIcon('trash')}</button>`:''}</div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile&&inlineListEditing.has('extra|'+list.id)?`<button type="button" class="list-icon-control" aria-label="Remove item" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">${listActionIcon('trash')}</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}</section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
+   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div class="list-edit-slot"><button type="button" class="list-icon-control" aria-label="${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${listActionIcon(inlineListEditing.has('extra|'+list.id)?'done':'edit')}</button>${inlineListEditing.has('extra|'+list.id)?`<button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button><button class="list-icon-control" aria-label="Rename list" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete list" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">${listActionIcon('trash')}</button>`:''}</div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong>${favoriteFriendTagsHtml(item)}<small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile&&inlineListEditing.has('extra|'+list.id)?`<button type="button" class="list-icon-control" aria-label="Remove item" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">${listActionIcon('trash')}</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}</section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
  }
 }
 async function createExtraList(category, suppliedTitle){
@@ -6208,9 +6209,9 @@ async function loadCustomLists(userId, tab) {
       const cat = row.category || 'Untitled';
       if (!CUSTOM_LISTS[tab][cat]) CUSTOM_LISTS[tab][cat] = [];
       if (tab === 'books') {
-        CUSTOM_LISTS[tab][cat].push({ rowId: row.id, title: row.title, author: row.author, year: row.year || '', cover: preferredBookCover(row.title,row.author) || row.cover_url || '', savedCover: row.cover_url || '', whyInfluential: row.why_influential || '' });
+        CUSTOM_LISTS[tab][cat].push({ rowId: row.id, friend_tags: row.friend_tags || [], title: row.title, author: row.author, year: row.year || '', cover: preferredBookCover(row.title,row.author) || row.cover_url || '', savedCover: row.cover_url || '', whyInfluential: row.why_influential || '' });
       } else {
-        CUSTOM_LISTS[tab][cat].push({ rowId: row.id, tmdbId: row.tmdb_id, type: row.type, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, seasons: null, director: '', creator: '' });
+        CUSTOM_LISTS[tab][cat].push({ rowId: row.id, friend_tags: row.friend_tags || [], tmdbId: row.tmdb_id, type: row.type, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, runtime: null, seasons: null, director: '', creator: '' });
       }
     });
     renderCustomLists(tab);
@@ -6388,7 +6389,7 @@ function customListGridInnerHtml(tab, cat, items) {
         <span class="tile-rank">${i + 1}</span>
       </div>
       <div class="tile-label">
-        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.title)}</div>
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.title)}</div>${favoriteFriendTagsHtml(item)}
         <div style="font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sub}</div>
       </div>
     </div>`;
@@ -6437,12 +6438,28 @@ let newListCategory='music';
 
 // What each tab's list button says: what goes in the list, not just "a new list".
 const LIST_CTA_NOUN = { books: 'books', movies: 'movies', tv: 'shows', music: 'music', albums: 'albums', comedy: 'comedy', podcasts: 'podcasts' };
+const pickerFriendTags={selected:[],results:[],request:0,timer:null};
+function resetPickerFriendTags(){clearTimeout(pickerFriendTags.timer);pickerFriendTags.request++;pickerFriendTags.selected=[];pickerFriendTags.results=[];document.getElementById('picker-friend-search').value='';document.getElementById('picker-friend-results').innerHTML='';renderPickerFriendTags();}
+function renderPickerFriendTags(){document.getElementById('picker-friend-tags').innerHTML=pickerFriendTags.selected.map((p,i)=>`<button type="button" class="profile-control" aria-label="Remove tag for ${esc(p.username)}" onclick="pickerFriendTags.selected.splice(${i},1);renderPickerFriendTags()">@${esc(p.username)} ×</button>`).join('');}
+function selectPickerFriend(index){const p=pickerFriendTags.results[index];if(!p||pickerFriendTags.selected.some(x=>x.id===p.id))return;pickerFriendTags.selected.push(p);pickerFriendTags.request++;clearTimeout(pickerFriendTags.timer);document.getElementById('picker-friend-search').value='';document.getElementById('picker-friend-results').innerHTML='';renderPickerFriendTags();}
+function searchPickerFriends(value){
+ clearTimeout(pickerFriendTags.timer);const request=++pickerFriendTags.request,userId=currentUser?.id;
+ const q=value.replace(/^@/,'').replace(/[^a-zA-Z0-9_. -]/g,'').trim();const el=document.getElementById('picker-friend-results');el.innerHTML='';if(q.length<2||!sb)return;
+ pickerFriendTags.timer=setTimeout(async()=>{try{
+ const {data,error}=await sb.from('profile_directory').select('id,username,display_name').or(`username.ilike.%${q}%,display_name.ilike.%${q}%`).limit(8);
+ if(request!==pickerFriendTags.request||currentUser?.id!==userId)return;if(error)throw error;
+ pickerFriendTags.results=(data||[]).filter(p=>p.username&&p.id!==userId&&!pickerFriendTags.selected.some(x=>x.id===p.id));
+ el.innerHTML=pickerFriendTags.results.map((p,i)=>`<button type="button" class="extra-result" onclick="selectPickerFriend(${i})"><span>${esc(p.display_name||p.username)}<small>@${esc(p.username)}</small></span></button>`).join('')||'<p>No matching people.</p>';
+ }catch(_){if(request===pickerFriendTags.request)el.innerHTML='<p>Could not load people. Try again.</p>';}},250);
+}
+function favoriteFriendTagsHtml(item){const tags=item.friend_tags||item.friendTags||[];return tags.length?`<div class="favorite-friend-tags">${tags.filter(p=>p.username).map(p=>`<button type="button" class="activity-summary-title" data-username="${esc(p.username)}" onclick="event.stopPropagation();goToProfile(this.dataset.username)">@${esc(p.username)}</button>`).join(' ')}</div>`:'';}
+
 const PICKER_IDEAS={music:['Music I Love','On Repeat','Albums That Shaped Me'],albums:['Favorite Albums','No-Skip Albums'],movies:['Favorite Movies','Comfort Movies','Favorite Thrillers'],tv:['Favorite Shows','Favorite Dramas','Favorite Comedies'],books:['Books That Shaped Me','Favorite Books','Recent Reads'],podcasts:['Favorite Podcasts','Current Rotation','Episodes Worth Sharing'],comedy:['Favorite Comedy','Stand-up Favorites']};
 let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null,tab:'music'};
 function openFlexibleMusicPicker(category=null){openUnifiedPicker('music',category);}
 function openUnifiedPicker(tab,category=null){
  if(!isOwnProfile||!currentUser||flexibleMusic.saving)return;
- flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.tab=tab;
+ flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.tab=tab;resetPickerFriendTags();
  const tabs=tab==='music'?['music','albums']: [tab];
  const names=[...new Set([...tabs.flatMap(t=>Object.keys(CUSTOM_LISTS[t]||{})),...extraLists.filter(l=>l.category===tab).map(l=>l.title)])];
  const select=document.getElementById('music-picker-list');select.innerHTML='<option value="">Start a new list</option>'+names.map(n=>`<option value="${esc(n)}">${esc(customListLabel(tab,n))}</option>`).join('');
@@ -6478,7 +6495,8 @@ async function saveFlexibleMusic(index){
  const userId=currentUser?.id;flexibleMusic.saving=true;status.textContent='Saving…';
  try{
   if(!await requireFreshSession()||currentUser?.id!==userId||viewedProfile?.id!==userId)throw Error('Please sign in to your own profile.');
-  await saveOnboardingItem({...p,category},userId);
+  const friend_tags=pickerFriendTags.selected.map(({id,username,display_name})=>({id,username,display_name}));
+  await saveOnboardingItem({...p,category,friend_tags},userId);
   if(currentUser?.id!==userId)return;
   status.textContent=p.title+' added to '+customListLabel(flexibleMusic.tab,category)+'.';renderExtraLists();renderProfileTab();scheduleTasteConstellation();
  }catch(e){status.textContent=e.message||'Could not save. Please try again.';}
@@ -6630,7 +6648,7 @@ async function loadMusicCustomLists(userId) {
       const cat = row.category || 'Untitled';
       if (!CUSTOM_LISTS.music[cat]) CUSTOM_LISTS.music[cat] = [];
       CUSTOM_LISTS.music[cat].push({
-        id: row.id, rowId: row.id, name: row.name, genre: row.genre || '',
+        id: row.id, rowId: row.id, friend_tags: row.friend_tags || [], name: row.name, genre: row.genre || '',
         bandPhoto: row.band_photo || '', tilePhoto: row.tile_photo || '',
         heroPosition: row.hero_position || '', bio: row.bio || '',
         whyInfluential: row.why_influential || '', influencedByUserId: row.influenced_by_user_id || null,
@@ -6658,7 +6676,7 @@ async function loadAlbumCustomLists(userId) {
       const cat = row.category || 'Untitled';
       if (!CUSTOM_LISTS.albums[cat]) CUSTOM_LISTS.albums[cat] = [];
       CUSTOM_LISTS.albums[cat].push({
-        id: row.id, rowId: row.id, name: row.name, artist: row.artist || '', year: row.year || '',
+        id: row.id, rowId: row.id, friend_tags: row.friend_tags || [], name: row.name, artist: row.artist || '', year: row.year || '',
         genre: row.genre || '', iTunesId: row.itunes_id || '', coverPhoto: row.cover_photo || '',
         tilePhoto: row.tile_photo || '', songs: row.songs || [],
       });
@@ -6726,7 +6744,7 @@ function musicGridInnerHtml(cat, items) {
           : `<div class="tile-placeholder" id="tile-ph-${a.id}" style="aspect-ratio:4/3;height:auto"><svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>`}
         <span class="tile-rank">${i + 1}</span>
       </div>
-      <div class="tile-label">${a.videoId ? `${esc(a.name)}${a.videoChannel ? `<div class="tile-sub">${esc(a.videoChannel)}</div>` : ''}` : (esc(a.name) || `Artist ${i + 1}`)}</div>
+      <div class="tile-label">${a.videoId ? `${esc(a.name)}${a.videoChannel ? `<div class="tile-sub">${esc(a.videoChannel)}</div>` : ''}` : (esc(a.name) || `Artist ${i + 1}`)}</div>${favoriteFriendTagsHtml(a)}
     </div>`;
   });
   if (!items.some(a => a.tilePhoto)) {
@@ -6750,7 +6768,7 @@ function artistDetailPanelHTML(a, closeOnclick) {
         <div class="expand-hero-wrap">
           ${a.bandPhoto ? `<img class="expand-hero" src="${esc(a.bandPhoto)}" alt="${esc(a.name)}" style="object-position:${a.heroPosition || 'center 20%'}" onerror="this.style.display='none'">` : ''}
           <div class="expand-hero-overlay">
-            <div class="expand-hero-name">${esc(a.name)}</div>
+            <div class="expand-hero-name">${esc(a.name)}</div>${favoriteFriendTagsHtml(a)}
             ${a.genre ? `<div class="expand-hero-genre">${esc(a.genre)}</div>` : ''}
           </div>
         </div>
@@ -6827,7 +6845,7 @@ function albumGridInnerHtml(cat, items) {
         <span class="tile-rank">${i + 1}</span>
       </div>
       <div class="tile-label">
-        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.name)}</div>
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.name)}</div>${favoriteFriendTagsHtml(a)}
         <div style="font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.artist)}${a.year?' - '+esc(a.year):''}</div>
       </div>
     </div>`;
@@ -6849,7 +6867,7 @@ function albumDetailPanelHTML(a, closeOnclick) {
         <div class="expand-hero-wrap">
           ${a.tilePhoto ? `<img class="expand-hero" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="this.style.display='none'">` : ''}
           <div class="expand-hero-overlay">
-            <div class="expand-hero-name">${esc(a.name)}</div>
+            <div class="expand-hero-name">${esc(a.name)}</div>${favoriteFriendTagsHtml(a)}
             <div class="expand-hero-genre">${[a.artist, a.year].filter(Boolean).join(' - ')}</div>
           </div>
         </div>
@@ -6891,7 +6909,7 @@ async function loadFavoriteDirectorsFromSupabase(userId) {
       // interpolates it directly into onclick="toggleDirector(...)" and a UUID would break that.
       const dir = {
         id: i + 1,
-        rowId: row.id, // the actual Supabase UUID, kept separate from the display id above
+        rowId: row.id, friend_tags: row.friend_tags || [], // the actual Supabase UUID, kept separate from the display id above
         tmdbId: row.tmdb_id,
         name: row.name,
         known_for: row.known_for || '',
@@ -7910,6 +7928,7 @@ async function saveOnboardingItem(item,userId) {
       row={user_id:userId,category,tmdb_id:item.id,title:item.title,year:item.year||null,type:item.kind,sort_order:(CUSTOM_LISTS[tab][category]||[]).length};
       local={title:item.title,tmdbId:item.id,type:item.kind,year:item.year,poster:item.poster,genres:[]};
     }
+    if(item.friend_tags?.length){row.friend_tags=item.friend_tags;local.friend_tags=item.friend_tags;}
     const {data,error}=await sb.from(table).insert(row).select().single();if(error)throw error;
     if(currentUser?.id!==userId||viewedProfile?.id!==userId)return;
     if(item.kind==='artist'){
@@ -8591,7 +8610,7 @@ function videoDetailPanelHTML(a, closeOnclick) {
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
       <div style="display:flex;align-items:flex-start;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border);">
         <div style="min-width:0;flex:1;">
-          <div style="font-size:17px;font-weight:700;line-height:1.3;">${esc(a.name)}</div>
+          <div style="font-size:17px;font-weight:700;line-height:1.3;">${esc(a.name)}</div>${favoriteFriendTagsHtml(a)}
           ${a.videoChannel ? `<div style="font-size:12px;color:var(--muted);margin-top:3px;">${esc(a.videoChannel)}</div>` : ''}
         </div>
         <a href="https://www.youtube.com/watch?v=${esc(id)}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;white-space:nowrap;padding-top:6px;">Open on YouTube ↗</a>
@@ -8849,7 +8868,7 @@ function toggleArtistExpand(artistId, tileIdx) {
       <div class="expand-hero-wrap">
         ${a.bandPhoto ? `<img class="expand-hero" src="${esc(a.bandPhoto)}" alt="${esc(a.name)}" style="object-position:${a.heroPosition || HERO_POS[a.id] || 'center 20%'}" onerror="this.style.display='none'">` : ''}
         <div class="expand-hero-overlay">
-          <div class="expand-hero-name">${esc(a.name)}</div>
+          <div class="expand-hero-name">${esc(a.name)}</div>${favoriteFriendTagsHtml(a)}
           ${a.genre ? `<div class="expand-hero-genre">${esc(a.genre)}</div>` : ''}
         </div>
       </div>
@@ -8926,14 +8945,14 @@ function renderList() {
               <span>Click Edit to add a band photo URL</span>
              </div>`}
         <div class="artist-hero-name-overlay">
-          <div class="artist-hero-name">${esc(a.name)}</div>
+          <div class="artist-hero-name">${esc(a.name)}</div>${favoriteFriendTagsHtml(a)}
           ${a.genre ? `<div class="artist-hero-genre">${esc(a.genre)}</div>` : ''}
         </div>
       </div>
       <div class="artist-header">
         <div class="artist-avatar" style="background:linear-gradient(135deg,${color}cc,${color})">${initials(a.name)}</div>
         <div>
-          <div class="artist-name">${esc(a.name)}</div>
+          <div class="artist-name">${esc(a.name)}</div>${favoriteFriendTagsHtml(a)}
           ${a.genre ? `<div class="artist-genre">${esc(a.genre)}</div>` : ''}
         </div>
         <div class="artist-header-actions">
@@ -9351,7 +9370,7 @@ function toggleOtherFavTile(artistId) {
       <div style="display:flex;align-items:center;gap:14px;padding:1.125rem 1.5rem;border-bottom:1px solid var(--border);">
         <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,${COLORS[a.name.charCodeAt(0)%COLORS.length]}cc,${COLORS[a.name.charCodeAt(0)%COLORS.length]});display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0;">${initials(a.name)}</div>
         <div>
-          <div style="font-size:16px;font-weight:600;">${esc(a.name)}</div>
+          <div style="font-size:16px;font-weight:600;">${esc(a.name)}</div>${favoriteFriendTagsHtml(a)}
           ${a.genre?`<div style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(a.genre)}</div>`:''}
         </div>
         <button onclick="toggleOtherFavTile('${artistId}')" style="margin-left:auto;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
@@ -9740,7 +9759,7 @@ function toggleAlbumExpand(albumId, tileIdx) {
           <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="opacity:0.2"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M16 8l-4 4-2-2-4 4"/></svg>
         </div>
         <div class="expand-hero-overlay">
-          <div class="expand-hero-name">${esc(a.name)}</div>
+          <div class="expand-hero-name">${esc(a.name)}</div>${favoriteFriendTagsHtml(a)}
           <div class="expand-hero-genre">${esc(a.artist)}${a.year?' · '+esc(a.year):''}</div>
         </div>
       </div>
@@ -13153,7 +13172,7 @@ function renderTripPlaylist() {
           <div class="sl-info">
             ${isMultimediaClubList()?'':`<span class="sl-num" style="background:${cat.color};">${idx + 1}</span>`}
             <div class="sl-info-text">
-              <div class="sl-name">${esc(item.title)}</div>
+              <div class="sl-name">${esc(item.title)}</div>${favoriteFriendTagsHtml(item)}
               ${meta.map(m => `<div class="sl-sub">${esc(m)}</div>`).join('')}
               ${item.link ? `<a href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-block;margin-top:3px;font-size:12px;color:var(--accent);text-decoration:none;">${esc(linkHost)} ↗</a>` : ''}
               ${item.caption ? `<div class="sl-caption">“${esc(item.caption)}”</div>` : ''}
@@ -13669,7 +13688,7 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
           ? `<img src="${item.art}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0;">`
           : `<div style="width:64px;height:64px;border-radius:10px;background:${color}18;flex-shrink:0;"></div>`}
         <div style="min-width:0;">
-          <div style="font-size:17px;font-weight:700;color:var(--text);">${esc(item.title)}</div>
+          <div style="font-size:17px;font-weight:700;color:var(--text);">${esc(item.title)}</div>${favoriteFriendTagsHtml(item)}
           <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(item.sub || '')}</div>
           ${item.eventDate ? `<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">📅 ${esc(sharedDateLabel(item))}</div>` : ''}
           ${item.caption ? `<div style="font-size:11.5px;color:${color};margin-top:4px;font-style:italic;">— ${esc(item.caption)}</div>` : ''}
@@ -15838,7 +15857,7 @@ async function loadFavoriteTVList(userId, category, idPrefix, gridId) {
     if (error || !data) return false;
 
     const arr = [];
-    data.forEach(row => arr.push({ rowId: row.id, tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, seasons: null, creator: '' }));
+    data.forEach(row => arr.push({ rowId: row.id, friend_tags: row.friend_tags || [], tmdbId: row.tmdb_id, title: row.title, year: row.year, poster: '', backdrop: '', overview: '', genres: [], rating: null, seasons: null, creator: '' }));
     TV_GRID_STORE[idPrefix] = { arr, gridId };
     renderTVGrid(arr, idPrefix, gridId);
     renderTVGridControls(idPrefix);
@@ -16276,7 +16295,7 @@ async function loadFavoriteBooksFromSupabase(userId, category, gridId) {
 
     const arr = BOOK_ARRAYS[gridId];
     arr.length = 0;
-    data.forEach(row => arr.push({ rowId: row.id, title: row.title, author: row.author, year: row.year || '', cover: preferredBookCover(row.title,row.author) || row.cover_url || '', whyInfluential: row.why_influential || '' }));
+    data.forEach(row => arr.push({ rowId: row.id, friend_tags: row.friend_tags || [], title: row.title, author: row.author, year: row.year || '', cover: preferredBookCover(row.title,row.author) || row.cover_url || '', whyInfluential: row.why_influential || '' }));
     renderBookGrid(arr, gridId);
     renderBookGridControls(gridId);
     for (let i = 0; i < arr.length; i++) {
@@ -16961,6 +16980,6 @@ renderTasteInfluences();
 })();
 </script>
 
-<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div><label for="music-picker-query">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Start typing…" oninput="queueFlexibleMusic(this.value)"><div id="music-picker-results" aria-live="polite"></div><p id="music-picker-status" role="status"></p></dialog>
+<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div><label for="picker-friend-search">Tag friends <span style="font-weight:normal">(optional)</span></label><input id="picker-friend-search" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="searchPickerFriends(this.value)"><div id="picker-friend-results" aria-live="polite"></div><div id="picker-friend-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div><p style="color:var(--muted);font-size:12px">Selected friends will be tagged on the items you add here.</p><label for="music-picker-query">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Start typing…" oninput="queueFlexibleMusic(this.value)"><div id="music-picker-results" aria-live="polite"></div><p id="music-picker-status" role="status"></p></dialog>
 </body>
 </html>
