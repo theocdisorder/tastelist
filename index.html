@@ -2176,7 +2176,7 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .rec-remove-button{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:50%;background:transparent;color:var(--muted);cursor:pointer;}
 .rec-remove-button:hover,.rec-remove-button:focus-visible{color:#ff7569;border-color:currentColor;}
 .rec-remove-button:disabled{opacity:.5;cursor:wait;}
-</style></head>
+</style><style>#ob-footer-feedback{flex-basis:100%;margin:0 0 10px;color:#ffaaa0;font-size:14px;}#ob-footer-feedback[hidden]{display:none;}.ob-footer:has(#ob-footer-feedback:not([hidden])){flex-wrap:wrap;}</style></head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
 <div id="app-startup-status" role="status" aria-live="polite">Loading…</div>
@@ -7308,7 +7308,7 @@ function renderOnboardingStarters() {
  const rows=onboardingStarterView.rows.map((r,i)=>({...r,index:i})).filter(r=>obKindMatches(r.seed[0],state.filter));
  const f=state.filter||'all', starterChips=`<div class="ob-type-filters" role="group" aria-label="Filter suggestions by type">${['all','artist','album','movie','tv','book','podcast'].map(k=>`<button type="button" data-ob-filter="${k}" aria-pressed="${k===f}" onclick="filterOnboardingSearch('${k}')">${OB_FILTER_LABELS[k]}</button>`).join('')}</div>`;
  const ready=profileFavoritesLoaded&&isOwnProfile&&viewedProfile?.id===currentUser?.id;
- el.innerHTML=`${starterChips}<p class="ob-starter-heading">A few ideas to get you started</p><p class="ob-starter-caption">Curated suggestions — pick any that feel like you, or search for your own.</p><div class="ob-results-grid">${rows.map(row=>{
+ el.innerHTML=`${starterChips}<p class="ob-starter-heading">A few ideas to get you started</p><div class="ob-results-grid">${rows.map(row=>{
  const p=row.item||{title:row.seed[1],kind:row.seed[0],label:({movie:'Movie',tv:'TV show',book:'Book',artist:'Artist',album:'Album',podcast:'Podcast'})[row.seed[0]]||row.seed[0],year:row.seed[2]||'',author:row.seed[3]||''};
  const selected=row.item&&state.pending.some(x=>onboardingSelectionKey(x)===onboardingSelectionKey(p));
  return `<button type="button" class="ob-result ${selected?'selected':''}" aria-pressed="${!!selected}" onclick="selectOnboardingStarter(${row.index})" ${!ready||state.saving||!row.done?'disabled':''}>${onboardingArtwork(p)}<strong>${esc(p.title)}</strong><small>${esc([p.label,p.author||p.artist,p.year].filter(Boolean).join(' · '))}</small>${row.item?`<span class="ob-selected-mark">${selected?'✓':'+'}</span>`:row.done?`<span class="ob-selected-mark" aria-hidden="true">${row.retrying?'…':'+'}</span>`:'<small>Loading…</small>'}</button>`;
@@ -7355,7 +7355,7 @@ function cycleOnboardingQuestion() {
   const ideas = document.querySelector('#ob-search-ideas > div');
   if (ideas) ideas.innerHTML = onboardingIdeasHtml(true);
   const destination=document.getElementById('ob-list-destination');
-  if(destination)destination.textContent='Your picks will create “'+q.list+'” in their matching media tabs.';
+  if(destination)destination.textContent='Your picks will create “'+q.list+'” in their matching media tabs. Select as many as you like.';
   loadOnboardingStarters();
 }
 
@@ -7426,7 +7426,7 @@ function renderOnboardingJourney() {
       <label class="ob-search"><span aria-hidden="true">⌕</span><input id="ob-search" type="search" aria-label="Search songs, artists, movies, shows, books and podcasts" placeholder="Start typing an artist, album, movie, show or book…" value="${esc(state.query)}" oninput="onOnboardingSearch(this.value)" ${!ready?'disabled':''}><button type="button" aria-label="Clear search" onclick="clearOnboardingSearch()">×</button></label>
       <div class="ob-import" role="group" aria-label="Bring picks from another app"><span>Or bring picks from</span><button type="button" onclick="openTasteImport('letterboxd','onboarding')" ${!ready?'disabled':''}>Letterboxd</button><button type="button" onclick="openTasteImport('goodreads','onboarding')" ${!ready?'disabled':''}>Goodreads</button></div>
 
-      <p id="ob-list-destination" class="ob-multiselect-hint">Your picks will create “${esc(onboardingQuestion().list)}” in their matching media tabs.</p><p class="ob-multiselect-hint">Select as many as you like. Your selections stay here as you search.</p><div id="ob-pending" class="ob-pending" aria-live="polite"></div><div id="ob-results" aria-live="polite"></div>
+      <p id="ob-list-destination" class="ob-multiselect-hint">Your picks will create “${esc(onboardingQuestion().list)}” in their matching media tabs. Select as many as you like.</p><div id="ob-results" aria-live="polite"></div>
       <section id="ob-starters" aria-label="Suggested picks" aria-live="polite"></section>
       <div id="ob-feedback" class="ob-feedback" role="status">${!ready?'Loading your favorites…':''}</div>`;
     footer = `<span class="ob-saved-count"><strong id="ob-selection-count">0 selected</strong><br>${picks.length} ${picks.length===1?'pick':'picks'} saved</span><div><button id="ob-review-button" type="button" class="ob-button" onclick="advanceOnboarding(1)" ${!picks.length?'disabled':''}>Review my picks</button> <button id="ob-add-button" type="button" class="ob-button ob-primary" onclick="saveOnboardingSelection()" disabled>Add to my list</button></div>`;
@@ -7439,7 +7439,7 @@ function renderOnboardingJourney() {
     body = `<div class="ob-finish"><div class="ob-personal-collage" aria-label="Your saved favorites">${collage || '<div class="ob-empty-art">Your next favorite<br>is waiting.</div>'}</div><div><h1 id="onboarding-title" tabindex="-1">Looks good.</h1><p>This is just the beginning.<br>You can always add, remove,<br>and explore more.</p><ul><li>✓ &nbsp; ${picks.length} ${picks.length===1?'favorite':'favorites'} added</li><li>✓ &nbsp; ${categories.size} ${categories.size===1?'category':'categories'} explored</li><li>✓ &nbsp; Your taste, in one place</li></ul>${btn('Go to activity feed →',"finishOnboarding('completed')",true)}<button class="ob-text-link" onclick="onboardingAddAnother()">Continue adding</button><button class="ob-text-link" onclick="focusPeopleSearch()">Find friends first</button></div></div>`;
     footer = `${btn('← Back','advanceOnboarding(1)')}<span class="ob-motto">Same obsessions. A fuller you.</span>`;
   }
-  el.innerHTML = `<section class="ob-frame" aria-labelledby="onboarding-title"><header class="ob-top"><img class="tl-logo tl-logo-ob" src="${TL_LOGO_SRC}" alt="TasteList"><div class="ob-progress" aria-label="Step ${step+1} of 3">${[0,1,2].map(i=>`<span class="${i<=step?'filled':''}"></span>`).join('')}</div><span>${step+1} / 3</span></header><main class="ob-content">${body}</main><footer class="ob-footer">${footer}</footer><button class="ob-skip" onclick="finishOnboarding('skipped')">Skip for now</button></section>`;
+  el.innerHTML = `<section class="ob-frame" aria-labelledby="onboarding-title"><header class="ob-top"><img class="tl-logo tl-logo-ob" src="${TL_LOGO_SRC}" alt="TasteList"><div class="ob-progress" aria-label="Step ${step+1} of 3">${[0,1,2].map(i=>`<span class="${i<=step?'filled':''}"></span>`).join('')}</div><span>${step+1} / 3</span></header><main class="ob-content">${body}</main><footer class="ob-footer"><p id="ob-footer-feedback" role="alert" hidden></p>${footer}</footer><button class="ob-skip" onclick="finishOnboarding('skipped')">Skip for now</button></section>`;
   if (step===0 && !state.added) {
     loadOnboardingStarters();
     renderOnboardingSearchResults();
@@ -7607,13 +7607,9 @@ function renderOnboardingSearchResults() {
   el.innerHTML=chips+(state.loading&&!state.results.length?'<p class="ob-search-status">Finding matches…</p>':state.results.length?`<div class="ob-results-grid">${state.results.map((item,i)=>!obKindMatches(item.kind,state.filter)?'':`<button type="button" class="ob-result ${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'selected':''}" aria-pressed="${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))}" onclick="selectOnboardingResult(${i})" ${state.saving?'disabled':''}>${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.year?' · '+esc(item.year):''}${item.artist&&item.kind==='album'?' · '+esc(item.artist):item.author?' · '+esc(item.author):''}</small>${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'<span class="ob-selected-mark" aria-hidden="true">✓</span>':'<span class="ob-select-circle" aria-hidden="true">+</span>'}</button>`).join('')}</div>`:state.query.trim().length===1?'<p class="ob-search-status">Type at least 2 letters to see suggestions.</p>':state.query.trim()?(state.searchFailed?'<p class="ob-search-status">Search is temporarily unavailable.</p>':'<p class="ob-search-status">No matches found. Try a few more letters or add the creator’s name.</p>'):'');
   if(state.searchFailed&&!state.loading)el.innerHTML+='<button type="button" class="ob-button" onclick="runOnboardingSearch()">Retry search</button>';
   const count=document.getElementById('ob-selection-count');if(count)count.textContent=`${state.pending.length} selected`;
-  const pending=document.getElementById('ob-pending');
-  if(pending) {
-    pending.hidden=!state.pending.length;
-    pending.innerHTML=state.pending.length?`<p>${state.pending.length} selected · Keep searching to add more</p><div>${state.pending.map((item,i)=>`<button type="button" onclick="removeOnboardingSelection(${i})" aria-label="Remove ${esc(item.title)} from selection" ${state.saving?'disabled':''}>${esc(item.title)} · ${esc(item.category||onboardingQuestion().list)} <span aria-hidden="true">×</span></button>`).join('')}</div>`:'';
-  }
   const review=document.getElementById('ob-review-button');if(review)review.disabled=state.saving||!!state.pending.length||!onboardingPicks().length;
   const feedback=document.getElementById('ob-feedback');if(feedback)feedback.textContent=state.error;
+  const footerError=document.getElementById('ob-footer-feedback');if(footerError){footerError.hidden=!state.error;footerError.textContent=state.error;}
   const button=document.getElementById('ob-add-button');if(button){button.disabled=!state.pending.length||state.saving;button.textContent=state.saving?'Adding…':state.pending.length ? `Add ${state.pending.length} ${state.pending.length===1?'pick':'picks'} to my list →` : 'Select picks to add';}
   updateOnboardingFooterHighlight(state);
 }
@@ -7678,7 +7674,7 @@ async function saveOnboardingSelection() {
     }
     if(currentUser?.id!==userId)return;
     if(failures.length)state.error=`${saved.length ? saved.length+' saved. ' : ''}Some picks weren’t added. Your remaining selections are kept. ${failures.join(' ')}`;
-    else if(saved.length)state.added=saved.length===1?{...saved[0]}:{...saved[0],title:`${saved.length} picks added`,label:'Saved to '+[...new Set(saved.map(p=>p.category||onboardingQuestion().list))].join(' · ')+'.'};
+    else if(saved.length)state.added=saved.length===1?{...saved[0]}:{...saved[0],title:`${saved.length} picks saved`,label:'Saved to '+[...new Set(saved.map(p=>p.category||onboardingQuestion().list))].join(' · ')+'.'};
     if(saved.length){renderOnboardingJourney();scheduleTasteConstellation();}
   } catch(error) {if(currentUser?.id===userId)state.error=error.message||'Could not save your picks. Please try again.';}
   finally {state.saving=false;if(currentUser?.id===userId)renderOnboardingSearchResults();}
@@ -8027,12 +8023,25 @@ new MutationObserver(() => { cancelAnimationFrame(enhanceStreamLinks._raf); enha
   .observe(document.documentElement, { childList: true, subtree: true });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('listen-chooser')?.style.display === 'flex') closeListenChooser(); });
 
+function onboardingAlreadySaved(item,category){
+ const tab={artist:'music',album:'albums',movie:'movies',tv:'tv',book:'books'}[item.kind];
+ const group=['song','artist','album'].includes(item.kind)?'music':['comedian','special'].includes(item.kind)?'comedy':'podcasts';
+ const candidates=tab?(CUSTOM_LISTS[tab]?.[category]||[]):extraLists.filter(l=>l.category===group&&l.title===category).flatMap(l=>l.items||[]);
+ const norm=v=>String(v||'').trim().toLowerCase();
+ return candidates.some(p=>{
+  if(!tab&&p.kind!==item.kind)return false;
+  const id=tab?(item.kind==='movie'||item.kind==='tv'?p.tmdbId:null):p.id;
+  if(id!=null&&item.id!=null&&String(id)===String(item.id))return true;
+  return norm(p.title||p.name)===norm(item.title)&&
+   (item.kind!=='album'||norm(p.artist)===norm(item.artist))&&
+   (item.kind!=='book'||norm(p.author)===norm(item.author));
+ });
+}
 async function saveOnboardingItem(item,userId) {
     if(item.destination==='next'){await saveImportToWhatsNext(item);return;}
     const state=onboardingVisualState();
-    const picks=onboardingPicks();
-    if(picks.some(p=>p.kind===item.kind && (p.title||p.name).toLowerCase()===item.title.toLowerCase() && (item.kind!=='album'||(p.artist||'').toLowerCase()===(item.artist||'').toLowerCase()) && (item.kind!=='book'||(p.author||'').toLowerCase()===(item.author||'').toLowerCase())))throw new Error('This is already in your favorites. Choose another pick.');
     const category=item.category||onboardingQuestion().list;
+    if(onboardingAlreadySaved(item,category))return;
     if(['song','comedian','special','podcast','episode'].includes(item.kind)){await saveExtraPick(item,category);return;}
     let table,row,local;
     if(item.kind==='artist') {
