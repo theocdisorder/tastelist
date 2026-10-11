@@ -2153,6 +2153,14 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .wn-cover .wn-add:hover .wn-add-note,.wn-cover .wn-add:focus-within .wn-add-note{opacity:1;}
 .wn-panel-strip{display:flex;justify-content:flex-start;}.wn-panel-strip .wn-add{width:auto;}
 </style>
+<style>
+.expand-actions .wn-panel-strip{display:inline-flex;margin:0;padding:0;align-items:center;}
+.expand-actions .wn-add-btn{width:32px;height:32px;border-radius:50%;padding:6px;background:rgba(0,0,0,.45);border-color:rgba(255,255,255,.25);}
+.expand-actions .wn-add-btn.is-done{background:var(--accent);border-color:var(--accent);}
+.expand-actions .wn-add-note,.wn-detail-bookmark .wn-add-note{position:absolute;right:0;top:40px;width:max-content;max-width:240px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;opacity:0;pointer-events:none;z-index:5;}
+.expand-actions .wn-add:hover .wn-add-note,.expand-actions .wn-add:focus-within .wn-add-note,.wn-detail-bookmark .wn-add:hover .wn-add-note,.wn-detail-bookmark .wn-add:focus-within .wn-add-note{opacity:1;}
+.wn-detail-wrap{position:relative;}.wn-detail-bookmark{position:absolute;top:12px;right:54px;z-index:3;}
+</style>
 </head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
@@ -6425,7 +6433,11 @@ function customListPanelHtml(tab, cat, items) {
 function gridPanelHtml(tab, cat, items) {
   const panel = tab === 'music' ? musicPanelHtml(cat, items) : tab === 'albums' ? albumPanelHtml(cat, items) : customListPanelHtml(tab, cat, items);
   const open = CUSTOM_LIST_EXPANDED[tab]?.[cat];
-  return panel && open != null ? panel + favoritesWhatsNextHtml(tab, items[open]) : panel;
+  if(!panel || open == null)return panel;
+  const bookmark=favoritesWhatsNextHtml(tab,items[open]);
+  if(!bookmark)return panel;
+  if(panel.includes('<button class="expand-close"'))return panel.replace('<button class="expand-close"',bookmark+'<button class="expand-close"');
+  return `<div class="wn-detail-wrap">${panel}<div class="wn-detail-bookmark">${bookmark}</div></div>`;
 }
 
 function toggleCustomListExpand(tab, cat, index) {
