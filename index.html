@@ -2073,6 +2073,15 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 /* Comment notifications: the comment itself + a reply cue */
 .notif-comment { display: block; margin-top: 4px; padding: 6px 10px; border-left: 2px solid rgba(124,77,255,.6); background: rgba(255,255,255,.04); border-radius: 0 6px 6px 0; color: var(--text); font-size: 12.5px; line-height: 1.45; white-space: normal; overflow-wrap: anywhere; }
 .notif-reply { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 700; color: var(--accent, #7C4DFF); }
+
+/* Import: pick or name the destination list */
+.ti-dest-wrap { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.ti-new-list { display: flex; flex-direction: column; gap: 6px; }
+.ti-new-list .tl-input { max-width: 320px; }
+.ti-new-ideas { display: flex; flex-wrap: wrap; gap: 6px; }
+.ti-new-ideas button { font: inherit; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; cursor: pointer; color: var(--muted); background: none; border: 1px solid var(--border); }
+.ti-new-ideas button:hover { color: var(--text); border-color: rgba(255,255,255,.35); }
+@media (pointer: coarse) { .ti-new-ideas button { min-height: 44px; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -7828,7 +7837,7 @@ const TASTE_IMPORT_ERRORS = {
   private: 'That profile is private (or its shelves are hidden). Make it public, then try again — or search for picks instead.',
   unavailable: 'We couldn’t reach it just now. Please try again in a minute.',
 };
-let tasteImport = { source: null, ctx: 'onboarding', user: '', shelf: 'read', items: [], selected: new Set(), loading: false, error: '', dest: '', profile: '', saving: false, seq: 0 };
+let tasteImport = { newListName: '', source: null, ctx: 'onboarding', user: '', shelf: 'read', items: [], selected: new Set(), loading: false, error: '', dest: '', profile: '', saving: false, seq: 0 };
 
 function tasteImportCleanTitle(t) { return String(t || '').replace(/\s*\([^()]*#\s*\d+(?:\.\d+)?\)\s*$/, '').trim(); }
 function tasteImportStars(r) { if (!r) return ''; const full = Math.floor(r), half = r - full >= 0.5; return '★'.repeat(full) + (half ? '½' : ''); }
@@ -7843,16 +7852,18 @@ function tasteImportOwned() {
   FRIEND_RECOMMENDATIONS.forEach(r => owned.add('next|' + tasteImportOwnedKey(r.type === 'book' ? 'book' : r.type === 'tv' ? 'tv' : 'movie', r.title)));
   return owned;
 }
+function tasteImportDefaultDest() {
+  if (tasteImport.shelf === 'to-read') return '__next';
+  const first = tasteImportDestinations()[0][0];
+  if (first === '__new' && !tasteImport.newListName) tasteImport.newListName = tasteImport.source === 'letterboxd' ? 'Favorite Movies' : 'Favorite Books';
+  return first;
+}
 function tasteImportDestinations() {
   const src = tasteImport.source, opts = [];
   const label = (tab, key) => (typeof customListLabel === 'function' ? customListLabel(tab, key) : key);
-  if (src === 'letterboxd') {
-    Object.keys(CUSTOM_LISTS.movies || {}).forEach(k => opts.push([`movies:${k}`, label('movies', k)]));
-    if (!opts.length) opts.push(['movies:Favorite Movies', 'Favorite Movies']);
-  } else {
-    Object.keys(CUSTOM_LISTS.books || {}).forEach(k => opts.push([`books:${k}`, label('books', k)]));
-    if (!opts.length) opts.push(['books:Books That Shaped Me', 'Books That Shaped Me']);
-  }
+  const tab = src === 'letterboxd' ? 'movies' : 'books';
+  Object.keys(CUSTOM_LISTS[tab] || {}).forEach(k => opts.push([`${tab}:${k}`, label(tab, k)]));
+  opts.push(['__new', '+ New list…']);
   opts.push(['__next', 'What’s Next (want to read/watch)']);
   return opts;
 }
@@ -7884,7 +7895,7 @@ async function loadTasteImport() {
     try { localStorage.setItem('tl_import_' + tasteImport.source, tasteImport.user); } catch (_) {}
     tasteImport.profile = data.profile || '';
     tasteImport.items = (data.items || []).map(it => ({ ...it, title: it.kind === 'book' ? tasteImportCleanTitle(it.title) : it.title }));
-    if (!tasteImport.dest) tasteImport.dest = tasteImport.shelf === 'to-read' ? '__next' : tasteImportDestinations()[0][0];
+    if (!tasteImport.dest) tasteImport.dest = tasteImportDefaultDest();
   } catch (e) {
     if (seq !== tasteImport.seq) return;
     tasteImport.error = TASTE_IMPORT_ERRORS[e.code] || TASTE_IMPORT_ERRORS.unavailable;
@@ -7895,7 +7906,7 @@ async function loadTasteImport() {
 function setTasteImportShelf(shelf) {
   if (tasteImport.shelf === shelf) return;
   tasteImport.shelf = shelf;
-  tasteImport.dest = shelf === 'to-read' ? '__next' : (tasteImport.dest === '__next' ? tasteImportDestinations()[0][0] : tasteImport.dest);
+  tasteImport.dest = shelf === 'to-read' ? '__next' : (tasteImport.dest === '__next' ? tasteImportDefaultDest() : tasteImport.dest);
   loadTasteImport();
 }
 function toggleTasteImportPick(i) { const s = tasteImport.selected; s.has(i) ? s.delete(i) : s.add(i); renderTasteImport(); }
@@ -7928,7 +7939,7 @@ function renderTasteImport() {
   const { top, rest } = tasteImportRanked();
   const n = tasteImport.selected.size;
   const destSel = tasteImport.ctx === 'profile' && tasteImport.items.length
-    ? `<label class="ti-dest">Add to <select onchange="tasteImport.dest=this.value;renderTasteImport()">${tasteImportDestinations().map(([v, l]) => `<option value="${esc(v)}"${v === tasteImport.dest ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`
+    ? `<div class="ti-dest-wrap"><label class="ti-dest">Add to <select onchange="tasteImport.dest=this.value;if(this.value==='__new'&&!tasteImport.newListName)tasteImport.newListName=tasteImport.source==='letterboxd'?'Favorite Movies':'Favorite Books';renderTasteImport();if(this.value==='__new')setTimeout(()=>document.getElementById('ti-new-list')?.select(),0)">${tasteImportDestinations().map(([v, l]) => `<option value="${esc(v)}"${v === tasteImport.dest ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>${tasteImport.dest === '__new' ? `<div class="ti-new-list"><input id="ti-new-list" class="tl-input" maxlength="120" placeholder="Name your new list" aria-label="New list name" value="${esc(tasteImport.newListName)}" oninput="tasteImport.newListName=this.value"><div class="ti-new-ideas">${(STARTER_LIST_SUGGESTIONS[tasteImport.source === 'letterboxd' ? 'movies' : 'books'] || []).map(n => `<button type="button" onclick="tasteImport.newListName=this.textContent;document.getElementById('ti-new-list').value=this.textContent">${esc(n)}</button>`).join('')}</div></div>` : ''}</div>`
     : (tasteImport.ctx === 'onboarding' && tasteImport.items.length ? `<p class="ti-note">${toNext ? 'These will go to your <strong>What’s Next</strong> list.' : `These will join your picks for “${esc(onboardingQuestion().list)}”.`}</p>` : '');
   el.innerHTML = `
     <div class="ti-head"><h2 id="taste-import-title" class="ti-title">Bring picks from ${src.name}</h2>
@@ -7977,8 +7988,16 @@ async function applyTasteImport() {
     return;
   }
   // Profile: save now, into the chosen list.
+  let dest = tasteImport.dest;
+  if (dest === '__new') {
+    const name = String(tasteImport.newListName || '').trim().replace(/\s+/g, ' ');
+    if (!name) { showToast('Give your new list a name.'); document.getElementById('ti-new-list')?.focus(); return; }
+    if (name.length > 120) { showToast('Use a list name of 120 characters or fewer.'); return; }
+    const tab = tasteImport.source === 'letterboxd' ? 'movies' : 'books';
+    const existing = Object.keys(CUSTOM_LISTS[tab] || {}).find(k => k.toLowerCase() === name.toLowerCase());
+    dest = `${tab}:${existing || name}`;
+  }
   tasteImport.saving = true; renderTasteImport();
-  const dest = tasteImport.dest;
   let ok = 0, failed = 0;
   for (const p of picks) {
     try {
@@ -7992,7 +8011,8 @@ async function applyTasteImport() {
   if (tab) { try { renderCustomLists(tab); } catch (_) {} }
   try { renderProfileTab(); } catch (_) {}
   closeTasteImport();
-  const where = dest === '__next' ? 'What’s Next' : (tasteImportDestinations().find(([v]) => v === dest) || [, 'your list'])[1];
+  const where = dest === '__next' ? 'What’s Next' : (tasteImportDestinations().find(([v]) => v === dest) || [, dest.split(':').slice(1).join(':') || 'your list'])[1];
+  tasteImport.newListName = '';
   showToast(`Added ${ok} to ${where}${failed ? ` (${failed} couldn’t be added — maybe already there)` : ''}.`);
 }
 // Books tab: an import row above the lists (owner only)
