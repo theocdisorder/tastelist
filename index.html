@@ -13354,7 +13354,6 @@ function renderTripPlaylist() {
             ${editControls}
           </div>
           <div class="sl-info">
-            ${isMultimediaClubList()?'':`<span class="sl-num" style="background:${cat.color};">${idx + 1}</span>`}
             <div class="sl-info-text">
               <div class="sl-name">${esc(item.title)}</div>${favoriteFriendTagsHtml(item)}
               ${meta.map(m => `<div class="sl-sub">${esc(m)}</div>`).join('')}
