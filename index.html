@@ -2135,6 +2135,11 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .taste-poster-heading h2{font-size:clamp(30px,5vw,56px)}
 .taste-poster-heading .taste-poster-motto{margin:0;color:#35a8ff;font-family:var(--font-site);font-size:clamp(11px,1.8vw,18px);font-weight:700;font-style:italic;line-height:1.5;letter-spacing:.035em;transform:rotate(-12deg);text-transform:uppercase}
 </style>
+<style>
+/* Podcast covers are square; retain the full design, including edge lettering. */
+.ob-art.ob-podcast-art,#extra-podcasts .ob-art{aspect-ratio:1 / 1!important;height:auto!important;align-self:start;}
+.ob-art.ob-podcast-art img,#extra-podcasts .ob-art img{object-fit:contain!important;object-position:center!important;width:100%;height:100%;}
+</style>
 </head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
@@ -7249,6 +7254,7 @@ function onboardingArt(item) {
   return /^https?:\/\//i.test(url) ? url : '';
 }
 function onboardingArtwork(item, extra = '') {
+  if(['podcast','episode'].includes(item.kind)||item.medium==='Podcasts')extra+=' ob-podcast-art';
   const art = onboardingArt(item);
   if(item.kind==='book'||item.medium==='Books') {
    const title=item.title||item.name||'',author=item.author||'';
