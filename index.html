@@ -1390,6 +1390,10 @@ if (new URLSearchParams(location.search).has('list')) {
 #music-picker-results{display:grid;gap:8px;margin-top:16px;max-height:55vh;overflow:auto;}
 #music-picker{width:min(600px,calc(100vw - 32px));background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:18px;padding:24px;}
 #music-picker .extra-result{width:100%;text-align:left;}
+#music-picker{position:fixed!important;inset:0!important;margin:auto!important;box-sizing:border-box;width:min(600px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow-y:auto;padding:28px;}
+#music-picker::backdrop{background:rgba(0,0,0,.65);backdrop-filter:blur(3px);}
+#music-picker h2{margin:0;font-size:26px;}#music-picker label{display:block;margin:16px 0 8px;color:var(--muted);font-size:14px;}
+#music-picker select,#music-picker input{width:100%;box-sizing:border-box;}#music-picker [hidden]{display:none!important;}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -2495,7 +2499,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
 <div class="music-main">
 
-  <div id="movies-create-list-row" class="list-create-row" style="display:none;"><button type="button" class="ed-primary" onclick="addToMainList('movies')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add movies you love</button><div class="list-create-import"><button type="button" class="list-import-link" onclick="promptNewCustomList('movies')">or start a new list</button> <span class="list-links-sep" aria-hidden="true">·</span> <button type="button" class="list-import-link" onclick="openTasteImport('letterboxd','profile')">import from Letterboxd</button></div></div>
+  <div id="movies-create-list-row" class="list-create-row" style="display:none;"><button type="button" class="ed-primary" onclick="addToMainList('movies')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add movies you love</button><div class="list-create-import"><button type="button" class="list-import-link" onclick="openTasteImport('letterboxd','profile')">import from Letterboxd</button></div></div>
 
   <div class="music-section">
     <div class="music-section-header">
@@ -6070,7 +6074,7 @@ function renderExtraLists(){
   if(category==='music'&&!lists.length){el.innerHTML='';continue;}
   if(category==='podcasts'){const bio=document.getElementById('podcast-bio-text');const picks=lists.flatMap(l=>l.items||[]);if(bio)bio.innerHTML=picks.length?'<p>'+picks.slice(0,6).map(p=>esc(p.title)).join(' · ')+'</p>':'<p>The shows and episodes you love, in one place.</p>';}
   el.innerHTML=`<div class="extra-heading"><h2>${category==='music'?'Favorite Songs':category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
-   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div><button class="profile-control" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">Rename</button> <button class="profile-control" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">Delete list</button></div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile?`${list.category==='podcasts'?`<button class="ob-text-link" data-id="${esc(list.id)}" onclick="choosePodcastShow(this.dataset.id,${i})">${item.art?'Change show / artwork':'Choose show / add artwork'}</button>`:''}<button class="ob-text-link" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">Remove</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}</section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
+   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div class="list-edit-slot"><button type="button" class="list-icon-control" aria-label="${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${listActionIcon(inlineListEditing.has('extra|'+list.id)?'done':'edit')}</button>${inlineListEditing.has('extra|'+list.id)?`<button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button><button class="list-icon-control" aria-label="Rename list" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete list" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">${listActionIcon('trash')}</button>`:''}</div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile&&inlineListEditing.has('extra|'+list.id)?`<button type="button" class="list-icon-control" aria-label="Remove item" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">${listActionIcon('trash')}</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}</section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
  }
 }
 async function createExtraList(category, suppliedTitle){
@@ -6088,7 +6092,8 @@ async function updateExtraList(list,changes){
 async function renameExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;const title=prompt('Rename list',list.title);if(!title?.trim())return;extraBusy=true;try{await updateExtraList(list,{title:title.trim().slice(0,120)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
 async function removeExtraItem(id,index){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;extraBusy=true;try{await updateExtraList(list,{items:list.items.filter((_,i)=>i!==index)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
 async function deleteExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile||extraBusy||!confirm('Delete this list and its picks?'))return;extraBusy=true;try{const {error}=await sb.from('taste_extra_lists').delete().eq('id',id).eq('user_id',currentUser.id);if(error)throw error;extraLists=extraLists.filter(l=>l.id!==id);renderExtraLists();scheduleTasteConstellation();renderProfileTab();}catch(_){alert('Could not delete the list.');}finally{extraBusy=false;}}
-function openExtraPicker(id){const musicList=extraLists.find(l=>l.id===id&&l.category==='music');if(musicList){openFlexibleMusicPicker(musicList.title);return;}extraPicker.replaceItem=null;document.getElementById('extra-picker-kind').disabled=false;const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile)return;extraPicker.request++;extraPicker.listId=id;extraPicker.category=list.category;extraPicker.results=[];document.getElementById('extra-picker-query').value='';document.getElementById('extra-picker-results').innerHTML='';document.getElementById('extra-picker-title').textContent='Add to '+list.title;document.getElementById('extra-picker-kind').innerHTML=(list.category==='comedy'?[['comedian','Comedians / performers'],['special','Stand-up specials']]:[['podcast','Podcast shows'],['episode','Podcast episodes']]).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');document.getElementById('extra-picker').showModal();}
+function openExtraPicker(id){const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile)return;openUnifiedPicker(list.category,list.title);}
+
 function queueExtraSearch(){clearTimeout(extraPicker.timer);extraPicker.request++;extraPicker.timer=setTimeout(runExtraSearch,350);}
 async function runExtraSearch(){const request=++extraPicker.request,el=document.getElementById('extra-picker-results'),query=document.getElementById('extra-picker-query').value.trim(),kind=document.getElementById('extra-picker-kind').value;if(!query){el.innerHTML='';return;}el.innerHTML='<p>Searching…</p>';try{const items=await searchExtraCatalog(kind,query);if(request!==extraPicker.request)return;extraPicker.results=items;el.innerHTML=items.length?items.map((item,i)=>`<button class="extra-result" onclick="addExtraResult(${i})">${onboardingArtwork(item)}<span><strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.artist?' · '+esc(item.artist):''}</small></span><span>+</span></button>`).join(''):'<p>No matching results.</p>';}catch(_){if(request===extraPicker.request)el.innerHTML='<p>Search couldn’t load. Please try again.</p>';}}
 // Catalog IDs are preferred; title-only matches must be unambiguous.
@@ -6432,37 +6437,50 @@ let newListCategory='music';
 
 // What each tab's list button says: what goes in the list, not just "a new list".
 const LIST_CTA_NOUN = { books: 'books', movies: 'movies', tv: 'shows', music: 'music', albums: 'albums', comedy: 'comedy', podcasts: 'podcasts' };
-let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null};
-function openFlexibleMusicPicker(category=null){
+const PICKER_IDEAS={music:['Music I Love','On Repeat','Albums That Shaped Me'],albums:['Favorite Albums','No-Skip Albums'],movies:['Favorite Movies','Comfort Movies','Favorite Thrillers'],tv:['Favorite Shows','Favorite Dramas','Favorite Comedies'],books:['Books That Shaped Me','Favorite Books','Recent Reads'],podcasts:['Favorite Podcasts','Current Rotation','Episodes Worth Sharing'],comedy:['Favorite Comedy','Stand-up Favorites']};
+let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null,tab:'music'};
+function openFlexibleMusicPicker(category=null){openUnifiedPicker('music',category);}
+function openUnifiedPicker(tab,category=null){
  if(!isOwnProfile||!currentUser||flexibleMusic.saving)return;
- flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.category=category;
- document.getElementById('music-picker-query').value='';document.getElementById('music-picker-results').innerHTML='';document.getElementById('music-picker-status').textContent='';
- document.getElementById('music-picker').showModal();document.getElementById('music-picker-query').focus();
+ flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.tab=tab;
+ const tabs=tab==='music'?['music','albums']: [tab];
+ const names=[...new Set([...tabs.flatMap(t=>Object.keys(CUSTOM_LISTS[t]||{})),...extraLists.filter(l=>l.category===tab).map(l=>l.title)])];
+ const select=document.getElementById('music-picker-list');select.innerHTML='<option value="">Start a new list</option>'+names.map(n=>`<option value="${esc(n)}">${esc(customListLabel(tab,n))}</option>`).join('');
+ select.value=category&&names.includes(category)?category:'';
+ document.getElementById('music-picker-name').value=category&&!names.includes(category)?category:'';
+ document.getElementById('music-picker-title').textContent=listCtaLabel(tab);
+ document.getElementById('music-picker-hint').textContent=tab==='books'?'Search a book title or author to find books.':tab==='podcasts'?'Search shows and episodes together.':tab==='music'?'Search songs, albums and artists together.':'Search and select the right title.';
+ document.getElementById('music-picker-ideas').innerHTML=(PICKER_IDEAS[tab]||[]).map(name=>`<button type="button" class="profile-control" data-name="${esc(name)}" onclick="document.getElementById('music-picker-name').value=this.dataset.name">${esc(name)}</button>`).join('');
+ pickerDestinationChanged();document.getElementById('music-picker-query').value='';document.getElementById('music-picker-results').innerHTML='';document.getElementById('music-picker-status').textContent='';
+ document.getElementById('music-picker').showModal();document.getElementById(select.value?'music-picker-query':'music-picker-name').focus();
 }
+function pickerDestinationChanged(){document.getElementById('music-picker-new-list').hidden=!!document.getElementById('music-picker-list').value;}
 function queueFlexibleMusic(q){
  clearTimeout(flexibleMusic.timer);const request=++flexibleMusic.request;flexibleMusic.results=[];
- document.getElementById('music-picker-results').innerHTML='';
- if(q.trim().length<2)return;
+ document.getElementById('music-picker-results').innerHTML='';if(q.trim().length<2)return;
  flexibleMusic.timer=setTimeout(()=>searchFlexibleMusic(q.trim(),request),250);
 }
 async function searchFlexibleMusic(q,request){
- const userId=currentUser?.id,el=document.getElementById('music-picker-results');el.innerHTML='<p>Searching songs, albums and artists…</p>';
- const results=await Promise.allSettled(['song','album','artist'].map(kind=>onboardingAutocompleteProvider(kind,q)));
+ const userId=currentUser?.id,el=document.getElementById('music-picker-results');el.innerHTML='<p>Searching…</p>';
+ const kinds=({music:['song','album','artist'],albums:['album'],movies:['movie'],tv:['tv'],books:['book'],podcasts:['podcast','episode'],comedy:['comedian','special']})[flexibleMusic.tab]||[];
+ const results=await Promise.allSettled(kinds.map(kind=>onboardingAutocompleteProvider(kind,q)));
  if(request!==flexibleMusic.request||userId!==currentUser?.id)return;
  flexibleMusic.results=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)).slice(0,30);
- el.innerHTML=flexibleMusic.results.map((p,i)=>`<button type="button" class="extra-result" onclick="saveFlexibleMusic(${i})">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist,p.album,p.year].filter(Boolean).join(' · '))}</small></span><span>+</span></button>`).join('')||'<p>No results. Try another title or artist.</p>';
- if(results.some(r=>r.status==='rejected'))el.innerHTML+='<p>Some music results could not load. Please search again to retry.</p>';
+ el.innerHTML=flexibleMusic.results.map((p,i)=>`<button type="button" class="extra-result" onclick="saveFlexibleMusic(${i})">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.album,p.year].filter(Boolean).join(' · '))}</small></span><span>+</span></button>`).join('')||'<p>No matches. Try another title or creator.</p>';
+ if(results.some(r=>r.status==='rejected'))el.innerHTML+='<p>Some results could not load. Search again to retry.</p>';
 }
 async function saveFlexibleMusic(index){
  const p=flexibleMusic.results[index];if(!p||flexibleMusic.saving||!isOwnProfile)return;
- const userId=currentUser?.id;flexibleMusic.saving=true;
- const status=document.getElementById('music-picker-status');status.textContent='Saving…';
+ const status=document.getElementById('music-picker-status');
+ const category=document.getElementById('music-picker-list').value||document.getElementById('music-picker-name').value.trim();
+ if(!category){status.textContent='Choose a list or give your new list a name.';document.getElementById('music-picker-name').focus();return;}
+ if(category.length>120){status.textContent='Use a list name of 120 characters or fewer.';return;}
+ const userId=currentUser?.id;flexibleMusic.saving=true;status.textContent='Saving…';
  try{
   if(!await requireFreshSession()||currentUser?.id!==userId||viewedProfile?.id!==userId)throw Error('Please sign in to your own profile.');
-  const category=p.kind==='song'?(flexibleMusic.category||'Favorite Songs'):mainListFor(p.kind==='album'?'albums':'music');
   await saveOnboardingItem({...p,category},userId);
   if(currentUser?.id!==userId)return;
-  status.textContent=p.title+' added.';renderExtraLists();renderProfileTab();scheduleTasteConstellation();
+  status.textContent=p.title+' added to '+customListLabel(flexibleMusic.tab,category)+'.';renderExtraLists();renderProfileTab();scheduleTasteConstellation();
  }catch(e){status.textContent=e.message||'Could not save. Please try again.';}
  finally{flexibleMusic.saving=false;}
 }
@@ -6477,18 +6495,7 @@ function mainListFor(tab) {
   const label = k => (typeof customListLabel === 'function' ? customListLabel(tab, k) : k);
   return keys.find(k => tasteListTier(tab, k, label(k)) === 1) || keys.find(k => tasteListTier(tab, k, label(k)) === 2) || keys[0] || MAIN_LIST_DEFAULT[tab] || 'Favorites';
 }
-async function addToMainList(tab) {
-  if (!isOwnProfile) return;
-  if (tab === 'music') { openFlexibleMusicPicker(); return; }
-  if (tab === 'comedy' || tab === 'podcasts') {
-    const lists = extraLists.filter(l => l.category === tab);
-    const main = lists.find(l => /fav|top|best|love/i.test(l.title || '')) || lists[0];
-    if (main) { openExtraPicker(main.id); return; }
-    await createExtraList(tab, MAIN_LIST_DEFAULT[tab]);     // creates it, then opens the picker
-    return;
-  }
-  createSuggestedList(tab, mainListFor(tab));              // opens the search for that list (creating it if needed)
-}
+async function addToMainList(tab) { openUnifiedPicker(tab); }
 // Main button adds to the main list; "or start a new list" (and import, where available) underneath.
 function applyListCta(tab, html) {
   if (!isOwnProfile || !html) return html;
@@ -6499,8 +6506,7 @@ function applyListCta(tab, html) {
     : html.replace(/(<\/button>)(<\/div>)$/, `$1${links}$2`);
 }
 function listCtaLinksHtml(tab, importSource) {
-  const imp = importSource ? ` <span class="list-links-sep" aria-hidden="true">·</span> <button type="button" class="list-import-link" onclick="openTasteImport('${importSource}','profile')">import from ${importSource === 'goodreads' ? 'Goodreads' : 'Letterboxd'}</button>` : '';
-  return `<div class="list-create-import"><button type="button" class="list-import-link" onclick="promptNewCustomList('${tab}')">or start a new list</button>${imp}</div>`;
+ return importSource?`<div class="list-create-import"><button type="button" class="list-import-link" onclick="openTasteImport('${importSource}','profile')">Import from ${importSource==='goodreads'?'Goodreads':'Letterboxd'}</button></div>`:'';
 }
 
 function promptNewCustomList(tab) {
@@ -12161,7 +12167,7 @@ function openCustomAddModal(tab, cat) {
   const inputId = tab === 'tv' ? 'tv-grid-search-input' : 'rich-grid-search-input';
   const resultsId = tab === 'tv' ? 'tv-grid-search-results' : 'rich-grid-search-results';
   const influencedByFieldId = tab === 'tv' ? 'tv-grid-influenced-by' : 'rich-grid-influenced-by';
-  document.getElementById(titleId).textContent = `Add to "${cat}"`;
+  document.getElementById(titleId).textContent = `Add to "${customListLabel(tab,cat)}"`;
   document.getElementById(inputId).value = '';
   document.getElementById(influencedByFieldId).value = '';
   document.getElementById(resultsId).innerHTML = '<span style="font-size:12.5px;color:var(--faint);">Start typing to search…</span>';
@@ -16955,6 +16961,6 @@ renderTasteInfluences();
 })();
 </script>
 
-<dialog id="music-picker"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2>Add music you love</h2><button type="button" class="profile-control" aria-label="Close music search" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p>Search a song, album or artist, then choose the right match.</p><input id="music-picker-query" class="tl-input" type="search" aria-label="Search songs, albums and artists" placeholder="Start typing a title or artist…" oninput="queueFlexibleMusic(this.value)"><div id="music-picker-results" aria-live="polite"></div><p id="music-picker-status" role="status"></p></dialog>
+<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div><label for="music-picker-query">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Start typing…" oninput="queueFlexibleMusic(this.value)"><div id="music-picker-results" aria-live="polite"></div><p id="music-picker-status" role="status"></p></dialog>
 </body>
 </html>
