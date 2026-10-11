@@ -2054,6 +2054,25 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .ti-picked-change:hover { color: var(--text); }
 @media (max-width: 420px) { .ti-picked { flex-wrap: wrap; } .ti-picked-badge { order: 3; } }
 @media (pointer: coarse) { .ti-picked-change { min-height: 44px; min-width: 44px; } }
+
+/* Horizontal scroll arrows */
+.hscroll-host { position: relative; }
+.hscroll-btn { position: absolute; z-index: 3; width: 56px; padding: 0; border: 0; cursor: pointer; display: flex; align-items: center; color: #fff;
+  transition: opacity .18s ease; opacity: .9; }
+.hscroll-prev { justify-content: flex-start; padding-left: 6px; background: linear-gradient(to right, rgba(12,12,13,.85), rgba(12,12,13,0)); }
+.hscroll-next { justify-content: flex-end; padding-right: 6px; background: linear-gradient(to left, rgba(12,12,13,.85), rgba(12,12,13,0)); }
+.hscroll-chev { width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(24,24,28,.78); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 4px 14px rgba(0,0,0,.45); transition: transform .15s ease, background .15s ease; }
+.hscroll-host:hover .hscroll-btn { opacity: 1; }
+.hscroll-btn:hover .hscroll-chev, .hscroll-btn:focus-visible .hscroll-chev { background: rgba(124,77,255,.9); border-color: rgba(124,77,255,1); transform: scale(1.08); }
+.hscroll-btn:focus-visible { outline: none; }
+.hscroll-btn.is-off { opacity: 0 !important; pointer-events: none; }
+@media (pointer: coarse) { .hscroll-btn { width: 44px; } .hscroll-chev { width: 30px; height: 30px; } }
+@media (prefers-reduced-motion: reduce) { .hscroll-btn, .hscroll-chev { transition: none; } }
+
+/* Comment notifications: the comment itself + a reply cue */
+.notif-comment { display: block; margin-top: 4px; padding: 6px 10px; border-left: 2px solid rgba(124,77,255,.6); background: rgba(255,255,255,.04); border-radius: 0 6px 6px 0; color: var(--text); font-size: 12.5px; line-height: 1.45; white-space: normal; overflow-wrap: anywhere; }
+.notif-reply { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 700; color: var(--accent, #7C4DFF); }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -3698,7 +3717,14 @@ async function canonicalizeTasteItem(category, title, sub) {
       const want = tasteNorm(title), wantSub = tasteNorm(sub);
       const sameTitle = r => { const n = tasteNorm(r.title), main = tasteNorm(String(r.title).split(/[:(]/)[0]); return n === want || main === want; };
       const subOk = r => !wantSub || !r.sub || tasteNorm(r.sub) === wantSub;
-      const hit = pool.find(r => sameTitle(r) && subOk(r) && r.sub) || pool.find(r => sameTitle(r) && subOk(r));
+      let hit = pool.find(r => sameTitle(r) && subOk(r) && r.sub) || pool.find(r => sameTitle(r) && subOk(r));
+      // A title typed partway and saved without picking from the dropdown ("Die My Lo"): use the catalog
+      // title it clearly starts — at least 4 characters typed, and at least half of the full title.
+      if (!hit && want.length >= 4) {
+        const partial = pool.filter(r => { const n = tasteNorm(r.title); return n.startsWith(want) && want.length >= n.length * 0.5 && subOk(r); });
+        // Only when it points to exactly one title ("the bea" could be The Bear or The Beast — leave those alone).
+        if (new Set(partial.map(r => tasteNorm(r.title))).size === 1) hit = partial.find(r => r.sub) || partial[0];
+      }
       if (hit) {
         matched = true;
         // Keep the main title when the catalog adds a subtitle you didn't type.
@@ -4720,6 +4746,7 @@ function renderAuthWidget() {
     const name = firstNameOnly(currentProfile?.display_name) || currentUser.email;
     el.innerHTML = `
       <a href="javascript:void(0)" onclick="goToMyProfileView()" style="color:var(--muted);text-decoration:none;">${esc(name)}</a>
+      <button type="button" class="sl-btn" onclick="inviteFriendToTasteList()" style="margin-left:10px;padding:6px 10px">Invite friends</button>
       <a href="javascript:void(0)" onclick="signOut()" style="color:var(--accent);text-decoration:none;margin-left:10px;">Sign out</a>`;
   } else {
     el.innerHTML = `<a href="javascript:void(0)" onclick="openAuthModal('signin')" style="color:var(--accent);text-decoration:none;">Sign in</a>`;
@@ -4814,7 +4841,7 @@ function toggleAuthMode() {
 function updateAuthModalMode() {
   const isSignIn = authMode === 'signin';
   document.getElementById('auth-modal-title').textContent = isSignIn ? 'Sign in' : 'Create account';
-  document.getElementById('auth-modal-sub').textContent = isSignIn ? 'Welcome back.' : 'Build your own taste list.';
+  document.getElementById('auth-modal-sub').textContent = isSignIn ? 'Welcome back.' : 'Build your own taste list. You’ll follow Sreya and, if invited, your inviter to get started. You can unfollow anytime.';
   document.getElementById('auth-submit-btn').textContent = isSignIn ? 'Sign in' : 'Sign up';
   document.getElementById('auth-toggle-text').textContent = isSignIn ? "Don't have an account?" : 'Already have an account?';
   document.getElementById('auth-toggle-link').textContent = isSignIn ? 'Sign up' : 'Sign in';
@@ -4833,7 +4860,7 @@ async function submitAuthForm() {
   try {
     const { error } = authMode === 'signin'
       ? await sb.auth.signInWithPassword({ email, password })
-      : await sb.auth.signUp({ email, password, options: { emailRedirectTo: listInviteToken() ? location.origin+'/?join='+encodeURIComponent(listInviteToken()) : inviteSignupPending ? inviteReturnUrl() : location.origin + '/' } });
+      : await sb.auth.signUp({ email, password, options: { emailRedirectTo: friendInviteToken() ? location.origin+'/?invite='+encodeURIComponent(friendInviteToken()) : listInviteToken() ? location.origin+'/?join='+encodeURIComponent(listInviteToken()) : inviteSignupPending ? inviteReturnUrl() : location.origin + '/' } });
     if (error) throw error;
     if (authMode === 'signup') {
       errEl.style.color = '#22C55E';
@@ -4891,34 +4918,31 @@ function startInviteSignup(method) {
   openAuthModal('signup');
 }
 // After an invited friend finishes signing up: offer (once) to follow whoever invited them.
-async function maybeOfferInviterFollow() {
-  if (!currentUser || !sb || shouldShowOnboarding()) return;
-  let inviter = null;
-  try { inviter = localStorage.getItem('tl_invited_by'); } catch (_) {}
-  if (!inviter) return;
-  try { localStorage.removeItem('tl_invited_by'); } catch (_) {}
-  try {
-    const { data: prof } = await sb.from('profiles').select('id, username, display_name, is_public').eq('username', inviter).maybeSingle();
-    if (!prof || prof.id === currentUser.id) return;
-    const { data: existing } = await sb.from('follows').select('id').eq('follower_id', currentUser.id).eq('followed_id', prof.id).maybeSingle();
-    if (existing) return;
-    const name = firstNameOnly(prof.display_name) || prof.username;
-    const toast = document.createElement('div');
-    toast.setAttribute('role', 'status');
-    toast.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:950;display:flex;align-items:center;gap:14px;padding:14px 16px 14px 20px;border-radius:16px;background:rgba(24,22,28,.95);border:1px solid rgba(203,176,244,.3);box-shadow:0 16px 48px rgba(0,0,0,.6);font-size:14px;color:#eee;max-width:calc(100% - 32px);';
-    toast.innerHTML = `<span>You joined from ${esc(name)}'s TasteList.</span><button style="font:inherit;font-weight:600;font-size:13px;background:#dbc0ff;color:#17111e;border:none;border-radius:999px;padding:8px 16px;cursor:pointer;white-space:nowrap;">Follow ${esc(name)}</button><button aria-label="Dismiss" style="background:none;border:none;color:#8d8a84;cursor:pointer;font-size:14px;">✕</button>`;
-    const [followBtn, closeBtn] = toast.querySelectorAll('button');
-    closeBtn.onclick = () => toast.remove();
-    followBtn.onclick = async () => {
-      followBtn.disabled = true;
-      const status = prof.is_public === false ? 'pending' : 'accepted';
-      const { error } = await sb.from('follows').insert({ follower_id: currentUser.id, followed_id: prof.id, status });
-      toast.querySelector('span').textContent = error ? 'Couldn’t follow right now — try from their profile.' : (status === 'pending' ? `Follow request sent to ${name}.` : `You're following ${name}.`);
-      followBtn.remove();
-      setTimeout(() => toast.remove(), 3500);
-    };
-    document.body.appendChild(toast);
-  } catch (_) {}
+let signupFollowBusy=false;
+function friendInviteToken(){
+ const t=new URLSearchParams(location.search).get('invite');
+ return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t||'')?t:null;
+}
+async function inviteFriendToTasteList(){
+ if(!currentUser)return;
+ try{
+  const {data,error}=await sb.rpc('create_friend_invite');if(error||!data)throw error||Error('Could not create invitation.');
+  const url='https://tastelist.app/?invite='+encodeURIComponent(data);
+  if(navigator.share)await navigator.share({title:'Join me on TasteList',text:'Make your TasteList and discover what your friends love. Join me!',url});
+  else{await navigator.clipboard.writeText(url);showToast('Invitation link copied. Send it to a friend.');}
+ }catch(e){if(e.name!=='AbortError')showToast(e.message||'Could not create invitation. Please try again.');}
+}
+async function maybeOfferInviterFollow(){
+ if(!currentUser||!sb||signupFollowBusy)return;
+ const userId=currentUser.id;signupFollowBusy=true;
+ try{
+  const {error}=await sb.rpc('apply_signup_follows',{friend_token:friendInviteToken(),list_token:listInviteToken()});
+  if(error){console.error('Could not apply signup follows:',error);return;}
+  if(currentUser?.id!==userId)return;
+  // Remove referral credentials after the server records them; list invitations stay until joined.
+  if(friendInviteToken()){const u=new URL(location.href);u.searchParams.delete('invite');history.replaceState(null,'',u);}
+ }catch(e){console.error('Could not apply signup follows:',e);}
+ finally{signupFollowBusy=false;}
 }
 
 async function signInWithGoogle(redirectOverride) {
@@ -4935,7 +4959,7 @@ async function signInWithGoogle(redirectOverride) {
     back.hash = '';
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: (typeof redirectOverride === 'string' && redirectOverride) || (inviteSignupPending ? inviteReturnUrl() : back.toString()), queryParams: { prompt: 'select_account' } },
+      options: { redirectTo: friendInviteToken() ? location.origin+'/?invite='+encodeURIComponent(friendInviteToken()) : (typeof redirectOverride === 'string' && redirectOverride) || (inviteSignupPending ? inviteReturnUrl() : back.toString()), queryParams: { prompt: 'select_account' } },
     });
     if (error) throw error;
   } catch (e) {
@@ -5470,7 +5494,7 @@ async function loadNotifications() {
   el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:12.5px;">Loading…</div>';
   try {
     const { data, error } = await sb.from('notifications')
-      .select('id, type, target_type, target_id, reaction, comment_preview, read, created_at, profiles!notifications_actor_id_fkey(username, display_name)')
+      .select('id, type, target_type, target_id, reaction, comment_preview, target_label, read, created_at, profiles!notifications_actor_id_fkey(username, display_name)')
       .eq('user_id', currentUser.id)
       .order('created_at', { ascending: false })
       .limit(20);
@@ -5494,9 +5518,73 @@ async function loadNotifications() {
   }
 }
 
+const NOTIF_TARGET_NOUN = { activity_feed: 'post', artist: 'artist', album: 'album', book: 'book', movie: 'movie', tv: 'show', director: 'director', list: 'list', taste_list: 'shared list', taste_list_item: 'pick' };
+const NOTIF_ROWS = new Map();
+// Comment notification → open the commented item on your own profile (or shared list), open its
+// comments, scroll there and put the cursor in the reply box.
+async function openCommentTarget(notifId) {
+  const n = NOTIF_ROWS.get(notifId); if (!n) return;
+  closeNotificationsDropdown();
+  const type = n.target_type, id = n.target_id;
+  const focusReply = async () => {
+    for (let t = 0; t < 20; t++) {   // the thread loads asynchronously; wait briefly for its reply box
+      const box = document.getElementById(`comment-input-${type}-${id}`);
+      if (box && box.offsetParent) { box.scrollIntoView({ block: 'center', behavior: 'smooth' }); box.focus({ preventScroll: true }); return true; }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    return false;
+  };
+  const openInline = async () => {
+    const el = document.getElementById(`inline-comments-${type}-${id}`);
+    if (!el) return false;
+    if (el.style.display !== 'block') await toggleInlineComments(type, id);
+    return focusReply();
+  };
+  try {
+    if (!['taste_list', 'taste_list_item'].includes(type) && !isOwnProfile) await goToMyProfileView();
+    if (type === 'activity_feed') {
+      switchTab('profile');
+      const idx = ACTIVITY_FEED_ITEMS.findIndex(i => String(i.id) === String(id));
+      if (idx >= 0) { await openActivitySummary(idx); if (await focusReply()) return; }
+    } else if (['artist', 'album', 'movie', 'tv', 'book'].includes(type)) {
+      const tab = { artist: 'music', album: 'albums', movie: 'movies', tv: 'tv', book: 'books' }[type];
+      switchTab('favorites'); switchFavoritesFilter(tab === 'albums' ? 'music' : tab);
+      for (const [cat, items] of Object.entries(CUSTOM_LISTS[tab] || {})) {
+        const i = items.findIndex(x => String(x.rowId || x.id) === String(id));
+        if (i < 0) continue;
+        CUSTOM_LIST_EXPANDED[tab] = CUSTOM_LIST_EXPANDED[tab] || {};
+        CUSTOM_LIST_EXPANDED[tab][cat] = i;
+        renderCustomLists(tab);
+        if (await openInline()) return;
+      }
+      if (await openInline()) return;
+    } else if (type === 'director') {
+      switchTab('favorites'); switchFavoritesFilter('movies');
+      if (await openInline()) return;
+    } else if (type === 'list') {
+      const { data } = await sb.from('profile_lists').select('tab').eq('id', id).maybeSingle();
+      switchTab('favorites'); switchFavoritesFilter(data?.tab === 'albums' ? 'music' : (data?.tab || 'music'));
+      if (await openInline()) return;
+    } else if (type === 'taste_list') {
+      await openTasteList(id);
+      if (await openInline()) return;
+    } else if (type === 'taste_list_item') {
+      const { data } = await sb.from('taste_list_items').select('list_id').eq('id', id).maybeSingle();
+      if (data?.list_id) {
+        await openTasteList(data.list_id);
+        const idx = tripPlaylistFlatItems.findIndex(i => String(i.id) === String(id));
+        if (idx >= 0) { await openTripPlaylistSummary(idx); if (await focusReply()) return; }
+      }
+    }
+    showToast('Couldn’t find that comment — the item may have been removed.');
+  } catch (e) {
+    console.error('Failed to open comment:', e);
+    showToast('Couldn’t open that comment. Please try again.');
+  }
+}
 const NOTIF_COPY = {
   reaction: (who, n) => `${who} reacted ${n.reaction || '👍'} to your update`,
-  comment: (who, n) => `${who} commented: "${esc((n.comment_preview || '').slice(0, 80))}"`,
+  comment: (who, n) => `${who} commented on ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'your ' + (NOTIF_TARGET_NOUN[n.target_type] || 'post')}:<span class="notif-comment">“${esc(n.comment_preview || '')}”</span><span class="notif-reply">Reply →</span>`,
   follow_request: (who) => `${who} wants to follow you`,
   follow_accepted: (who) => `${who} accepted your follow request`,
   new_follower: (who) => `${who} started following you`,
@@ -5517,7 +5605,10 @@ function renderNotificationsDropdown(rows) {
       const copyFn = NOTIF_COPY[n.type];
       const text = copyFn ? copyFn(who, n) : 'Something happened';
       const isRequest = n.type === 'follow_request';
-      return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);${n.read ? '' : 'background:rgba(124,77,255,0.08);'}display:flex;flex-direction:column;gap:6px;${isRequest ? '' : 'cursor:pointer;'}" ${isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`}>
+      NOTIF_ROWS.set(n.id, n);
+      const isComment = n.type === 'comment' && n.target_type && n.target_id;
+      const action = isComment ? `onclick="openCommentTarget('${n.id}')"` : (isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`);
+      return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);${n.read ? '' : 'background:rgba(124,77,255,0.08);'}display:flex;flex-direction:column;gap:6px;${isRequest ? '' : 'cursor:pointer;'}" ${action}>
         <div style="font-size:13px;color:var(--text);line-height:1.4;">${text}</div>
         <div style="font-size:11px;color:var(--faint);">${formatActivityDate(n.created_at)}</div>
         ${isRequest && n.requestStatus === 'accepted' ? `<div style="font-size:11.5px;color:var(--accent);font-weight:600;">✓ Accepted — they now follow you</div>` : ''}
@@ -6600,6 +6691,15 @@ function queueFlexibleMusic(q){
  document.getElementById('music-picker-results').innerHTML='';if(q.trim().length<2)return;
  flexibleMusic.timer=setTimeout(()=>searchFlexibleMusic(q.trim(),request),250);
 }
+const artistPreviewPhotos=new Map();
+async function previewArtistPhoto(name){
+ const key=name.trim().toLowerCase();
+ if(!artistPreviewPhotos.has(key))artistPreviewPhotos.set(key,Promise.race([
+  lookupArtistArt(name).then(p=>p?.tilePhoto||p?.bandPhoto||''),
+  new Promise(resolve=>setTimeout(()=>resolve(''),12000))
+ ]).catch(()=>''));
+ const art=await artistPreviewPhotos.get(key);if(!art)artistPreviewPhotos.delete(key);return art;
+}
 async function searchFlexibleMusic(q,request){
  const userId=currentUser?.id,el=document.getElementById('music-picker-results');el.innerHTML='<p>Searching…</p>';
  const kinds=({music:['song','album','artist'],albums:['album'],movies:['movie'],tv:['tv'],books:['book'],podcasts:['podcast','episode'],comedy:['comedian','special']})[flexibleMusic.tab]||[];
@@ -6608,6 +6708,18 @@ async function searchFlexibleMusic(q,request){
  flexibleMusic.results=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)).slice(0,30);
  el.innerHTML=flexibleMusic.results.map((p,i)=>`<button type="button" class="extra-result" onclick="saveFlexibleMusic(${i})">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.album,p.year].filter(Boolean).join(' · '))}</small></span><span>+</span></button>`).join('')||'<p>No matches. Try another title or creator.</p>';
  if(results.some(r=>r.status==='rejected'))el.innerHTML+='<p>Some results could not load. Search again to retry.</p>';
+ const artistJobs=flexibleMusic.results.map((p,index)=>({p,index})).filter(({p})=>p.kind==='artist'&&!onboardingArt(p));
+ let nextArtist=0;
+ async function worker(){while(nextArtist<artistJobs.length){
+  const {p,index}=artistJobs[nextArtist++];
+  const art=await previewArtistPhoto(p.title);
+  if(request!==flexibleMusic.request||userId!==currentUser?.id)return;
+  if(!art||flexibleMusic.results[index]!==p)continue;
+  p.art=art;
+  const tile=el.querySelectorAll('button.extra-result')[index]?.querySelector('.ob-art');
+  if(tile){const image=document.createElement('img');image.alt='';image.src=art;image.onerror=()=>image.remove();tile.replaceChildren(image);}
+ }}
+ await Promise.allSettled([worker(),worker(),worker()]);
 }
 async function saveFlexibleMusic(index){
  const p=flexibleMusic.results[index];if(!p||flexibleMusic.saving||!isOwnProfile)return;
@@ -6619,9 +6731,18 @@ async function saveFlexibleMusic(index){
  try{
   if(!await requireFreshSession()||currentUser?.id!==userId||viewedProfile?.id!==userId)throw Error('Please sign in to your own profile.');
   const friend_tags=pickerFriendTags.selected.map(({id,username,display_name})=>({id,username,display_name}));
-  await saveOnboardingItem({...p,category,friend_tags},userId);
+  // A song or album picked while an artist list is selected goes to the matching kind of list
+  // (and an artist picked for a song/album list goes to the main artist list).
+  let target=category;
+  if(flexibleMusic.tab==='music'){
+   const isArtistList=!!CUSTOM_LISTS.music?.[category], isAlbumList=!!CUSTOM_LISTS.albums?.[category], isSongList=extraLists.some(l=>l.category==='music'&&l.title===category);
+   if(p.kind==='song'&&(isArtistList||isAlbumList))target='Favorite Songs';
+   else if(p.kind==='album'&&(isArtistList||isSongList))target='Favorite Albums';
+   else if(p.kind==='artist'&&(isAlbumList||isSongList))target=mainListFor('music');
+  }
+  await saveOnboardingItem({...p,category:target,friend_tags},userId);
   if(currentUser?.id!==userId)return;
-  status.textContent=p.title+' added to '+customListLabel(flexibleMusic.tab,category)+'.';renderExtraLists();renderProfileTab();scheduleTasteConstellation();
+  status.textContent=p.title+' added to '+customListLabel(p.kind==='album'?'albums':flexibleMusic.tab,target)+'.';renderExtraLists();renderProfileTab();scheduleTasteConstellation();
  }catch(e){status.textContent=e.message||'Could not save. Please try again.';}
  finally{flexibleMusic.saving=false;}
 }
@@ -7448,7 +7569,7 @@ function renderOnboardingJourney() {
     body = `<div class="ob-finish"><div class="ob-personal-collage" aria-label="Your saved favorites">${collage || '<div class="ob-empty-art">Your next favorite<br>is waiting.</div>'}</div><div><h1 id="onboarding-title" tabindex="-1">Looks good.</h1><p>This is just the beginning.<br>You can always add, remove,<br>and explore more.</p><ul><li>✓ &nbsp; ${picks.length} ${picks.length===1?'favorite':'favorites'} added</li><li>✓ &nbsp; ${categories.size} ${categories.size===1?'category':'categories'} explored</li><li>✓ &nbsp; Your taste, in one place</li></ul>${btn('Go to activity feed →',"finishOnboarding('completed')",true)}<button class="ob-text-link" onclick="onboardingAddAnother()">Continue adding</button><button class="ob-text-link" onclick="focusPeopleSearch()">Find friends first</button></div></div>`;
     footer = `${btn('← Back','advanceOnboarding(1)')}<span class="ob-motto">Same obsessions. A fuller you.</span>`;
   }
-  el.innerHTML = `<section class="ob-frame" aria-labelledby="onboarding-title"><header class="ob-top"><img class="tl-logo tl-logo-ob" src="${TL_LOGO_SRC}" alt="TasteList"><div class="ob-progress" aria-label="Step ${step+1} of 3">${[0,1,2].map(i=>`<span class="${i<=step?'filled':''}"></span>`).join('')}</div><span>${step+1} / 3</span></header><main class="ob-content">${body}</main><footer class="ob-footer"><p id="ob-footer-feedback" role="alert" hidden></p>${footer}</footer><button class="ob-skip" onclick="finishOnboarding('skipped')">Skip for now</button></section>`;
+  el.innerHTML = `<section class="ob-frame" aria-labelledby="onboarding-title"><header class="ob-top"><div class="ob-progress" aria-label="Step ${step+1} of 3">${[0,1,2].map(i=>`<span class="${i<=step?'filled':''}"></span>`).join('')}</div><span>${step+1} / 3</span></header><main class="ob-content">${body}</main><footer class="ob-footer"><p id="ob-footer-feedback" role="alert" hidden></p>${footer}</footer><button class="ob-skip" onclick="finishOnboarding('skipped')">Skip for now</button></section>`;
   if (step===0 && !state.added) {
     loadOnboardingStarters();
     renderOnboardingSearchResults();
@@ -11507,6 +11628,51 @@ function toggleMovieEditMode() {
 
 // Each list's edit button sits next to the list's name. Sections render it in their controls row
 // (with Add / Rename / Delete while editing); move it up into the header, wherever it's rendered.
+
+// ── Arrows on horizontally scrolling rows (Netflix-style) ──────────────────────────────────────────
+// A soft edge fade with a chevron appears on whichever side has more items; hidden at each end and on
+// rows that fit. Attached automatically to every scrolling list row as it's drawn.
+const HSCROLL_SELECTOR = '.artist-grid';
+const hsResize = 'ResizeObserver' in window ? new ResizeObserver(entries => entries.forEach(e => updateHScroll(e.target))) : null;
+function setupHScroll(grid) {
+  const host = grid.parentElement;
+  if (!host) return;
+  // Drop arrows left behind by a row that was redrawn.
+  host.querySelectorAll(':scope > .hscroll-btn').forEach(b => { if (b._grid !== grid) b.remove(); });
+  if (grid._hs && grid._hs.prev.isConnected) { updateHScroll(grid); return; }
+  host.classList.add('hscroll-host');
+  const make = dir => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'hscroll-btn hscroll-' + dir + ' is-off';
+    b.setAttribute('aria-label', dir === 'prev' ? 'Scroll left' : 'Scroll right');
+    b.innerHTML = `<span class="hscroll-chev" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="${dir === 'prev' ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6'}"/></svg></span>`;
+    b._grid = grid;
+    b.addEventListener('click', e => {
+      e.stopPropagation();
+      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      grid.scrollBy({ left: (dir === 'prev' ? -1 : 1) * Math.max(180, grid.clientWidth * 0.85), behavior: reduce ? 'auto' : 'smooth' });
+    });
+    host.appendChild(b);
+    return b;
+  };
+  grid._hs = { prev: make('prev'), next: make('next') };
+  grid.addEventListener('scroll', () => updateHScroll(grid), { passive: true });
+  hsResize?.observe(grid);
+  updateHScroll(grid);
+}
+function updateHScroll(grid) {
+  const h = grid._hs; if (!h || !grid.isConnected) return;
+  const max = grid.scrollWidth - grid.clientWidth, overflow = max > 4;
+  const top = grid.offsetTop, height = Math.max(0, grid.clientHeight - 6);
+  for (const b of [h.prev, h.next]) { b.style.top = top + 'px'; b.style.height = height + 'px'; }
+  h.prev.style.left = grid.offsetLeft + 'px';
+  h.next.style.left = (grid.offsetLeft + grid.clientWidth - h.next.offsetWidth) + 'px';
+  h.prev.classList.toggle('is-off', !(overflow && grid.scrollLeft > 4));
+  h.next.classList.toggle('is-off', !(overflow && grid.scrollLeft < max - 4));
+}
+function scanHScroll() { document.querySelectorAll(HSCROLL_SELECTOR).forEach(g => { if (g.offsetParent) setupHScroll(g); }); }
+window.addEventListener('resize', () => document.querySelectorAll(HSCROLL_SELECTOR).forEach(updateHScroll), { passive: true });
+
 function placeEditToggles() {
   document.querySelectorAll('.section-controls-row').forEach(row => {
     const toggle = row.querySelector('button.list-icon-control[aria-pressed]');
@@ -11524,7 +11690,7 @@ function placeEditToggles() {
 }
 (() => {
   let queued = false;
-  const run = () => { queued = false; placeEditToggles(); };
+  const run = () => { queued = false; placeEditToggles(); scanHScroll(); };
   const start = () => {
     const root = document.getElementById('app-content') || document.body;
     new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(root, { childList: true, subtree: true });
