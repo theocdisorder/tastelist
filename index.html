@@ -1973,7 +1973,7 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .wn-add { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 0 20px 14px; }
 .wn-add-btn { font: inherit; font-size: 13.5px; font-weight: 600; color: #fff; background: var(--accent); border: 1px solid var(--accent); border-radius: 10px; padding: 11px 14px; cursor: pointer; }
 .wn-add-btn:hover { filter: brightness(1.08); }
-.wn-add-btn.is-done { background: rgba(255,255,255,.06); border-color: var(--border); color: var(--text); cursor: default; filter: none; }
+.wn-add-btn.is-done { background: rgba(255,255,255,.06); border-color: var(--border); color: var(--text); cursor: pointer; filter: none; }
 .wn-add-btn:disabled:not(.is-done) { opacity: .7; cursor: progress; }
 .wn-add-note { font-size: 12px; color: var(--muted); text-align: center; }
 .wn-panel-strip { grid-column: 1 / -1; display: flex; justify-content: center; margin: -4px 0 8px; }
@@ -14717,9 +14717,10 @@ document.addEventListener('click', e => {
 // found it from. If it's already there, that person is added as another recommender instead.
 const WN_PAYLOADS = new Map(); let wnSeq = 0;
 const wnSaved=new Set();
-function wnSavedKey(p){return JSON.stringify([currentUser?.id,p.type,p.title.toLowerCase(),p.fromId]);}
+const wnBusy=new Set();
+function wnSavedKey(p){return JSON.stringify([currentUser?.id,p.type,p.title.toLowerCase()]);}
 function wnBookmarkIcon(){return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg>';}
-function wnBookmarkState(btn,saved){if(!btn)return;btn.innerHTML=wnBookmarkIcon();btn.classList.toggle('is-done',saved);btn.setAttribute('aria-label',saved?'Saved to What’s Next':'Save to What’s Next');btn.setAttribute('aria-pressed',String(saved));btn.title=saved?'Saved to What’s Next':'Save to What’s Next';btn.disabled=saved;}
+function wnBookmarkState(btn,saved){if(!btn)return;btn.innerHTML=wnBookmarkIcon();btn.classList.toggle('is-done',saved);btn.setAttribute('aria-label',saved?'Remove from What’s Next':'Save to What’s Next');btn.setAttribute('aria-pressed',String(saved));btn.title=saved?'Remove from What’s Next':'Save to What’s Next';btn.disabled=false;}
 function wnRecType(kind) {
   return ({ movie: 'film', film: 'film', tv: 'tv', book: 'book', song: 'song', album: 'album', artist: 'artist', podcast: 'podcast', episode: 'podcast', article: 'article' })[kind] || 'other';
 }
@@ -14730,7 +14731,7 @@ function whatsNextButtonHtml(p) {
   WN_PAYLOADS.set(key, { title: String(p.title).trim(), type: wnRecType(p.kind), art: p.art || '', tmdbId: p.tmdbId || null, fromId: p.fromId, fromName: p.fromName || '' });
   const first = String(p.fromName || '').trim().split(/\s+/)[0];
   const saved=wnSaved.has(wnSavedKey(WN_PAYLOADS.get(key)));
-  return `<span class="wn-add"><button type="button" class="wn-add-btn ${saved?'is-done':''}" aria-label="${saved?'Saved to What’s Next':'Save to What’s Next'}" aria-pressed="${saved}" title="${saved?'Saved to What’s Next':'Save to What’s Next'}" ${saved?'disabled':''} onclick="event.stopPropagation();addToWhatsNext('${key}', this)">${wnBookmarkIcon()}</button><span class="wn-add-note">${saved?'Saved to What’s Next':'Save for later'}${first?' · Discovered through '+esc(first):''}</span></span>`;
+  return `<span class="wn-add"><button type="button" class="wn-add-btn ${saved?'is-done':''}" aria-label="${saved?'Remove from What’s Next':'Save to What’s Next'}" aria-pressed="${saved}" title="${saved?'Remove from What’s Next':'Save to What’s Next'}" data-wn-key="${key}" onclick="event.stopPropagation();addToWhatsNext('${key}', this)">${wnBookmarkIcon()}</button><span class="wn-add-note">${saved?'Saved to What’s Next':'Save for later'}${first?' · Discovered through '+esc(first):''}</span></span>`;
 }
 function personFromId(id) {
   if (!id) return null;
@@ -14762,27 +14763,46 @@ function favoritesWhatsNextHtml(tab, item) {
 async function addToWhatsNext(key, btn) {
   const p = WN_PAYLOADS.get(key); if (!p) return;
   if (!currentUser || !sb) { openAuthModal('signup'); return; }
-  if (!(await requireFreshSession())) { showToast(SESSION_EXPIRED_MESSAGE); return; }
+  const userId=currentUser.id,stateKey=wnSavedKey(p);
+  if(wnBusy.has(stateKey))return;wnBusy.add(stateKey);
+  const wasSaved=wnSaved.has(stateKey);
+  try { if(!(await requireFreshSession())||currentUser?.id!==userId){showToast(SESSION_EXPIRED_MESSAGE);return;}
+  } catch(_){showToast('Please sign in again.');return;}
+  finally{wnBusy.delete(stateKey);}
+  if(wnBusy.has(stateKey))return;wnBusy.add(stateKey);
   const label = btn?.innerHTML;
-  if (btn) { btn.disabled = true; btn.setAttribute('aria-label','Saving to What’s Next');btn.setAttribute('aria-busy','true'); }
+  if (btn) { btn.disabled = true; btn.setAttribute('aria-label',wasSaved?'Removing from What’s Next':'Saving to What’s Next');btn.setAttribute('aria-busy','true'); }
   const tag = { user_id: p.fromId, name: p.fromName || '' };
   const first = String(p.fromName || '').split(/\s+/)[0] || 'them';
   try {
     const pattern = p.title.replace(/[\\%_]/g, m => '\\' + m);
-    const { data: existing, error: findErr } = await sb.from('friend_recs').select('id, recommenders').eq('user_id', currentUser.id).eq('type', p.type).ilike('title', pattern).limit(1);
+    const { data: existing, error: findErr } = await sb.from('friend_recs').select('id, recommenders').eq('user_id', userId).eq('type', p.type).ilike('title', pattern).limit(1);
     if (findErr) throw findErr;
+    if(currentUser?.id!==userId)throw Error('Account changed. Please try again.');
     let message;
+    if(wasSaved){
+      if(existing?.length){
+        const {data:removed,error}=await sb.from('friend_recs').delete().eq('id',existing[0].id).eq('user_id',userId).select('id');
+        if(error)throw error;
+        if(!removed?.length)throw Error('Could not remove the item. Please retry.');
+      }
+      wnSaved.delete(stateKey);
+      if(btn){btn.removeAttribute('aria-busy');wnBookmarkState(btn,false);const note=btn.parentElement?.querySelector('.wn-add-note');if(note)note.textContent='Save for later · Discovered through '+first;}
+      if(isOwnProfile&&currentUser?.id===userId){await loadFriendRecsFromSupabase(userId);renderFriendRecs();}
+      showToast('Removed from your What’s Next.');
+      return;
+    }
     if (existing?.length) {
       const row = existing[0], list = Array.isArray(row.recommenders) ? row.recommenders : [];
       if (list.some(r => r.user_id === tag.user_id)) message = `Already on your What’s Next, rec’d by ${first}.`;
       else {
-        const { error } = await sb.from('friend_recs').update({ recommenders: [...list, tag].slice(0, 20) }).eq('id', row.id).eq('user_id', currentUser.id);
+        const { error } = await sb.from('friend_recs').update({ recommenders: [...list, tag].slice(0, 20) }).eq('id', row.id).eq('user_id', userId);
         if (error) throw error;
         message = `Already on your What’s Next — added ${first} as a recommender.`;
       }
     } else {
-      const { data: last } = await sb.from('friend_recs').select('sort_order').eq('user_id', currentUser.id).order('sort_order', { ascending: false, nullsFirst: false }).limit(1);
-      const row = { user_id: currentUser.id, title: p.title, type: p.type, art_url: p.art || null, recommenders: [tag], from_name: p.fromName || null, recommended_by_user_id: p.fromId, sort_order: ((last?.[0]?.sort_order) ?? -1) + 1 };
+      const { data: last } = await sb.from('friend_recs').select('sort_order').eq('user_id', userId).order('sort_order', { ascending: false, nullsFirst: false }).limit(1);
+      const row = { user_id: userId, title: p.title, type: p.type, art_url: p.art || null, recommenders: [tag], from_name: p.fromName || null, recommended_by_user_id: p.fromId, sort_order: ((last?.[0]?.sort_order) ?? -1) + 1 };
       if (p.tmdbId && (p.type === 'film' || p.type === 'tv')) row.tmdb_id = p.tmdbId;
       const { error } = await sb.from('friend_recs').insert(row);
       if (error) throw error;
@@ -14793,9 +14813,9 @@ async function addToWhatsNext(key, btn) {
     if (isOwnProfile) { try { await loadFriendRecsFromSupabase(currentUser.id); renderFriendRecs(); } catch (_) {} }
     showToast(message);
   } catch (e) {
-    if (btn) { btn.disabled = false; btn.innerHTML = label;btn.removeAttribute('aria-busy');btn.setAttribute('aria-label','Save to What’s Next'); }
-    showToast('Couldn’t add it to your What’s Next: ' + (e.message || 'please try again'));
-  }
+    if (btn) { btn.disabled = false; btn.removeAttribute('aria-busy');wnBookmarkState(btn,wnSaved.has(stateKey)); }
+    showToast('Couldn’t update your What’s Next: ' + (e.message || 'please try again'));
+  } finally {wnBusy.delete(stateKey);}
 }
 
 const summaryFeedRows = new Map();
