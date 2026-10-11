@@ -2140,6 +2140,19 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .ob-art.ob-podcast-art,#extra-podcasts .ob-art{aspect-ratio:1 / 1!important;height:auto!important;align-self:start;}
 .ob-art.ob-podcast-art img,#extra-podcasts .ob-art img{object-fit:contain!important;object-position:center!important;width:100%;height:100%;}
 </style>
+<style>
+.wn-cover{position:relative;flex-shrink:0;width:64px;height:64px;overflow:visible;}
+.wn-add{position:relative;display:inline-flex;align-items:center;padding:0;gap:8px;flex-direction:row;}
+.wn-add-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:7px;flex-shrink:0;border-radius:9px;border:1px solid #ffffff66;background:rgba(18,18,22,.9);color:white;cursor:pointer;box-shadow:0 2px 8px #0005;}
+.wn-add-btn.is-done{background:var(--accent);border-color:var(--accent);color:#fff;opacity:1;}
+.wn-add-btn.is-done svg{fill:currentColor;stroke:currentColor;}
+.wn-add-btn:focus-visible{outline:2px solid white;outline-offset:3px;}
+.wn-add-note{font-size:12px;text-align:left;}
+.wn-cover>.wn-add{position:absolute;top:-7px;right:-7px;z-index:3;}
+.wn-cover .wn-add-note{position:absolute;top:42px;left:0;width:180px;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;opacity:0;pointer-events:none;}
+.wn-cover .wn-add:hover .wn-add-note,.wn-cover .wn-add:focus-within .wn-add-note{opacity:1;}
+.wn-panel-strip{display:flex;justify-content:flex-start;}.wn-panel-strip .wn-add{width:auto;}
+</style>
 </head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
@@ -4449,7 +4462,7 @@ async function addInviteMember(userId, btn) {
   const list = allTasteLists.find(l => l.id === inviteListId);
   const person = (document.getElementById('invite-results')._people || []).find(p => p.id === userId);
   if (!list || !person || !list.isOwner) return;
-  btn.disabled = true; btn.textContent = 'Adding…';
+  btn.disabled = true; btn.setAttribute('aria-label','Saving to What’s Next');btn.setAttribute('aria-busy','true');
   if (!(await requireFreshSession())) { btn.disabled = false; btn.textContent = 'Invite'; showToast(SESSION_EXPIRED_MESSAGE); return; }
   try {
     const { error } = await sb.from('taste_list_collaborators').insert({ list_id: list.id, user_id: person.id });
@@ -13690,9 +13703,10 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
     <div style="position:relative;">
       <button onclick="closeActivitySummary()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:28px;height:28px;border-radius:50%;cursor:pointer;z-index:2;">✕</button>
       <div style="display:flex;gap:14px;padding:22px 50px 16px 20px;">
-        ${item.art
+        <div class="wn-cover">${item.art
           ? `<img src="${item.art}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0;">`
           : `<div style="width:64px;height:64px;border-radius:10px;background:${color}18;flex-shrink:0;"></div>`}
+        ${tripItemWhatsNextHtml(item)}</div>
         <div style="min-width:0;">
           <div style="font-size:17px;font-weight:700;color:var(--text);">${esc(item.title)}</div>${favoriteFriendTagsHtml(item)}
           <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(item.sub || '')}</div>
@@ -13712,7 +13726,6 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
         ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
         ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
       </div>` : ''}
-      ${tripItemWhatsNextHtml(item)}
     </div>`;
 }
 
@@ -14691,6 +14704,10 @@ document.addEventListener('click', e => {
 // Adds the item to the signed-in person's own What's Next, credited ("Rec'd by") to the person they
 // found it from. If it's already there, that person is added as another recommender instead.
 const WN_PAYLOADS = new Map(); let wnSeq = 0;
+const wnSaved=new Set();
+function wnSavedKey(p){return JSON.stringify([currentUser?.id,p.type,p.title.toLowerCase(),p.fromId]);}
+function wnBookmarkIcon(){return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg>';}
+function wnBookmarkState(btn,saved){if(!btn)return;btn.innerHTML=wnBookmarkIcon();btn.classList.toggle('is-done',saved);btn.setAttribute('aria-label',saved?'Saved to What’s Next':'Save to What’s Next');btn.setAttribute('aria-pressed',String(saved));btn.title=saved?'Saved to What’s Next':'Save to What’s Next';btn.disabled=saved;}
 function wnRecType(kind) {
   return ({ movie: 'film', film: 'film', tv: 'tv', book: 'book', song: 'song', album: 'album', artist: 'artist', podcast: 'podcast', episode: 'podcast', article: 'article' })[kind] || 'other';
 }
@@ -14700,7 +14717,8 @@ function whatsNextButtonHtml(p) {
   const key = 'wn' + (++wnSeq);
   WN_PAYLOADS.set(key, { title: String(p.title).trim(), type: wnRecType(p.kind), art: p.art || '', tmdbId: p.tmdbId || null, fromId: p.fromId, fromName: p.fromName || '' });
   const first = String(p.fromName || '').trim().split(/\s+/)[0];
-  return `<div class="wn-add"><button type="button" class="wn-add-btn" onclick="addToWhatsNext('${key}', this)">+ Add to my What’s Next</button>${first ? `<span class="wn-add-note">We’ll note it was rec’d by ${esc(first)}</span>` : ''}</div>`;
+  const saved=wnSaved.has(wnSavedKey(WN_PAYLOADS.get(key)));
+  return `<span class="wn-add"><button type="button" class="wn-add-btn ${saved?'is-done':''}" aria-label="${saved?'Saved to What’s Next':'Save to What’s Next'}" aria-pressed="${saved}" title="${saved?'Saved to What’s Next':'Save to What’s Next'}" ${saved?'disabled':''} onclick="event.stopPropagation();addToWhatsNext('${key}', this)">${wnBookmarkIcon()}</button><span class="wn-add-note">${saved?'Saved to What’s Next':'Save for later'}${first?' · Discovered through '+esc(first):''}</span></span>`;
 }
 function personFromId(id) {
   if (!id) return null;
@@ -14733,8 +14751,8 @@ async function addToWhatsNext(key, btn) {
   const p = WN_PAYLOADS.get(key); if (!p) return;
   if (!currentUser || !sb) { openAuthModal('signup'); return; }
   if (!(await requireFreshSession())) { showToast(SESSION_EXPIRED_MESSAGE); return; }
-  const label = btn?.textContent;
-  if (btn) { btn.disabled = true; btn.textContent = 'Adding…'; }
+  const label = btn?.innerHTML;
+  if (btn) { btn.disabled = true; btn.setAttribute('aria-label','Saving to What’s Next');btn.setAttribute('aria-busy','true'); }
   const tag = { user_id: p.fromId, name: p.fromName || '' };
   const first = String(p.fromName || '').split(/\s+/)[0] || 'them';
   try {
@@ -14758,11 +14776,12 @@ async function addToWhatsNext(key, btn) {
       if (error) throw error;
       message = `Added to your What’s Next, rec’d by ${first}.`;
     }
-    if (btn) { btn.textContent = '✓ On your What’s Next'; btn.classList.add('is-done'); }
+    wnSaved.add(wnSavedKey(p));
+    if(btn){btn.removeAttribute('aria-busy');wnBookmarkState(btn,true);const note=btn.parentElement?.querySelector('.wn-add-note');if(note)note.textContent='Saved to What’s Next · Discovered through '+first;}
     if (isOwnProfile) { try { await loadFriendRecsFromSupabase(currentUser.id); renderFriendRecs(); } catch (_) {} }
     showToast(message);
   } catch (e) {
-    if (btn) { btn.disabled = false; btn.textContent = label; }
+    if (btn) { btn.disabled = false; btn.innerHTML = label;btn.removeAttribute('aria-busy');btn.setAttribute('aria-label','Save to What’s Next'); }
     showToast('Couldn’t add it to your What’s Next: ' + (e.message || 'please try again'));
   }
 }
@@ -14873,9 +14892,10 @@ function activitySummaryHtml(item, summary, loading) {
     <div style="position:relative;">
       <button onclick="closeActivitySummary()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:28px;height:28px;border-radius:50%;cursor:pointer;z-index:2;">✕</button>
       <div style="display:flex;gap:14px;padding:22px 50px 16px 20px;">
-        ${item.art
+        <div class="wn-cover">${item.art
           ? `<img src="${item.art}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0;">`
           : `<div style="width:64px;height:64px;border-radius:10px;background:${iconColor}18;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${mediaIcon(iconType,30)}</div>`}
+        ${activityWhatsNextHtml(item)}</div>
         <div style="min-width:0;">
           <div style="font-size:17px;font-weight:700;color:var(--text);">${esc(item.label)}</div>
           <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(item.sub)}</div>
@@ -14889,7 +14909,6 @@ function activitySummaryHtml(item, summary, loading) {
         ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
         ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
       </div>` : ''}
-      ${activityWhatsNextHtml(item)}
       <div style="padding:0 20px 20px;">
         <button onclick="switchTab('${item.tab}', document.getElementById('tab-btn-${item.tab}')); closeActivitySummary();" style="width:100%;background:${iconColor}18;border:1px solid ${iconColor}33;color:${iconColor};font-size:13px;font-weight:600;font-family:inherit;padding:10px;border-radius:10px;cursor:pointer;">Go to ${tabLabel}</button>
       </div>
