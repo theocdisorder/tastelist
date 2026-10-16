@@ -2183,6 +2183,20 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 @media (min-width: 721px) {
   #profile-feed .activity-card > .activity-card-art { display: flex !important; align-items: center; justify-content: center; align-self: stretch; }
 }
+
+/* Landing page: shared-list invitation */
+.landing-invite { max-width: 980px; margin: 8px auto 6px; padding: 0 var(--gutter, 20px); }
+.landing-invite[hidden] { display: none; }
+.landing-invite-card { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; border-radius: 16px; background: rgba(124,77,255,.12); border: 1px solid rgba(185,154,255,.45); }
+.landing-invite-icon { font-size: 22px; color: #cdb6ff; }
+.landing-invite-text { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 3px; color: var(--muted, #b8b3ad); font-size: 13.5px; line-height: 1.45; }
+.landing-invite-text strong { color: #f2efe9; font-size: 15.5px; }
+.landing-invite-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.landing-invite-primary { font: inherit; font-size: 14px; font-weight: 650; color: #fff; background: #7C4DFF; border: 1px solid #7C4DFF; border-radius: 999px; padding: 10px 18px; cursor: pointer; }
+.landing-invite-primary:hover { filter: brightness(1.08); }
+.landing-invite-link { font: inherit; font-size: 13px; color: #cdb6ff; background: none; border: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 4px 2px; }
+@media (max-width: 600px) { .landing-invite-actions { width: 100%; } .landing-invite-primary { flex: 1; } }
+@media (pointer: coarse) { .landing-invite-primary, .landing-invite-link { min-height: 44px; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -2468,6 +2482,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 <div id="landing-page" style="display:none;min-height:100vh;">
   <div class="ob-landing">
     <nav class="ob-landing-nav" aria-label="Account"><img class="tl-logo tl-logo-landing" alt="TasteList"><script>document.currentScript.previousElementSibling.src=TL_LOGO_SRC</script><div class="ob-login"><span>Already have an account?</span><button onclick="openAuthModal('signin')">Sign in</button></div></nav>
+    <div id="landing-list-invite" class="landing-invite" hidden aria-live="polite"></div>
     <div class="ob-landing-hero"><div class="ob-landing-copy"><h1>You are what<br>you love.</h1><p>Share what you love. Remember what your friends recommend. Make lists worth saving.</p><button onclick="openAuthModal('signup')">Sign up <span aria-hidden="true">→</span></button><div class="ob-caption ob-eyebrow">Your taste. In one place.</div></div><div class="ob-hero-collage" id="landing-artwork" aria-label="Music, movies, books, and television to discover"></div></div>
     <div class="welcome-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:left;align-items:stretch;">
       <div class="ob-feature-card" style="background:#161618;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px;display:flex;flex-direction:column;">
@@ -5897,6 +5912,7 @@ const NOTIF_COPY = {
   rec_saved: (who, n) => `${who} added your pick ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : ''} to their What’s Next`,
   list_item: (who, n) => `${who} added ${n.comment_preview ? `<strong>${esc(n.comment_preview)}</strong>` : 'something'} to ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'a shared list'}`,
   list_joined: (who, n) => `${who} joined ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'your shared list'}`,
+  list_added: (who, n) => `${who} added you to ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'a shared list'}<span class="notif-reply">Open the list →</span>`,
   comment: (who, n) => `${who} commented on ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'your ' + (NOTIF_TARGET_NOUN[n.target_type] || 'post')}:<span class="notif-comment">“${esc(n.comment_preview || '')}”</span><span class="notif-reply">Reply →</span>`,
   follow_request: (who) => `${who} wants to follow you`,
   follow_accepted: (who) => `${who} accepted your follow request`,
@@ -5920,7 +5936,7 @@ function renderNotificationsDropdown(rows) {
       const isRequest = n.type === 'follow_request';
       NOTIF_ROWS.set(n.id, n);
       const isComment = n.type === 'comment' && n.target_type && n.target_id;
-      const goesToTarget = (n.target_type === 'activity_feed' && ['new_post','comment_reply','reaction','tag'].includes(n.type)) || ['list_item','list_joined'].includes(n.type) || (n.type === 'comment_reply' && /^taste_list/.test(n.target_type || ''));
+      const goesToTarget = (n.target_type === 'activity_feed' && ['new_post','comment_reply','reaction','tag'].includes(n.type)) || ['list_item','list_joined','list_added'].includes(n.type) || (n.type === 'comment_reply' && /^taste_list/.test(n.target_type || ''));
       const action = isComment ? `onclick="openCommentTarget('${n.id}')"` : goesToTarget ? `onclick="openNotificationTarget('${n.id}')"` : (isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`);
       return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);${n.read ? '' : 'background:rgba(124,77,255,0.08);'}display:flex;flex-direction:column;gap:6px;${isRequest ? '' : 'cursor:pointer;'}" ${action}>
         <div style="font-size:13px;color:var(--text);line-height:1.4;">${text}</div>
@@ -16483,17 +16499,41 @@ async function shareTastePoster() {
 }
 
 let activeListInvite=null,joinedInviteList=null;
-function listInviteToken(){const t=new URLSearchParams(location.search).get('join');return /^[0-9a-f-]{36}$/i.test(t||'')?t:null;}
+function listInviteToken(){
+ const ok=t=>/^[0-9a-f-]{36}$/i.test(t||'');
+ const t=new URLSearchParams(location.search).get('join');
+ if(ok(t)){try{localStorage.setItem('tl_list_invite',JSON.stringify({token:t,at:Date.now()}));}catch(_){}return t;}
+ // Backup in case the link's ?join= was lost between sign-up and finishing onboarding.
+ try{const saved=JSON.parse(localStorage.getItem('tl_list_invite')||'null');if(saved&&ok(saved.token)&&Date.now()-saved.at<14*864e5)return saved.token;}catch(_){}
+ return null;
+}
+function clearSavedListInvite(){try{localStorage.removeItem('tl_list_invite');}catch(_){}}
+// Signed-out visitor opening a shared-list invite: say who invited them and to what, on the landing page.
+async function renderLandingListInvite(token){
+ const el=document.getElementById('landing-list-invite');if(!el||!sb||currentUser)return;
+ try{
+  const {data,error}=await sb.rpc('preview_list_invite_details',{invite_token:token});
+  const d=data?.[0];
+  if(error||!d){el.innerHTML=`<p class="landing-invite-text">This invitation has expired or was turned off. You can still create your TasteList — ask your friend for a new link.</p>`;el.hidden=false;clearSavedListInvite();return;}
+  const picks=d.item_count?`${d.item_count} ${d.item_count===1?'pick':'picks'} so far`:'Just getting started';
+  el.innerHTML=`<div class="landing-invite-card"><span class="landing-invite-icon" aria-hidden="true">✉︎</span>
+   <div class="landing-invite-text"><strong>${esc(d.owner_name||'A friend')} invited you to ${esc(d.title)}</strong><span>${esc(picks)} · Create your TasteList to see the list and add your own picks.</span></div>
+   <div class="landing-invite-actions"><button type="button" class="landing-invite-primary" onclick="openAuthModal('signup')">Create my TasteList</button><button type="button" class="landing-invite-link" onclick="openAuthModal('signin')">I already have an account</button></div></div>`;
+  el.hidden=false;
+ }catch(_){}
+}
 async function showListInvitation(){
  const token=listInviteToken();if(!token||!sb)return false;
  activeListInvite=token;
  // Let invited visitors use the normal landing page and complete their own onboarding first.
- if(!currentUser||shouldShowOnboarding())return true;
+ if(!currentUser){renderLandingListInvite(token);return true;}
+ if(shouldShowOnboarding())return true;
  const {data,error}=await sb.rpc('preview_taste_list_invite',{invite_token:token});
  const title=data?.[0]?.title;
  document.getElementById('list-invite-heading').textContent=title?'You’re invited to '+title:'Invitation unavailable';
  document.getElementById('list-invite-note').textContent=title?'Your TasteList is ready. Join this shared list to see the picks and add your own.':'This invitation may have expired or been turned off. Ask the owner for a new link.';
  document.getElementById('list-invite-join').hidden=!title||!!error;
+ if(!title||error)clearSavedListInvite();
  document.getElementById('list-invite-after').hidden=true;
  document.getElementById('list-invite-dialog').showModal();
 
@@ -16513,6 +16553,7 @@ async function acceptListInvitation(){
 }
 async function continueJoinedList(buildProfile){
  if(!joinedInviteList)return;
+ clearSavedListInvite();
  const id=joinedInviteList;document.getElementById('list-invite-dialog').close();
  if(buildProfile){
   try{sessionStorage.setItem('tl_onboarding_return_list',id);}catch(_){}
