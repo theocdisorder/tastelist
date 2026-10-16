@@ -2197,6 +2197,101 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .landing-invite-link { font: inherit; font-size: 13px; color: #cdb6ff; background: none; border: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 4px 2px; }
 @media (max-width: 600px) { .landing-invite-actions { width: 100%; } .landing-invite-primary { flex: 1; } }
 @media (pointer: coarse) { .landing-invite-primary, .landing-invite-link { min-height: 44px; } }
+
+/* New member who joined before setting up a profile */
+.new-member-welcome { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 18px; padding: 12px 16px; border-radius: 14px; background: rgba(124,77,255,.12); border: 1px solid rgba(185,154,255,.4); font-size: 14px; color: var(--text); }
+.new-member-welcome-text { flex: 1; min-width: 220px; line-height: 1.45; }
+.new-member-welcome-btn { font: inherit; font-size: 13.5px; font-weight: 650; color: #fff; background: #7C4DFF; border: 1px solid #7C4DFF; border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+@media (pointer: coarse) { .new-member-welcome-btn { min-height: 44px; } }
+
+/* Feed composer: everything below the prompt in one column, optional extras as chips */
+.feed-composer-card #feed-tag-wrap, .feed-composer-card .feed-composer-bottom { margin-left: 54px; }
+.feed-composer-card #feed-tag-wrap[hidden] { display: none; }
+.feed-composer-card #feed-tag-wrap .tag-field { margin-top: 10px; }
+.feed-composer-card .feed-composer-bottom { margin-top: 12px; align-items: center; }
+.composer-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.composer-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 600; color: var(--muted);
+  background: transparent; border: 1px solid var(--border); border-radius: 999px; padding: 7px 12px; cursor: pointer; line-height: 1; white-space: nowrap; }
+.composer-chip:hover, .composer-chip:focus-within { color: var(--text); border-color: rgba(255,255,255,.3); }
+.composer-chip.is-on { color: #cdb6ff; border-color: rgba(185,154,255,.5); background: rgba(124,77,255,.10); }
+/* the native date picker sits invisibly over the date chip, so the whole chip opens it */
+.composer-date-chip input[type="date"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; color-scheme: dark; }
+.composer-date-chip input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; opacity: 0; }
+.composer-count { font-size: 11px; color: var(--muted); }
+@media (max-width: 600px) { .feed-composer-card #feed-tag-wrap, .feed-composer-card .feed-composer-bottom { margin-left: 0 !important; } }   /* matches the title field */
+@media (pointer: coarse) { .composer-chip { min-height: 44px; } }
+
+/* ── What's New composer ─────────────────────────────────────────────────────── */
+/* Collapsed entry */
+.fc-entry-wrap { margin-bottom: 22px; }
+.fc-entry { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; font: inherit; text-align: left; cursor: text; color: var(--muted);
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 16px; transition: border-color .15s ease, background .15s ease; }
+.fc-entry:hover { border-color: rgba(255,255,255,.22); }
+.fc-entry:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fc-entry-text { flex: 1; min-width: 0; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-entry.has-draft .fc-entry-text { color: var(--text); font-style: italic; }
+.fc-entry-cta { flex: 0 0 auto; font-size: 13px; font-weight: 650; color: #cdb6ff; border: 1px solid rgba(185,154,255,.4); border-radius: 999px; padding: 6px 14px; }
+.fc-discard-link { margin: 6px 0 0 4px; font: inherit; font-size: 12.5px; color: var(--muted); background: none; border: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.fc-discard { display: flex; align-items: center; gap: 10px; margin: 8px 0 0 4px; font-size: 13px; color: var(--muted); }
+.fc-discard button { font: inherit; font-size: 13px; font-weight: 600; background: none; border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; color: var(--text); cursor: pointer; }
+.fc-discard button:first-of-type { color: #F97360; border-color: rgba(249,115,96,.45); }
+/* Overlay + panel */
+body.fc-open { overflow: hidden; }
+.fc-overlay { position: fixed; inset: 0; z-index: 1200; background: rgba(0,0,0,.62); backdrop-filter: blur(3px); display: flex; align-items: flex-start; justify-content: center; padding: clamp(16px, 8vh, 96px) 16px 24px; overflow-y: auto; }
+.fc-overlay[hidden] { display: none; }
+.fc-panel { width: min(720px, 100%); display: flex; flex-direction: column; background: var(--surface2, #1c1c1f); border: 1px solid var(--border); border-radius: 22px; box-shadow: 0 30px 80px rgba(0,0,0,.55); }
+.fc-head { display: flex; align-items: center; gap: 12px; padding: 18px 20px 6px; }
+.fc-head-text { flex: 1; min-width: 0; }
+.fc-head h2 { margin: 0; font-family: var(--ob-serif, Georgia, serif); font-size: 22px; font-weight: 600; letter-spacing: -.01em; color: #f2efe9; }
+.fc-head p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.fc-close { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; font-size: 22px; line-height: 1; color: var(--muted); background: none; border: 1px solid transparent; cursor: pointer; }
+.fc-close:hover { color: var(--text); border-color: var(--border); }
+.fc-body { padding: 10px 20px 4px; display: flex; flex-direction: column; gap: 6px; }
+/* Media: search, then a compact preview */
+.fc-search { display: flex; align-items: center; gap: 10px; padding: 0 14px; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid var(--border); color: var(--muted); }
+.fc-search:focus-within { border-color: rgba(185,154,255,.6); box-shadow: 0 0 0 3px rgba(124,77,255,.15); }
+.fc-search input { flex: 1; min-width: 0; font: inherit; font-size: 15.5px; color: var(--text); background: none; border: 0; padding: 14px 0; outline: none; }
+.fc-search input::placeholder { color: var(--muted); }
+.fc-search input::-webkit-search-cancel-button { display: none; }
+.fc-media #feed-title-filters .ob-type-filters { margin: 10px 0 2px; }
+.fc-media #feed-title-results > p { margin: 8px 2px; font-size: 12.5px; color: var(--muted); }
+.fc-media #feed-title-results .feed-title-matches { max-height: 300px; overflow-y: auto; }
+.fc-media-picked { display: flex; align-items: center; gap: 14px; padding: 10px; border-radius: 14px; background: rgba(0,0,0,.22); border: 1px solid var(--border); }
+.fc-media-picked > :first-child { flex: 0 0 auto; width: 56px !important; height: 84px !important; border-radius: 6px; overflow: hidden; object-fit: cover; box-shadow: 0 6px 16px rgba(0,0,0,.4); }
+.fc-media-picked > :first-child img { width: 100%; height: 100%; object-fit: cover; }
+.fc-media-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.fc-media-text strong { font-size: 16.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-media-text small { font-size: 13px; color: var(--muted); }
+.fc-change { align-self: flex-start; margin-top: 3px; font: inherit; font-size: 13px; font-weight: 600; color: #b99aff; background: none; border: 0; padding: 0; cursor: pointer; }
+.fc-change:hover { text-decoration: underline; text-underline-offset: 3px; }
+.fc-media-check { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #b99aff; border: 1.5px solid #b99aff; margin-right: 6px; }
+/* Writing area: borderless */
+.fc-text { width: 100%; box-sizing: border-box; min-height: 96px; resize: none; margin-top: 8px; padding: 10px 2px; font: inherit; font-size: 17px; line-height: 1.55; color: var(--text); background: transparent; border: 0; outline: none; }
+.fc-text::placeholder { color: var(--muted); font-style: italic; }
+.fc-body #feed-tag-wrap .tag-field { margin-top: 2px; }
+.fc-status { margin: 0; min-height: 0; font-size: 13px; color: #F97360; }
+.fc-status:empty { display: none; }
+/* Footer */
+.fc-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 8px; padding: 12px 20px 16px; border-top: 1px solid var(--border); }
+.fc-actions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.fc-hint { font-size: 12.5px; color: var(--muted); }
+.fc-hint:empty { display: none; }
+.fc-cancel { font: inherit; font-size: 14px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 8px 6px; }
+.fc-submit { font: inherit; font-size: 15px; font-weight: 650; color: #fff; background: #7C4DFF; border: 1px solid #7C4DFF; border-radius: 999px; padding: 11px 20px; cursor: pointer; transition: filter .15s ease, opacity .15s ease; }
+.fc-submit:hover:not(:disabled) { filter: brightness(1.08); }
+.fc-submit:disabled { opacity: .45; cursor: not-allowed; }
+/* Phones: full-screen sheet with the footer always reachable */
+@media (max-width: 600px) {
+  .fc-overlay { padding: 0; align-items: stretch; }
+  .fc-panel { width: 100%; min-height: 100%; border-radius: 0; border: 0; }
+  .fc-head { padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 4px; }
+  .fc-body { padding: 8px 16px 4px; flex: 1; }
+  .fc-foot { position: sticky; bottom: 0; background: var(--surface2, #1c1c1f); padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .fc-media-picked > :first-child { width: 48px !important; height: 72px !important; }
+  .fc-hint { display: none; }
+}
+@media (pointer: coarse) { .fc-close, .fc-change, .fc-cancel, .fc-discard-link { min-height: 44px; min-width: 44px; } }
+@media (prefers-reduced-motion: reduce) { .fc-entry, .fc-submit { transition: none; } }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -7257,7 +7352,7 @@ async function loadAlbumCustomLists(userId) {
 }
 
 function listActionIcon(kind){
- const paths={edit:'M16 3l5 5M4 20l4-1L21 6l-5-5L3 14v6z',done:'M5 12l4 4L19 6',trash:'M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6'};
+ const paths={edit:'M16 3l5 5M4 20l4-1L21 6l-5-5L3 14v6z',done:'M5 12l4 4L19 6',trash:'M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6',camera:'M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'};
  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[kind]||paths.edit}"/></svg>`;
 }
 function musicListSectionHtml(cat) {
@@ -13808,6 +13903,7 @@ async function uploadSharedListCover(input){
 }
 let slConfirmingRemove = false;
 function renderTasteListHeader(flat) {
+  try { renderNewMemberWelcome(); } catch (_) {}
   const list = allTasteLists.find(l => l.id === currentTasteListId);
   const byline = document.getElementById('sl-byline');
   if (byline && list) {
@@ -13822,7 +13918,7 @@ function renderTasteListHeader(flat) {
   const actions = document.getElementById('sl-actions');
   if (actions) actions.innerHTML = (canEditTasteList ? `<button type="button" class="sl-btn primary" onclick="openTasteItemForm()">+ Add item</button><button type="button" class="list-icon-control sl-icon-control" aria-label="${editMode?'Done editing':'Edit list'}" title="${editMode?'Done editing':'Edit list'}" aria-pressed="${editMode}" onclick="toggleEditMode()">${listActionIcon(editMode?'done':'edit')}</button>` : '')
     + (list?.isOwner ? `<button type="button" class="list-icon-control sl-icon-control" aria-label="Delete list" title="Delete list" onclick="deleteSharedTasteList('${jsStr(list.id)}')">${listActionIcon('trash')}</button>` : '')
-    + (canEditTasteList ? `<button type="button" class="sl-btn" onclick="document.getElementById('shared-cover-input').click()">Change photo</button>` : '')
+    + (canEditTasteList ? `<button type="button" class="list-icon-control sl-icon-control" aria-label="Change cover photo" title="Change cover photo" onclick="document.getElementById('shared-cover-input').click()">${listActionIcon('camera')}</button>` : '')
     + (list ? `<button type="button" class="sl-btn" onclick="openSharedListShare()">${list.isOwner?'Invite / share list':'Share list'} ↗</button>` : '');
   const bg = document.getElementById('sl-hero-bg');
   if (bg) {
@@ -15200,7 +15296,7 @@ function searchFeedTitles(q,manual=false){
  box.innerHTML=rows.length?`<p>Choose the correct title to attach its artwork.</p><div class="feed-title-matches">${rows.map((p,i)=>`<button type="button" onclick="selectFeedTitle(${i})">${feedTitleArt(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span></button>`).join('')}</div>`:`<p>No matches${f!=='all'?` in ${esc(FEED_FILTER_LABELS[f].toLowerCase())}`:''}. Try the title and creator’s name${f!=='all'?', or search everything':''}.</p>`;
  },350);
 }
-function selectFeedTitle(i){if(feedPostDraft.saving)return;const p=feedTitleSearch.results[i];if(!p)return;feedPostDraft.attachment={...p};feedTitleSearch.seq++;feedTitleSearch.filter='all';feedTitleSearch.filterManual=false;renderFeedComposer();}
+function selectFeedTitle(i){if(feedPostDraft.saving)return;const p=feedTitleSearch.results[i];if(!p)return;feedPostDraft.attachment={...p};feedTitleSearch.seq++;feedTitleSearch.filter='all';feedTitleSearch.filterManual=false;renderFeedComposer();setTimeout(()=>document.getElementById('feed-post-text')?.focus(),0);}
 function clearFeedTitle(){if(feedPostDraft.saving)return;feedPostDraft.attachment=null;feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.filter='all';feedTitleSearch.filterManual=false;renderFeedComposer();document.getElementById('feed-title-query')?.focus();}
 function feedPostAttachmentHtml(row){const p=row.catalog_item?.attachment;if(!p)return '';return `<div class="feed-post-attachment">${feedTitleArt(p)}<div><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></div></div>`;}
 
@@ -15310,6 +15406,7 @@ function tagFieldInit(ns, tags = []) {
 }
 function tagState(ns) { return TAG_FIELDS[ns] || (TAG_FIELDS[ns] = { selected: [], results: [], request: 0, timer: null, q: '' }); }
 function renderTagChips(ns) {
+  if (ns === 'feed') { const chip = document.getElementById('feed-tag-chip'); if (chip) chip.textContent = feedTagChipLabel(); }
   const el = document.getElementById(`tag-${ns}-chips`); if (!el) return;
   el.innerHTML = tagState(ns).selected.map((t, i) => `<button type="button" class="tag-chip${t.username ? '' : ' is-name'}" aria-label="Remove ${esc(t.username ? '@' + t.username : t.name)}" onclick="tagFieldRemove('${ns}',${i})">${esc(t.username ? '@' + t.username : t.name)} <span aria-hidden="true">×</span></button>`).join('');
 }
@@ -15380,19 +15477,126 @@ function feedPostDateValue() {
   const v = String(feedPostDraft.date || '').slice(0, 10), today = localDateISO();
   return /^\d{4}-\d{2}-\d{2}$/.test(v) && v <= today && v >= '1900-01-01' ? v : today;   // no future dates
 }
+
+// Composer extras live in a compact row of chips beside Post.
+function feedComposerTagsOpen() { return !!feedPostDraft.showTags || (TAG_FIELDS.feed?.selected?.length || 0) > 0; }
+function feedTagChipLabel() {
+  const n = TAG_FIELDS.feed?.selected?.length || 0;
+  return n ? `@ Tagged ${n}` : '@ Tag people';
+}
+function toggleFeedTags() {
+  const wrap = document.getElementById('feed-tag-wrap'), chip = document.getElementById('feed-tag-chip');
+  const open = wrap?.hidden !== false || !wrap;   // opening unless it's open and empty
+  if (!open && (TAG_FIELDS.feed?.selected?.length || 0) > 0) { document.getElementById('tag-feed-input')?.focus(); return; }
+  feedPostDraft.showTags = open;
+  if (wrap) wrap.hidden = !open;
+  if (chip) { chip.classList.toggle('is-on', open); chip.setAttribute('aria-expanded', String(open)); }
+  if (open) setTimeout(() => document.getElementById('tag-feed-input')?.focus(), 0);
+}
+// "Today", "Yesterday", "Sep 1", "Sep 1, 2025"
+function friendlyPostDate(iso) {
+  const today = localDateISO(), y = new Date(); y.setDate(y.getDate() - 1);
+  if (iso === today) return 'Today';
+  if (iso === localDateISO(y)) return 'Yesterday';
+  const [Y, M, D] = iso.split('-').map(Number), d = new Date(Y, M - 1, D);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(Y !== new Date().getFullYear() ? { year: 'numeric' } : {}) });
+}
+
+// ── What's New composer: a compact entry on the Feed that opens a focused, centered composer ─────────
+// Reuses the existing draft (feedPostDraft), title search (searchFeedTitles / selectFeedTitle /
+// clearFeedTitle), tag field ('feed'), date chip and publishFeedPost — the element ids are unchanged.
+let feedComposerOpen = false, feedDiscardConfirm = false;
+function feedDraftHasContent() { return !!(feedPostDraft.text?.trim() || feedPostDraft.attachment || (TAG_FIELDS.feed?.selected?.length || 0)); }
+function feedComposerHint() {
+  if (feedPostDraft.saving) return '';
+  if (!feedPostDraft.attachment) return 'Pick a title to post';
+  if (!feedPostDraft.text?.trim()) return 'Add your take to post';
+  if (feedPostDraft.text.length > 3000) return 'Keep it under 3,000 characters';
+  return '';
+}
+function updateFeedComposerHint() { const el = document.getElementById('fc-hint'); if (el) el.textContent = feedComposerHint(); }
+function ensureFeedComposerModal() {
+  let el = document.getElementById('feed-composer-modal');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'feed-composer-modal'; el.className = 'fc-overlay'; el.hidden = true;
+    el.addEventListener('mousedown', e => { if (e.target === el) closeFeedComposer(); });
+    el.innerHTML = '<section class="fc-panel" id="feed-composer-panel" role="dialog" aria-modal="true" aria-labelledby="fc-title"></section>';
+    document.body.appendChild(el);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && feedComposerOpen && !document.querySelector('dialog[open]')) { e.preventDefault(); closeFeedComposer(); } });
+  }
+  return el;
+}
+function feedComposerMediaMarkup() {
+  const p = feedPostDraft.attachment;
+  if (p) {
+    const meta = [p.label, p.artist || p.author, p.year].filter(Boolean).join(' · ');
+    return `<div class="fc-media-picked">${feedTitleArt(p)}<div class="fc-media-text"><strong>${esc(p.title)}</strong>${meta ? `<small>${esc(meta)}</small>` : ''}<button type="button" class="fc-change" onclick="clearFeedTitle()" ${feedPostDraft.saving ? 'disabled' : ''}>Change title</button></div><span class="fc-media-check" aria-hidden="true">✓</span></div>`;
+  }
+  return `<label class="update-sr" for="feed-title-query">Title</label>
+    <div class="fc-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="feed-title-query" placeholder="Search for a book, movie, show, song, album or artist…" autocomplete="off" oninput="searchFeedTitles(this.value,true)" ${feedPostDraft.saving ? 'disabled' : ''}></div>
+    <div id="feed-title-filters"></div><div id="feed-title-results" aria-live="polite"></div>`;
+}
 function renderFeedComposer(){
  const host=document.getElementById('feed-composer');if(!host)return;
- if(!currentUser){host.innerHTML='';return;}
+ if(!currentUser){host.innerHTML='';feedComposerOpen=false;const m=document.getElementById('feed-composer-modal');if(m)m.hidden=true;document.body.classList.remove('fc-open');return;}
  if(feedPostDraft.userId!==currentUser.id){feedPostDraft={userId:currentUser.id,text:'',id:null,saving:false,requestId:null};tagFieldInit('feed');}
- host.innerHTML=`<section class="feed-composer-card" aria-label="Write a TasteList update"><div class="feed-composer-input-row">${profileAvatarHtml(currentProfile,42)}<textarea id="feed-post-text" aria-label="Write an update" rows="2" maxlength="3000" placeholder="${esc(FEED_POST_PROMPTS[0])}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea></div>${feedTitleMarkup()}${tagFieldMarkup('feed')}<div class="feed-composer-bottom"><small><label class="feed-post-date" title="Change the date to post about something from earlier"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><input type="date" id="feed-post-date" aria-label="Post date" value="${esc(feedPostDraft.date||localDateISO())}" max="${localDateISO()}" onchange="feedPostDraft.date=this.value" ${feedPostDraft.saving?'disabled':''}></label><span id="feed-post-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span></small><div>${feedPostDraft.id?'<button class="sl-btn" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="ed-primary" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||!feedPostDraft.attachment||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post'}</button></div></div><p id="feed-post-status" role="status" aria-live="polite"></p></section>`;
- sizeFeedPostInput();
+ // Collapsed entry on the Feed
+ const draft=feedDraftHasContent(), p=feedPostDraft.attachment;
+ const entryText=feedPostDraft.id?'Continue editing your update…':draft?`Continue your draft${p?` about ${esc(p.title)}`:''}…`:'What’s on your mind?';
+ host.innerHTML=`<section class="fc-entry-wrap" aria-label="Write a TasteList update">
+   <button type="button" class="fc-entry${draft?' has-draft':''}" onclick="openFeedComposer()" aria-haspopup="dialog">${profileAvatarHtml(currentProfile,40)}<span class="fc-entry-text">${entryText}</span><span class="fc-entry-cta" aria-hidden="true">${draft?'Continue':'Post'}</span></button>
+   ${draft&&!feedPostDraft.id?(feedDiscardConfirm?`<div class="fc-discard" role="group" aria-label="Discard draft"><span>Discard your draft?</span><button type="button" onclick="discardFeedDraft(true)">Discard</button><button type="button" onclick="feedDiscardConfirm=false;renderFeedComposer()">Keep it</button></div>`:`<button type="button" class="fc-discard-link" onclick="feedDiscardConfirm=true;renderFeedComposer()">Discard draft</button>`):''}
+ </section>`;
  setTimeout(() => loadPeopleSuggestions(), 0);
+ // Expanded composer
+ const overlay=ensureFeedComposerModal(), panel=document.getElementById('feed-composer-panel');
+ if(!feedComposerOpen){overlay.hidden=true;document.body.classList.remove('fc-open');return;}
+ overlay.hidden=false;document.body.classList.add('fc-open');
+ const hint=feedComposerHint();
+ panel.innerHTML=`<header class="fc-head">${profileAvatarHtml(currentProfile,36)}<div class="fc-head-text"><h2 id="fc-title">${feedPostDraft.id?'Edit update':'Your update'}</h2><p>Share a thought about something you’ve watched, read, or listened to</p></div><button type="button" class="fc-close" aria-label="Close (your draft is kept)" title="Close — your draft is kept" onclick="closeFeedComposer()">×</button></header>
+  <div class="fc-body">
+   <div class="fc-media">${feedComposerMediaMarkup()}</div>
+   <label class="update-sr" for="feed-post-text">Your take</label>
+   <textarea id="feed-post-text" class="fc-text" rows="3" maxlength="3000" placeholder="What’s your take?" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea>
+   <div id="feed-tag-wrap" ${feedComposerTagsOpen()?'':'hidden'}>${tagFieldMarkup('feed','Tag people','search TasteList, or type any name')}</div>
+   <p id="feed-post-status" class="fc-status" role="status" aria-live="polite"></p>
+  </div>
+  <footer class="fc-foot"><div class="composer-chips">
+    <span class="composer-chip composer-date-chip" title="Change the date to post about something from earlier"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><span id="feed-date-label">${esc(friendlyPostDate(feedPostDateValue()))}</span><input type="date" id="feed-post-date" aria-label="Post date" value="${esc(feedPostDateValue())}" max="${localDateISO()}" onchange="feedPostDraft.date=this.value;document.getElementById('feed-date-label').textContent=friendlyPostDate(feedPostDateValue())" ${feedPostDraft.saving?'disabled':''}></span>
+    <button type="button" class="composer-chip${feedComposerTagsOpen()?' is-on':''}" id="feed-tag-chip" aria-expanded="${feedComposerTagsOpen()}" onclick="toggleFeedTags()" ${feedPostDraft.saving?'disabled':''}>${feedTagChipLabel()}</button>
+    <span id="feed-post-count" class="composer-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span>
+   </div>
+   <div class="fc-actions"><span id="fc-hint" class="fc-hint" aria-live="polite">${esc(hint)}</span>${feedPostDraft.id?'<button type="button" class="fc-cancel" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="fc-submit" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||!feedPostDraft.attachment||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post update'} <span aria-hidden="true">→</span></button></div>
+  </footer>`;
+ sizeFeedPostInput();
  renderTagChips('feed');
 }
+function openFeedComposer(focusId) {
+  if (!currentUser) { openAuthModal('signup'); return; }
+  feedComposerOpen = true; feedDiscardConfirm = false;
+  renderFeedComposer();
+  setTimeout(() => document.getElementById(focusId || (feedPostDraft.attachment ? 'feed-post-text' : 'feed-title-query'))?.focus(), 0);
+}
+// Closing never throws a draft away: it stays in the entry ("Continue your draft…") until posted or discarded.
+function closeFeedComposer() {
+  if (feedPostDraft.saving) return;
+  const hadDraft = feedDraftHasContent();
+  feedComposerOpen = false; renderFeedComposer();
+  document.querySelector('.fc-entry')?.focus();
+  if (hadDraft && !feedPostDraft.id) showToast('Draft saved — pick up where you left off any time.');
+}
+function discardFeedDraft() {
+  if (feedPostDraft.saving) return;
+  feedPostDraft = { userId: currentUser?.id, text: '', id: null, saving: false, requestId: null };
+  tagFieldInit('feed'); feedTitleSearch.manual = false; feedTitleSearch.seq++;
+  feedDiscardConfirm = false; feedComposerOpen = false; renderFeedComposer();
+}
 function sizeFeedPostInput(){const input=document.getElementById('feed-post-text');if(!input)return;input.style.height='auto';input.style.height=Math.min(180,Math.max(64,input.scrollHeight))+'px';input.style.overflowY=input.scrollHeight>180?'auto':'hidden';}
-function updateFeedPostDraft(text){feedPostDraft.text=text;const count=document.getElementById('feed-post-count');count.hidden=text.length<2800;count.textContent=text.length.toLocaleString()+' / 3,000';sizeFeedPostInput();document.getElementById('feed-post-submit').disabled=!text.trim()||text.length>3000||!feedPostDraft.attachment||feedPostDraft.saving;inferFeedTitle(text);}
+function updateFeedPostDraft(text){feedPostDraft.text=text;const count=document.getElementById('feed-post-count');if(count){count.hidden=text.length<2800;count.textContent=text.length.toLocaleString()+' / 3,000';}sizeFeedPostInput();const submit=document.getElementById('feed-post-submit');if(submit)submit.disabled=!text.trim()||text.length>3000||!feedPostDraft.attachment||feedPostDraft.saving;updateFeedComposerHint();inferFeedTitle(text);}
 function useFeedPostPrompt(i){const input=document.getElementById('feed-post-text');input.placeholder=FEED_POST_PROMPTS[i];input.focus();}
-function cancelFeedPostEdit(){if(feedPostDraft.saving)return;feedPostDraft.text='';feedPostDraft.attachment=null;feedTitleSearch.manual=false;feedTitleSearch.seq++;feedPostDraft.id=null;feedPostDraft.requestId=null;renderFeedComposer();}
+function cancelFeedPostEdit(){if(feedPostDraft.saving)return;feedComposerOpen=false;tagFieldInit('feed');feedPostDraft.text='';feedPostDraft.attachment=null;feedTitleSearch.manual=false;feedTitleSearch.seq++;feedPostDraft.id=null;feedPostDraft.requestId=null;renderFeedComposer();}
 async function publishFeedPost(){
  if(!currentUser||feedPostDraft.saving||feedPostDraft.userId!==currentUser.id)return;
  const text=feedPostDraft.text.trim(),userId=currentUser.id;if(!text||text.length>3000)return;
@@ -15412,7 +15616,7 @@ async function publishFeedPost(){
   }
   if(result.error)throw result.error;
   if(currentUser?.id!==userId)return;
-  feedPostDraft={userId,text:'',id:null,saving:false,requestId:null};tagFieldInit('feed');feedTitleSearch.manual=false;feedTitleSearch.seq++;renderFeedComposer();
+  feedPostDraft={userId,text:'',id:null,saving:false,requestId:null};tagFieldInit('feed');feedTitleSearch.manual=false;feedTitleSearch.seq++;feedComposerOpen=false;renderFeedComposer();
   showToast('Update posted');await loadPublicFeed();
   if(viewedProfile?.id===userId)await loadActivityFeedFromSupabase(userId);
  }catch(e){if(currentUser?.id===userId){feedPostDraft.saving=false;renderFeedComposer();document.getElementById('feed-post-status').textContent=e.message||'Could not post. Your draft is still here.';}}
@@ -15422,7 +15626,7 @@ function editFeedTextPost(id){
  const r=feedRows.find(r=>r.id===id)||ACTIVITY_FEED_ITEMS.find(r=>r.id===id);
  if(!r||feedPostDraft.saving)return;
  if(feedPostDraft.text.trim()&&!confirm('Replace your current draft with this post?'))return;
- feedTitleSearch.manual=false;feedTitleSearch.seq++;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null,date:String(r.activity_date||r.activityDate||'').slice(0,10)||null};tagFieldInit('feed',r.tags||[]);goToFeedView();renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
+ feedTitleSearch.manual=false;feedTitleSearch.seq++;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null,date:String(r.activity_date||r.activityDate||'').slice(0,10)||null};tagFieldInit('feed',r.tags||[]);goToFeedView();feedComposerOpen=true;renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
 }
 async function deleteFeedTextPost(id){
  if(!currentUser||!confirm('Delete this update?'))return;
@@ -16527,11 +16731,12 @@ async function showListInvitation(){
  activeListInvite=token;
  // Let invited visitors use the normal landing page and complete their own onboarding first.
  if(!currentUser){renderLandingListInvite(token);return true;}
- if(shouldShowOnboarding())return true;
+ // Join first, set up your profile after: invited friends came for the list (onboarding stays available).
+ const newcomer=shouldShowOnboarding();
  const {data,error}=await sb.rpc('preview_taste_list_invite',{invite_token:token});
  const title=data?.[0]?.title;
  document.getElementById('list-invite-heading').textContent=title?'You’re invited to '+title:'Invitation unavailable';
- document.getElementById('list-invite-note').textContent=title?'Your TasteList is ready. Join this shared list to see the picks and add your own.':'This invitation may have expired or been turned off. Ask the owner for a new link.';
+ document.getElementById('list-invite-note').textContent=title?(newcomer?'Welcome to TasteList! Join to see the picks and add your own — you can set up your profile any time after.':'Join this shared list to see the picks and add your own.'):'This invitation may have expired or been turned off. Ask the owner for a new link.';
  document.getElementById('list-invite-join').hidden=!title||!!error;
  if(!title||error)clearSavedListInvite();
  document.getElementById('list-invite-after').hidden=true;
@@ -16539,6 +16744,28 @@ async function showListInvitation(){
 
  return true;
 }
+
+// Joined a shared list before finishing onboarding: welcome them, and offer profile setup when they're ready.
+function renderNewMemberWelcome() {
+  const section = document.getElementById('trip-playlist-section');
+  if (!section || !currentUser) return;
+  const pending = onboardingUserId === currentUser.id && ['pending', 'skipped'].includes(onboardingState?.status);
+  let el = document.getElementById('new-member-welcome');
+  if (!pending) { el?.remove(); return; }
+  if (!el) {
+    el = document.createElement('div'); el.id = 'new-member-welcome'; el.className = 'new-member-welcome'; el.setAttribute('role', 'status');
+    section.prepend(el);
+  }
+  el.innerHTML = `<span aria-hidden="true">🎉</span><span class="new-member-welcome-text"><strong>You’re in!</strong> Add a pick to the list, or set up your own TasteList when you’re ready.</span><button type="button" class="new-member-welcome-btn" onclick="startOnboardingFromList()">Set up my TasteList →</button>`;
+}
+async function startOnboardingFromList() {
+  try { sessionStorage.setItem('tl_onboarding_return_list', currentTasteListId || ''); } catch (_) {}
+  document.getElementById('new-member-welcome')?.remove();
+  const clean = new URL(location.href); ['join', 'list', 'u'].forEach(k => clean.searchParams.delete(k)); history.replaceState(null, '', clean);
+  await goToMyProfileView();
+  try { await resumeOnboarding(); } catch (_) {}
+}
+
 async function acceptListInvitation(){
  if(!activeListInvite)return;
  if(!currentUser){try{sessionStorage.setItem('tl_join_intent',activeListInvite);}catch(_){}document.getElementById('list-invite-dialog').close();openAuthModal('signup');return;}
@@ -16546,7 +16773,7 @@ async function acceptListInvitation(){
  try{
  const {data,error}=await sb.rpc('accept_taste_list_invite',{invite_token:activeListInvite});if(error)throw error;
  if(!data)throw Error('Could not open the joined list. Please try again.');
- joinedInviteList=data;try{sessionStorage.removeItem('tl_join_intent');}catch(_){}
+ joinedInviteList=data;try{sessionStorage.removeItem('tl_join_intent');}catch(_){}clearSavedListInvite();
  location.href=sharedListUrl(data);
  }catch(e){document.getElementById('list-invite-note').textContent=e.message||'Could not join. Please try again.';}
  finally{btn.disabled=false;}
