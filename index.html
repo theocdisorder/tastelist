@@ -1467,7 +1467,7 @@ if (new URLSearchParams(location.search).has('list')) {
 .ob-ideas { padding:8px 0 30px; }.ob-ideas p {font-size:13px;margin-bottom:14px}.ob-ideas>div{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .ob-results-grid,.ob-pick-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px; }
 .ob-results-grid { max-height:390px;overflow:auto;padding:5px 5px 14px; }
-.ob-result { position:relative;text-align:left;padding:0 0 12px;background:none;border:0;color:inherit;font:inherit;cursor:pointer;min-width:0;border-radius:8px; }
+.ob-result { align-self:start;display:block;position:relative;text-align:left;padding:0 0 12px;background:none;border:0;color:inherit;font:inherit;cursor:pointer;min-width:0;border-radius:8px; }
 .ob-art { aspect-ratio:3/4;overflow:hidden;border:1px solid #ffffff26;border-radius:7px;background:linear-gradient(145deg,#383044,#1b1c21);display:flex;align-items:center;justify-content:center;color:#d1b9f4; }
 .ob-art>span { font:60px var(--ob-serif);opacity:.6; }.ob-art img{width:100%;height:100%;object-fit:cover;display:block}
 .ob-result strong,.ob-pick-card strong{display:block;font-size:13px;font-weight:500;line-height:1.4;margin:12px 0 3px;overflow-wrap:anywhere}.ob-result small,.ob-pick-card small{display:block;color:#a6a3a1;font-size:12px;line-height:1.4}
@@ -1831,7 +1831,7 @@ img.recs-tag-avatar { object-fit: cover; }
 /* Display serif. The site-wide font lock (html body * { font-family: Inter !important }) overrode every
    heading meant to use the serif; this list is the one place serif headings are declared. */
 html body :is(.ed-title, .ed-title .recs-title-text, .sl-title, .ob-card-title, .ob-frame h1, .ob-landing-copy h1, .ob-wordmark,
-  .rec-detail-title, .invite-title, #auth-modal .tl-modal-title) { font-family: var(--ob-serif) !important; }
+  .rec-detail-title, .invite-title, .dynamic-taste-empty h3, #auth-modal .tl-modal-title) { font-family: var(--ob-serif) !important; }
 html body :is(.ed-title, .ob-card-title, .rec-detail-title, .invite-title) { font-weight: 600; letter-spacing: -.015em; }
 /* Post titles share the review's sans so each post reads as one voice; serif is for section headings. */
 html body .activity-title { font-weight: 650; font-size: 19px; letter-spacing: -.012em; }
@@ -2082,6 +2082,107 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .ti-new-ideas button { font: inherit; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; cursor: pointer; color: var(--muted); background: none; border: 1px solid var(--border); }
 .ti-new-ideas button:hover { color: var(--text); border-color: rgba(255,255,255,.35); }
 @media (pointer: coarse) { .ti-new-ideas button { min-height: 44px; } }
+
+/* Profile: "Your taste is taking shape" as one centered button */
+.taste-emerging-wrap { display: flex; justify-content: center; margin: 22px 0 10px; }
+.taste-emerging-card { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 32px; font: inherit; text-align: center; cursor: pointer;
+  color: var(--text); background: rgba(255,255,255,.03); border: 1px dashed rgba(185,154,255,.45); border-radius: 16px; transition: background .15s ease, border-color .15s ease; }
+.taste-emerging-card:hover { background: rgba(124,77,255,.10); border-color: rgba(185,154,255,.8); }
+.taste-emerging-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.taste-emerging-title { font-size: 15px; color: var(--muted); }
+.taste-emerging-cta { font-size: 14.5px; font-weight: 650; color: #b99aff; }
+.taste-emerging-card:hover .taste-emerging-cta { color: #cdb6ff; }
+@media (max-width: 480px) { .taste-emerging-card { width: 100%; padding: 14px 20px; } }
+@media (prefers-reduced-motion: reduce) { .taste-emerging-card { transition: none; } }
+
+/* Favorite songs picker */
+.cp-heading { margin: 4px 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.extra-result.cp-song { display: flex; align-items: center; gap: 12px; text-align: left; }
+.extra-result.cp-song > span:nth-child(2) { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.extra-result.cp-song small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cp-art { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 6px; overflow: hidden; background: #26262a; display: inline-block; }
+.cp-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cp-art-sm { width: 32px; height: 32px; border-radius: 4px; }
+.extra-result.is-picked { border-color: rgba(34,197,94,.5) !important; background: rgba(34,197,94,.07) !important; }
+.extra-result.is-picked .cp-mark { color: #22C55E; font-weight: 700; }
+.cp-next-link { font: inherit; font-weight: 650; color: #b99aff; background: none; border: 0; padding: 0 2px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+@media (pointer: coarse) { .cp-next-link { min-height: 44px; } }
+
+/* "Pick your favorite songs" prompts */
+.ob-song-prompt { margin: 14px auto 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ob-song-prompt p { margin: 0; font-size: 13px; color: var(--muted); }
+.ob-song-link { font: inherit; font-size: 14px; font-weight: 650; color: #b99aff; background: rgba(124,77,255,.10); border: 1px solid rgba(185,154,255,.4); border-radius: 999px; padding: 9px 16px; cursor: pointer; }
+.ob-song-link:hover { background: rgba(124,77,255,.18); }
+.music-song-prompt { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 18px; padding: 11px 14px; border-radius: 12px; background: rgba(124,77,255,.08); border: 1px solid rgba(185,154,255,.3); font-size: 13.5px; color: var(--text); }
+.music-song-prompt-icon { color: #b99aff; font-size: 16px; }
+.music-song-prompt-text { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.music-song-prompt-text button { font: inherit; font-weight: 650; color: #b99aff; background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.music-song-prompt-more { color: var(--muted); }
+.music-song-prompt-dismiss { font: inherit; font-size: 12.5px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 4px 6px; }
+.music-song-prompt-dismiss:hover { color: var(--text); }
+@media (pointer: coarse) { .music-song-prompt-text button, .music-song-prompt-dismiss, .ob-song-link { min-height: 44px; } }
+
+/* People you may know */
+.pymk { margin: 0 0 26px; }
+.pymk:empty { display: none; }
+.pymk-head h2 { margin: 0 0 12px; font-size: 17px; font-weight: 700; color: var(--text); }
+.pymk-row.artist-grid > * { flex: 0 0 176px !important; }
+.pymk-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 14px 14px; text-align: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px; scroll-snap-align: start; }
+.pymk-person { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text); text-decoration: none; min-width: 0; width: 100%; }
+.pymk-person strong { font-size: 14px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 6px; }
+.pymk-person small { font-size: 12px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pymk-reason { margin: 2px 0 6px; font-size: 12px; line-height: 1.35; color: var(--muted); min-height: 2.7em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pymk-follow { width: 100%; font: inherit; font-size: 13px; font-weight: 650; color: #fff; background: var(--accent); border: 1px solid var(--accent); border-radius: 10px; padding: 8px 10px; cursor: pointer; }
+.pymk-follow:hover { filter: brightness(1.08); }
+.pymk-follow.is-done { background: transparent; color: var(--muted); border-color: var(--border); cursor: default; filter: none; }
+.pymk-dismiss { position: absolute; top: 6px; right: 8px; font: inherit; font-size: 12px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.pymk-dismiss:hover { color: var(--text); background: rgba(255,255,255,.06); }
+@media (max-width: 480px) { .pymk-row.artist-grid > * { flex-basis: 150px !important; } }
+@media (pointer: coarse) { .pymk-dismiss { min-width: 44px; min-height: 44px; top: 0; right: 0; } }
+
+/* Feed cards: cover centered vertically next to long posts (desktop, where the art column is full height) */
+@media (min-width: 721px) {
+  #view-feed-container .activity-card > .activity-card-art { display: flex !important; align-items: center; justify-content: center; }
+}
+/* Reactions: your reaction + count read as one highlighted control */
+.reaction-summary-btn.is-mine { color: #F97360; }
+
+/* Tag people */
+.tag-field { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.tag-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-chips:empty { display: none; }
+.tag-chip { font: inherit; font-size: 12.5px; font-weight: 600; color: #cdb6ff; background: rgba(124,77,255,.14); border: 1px solid rgba(185,154,255,.35); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.tag-chip.is-name { color: var(--text); background: rgba(255,255,255,.06); border-color: var(--border); }
+.tag-chip span { opacity: .7; margin-left: 2px; }
+.tag-results { display: flex; flex-direction: column; gap: 2px; }
+.tag-results:empty { display: none; }
+.tag-result { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font: inherit; font-size: 13.5px; color: var(--text); background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; cursor: pointer; text-align: left; }
+.tag-result:hover { border-color: rgba(185,154,255,.5); }
+.tag-result small { color: var(--muted); font-size: 12px; }
+.tag-write-in span { color: #cdb6ff; font-weight: 600; }
+.tag-searching { margin: 2px 0; font-size: 12px; color: var(--muted); }
+.tagged-line { margin: 4px 0 6px; font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.tagged-user { font: inherit; font-size: 13px; font-weight: 600; color: #b99aff; background: none; border: 0; padding: 0 2px; cursor: pointer; }
+.tagged-user:hover { text-decoration: underline; }
+.tagged-name { color: var(--text); font-weight: 500; padding: 0 2px; }
+@media (pointer: coarse) { .tag-chip, .tag-result { min-height: 44px; } }
+
+/* Feed composer: post date */
+.feed-post-date { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); cursor: pointer; }
+.feed-post-date input { font: inherit; font-size: 12.5px; color: var(--text); background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; color-scheme: dark; }
+.feed-post-date input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (pointer: coarse) { .feed-post-date input { min-height: 44px; } }
+
+/* Own posts: edit/delete sit in the top-right corner instead of pushing the header down.
+   (They floated right, and the full-width author table beneath can't sit beside a float.) */
+.activity-card-body { position: relative; }
+.activity-card-body > .status-card-controls { position: absolute; top: 14px; right: 14px; float: none; margin: 0; }
+.activity-card-body:has(> .status-card-controls) > table:first-of-type { width: calc(100% - 84px) !important; }
+/* Covers centered next to long posts — on profiles as well as the Feed (desktop) */
+@media (min-width: 721px) {
+  #profile-feed .activity-card > .activity-card-art { display: flex !important; align-items: center; justify-content: center; align-self: stretch; }
+}
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -2213,7 +2314,130 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .sl-visibility{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;}
 .sl-visibility select{font:inherit;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:6px 10px;}
 #shared-cover-status:empty{display:none;}#shared-cover-status{font-size:13px;color:var(--muted);}
-</style></head>
+</style><style>
+.dynamic-taste-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start;}
+.dynamic-taste-grid[data-count="1"]{grid-template-columns:minmax(0,360px);justify-content:center;}
+.dynamic-taste-grid[data-count="2"]{grid-template-columns:repeat(2,minmax(0,380px));justify-content:center;}
+.dynamic-taste-grid[data-count="3"]{grid-template-columns:repeat(3,minmax(0,1fr));}
+.dynamic-taste-card{padding:0;text-align:left;font:inherit;color:var(--text);border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);cursor:pointer;min-width:0;transition:transform .2s,box-shadow .2s;}
+.dynamic-taste-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px #0006;}
+.dynamic-taste-card:focus-visible{outline:2px solid var(--taste-color);outline-offset:4px;}
+.dynamic-taste-card-heading{display:flex;align-items:center;gap:6px;padding:8px 10px;background:color-mix(in srgb,var(--taste-color) 12%,transparent);border-bottom:1px solid color-mix(in srgb,var(--taste-color) 20%,transparent);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--taste-color);}
+.dynamic-taste-card-heading>span{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:color-mix(in srgb,var(--taste-color) 14%,transparent);}
+.dynamic-taste-art{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:color-mix(in srgb,var(--taste-color) 14%,var(--surface));}
+.dynamic-taste-art[data-count="1"]{grid-template-columns:1fr;}
+.dynamic-taste-cell{min-width:0;aspect-ratio:2/3;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;}
+.dynamic-taste-art[data-count="1"] .dynamic-taste-cell{aspect-ratio:1/1;}
+.dynamic-taste-art[data-count="3"] .dynamic-taste-cell:first-child{grid-row:span 2;aspect-ratio:auto;}
+.dynamic-taste-cell img{display:block;width:100%;height:100%;object-fit:cover;}
+.dynamic-taste-art[data-count="1"] img{object-fit:contain;}
+.dynamic-taste-cell span{padding:16px;text-align:center;font-size:13px;}
+.dynamic-taste-cell [hidden]{display:none;}
+.dynamic-taste-caption{padding:10px;background:var(--surface);}
+.dynamic-taste-caption strong,.dynamic-taste-caption>span{display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dynamic-taste-caption>span{font-size:10px;color:var(--muted);margin-top:3px;}
+.dynamic-taste-explore{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+.dynamic-taste-explore h3{font-size:13px;font-weight:500;color:var(--muted);margin:0 0 10px;}
+.dynamic-taste-explore>div{display:flex;flex-wrap:wrap;gap:8px;}
+.dynamic-taste-explore button{font:inherit;font-size:12px;border:1px solid var(--border);border-radius:20px;background:transparent;color:var(--text);padding:8px 12px;cursor:pointer;}
+.dynamic-taste-empty{text-align:center;padding:24px 16px;color:var(--muted);}.dynamic-taste-empty h3{color:var(--text);font-size:20px;margin:0;}.dynamic-taste-empty p{font-size:14px;}
+@media(max-width:900px){.dynamic-taste-grid,.dynamic-taste-grid[data-count="3"]{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:480px){.dynamic-taste-grid,.dynamic-taste-grid[data-count="2"],.dynamic-taste-grid[data-count="3"]{grid-template-columns:minmax(0,360px);justify-content:center;}}
+@media(prefers-reduced-motion:reduce){.dynamic-taste-card{transition:none;}}
+
+</style><style>
+.clean-taste-share{padding:28px;background:#0c0d0e;color:#f5f1e9;border:1px solid #303033;border-radius:16px;}
+.clean-taste-share h2{font-size:32px;line-height:1.1;margin:0;}.clean-taste-share header p{color:#aaa6a0;font-size:13px;}
+.clean-taste-share section{border-top:1px solid #303033;margin-top:22px;padding-top:16px;}.clean-taste-share h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;}
+.clean-share-picks{display:flex;gap:10px;justify-content:center;}.clean-share-picks figure{margin:0;flex:0 1 24%;min-width:0;}.clean-share-picks figure>div{aspect-ratio:185/220;background:#1d1d21;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.clean-share-picks img{width:100%;height:100%;object-fit:contain;}.clean-share-picks [hidden]{display:none;}.clean-share-picks span{font-size:12px;padding:8px;}.clean-share-picks figcaption{font-size:12px;line-height:1.4;margin-top:8px;}
+.clean-taste-share footer{border-top:1px solid #303033;margin-top:24px;padding-top:20px;color:#cbb0f4;font-size:12px;text-transform:uppercase;letter-spacing:.08em;}
+</style><style>
+#profile-share-cta[hidden]{display:none!important;}
+.dynamic-taste-empty{display:flex;flex-direction:column;align-items:center;gap:16px;padding:32px 20px;text-align:center;background:linear-gradient(120deg,#7c4dff12,transparent);border:1px solid var(--border);border-radius:14px;}
+.dynamic-taste-empty h3{font-family:var(--ob-serif,Georgia,serif);font-size:clamp(24px,2.6vw,30px);font-weight:600;letter-spacing:-.015em;line-height:1.2;margin:0;}
+.dynamic-taste-empty p{max-width:520px;line-height:1.6;margin:0;}
+.dynamic-taste-empty .taste-readiness{margin:0;line-height:1.5;}
+.dynamic-taste-empty .ed-primary{max-width:100%;white-space:normal;line-height:1.5;text-align:center;flex-shrink:0;}
+.taste-readiness{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:16px 0;}
+.taste-readiness progress{width:100px;height:5px;accent-color:#a78bfa;}
+.profile-compact-empty{padding:4px 0 12px;border:0;border-radius:0;background:none;}
+.profile-compact-empty p{font-size:13px;line-height:1.5;color:var(--muted);margin:0 0 10px;}
+.profile-compact-empty .ed-link{font-size:12px;font-weight:400;color:var(--muted);background:none;border:0;padding:0;cursor:pointer;}.profile-compact-empty .ed-link:hover{color:var(--text);text-decoration:underline;}
+.profile-section-empty .ed-sub{display:none;}.profile-section-empty .ed-head{margin-bottom:12px;}
+.whatsnew-rec-grid{align-items:start;}
+@media(max-width:600px){.dynamic-taste-empty{padding:24px 18px;}.dynamic-taste-empty .ed-primary{max-width:100%;}}
+</style><style>
+/* Only a completely empty owner's profile gets the editorial welcome. */
+#profile-content-sections.profile-first-visit .defining-picks-heading,
+#profile-content-sections.profile-first-visit .whatsnew-rec-grid{display:none!important;}
+.profile-first-visit .defining-picks-panel{border:0;padding:0;}
+.profile-welcome-editorial{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:center;gap:clamp(24px,5vw,64px);max-width:1040px;margin:24px auto 40px;padding:28px 0;}
+html body .profile-welcome-editorial h3{font-family:var(--ob-serif)!important;font-size:clamp(34px,4.6vw,52px);font-weight:500;letter-spacing:-.035em;line-height:1.1;margin:0 0 20px;color:#f2efe9;}
+.profile-welcome-copy p{max-width:440px;font-size:16px;line-height:1.75;color:var(--muted);margin:0 0 26px;text-wrap:pretty;}
+.profile-welcome-copy .ed-primary{padding:12px 20px;line-height:1.5;white-space:normal;}
+.profile-example-collage{margin:0;min-width:0;}
+.profile-example-art{display:flex;align-items:center;justify-content:center;min-height:245px;padding:20px 8px;}
+.profile-example-cover{position:relative;flex:0 1 35%;aspect-ratio:1;min-width:0;border-radius:5px;box-shadow:0 12px 26px #0006;background:#211a30;transform:rotate(-9deg);overflow:hidden;}
+.profile-example-cover:nth-child(2){aspect-ratio:2/3;background:#13231a;transform:translateY(-12px) rotate(3deg);margin:0 -12px;z-index:1;}
+.profile-example-cover:nth-child(3){background:#30201c;transform:translateY(12px) rotate(10deg);}
+.profile-example-cover span{position:absolute;inset:0;display:grid;place-items:center;padding:12px;text-align:center;font-size:13px;color:#e6dbf5;}
+.profile-example-cover img{position:absolute;width:100%;height:100%;object-fit:contain;inset:0;}
+.profile-example-collage figcaption{font-size:12px;line-height:1.5;color:var(--muted);text-align:center;margin-top:16px;}
+.profile-example-colors{display:flex;justify-content:center;gap:6px;margin-top:10px;}
+.profile-example-colors i{width:5px;height:5px;border-radius:50%;background:var(--dot);}
+.dynamic-taste-empty{border:0;background:none;padding:24px 16px;}
+@media(max-width:600px){
+ .profile-welcome-editorial{grid-template-columns:1fr;gap:24px;margin:8px auto 24px;padding:16px 0;text-align:center;}
+ .profile-welcome-copy p{margin-left:auto;margin-right:auto;font-size:15px;}
+ .profile-example-collage{grid-row:1;width:min(100%,310px);justify-self:center;}
+ .profile-example-art{min-height:180px;padding:18px 10px;}
+ .profile-example-collage figcaption{margin-top:8px;font-size:11px;}
+}
+</style>
+<style>.ob-art{position:relative}.ob-art>img{position:absolute;inset:0}.ob-art>img[hidden]{display:none!important}</style>
+<style>.ob-review-finish{display:flex;flex-direction:column;align-items:center;gap:10px}.ob-review-finish .ob-text-link{margin:0;font-size:13px}@media(max-width:600px){.ob-review-finish{align-items:stretch;max-width:100%}.ob-review-finish .ob-button{white-space:normal}}</style>
+<style>
+#friends-panel{box-sizing:border-box;width:min(620px,calc(100% - 28px));max-height:calc(100dvh - 40px);margin:auto;padding:28px;border:1px solid var(--border);border-radius:18px;background:var(--surface);color:var(--text);overflow:auto;}
+#friends-panel::backdrop{background:#000b;backdrop-filter:blur(5px)}
+.friends-panel-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:22px}
+html body #friends-panel h2{font-family:var(--ob-serif)!important;font-size:32px;line-height:1.2;margin:0 0 10px}
+#friends-panel p{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 14px}
+.friends-close{margin-left:auto;background:none;border:0;color:var(--muted);font-size:28px;cursor:pointer;padding:0 4px}
+#friends-panel label{display:block;font-size:13px;margin-bottom:8px}
+#friends-panel input{box-sizing:border-box;width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;color:var(--text);font:inherit}
+#friends-panel input:focus-visible,#friends-panel button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#friends-panel h3{font-size:15px;margin:24px 0 12px;line-height:1.4}
+#friends-results{min-height:64px;max-height:330px;overflow:auto}
+.friends-person{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+.friends-person-link{display:flex;align-items:center;gap:12px;min-width:0;flex:1;color:inherit;text-decoration:none}
+.friends-person-link>span:last-child{min-width:0;overflow-wrap:anywhere}.friends-person strong{display:block;font-size:14px}.friends-person small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.friends-avatar{position:relative;flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;background:#7c4dff33;border-radius:50%;overflow:hidden}.friends-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.friends-avatar img[hidden]{display:none}
+.friends-follow{flex-shrink:0;background:transparent;border:1px solid var(--border2);color:var(--text);border-radius:24px;padding:8px 12px;font-size:12px;cursor:pointer}.friends-follow:disabled{opacity:.55;cursor:default}
+.friends-invite{border-top:1px solid var(--border);margin-top:24px;padding-top:2px}#friends-invite-status{font-size:13px;line-height:1.5;color:var(--muted);margin-top:12px}
+#friends-panel footer{margin-top:24px;text-align:right}
+@media(max-width:480px){#friends-panel{padding:20px}.friends-person{gap:8px}.friends-follow{max-width:112px;white-space:normal}#friends-panel footer .ob-button{width:100%}}
+</style>
+<style>
+.reaction-summary-btn{display:inline-flex;align-items:center;gap:5px;background:none;border:0;padding:0;color:var(--muted);font:inherit;font-size:12.5px;cursor:pointer}.reaction-summary-btn:hover{text-decoration:underline;color:var(--text)}
+#reaction-people-dialog{box-sizing:border-box;width:min(440px,calc(100% - 32px));max-height:80dvh;overflow:auto;margin:auto;padding:24px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:16px}
+#reaction-people-dialog::backdrop{background:#000a;backdrop-filter:blur(4px)}
+#reaction-people-dialog header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+html body #reaction-people-title{font-family:var(--ob-serif)!important;font-size:28px;margin:0}
+#reaction-people-dialog header button{background:none;border:0;color:var(--muted);font-size:26px;cursor:pointer}
+#reaction-people-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#reaction-people-filters button{padding:6px 10px;border-radius:20px;background:none;color:var(--muted);border:1px solid var(--border);cursor:pointer}#reaction-people-filters button[aria-pressed=true]{background:#7c4dff22;color:var(--text);border-color:var(--accent)}
+.reaction-person{display:flex;align-items:center;gap:12px;padding:12px 0;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}.reaction-person-name{flex:1;min-width:0;overflow-wrap:anywhere}.reaction-person-name strong{font-size:14px}.reaction-person-name small{display:block;color:var(--muted);font-size:12px;margin-top:3px}.reaction-person-emoji{font-size:22px}
+.reaction-person-avatar{display:grid;place-items:center;position:relative;width:40px;height:40px;flex-shrink:0;border-radius:50%;overflow:hidden;background:#7c4dff33}.reaction-person-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.reaction-person-avatar img[hidden]{display:none}
+</style>
+<style>
+.taste-emerging{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:20px 0 8px;}
+.taste-emerging-caption{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;line-height:1.5;}
+.taste-emerging-caption small{font-size:11px;color:var(--faint);white-space:nowrap;}
+.taste-add-favorite{background:none;border:0;padding:6px 0;color:#b99aff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+.taste-add-favorite:hover{text-decoration:underline;}.taste-add-favorite:focus-visible{outline:2px solid var(--accent);outline-offset:4px;}
+@media(max-width:480px){.taste-emerging{gap:8px;align-items:flex-start;flex-direction:column;}}
+</style>
+</head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
 <div id="app-startup-status" role="status" aria-live="polite">Loading…</div>
@@ -2451,13 +2675,13 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div id="profile-locked-message" style="display:none;"></div>
 
     <div id="profile-onboarding-resume" hidden style="margin:0 0 24px;">
-      <button type="button" class="ob-button" onclick="openProfileMediaPicker()">Add more favorites →</button>
+      <button type="button" class="ed-link" onclick="resumeOnboarding()">Revisit guided setup →</button>
     </div>
     <div id="profile-loading-placeholder" style="padding:64px 24px;text-align:center;color:var(--faint);font-size:13px;">Loading…</div>
     <div id="profile-welcome-banner" style="display:none;"></div>
     <div id="profile-content-sections" style="display:none;">
     <!-- Taste in a sentence -->
-    <div style="border-radius:14px;padding:24px 28px;background:linear-gradient(135deg,rgba(192,132,252,0.08),rgba(34,197,94,0.06));border:1px solid rgba(255,255,255,0.08);margin-bottom:2rem;">
+    <div id="profile-sentence-section" hidden style="border-radius:14px;padding:24px 28px;background:linear-gradient(135deg,rgba(192,132,252,0.08),rgba(34,197,94,0.06));border:1px solid rgba(255,255,255,0.08);margin-bottom:2rem;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);">Taste in a sentence</div>
         <button id="regen-sentence-btn" onclick="generateTasteSentence()" title="Regenerate from your favorites" style="display:none;box-sizing:border-box;width:20px;height:20px;padding:0;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:11px;line-height:1;cursor:pointer;flex-shrink:0;">↻</button>
@@ -2470,7 +2694,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <section class="ed-panel defining-picks-panel">
       <div class="ed-head defining-picks-heading">
         <h2 id="defining-picks-header" class="ed-title">Your Defining Picks<span class="ed-sub">Tap a box to explore that section</span></h2>
-        <button class="ob-button ob-secondary" onclick="openTasteShare()">Share my TasteList ↗</button>
+        <button id="profile-share-cta" class="ob-button ob-secondary" onclick="openTasteShare()" hidden>Share my TasteList ↗</button>
       </div>
       <div id="profile-picks"></div>
     </section>
@@ -3471,13 +3695,13 @@ function renderActivityTypes() {
   document.getElementById('activity-type-options').innerHTML=[['movie','Film'],['tv','TV'],['book','Book'],['song','Music'],['artist','Artist'],['podcast','Podcast'],['article','Article'],['other','Other']].map(([key,label])=>`<button type="button" aria-pressed="${key===value}" onclick="changeActivityCatalogType('${key}')">${label}</button>`).join('');
 }
 function renderActivityTags() {
-  document.getElementById('activity-tag-chips').innerHTML=activityTagState.selected.map((p,i)=>`<button type="button" aria-label="Remove ${esc(p.username)}" onclick="activityTagState.selected.splice(${i},1);renderActivityTags()">@${esc(p.username)} ×</button>`).join('');
+  (document.getElementById('activity-tag-chips')||{}).innerHTML=activityTagState.selected.map((p,i)=>`<button type="button" aria-label="Remove ${esc(p.username)}" onclick="activityTagState.selected.splice(${i},1);renderActivityTags()">@${esc(p.username)} ×</button>`).join('');
 }
 function selectActivityTag(index) {
   const p=activityTagState.results[index];if(!p)return;
   if(!activityTagState.selected.some(x=>x.username===p.username))activityTagState.selected.push(p);
   clearTimeout(activityTagState.timer);activityTagState.request++;
-  document.getElementById('activity-tag-search').value='';document.getElementById('activity-tag-results').innerHTML='';renderActivityTags();
+  document.getElementById('activity-tag-search').value='';(document.getElementById('activity-tag-results')||{}).innerHTML='';renderActivityTags();
 }
 function searchActivityTags(value) {
   clearTimeout(activityTagState.timer);const request=++activityTagState.request;
@@ -3537,12 +3761,13 @@ function finishWhatsNext(index){
 }
 
 function openActivityItemForm(globalIndex) {
+  tagFieldInit('activity');
   resetActivityCatalog();
   activityItemFormState = { id: null };
   document.getElementById('activity-finish-help').hidden=true;
   document.getElementById('activity-finish-skip').hidden=true;
   clearTimeout(activityTagState.timer);activityTagState.request++;activityTagState.selected=[];activityTagState.results=[];
-  document.getElementById('activity-tag-search').value='';document.getElementById('activity-tag-results').innerHTML='';
+  (document.getElementById('activity-tag-results')||{}).innerHTML='';
   document.getElementById('activity-update-details').open=false;
   document.getElementById('activity-item-modal-error').style.display = 'none';
   document.getElementById('activity-item-label').value = '';
@@ -3567,7 +3792,7 @@ function openActivityItemForm(globalIndex) {
       document.getElementById('activity-item-sub').value = item.sub || '';
       const parsed=parseActivityPeople(item.note);
       document.getElementById('activity-item-note').value = parsed.text;
-      activityTagState.selected=parsed.people.map(username=>({username}));
+      tagFieldInit('activity',[...(item.tags||[]),...parsed.people.map(username=>({username}))]);
       document.getElementById('activity-item-art').value = item.art || '';
       document.getElementById('activity-item-date').value = item.rawDate || new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
     }
@@ -3597,7 +3822,7 @@ async function persistActivityItemForm() {
   const type = document.getElementById('activity-item-type').value;
   const sub = document.getElementById('activity-item-sub').value.trim();
   const text = document.getElementById('activity-item-note').value.trim();
-  const note = text + (activityTagState.selected.length ? '\n\nWith ' + activityTagState.selected.map(p=>'@['+p.username+']').join(' ') : '');
+  const note = text;   // people are saved as tags (row.tags), not appended to the note
   const date = document.getElementById('activity-item-date').value;
   const art = document.getElementById('activity-item-art').value.trim();
   const errEl = document.getElementById('activity-item-modal-error');
@@ -3618,7 +3843,7 @@ async function persistActivityItemForm() {
     return;
   }
 
-  const row = { label, type, sub: sub || null, note: note || null, activity_date: date, art_url: art || null, tmdb_id: activityItemFormState.tmdbId || null, catalog_item: activityCatalog.selected ? {...activityCatalog.selected, type} : null };
+  const row = { label, type, sub: sub || null, note: note || null, activity_date: date, art_url: art || null, tmdb_id: activityItemFormState.tmdbId || null, catalog_item: activityCatalog.selected ? {...activityCatalog.selected, type} : null, tags: await tagFieldValue('activity') };
 
   try {
     if(activityItemFormState.finishedRecId){
@@ -3961,8 +4186,35 @@ let allTasteLists = []; // [{id, user_id, title, subtitle, is_public, created_at
 let favoriteAuthors=[];
 let creatorEditor=null;
 let creatorSearchRevision=0;
+
+// Open the favorite-songs picker for an artist on your profile, by name (used right after adding them).
+function openSongsForArtistName(name) {
+  const a = (artists || []).find(x => !x.videoId && bookArtKey(x.name) === bookArtKey(name));
+  if (a?.id) openCreatorPicks('artist', String(a.id));
+  else showToast('Give it a second — ' + name + ' is still being saved.');
+}
+// Music tab: a gentle, dismissible nudge for your artists that don't have favorite songs yet.
+function songPromptDismissKey() { return 'tl_song_prompt_dismissed:' + (currentUser?.id || ''); }
+function musicSongPromptHtml() {
+  if (!isOwnProfile || !currentUser) return '';
+  const without = (artists || []).filter(a => !a.videoId && a.id && !(a.songs || []).some(x => x && x.title));
+  let dismissed = [];
+  try { dismissed = JSON.parse(localStorage.getItem(songPromptDismissKey()) || '[]'); } catch (_) {}
+  const fresh = without.filter(a => !dismissed.includes(String(a.id)));
+  if (!fresh.length) return '';
+  const shown = fresh.slice(0, 3), more = fresh.length - shown.length;
+  return `<div class="music-song-prompt" role="note"><span class="music-song-prompt-icon" aria-hidden="true">♪</span>
+    <span class="music-song-prompt-text">Add favorite songs for ${shown.map(a => `<button type="button" onclick="openCreatorPicks('artist','${jsStr(String(a.id))}')">${esc(a.name)}</button>`).join('<span aria-hidden="true">·</span>')}${more > 0 ? ` <span class="music-song-prompt-more">+${more} more</span>` : ''}</span>
+    <button type="button" class="music-song-prompt-dismiss" onclick="dismissMusicSongPrompt()">Not now</button></div>`;
+}
+function dismissMusicSongPrompt() {
+  const ids = (artists || []).filter(a => !a.videoId && a.id && !(a.songs || []).some(x => x && x.title)).map(a => String(a.id));
+  try { localStorage.setItem(songPromptDismissKey(), JSON.stringify(ids)); } catch (_) {}
+  document.querySelectorAll('.music-song-prompt').forEach(el => el.remove());
+}
+
 function creatorAction(kind,id,hasItems) {
- return isOwnProfile?`<button class="ob-button ob-secondary" style="margin:16px 24px" onclick="openCreatorPicks('${kind}','${jsStr(String(id))}')">${hasItems?'Edit':'Add'} favorite ${kind==='artist'?'songs':kind==='director'?'movies':'books'}</button>`:'';
+ return isOwnProfile?`<button class="ob-button ob-secondary" style="margin:16px 24px" onclick="openCreatorPicks('${kind}','${jsStr(String(id))}')">${kind==='artist'&&!hasItems?'+ Add your favorite songs':`${hasItems?'Edit':'Add'} favorite ${kind==='artist'?'songs':kind==='director'?'movies':'books'}`}</button>`:'';
 }
 async function loadFavoriteAuthors(profileId) {
  favoriteAuthors=[];renderFavoriteAuthors();
@@ -4036,17 +4288,20 @@ function openCreatorPicks(kind,id) {
  document.getElementById('creator-picks-query').value='';
  document.getElementById('creator-picks-results').innerHTML='';
  document.getElementById('creator-picks-error').textContent='';
+ document.getElementById('creator-picks-lede').textContent=kind==='artist'?`Pick up to 5 favorite ${item.name} songs, in the order you love them.`:'Search, select your favorites, and put them in your order.';
+ document.getElementById('creator-picks-query').placeholder=kind==='artist'?`Search all ${item.name} songs…`:'Search titles…';
  renderCreatorDraft();document.getElementById('creator-picks-dialog').showModal();
- if(kind==='author')searchCreatorPicks();
+ if(kind==='author'||kind==='artist')searchCreatorPicks();
 }
 function closeCreatorPicks(){if(creatorEditor?.busy)return;++creatorSearchRevision;creatorEditor=null;document.getElementById('creator-picks-dialog').close();}
 function renderCreatorDraft() {
  const state=creatorEditor;if(!state)return;
- document.getElementById('creator-picks-selected').innerHTML=state.picks.map((p,i)=>`<div ${inlineOrderAttrs('creator',i,true)} style="display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><span style="flex:1">${i+1}. ${esc(p.title)}${p.album?` <small>${esc(p.album)}</small>`:''}</span><button aria-label="Move ${esc(p.title)} up" ${i===0?'disabled':''} onclick="moveCreatorPick(${i},-1)">↑</button><button aria-label="Move ${esc(p.title)} down" ${i===state.picks.length-1?'disabled':''} onclick="moveCreatorPick(${i},1)">↓</button><button aria-label="Remove ${esc(p.title)}" onclick="removeCreatorPick(${i})">×</button></div>`).join('')||'<p>No favorites selected yet.</p>';
+ document.getElementById('creator-picks-selected').innerHTML=state.picks.map((p,i)=>`<div ${inlineOrderAttrs('creator',i,true)} style="display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">${state.kind==='artist'?`<span class="cp-art cp-art-sm">${p.art?`<img src="${esc(p.art)}" alt="" onerror="this.remove()">`:''}</span>`:''}<span style="flex:1">${i+1}. ${esc(p.title)}${p.album?` <small>${esc(p.album)}</small>`:''}</span><button aria-label="Move ${esc(p.title)} up" ${i===0?'disabled':''} onclick="moveCreatorPick(${i},-1)">↑</button><button aria-label="Move ${esc(p.title)} down" ${i===state.picks.length-1?'disabled':''} onclick="moveCreatorPick(${i},1)">↓</button><button aria-label="Remove ${esc(p.title)}" onclick="removeCreatorPick(${i})">×</button></div>`).join('')||'<p>No favorites selected yet.</p>';
 }
 function moveCreatorPick(i,delta){const s=creatorEditor,j=i+delta;if(!s||s.busy||j<0||j>=s.picks.length)return;[s.picks[i],s.picks[j]]=[s.picks[j],s.picks[i]];renderCreatorDraft();}
 function removeCreatorPick(i){if(!creatorEditor||creatorEditor.busy)return;creatorEditor.picks.splice(i,1);renderCreatorDraft();renderCreatorResults(creatorEditor);}
-function selectCreatorPick(i){const s=creatorEditor,p=s?.results[i];if(!s||s.busy||!p)return;if(s.kind==='artist'&&s.picks.length>=5){document.getElementById('creator-picks-error').textContent='Choose up to five favorite songs.';return;}if(s.picks.some(x=>bookArtKey(x.title)===bookArtKey(p.title)))return;s.picks.push({...p});document.getElementById('creator-picks-error').textContent='';renderCreatorDraft();renderCreatorResults(s);}
+function selectCreatorPick(i){const s=creatorEditor,p=s?.results[i];if(!s||s.busy||!p)return;
+ const already=s.picks.findIndex(x=>bookArtKey(x.title)===bookArtKey(p.title));if(already>=0){s.picks.splice(already,1);document.getElementById('creator-picks-error').textContent='';renderCreatorDraft();renderCreatorResults(s);return;}if(s.kind==='artist'&&s.picks.length>=5){document.getElementById('creator-picks-error').textContent='Choose up to five favorite songs.';return;}if(s.picks.some(x=>bookArtKey(x.title)===bookArtKey(p.title)))return;s.picks.push({...p});document.getElementById('creator-picks-error').textContent='';renderCreatorDraft();renderCreatorResults(s);}
 // Keep known and previously saved books available even if a catalog is offline.
 const AUTHOR_BOOK_STARTERS = {
  janeausten: ['Pride and Prejudice', 'Sense and Sensibility', 'Emma', 'Persuasion', 'Mansfield Park', 'Northanger Abbey']
@@ -4091,8 +4346,10 @@ function renderCreatorResults(state, note='') {
  const el=document.getElementById('creator-picks-results');
  el.innerHTML=state.results.map((p,i)=>{
   const selected=state.picks.some(x=>bookArtKey(x.title)===bookArtKey(p.title));
-  return `<button type="button" class="extra-result" onclick="selectCreatorPick(${i})" ${selected?'disabled':''}><span>${esc(p.title)}<small>${esc(p.album||p.year||'')}</small></span><span>${selected?'Selected':'+'}</span></button>`;
+  const art=state.kind==='artist'?`<span class="cp-art">${p.art?`<img src="${esc(p.art)}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`:'';
+  return `<button type="button" class="extra-result${state.kind==='artist'?' cp-song':''}${selected?' is-picked':''}" onclick="selectCreatorPick(${i})" aria-pressed="${selected}">${art}<span>${esc(p.title)}<small>${esc(p.album||p.year||'')}</small></span><span class="cp-mark">${selected?'✓':'+'}</span></button>`;
  }).join('')+(note?`<p role="status" style="color:var(--muted)">${esc(note)}</p>`:'');
+ if(state.kind==='artist'&&state.results.length&&!document.getElementById('creator-picks-query').value.trim())el.insertAdjacentHTML('afterbegin',`<p class="cp-heading">Popular ${esc(state.item.name)} songs</p>`);
 }
 async function searchCreatorPicks() {
  const s=creatorEditor;if(!s||s.busy)return;
@@ -4102,7 +4359,11 @@ async function searchCreatorPicks() {
  let results=[];
  if(s.kind==='artist'){
   const r=await sharedCatalogJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(s.item.name+' '+q)}&entity=song&limit=100`);
-  results=(r.results||[]).filter(x=>bookArtKey(x.artistName)===bookArtKey(s.item.name)).map(x=>({title:x.trackName,album:x.collectionName,art:(x.artworkUrl100||'').replace('100x100bb','300x300bb'),apple:x.trackViewUrl,spotify:'https://open.spotify.com/search/'+encodeURIComponent(x.trackName+' '+s.item.name)}));
+  // Most popular first (Apple's order); one entry per song, skipping live / remastered / alternate versions.
+  const baseTitle=t=>bookArtKey(String(t||'').replace(/\s*[\(\[][^)\]]*(?:live|remaster|version|edit|mix|demo|acoustic|mono|stereo)[^)\]]*[\)\]]/gi,'').replace(/\s+-\s+.*(?:live|remaster|version|edit|mix|demo|acoustic).*$/i,''));
+  const seenTitles=new Set();
+  results=(r.results||[]).filter(x=>bookArtKey(x.artistName)===bookArtKey(s.item.name)).filter(x=>{const k=baseTitle(x.trackName);if(!k||seenTitles.has(k))return false;seenTitles.add(k);return true;}).slice(0,q?40:15)
+   .map(x=>({title:x.trackName,album:x.collectionName,art:(x.artworkUrl100||'').replace('100x100bb','300x300bb'),apple:String(x.trackViewUrl||'').replace(/[?&]uo=\d+/,''),spotify:'https://open.spotify.com/search/'+encodeURIComponent(x.trackName+' '+s.item.name)}));
  } else if(s.kind==='director') {
   if(!s.item.tmdbId)throw Error('This director needs a catalog match. Please re-add them using director search.');
   const r=await tmdbFetch(`/person/${s.item.tmdbId}/movie_credits`);if(!r.ok)throw Error('Movie search unavailable.');const d=await r.json();
@@ -4120,7 +4381,7 @@ async function searchCreatorPicks() {
  }
  if(creatorEditor!==s||revision!==creatorSearchRevision)return;
  s.results=[...new Map(results.map(x=>[bookArtKey(x.title),x])).values()];
- el.innerHTML=s.results.length?s.results.map((p,i)=>`<button type="button" class="extra-result" onclick="selectCreatorPick(${i})"><span>${esc(p.title)}<small>${esc(p.album||p.year||'')}</small></span><span>+</span></button>`).join(''):'<p>No matching titles found. Try another search.</p>';
+ if(s.results.length)renderCreatorResults(s);else el.innerHTML='<p>No matching titles found. Try another search.</p>';
  }catch(error){if(creatorEditor===s&&revision===creatorSearchRevision)el.textContent=error.message||'Search failed. Please try again.';}
 }
 async function saveCreatorPicks() {
@@ -5195,6 +5456,7 @@ async function loadActivityFeedFromSupabase(userId) {
   const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
       const item = {
         id: row.id,
+        tags: Array.isArray(row.tags) ? row.tags : [],
         label: row.label,
         sub: row.sub || '',
         color: meta.color,
@@ -5506,7 +5768,7 @@ async function loadNotifications() {
       .select('id, type, target_type, target_id, reaction, comment_preview, target_label, read, created_at, profiles!notifications_actor_id_fkey(username, display_name)')
       .eq('user_id', currentUser.id)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(50);
     if (error) throw error;
     const reqIds = (data || []).filter(n => n.type === 'follow_request' && n.target_id).map(n => n.target_id);
     let followStatusById = {};
@@ -5591,8 +5853,50 @@ async function openCommentTarget(notifId) {
     showToast('Couldn’t open that comment. Please try again.');
   }
 }
+
+// Tapping a notification goes to what it's about: the post (comments open for replies), the shared
+// list, or otherwise the person's profile.
+async function openNotificationTarget(notifId) {
+  const n = NOTIF_ROWS.get(notifId); if (!n) return;
+  closeNotificationsDropdown();
+  const who = n.profiles?.username;
+  try {
+    if (n.target_type === 'activity_feed' && n.target_id && sb) {
+      let row = summaryFeedRows.get(String(n.target_id));
+      if (!row) {
+        const { data } = await sb.from('activity_feed').select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)').eq('id', n.target_id).maybeSingle();
+        if (data) { row = data; summaryFeedRows.set(String(data.id), data); }
+      }
+      if (row) {
+        await openFeedItemSummary(String(row.id));
+        if (n.type === 'comment_reply') {
+          for (let t = 0; t < 20; t++) {
+            const box = document.getElementById(`comment-input-activity_feed-${row.id}`);
+            if (box && box.offsetParent) { box.scrollIntoView({ block: 'center', behavior: 'smooth' }); box.focus({ preventScroll: true }); break; }
+            await new Promise(r => setTimeout(r, 100));
+          }
+        }
+        return;
+      }
+      showToast('That post is no longer available.'); return;
+    }
+    if (n.target_type === 'taste_list' && n.target_id) { location.assign(sharedListUrl(n.target_id)); return; }
+    if (n.target_type === 'taste_list_item' && n.target_id && sb) {
+      const { data } = await sb.from('taste_list_items').select('list_id').eq('id', n.target_id).maybeSingle();
+      if (data?.list_id) { location.assign(sharedListUrl(data.list_id)); return; }
+    }
+  } catch (e) { console.error('Failed to open notification:', e); }
+  if (who) goToProfile(who);
+}
+
 const NOTIF_COPY = {
-  reaction: (who, n) => `${who} reacted ${n.reaction || '👍'} to your update`,
+  tag: (who, n) => `${who} tagged you${n.target_label ? ` in <strong>${esc(n.target_label)}</strong>` : ''}`,
+  reaction: (who, n) => `${who} reacted ${n.reaction || '👍'} to ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'your ' + (NOTIF_TARGET_NOUN[n.target_type] || 'post')}`,
+  comment_reply: (who, n) => `${who} also commented on ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'a post you commented on'}:<span class="notif-comment">“${esc(n.comment_preview || '')}”</span><span class="notif-reply">Reply →</span>`,
+  new_post: (who, n) => `${who} posted ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'a new update'}`,
+  rec_saved: (who, n) => `${who} added your pick ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : ''} to their What’s Next`,
+  list_item: (who, n) => `${who} added ${n.comment_preview ? `<strong>${esc(n.comment_preview)}</strong>` : 'something'} to ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'a shared list'}`,
+  list_joined: (who, n) => `${who} joined ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'your shared list'}`,
   comment: (who, n) => `${who} commented on ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'your ' + (NOTIF_TARGET_NOUN[n.target_type] || 'post')}:<span class="notif-comment">“${esc(n.comment_preview || '')}”</span><span class="notif-reply">Reply →</span>`,
   follow_request: (who) => `${who} wants to follow you`,
   follow_accepted: (who) => `${who} accepted your follow request`,
@@ -5616,7 +5920,8 @@ function renderNotificationsDropdown(rows) {
       const isRequest = n.type === 'follow_request';
       NOTIF_ROWS.set(n.id, n);
       const isComment = n.type === 'comment' && n.target_type && n.target_id;
-      const action = isComment ? `onclick="openCommentTarget('${n.id}')"` : (isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`);
+      const goesToTarget = (n.target_type === 'activity_feed' && ['new_post','comment_reply','reaction','tag'].includes(n.type)) || ['list_item','list_joined'].includes(n.type) || (n.type === 'comment_reply' && /^taste_list/.test(n.target_type || ''));
+      const action = isComment ? `onclick="openCommentTarget('${n.id}')"` : goesToTarget ? `onclick="openNotificationTarget('${n.id}')"` : (isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`);
       return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);${n.read ? '' : 'background:rgba(124,77,255,0.08);'}display:flex;flex-direction:column;gap:6px;${isRequest ? '' : 'cursor:pointer;'}" ${action}>
         <div style="font-size:13px;color:var(--text);line-height:1.4;">${text}</div>
         <div style="font-size:11px;color:var(--faint);">${formatActivityDate(n.created_at)}</div>
@@ -5731,24 +6036,7 @@ function updateProfileHeaderAndBanner() {
   const locationBtn = document.getElementById('edit-location-btn');
   if (locationBtn) locationBtn.style.display = isOwnProfile ? 'inline-flex' : 'none';
 
-  // The "Taste in a sentence" placeholder invites generating one from real favorites data
-  // instead of asking someone to write it themselves from scratch — a stored value (whether
-  // generated or hand-written) always wins over generating a new one automatically, and other
-  // accounts never see a prompt meant for the owner.
-  const sentenceEl = document.getElementById('profile-sentence');
-  if (sentenceEl && viewedProfile) {
-    if (viewedProfile.taste_sentence) {
-      sentenceEl.textContent = viewedProfile.taste_sentence;
-    } else if (isOwnProfile) {
-      sentenceEl.innerHTML = `<span onclick="generateTasteSentence()" style="cursor:pointer;color:var(--accent);">Generate your taste in a sentence →</span>`;
-    } else {
-      sentenceEl.textContent = "Hasn't written one yet.";
-    }
-  }
-  const sentenceBtn = document.getElementById('edit-sentence-btn');
-  if (sentenceBtn) sentenceBtn.style.display = isOwnProfile ? 'inline-flex' : 'none';
-  const regenBtn = document.getElementById('regen-sentence-btn');
-  if (regenBtn) regenBtn.style.display = (isOwnProfile && viewedProfile?.taste_sentence) ? 'inline-flex' : 'none';
+  renderLiveTasteSentence();
   const banner = document.getElementById('profile-link-banner');
   if (!banner) return;
   if (isOwnProfile && viewedProfile?.username) {
@@ -5841,65 +6129,30 @@ function allFavoriteMovies() {
   return [...movies, ...Object.values(CUSTOM_LISTS.movies).flat()];
 }
 
-function computeTasteSentenceCandidate() {
-  const allMovies = allFavoriteMovies();
-  const allTV = Object.values(CUSTOM_LISTS.tv).flat();
-  const allBooks = Object.values(CUSTOM_LISTS.books).flat();
-  const topArtist = artists[0]?.name;
-  const topFilm = allMovies[0]?.title;
-  const topShow = allTV[0]?.title;
-  const topBook = allBooks[0]?.title;
-
-  const picks = [];
-  if (topArtist) picks.push(topArtist);
-  if (topFilm) picks.push(topFilm);
-  else if (topShow) picks.push(topShow);
-  if (topBook) picks.push(topBook);
+// Derived directly from intentional favorites; no analysis or saved sentence required.
+function computeTasteSentenceCandidate(groups = profileTasteFavorites()) {
+  const populated = groups.filter(g => g.items.length);
+  const picks = populated.map(g => g.items[0].title).filter(Boolean).slice(0, 3);
+  // A single category can still express several favorites.
+  if (populated.length === 1) picks.splice(0, picks.length, ...populated[0].items.slice(0, 3).map(p => p.title).filter(Boolean));
   if (!picks.length) return '';
-
-  // A few different phrasings per pick-count, chosen at random each time someone generates —
-  // still just string interpolation (no API call), but avoids the same sentence shape every time.
-  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-  let sentence;
-  if (picks.length === 1) {
-    sentence = pick([
-      `Into ${picks[0]} right now.`,
-      `Currently obsessed with ${picks[0]}.`,
-      `Can't stop thinking about ${picks[0]}.`,
-      `${picks[0]} has my full attention lately.`,
-    ]);
-  } else if (picks.length === 2) {
-    const [a, b] = picks;
-    sentence = pick([
-      `${a} and ${b} — pretty much on repeat.`,
-      `${a} and ${b} are running the show right now.`,
-      `Somewhere between ${a} and ${b} at any given moment.`,
-      `${a} by day, ${b} by night.`,
-      `Can't put down ${a} or ${b} lately.`,
-    ]);
-  } else {
-    const [a, b, c] = picks;
-    sentence = pick([
-      `${a}, ${b}, and ${c} — that's the taste.`,
-      `${a}, ${b}, ${c}: the current rotation.`,
-      `Living in the world of ${a}, ${b}, and ${c} right now.`,
-      `${a}, ${b}, and ${c} — hard to pick a favorite among them.`,
-    ]);
+  if (picks.length === 1) return `A taste for ${picks[0]}.`;
+  if (picks.length === 2) return `A taste for ${picks[0]} and ${picks[1]}.`;
+  return `A taste for ${picks[0]}, ${picks[1]}, and ${picks[2]}.`;
+}
+function renderLiveTasteSentence() {
+  const section = document.getElementById('profile-sentence-section');
+  const text = document.getElementById('profile-sentence');
+  if (!section || !text) return;
+  const sentence = profileFavoritesLoaded && viewedProfile?.id && !isLockedProfile()
+    ? computeTasteSentenceCandidate() : '';
+  text.textContent = sentence;
+  section.hidden = !sentence;
+  // This summary now follows favorites automatically instead of saving a stale snapshot.
+  for (const id of ['edit-sentence-btn', 'regen-sentence-btn']) {
+    const button = document.getElementById(id);
+    if (button) button.style.display = 'none';
   }
-
-  const genreCounts = {};
-  [...allMovies.flatMap(m => m.genres || []), ...allTV.flatMap(t => t.genres || [])].forEach(g => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
-  let topGenre = Object.entries(genreCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-  if (!topGenre && artists[0]?.genre) topGenre = artists[0].genre;
-  if (topGenre) {
-    sentence += ' ' + pick([
-      `Mostly ${topGenre.toLowerCase()}.`,
-      `Heavy ${topGenre.toLowerCase()} energy.`,
-      `There's a real ${topGenre.toLowerCase()} thread running through it.`,
-      `If there's a pattern, it's ${topGenre.toLowerCase()}.`,
-    ]);
-  }
-  return sentence;
 }
 
 // If Taste Insights has already been analyzed this session (someone opened it, or it
@@ -5979,7 +6232,7 @@ function copyProfileLink(btn, link) {
 // Curated examples, with artwork resolved from the same providers as onboarding.
 // Album cover: Apple's catalog first (tolerating edition suffixes like "(Remastered)" or
 // "Illmatic XX"), then MusicBrainz's Cover Art Archive as a backup source.
-async function lookupAlbumCover(title, artist) {
+async function lookupAlbumCover(title, artist, broken = '') {
   const norm = v => String(v || '').toLowerCase().replace(/\s*[\(\[].*?[\)\]]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
   const t = norm(title), a = norm(artist);
   const titleOk = name => { const n = norm(name); return n === t || n.startsWith(t + ' '); };
@@ -5990,7 +6243,12 @@ async function lookupAlbumCover(title, artist) {
       const hits = (d.results || []).filter(r => titleOk(r.collectionName) && artistOk(r.artistName) && r.artworkUrl100);
       // Prefer the plain original over anniversary / deluxe editions.
       const hit = hits.find(r => norm(r.collectionName) === t) || hits[0];
-      if (hit) return hit.artworkUrl100.replace(/\d+x\d+bb/, '600x600bb');
+      if (hit) {
+        for(const candidate of [hit,...hits.filter(x=>x!==hit)]){
+          const url=candidate.artworkUrl100.replace(/\d+x\d+bb/, '600x600bb');
+          if(url!==broken&&(!broken||await sharedImageWorks(url)))return url;
+        }
+      }
     } catch (_) {}
   }
   try {
@@ -6530,7 +6788,7 @@ function renderCustomLists(tab) {
         `<section class="list-start"><div><h3>Your music favorites start here</h3><p>Add a few things you love to get started.</p></div><button type="button" class="ed-primary" onclick="promptNewCustomList('music')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel('music')}</button></section>`;
     }
     addListHtml = applyListCta('music', addListHtml);
-    container.innerHTML = addListHtml + earlyHtml;
+    container.innerHTML = addListHtml + musicSongPromptHtml() + earlyHtml;
     if (lateContainer) {
       lateContainer.innerHTML = lateHtml;
     } else {
@@ -6662,7 +6920,7 @@ let newListCategory='music';
 // What each tab's list button says: what goes in the list, not just "a new list".
 const LIST_CTA_NOUN = { books: 'books', movies: 'movies', tv: 'shows', music: 'music', albums: 'albums', comedy: 'comedy', podcasts: 'podcasts' };
 const pickerFriendTags={selected:[],results:[],request:0,timer:null};
-function resetPickerFriendTags(){clearTimeout(pickerFriendTags.timer);pickerFriendTags.request++;pickerFriendTags.selected=[];pickerFriendTags.results=[];document.getElementById('picker-friend-search').value='';document.getElementById('picker-friend-results').innerHTML='';renderPickerFriendTags();}
+function resetPickerFriendTags(){tagFieldInit('picker');clearTimeout(pickerFriendTags.timer);pickerFriendTags.request++;pickerFriendTags.selected=[];pickerFriendTags.results=[];document.getElementById('picker-friend-search').value='';document.getElementById('picker-friend-results').innerHTML='';renderPickerFriendTags();}
 function renderPickerFriendTags(){document.getElementById('picker-friend-tags').innerHTML=pickerFriendTags.selected.map((p,i)=>`<button type="button" class="profile-control" aria-label="Remove tag for ${esc(p.username)}" onclick="pickerFriendTags.selected.splice(${i},1);renderPickerFriendTags()">@${esc(p.username)} ×</button>`).join('');}
 function selectPickerFriend(index){const p=pickerFriendTags.results[index];if(!p||pickerFriendTags.selected.some(x=>x.id===p.id))return;pickerFriendTags.selected.push(p);pickerFriendTags.request++;clearTimeout(pickerFriendTags.timer);document.getElementById('picker-friend-search').value='';document.getElementById('picker-friend-results').innerHTML='';renderPickerFriendTags();}
 function searchPickerFriends(value){
@@ -6675,7 +6933,7 @@ function searchPickerFriends(value){
  el.innerHTML=pickerFriendTags.results.map((p,i)=>`<button type="button" class="extra-result" onclick="selectPickerFriend(${i})"><span>${esc(p.display_name||p.username)}<small>@${esc(p.username)}</small></span></button>`).join('')||'<p>No matching people.</p>';
  }catch(_){if(request===pickerFriendTags.request)el.innerHTML='<p>Could not load people. Try again.</p>';}},250);
 }
-function favoriteFriendTagsHtml(item){const tags=item.friend_tags||item.friendTags||[];return tags.length?`<div class="favorite-friend-tags">${tags.filter(p=>p.username).map(p=>`<button type="button" class="activity-summary-title" data-username="${esc(p.username)}" onclick="event.stopPropagation();goToProfile(this.dataset.username)">@${esc(p.username)}</button>`).join(' ')}</div>`:'';}
+function favoriteFriendTagsHtml(item){const tags=(item.friend_tags||item.friendTags||[]).filter(p=>p&&(p.username||p.name));return tags.length?`<div class="favorite-friend-tags">${tags.map(p=>p.username?`<button type="button" class="activity-summary-title" data-username="${esc(p.username)}" onclick="event.stopPropagation();goToProfile(this.dataset.username)">@${esc(p.username)}</button>`:`<span class="tagged-name">${esc(p.name)}</span>`).join(' ')}</div>`:'';}
 
 const PICKER_IDEAS={music:['Music I Love','On Repeat','Albums That Shaped Me'],albums:['Favorite Albums','No-Skip Albums'],movies:['Favorite Movies','Comfort Movies','Favorite Thrillers'],tv:['Favorite Shows','Favorite Dramas','Favorite Comedies'],books:['Books That Shaped Me','Favorite Books','Recent Reads'],podcasts:['Favorite Podcasts','Current Rotation','Episodes Worth Sharing'],comedy:['Favorite Comedy','Stand-up Favorites']};
 let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null,tab:'music'};
@@ -6739,7 +6997,7 @@ async function saveFlexibleMusic(index){
  const userId=currentUser?.id;flexibleMusic.saving=true;status.textContent='Saving…';
  try{
   if(!await requireFreshSession()||currentUser?.id!==userId||viewedProfile?.id!==userId)throw Error('Please sign in to your own profile.');
-  const friend_tags=pickerFriendTags.selected.map(({id,username,display_name})=>({id,username,display_name}));
+  const friend_tags=(await tagFieldValue('picker')).map(t=>t.username?{id:t.user_id,username:t.username,display_name:t.display_name||''}:{name:t.name});
   // A song or album picked while an artist list is selected goes to the matching kind of list
   // (and an artist picked for a song/album list goes to the main artist list).
   let target=category;
@@ -6751,7 +7009,12 @@ async function saveFlexibleMusic(index){
   }
   await saveOnboardingItem({...p,category:target,friend_tags},userId);
   if(currentUser?.id!==userId)return;
-  status.textContent=p.title+' added to '+customListLabel(p.kind==='album'?'albums':flexibleMusic.tab,target)+'.';renderExtraLists();renderProfileTab();scheduleTasteConstellation();
+  status.textContent=p.title+' added to '+customListLabel(p.kind==='album'?'albums':flexibleMusic.tab,target)+'.';
+  if(p.kind==='artist'){
+   const added=(CUSTOM_LISTS.music[target]||[]).find(a=>bookArtKey(a.name)===bookArtKey(p.title));
+   if(added?.id){const link=document.createElement('button');link.type='button';link.className='cp-next-link';link.textContent='Pick favorite songs →';
+    link.onclick=()=>{document.getElementById('music-picker')?.close?.();openCreatorPicks('artist',String(added.id));};status.append(' ',link);}
+  }renderExtraLists();renderProfileTab();scheduleTasteConstellation();
  }catch(e){status.textContent=e.message||'Could not save. Please try again.';}
  finally{flexibleMusic.saving=false;}
 }
@@ -6891,6 +7154,38 @@ async function removeCustomListItem(tab, cat, idx) {
 // themselves -- can keep addressing an item by its real database id without knowing which list it
 // lives in, exactly like before. --
 
+
+// Favorite songs saved without artwork: look it up from Apple (exact, by track ID from the saved Apple
+// Music link — up to 150 per request — otherwise by title + artist), save it for the owner, redraw.
+function songArtPlaceholder() { return '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#26262a" rx="5"/><path d="M23.5 11.5v11.2a3.6 3.6 0 1 1-1.6-3V14.6l-6.4 1.5v8.6a3.6 3.6 0 1 1-1.6-3v-8.9z" fill="#5a5862"/></svg>'; }   // a function so it exists before this line runs
+async function backfillSongArt(userId) {
+  const pending = [];
+  for (const a of Object.values(CUSTOM_LISTS.music || {}).flat()) for (const song of (a.songs || [])) if (song && song.title && !song.art) pending.push({ a, song });
+  if (!pending.length) return;
+  const trackId = song => (String(song.apple || '').match(/[?&]i=(\d+)/) || [])[1];
+  const changed = new Set();
+  const withId = pending.filter(x => trackId(x.song));
+  for (let i = 0; i < withId.length; i += 150) {
+    const chunk = withId.slice(i, i + 150);
+    try {
+      const d = await sharedCatalogJSON(`https://itunes.apple.com/lookup?id=${chunk.map(x => trackId(x.song)).join(',')}&entity=song`);
+      const byId = new Map((d.results || []).filter(r => r.trackId).map(r => [String(r.trackId), r]));
+      chunk.forEach(x => { const r = byId.get(trackId(x.song)); if (r?.artworkUrl100) { x.song.art = r.artworkUrl100.replace('100x100bb', '300x300bb'); changed.add(x.a); } });
+    } catch (_) {}
+  }
+  for (const x of pending.filter(x => !x.song.art).slice(0, 15)) {   // no Apple link: search, title + artist must match
+    try {
+      const d = await sharedCatalogJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(x.song.title + ' ' + x.a.name)}&entity=song&limit=10`);
+      const hit = (d.results || []).find(r => bookArtKey(r.artistName) === bookArtKey(x.a.name) && bookArtKey(r.trackName) === bookArtKey(x.song.title));
+      if (hit?.artworkUrl100) { x.song.art = hit.artworkUrl100.replace('100x100bb', '300x300bb'); changed.add(x.a); }
+    } catch (_) {}
+    await new Promise(r => setTimeout(r, 150));
+  }
+  if (!changed.size || viewedProfile?.id !== userId) return;
+  renderCustomLists('music');
+  if (sb && userId === currentUser?.id) for (const a of changed) sb.from('favorite_artists').update({ songs: a.songs }).eq('id', a.rowId).eq('user_id', userId).then(() => {}, () => {});
+}
+
 async function loadMusicCustomLists(userId) {
   CUSTOM_LISTS.music = {};
   if (!sb || !userId) { artists = []; renderCustomLists('music'); return; }
@@ -6912,6 +7207,7 @@ async function loadMusicCustomLists(userId) {
     artists = Object.values(CUSTOM_LISTS.music).flat().filter(a => !a.videoId);
     renderCustomLists('music');
     backfillArtistPhotos();
+    backfillSongArt(userId);
   } catch (e) {
     console.error('Failed to load music lists:', e);
     artists = [];
@@ -7040,7 +7336,7 @@ function artistDetailPanelHTML(a, closeOnclick) {
         <tbody>${songs.map((s,si) => `
           <tr class="songs-table-row">
             <td class="songs-table-num">${si+1}</td>
-            <td class="songs-table-title"><div class="songs-table-art" id="art-${a.id}-${si}">${s.art ? `<img src="${esc(s.art)}" alt="" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;" onerror="this.style.display='none'">` : '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="#26262a" rx="5"/><text x="20" y="26" font-family="sans-serif" font-size="16" fill="#45444a" text-anchor="middle">note</text></svg>'}</div><span>${esc(s.title)}</span></td>
+            <td class="songs-table-title"><div class="songs-table-art" id="art-${a.id}-${si}">${s.art ? `<img src="${esc(s.art)}" alt="" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;" onerror="this.outerHTML=songArtPlaceholder()">` : songArtPlaceholder()}</div><span>${esc(s.title)}</span></td>
             <td class="songs-table-album">${esc(s.album||'')}</td>
             <td class="songs-table-links" data-q="${esc((s.title||'') + ' ' + (a.name||''))}">
               ${s.apple?`<a href="${esc(s.apple)}" class="stream-link apple" target="_blank" rel="noopener">Apple</a>`:''}
@@ -7134,7 +7430,7 @@ function albumDetailPanelHTML(a, closeOnclick) {
         <tbody>${songs.map((s,si) => `
           <tr class="songs-table-row">
             <td class="songs-table-num">${si+1}</td>
-            <td class="songs-table-title"><div class="songs-table-art" id="album-art-${a.id}-${si}">${(s.art || a.tilePhoto) ? `<img src="${esc(s.art || a.tilePhoto)}" alt="" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;" onerror="this.style.display='none'">` : '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="#26262a" rx="5"/><text x="20" y="26" font-family="sans-serif" font-size="16" fill="#45444a" text-anchor="middle">note</text></svg>'}</div><span>${esc(s.title)}</span></td>
+            <td class="songs-table-title"><div class="songs-table-art" id="album-art-${a.id}-${si}">${(s.art || a.tilePhoto) ? `<img src="${esc(s.art || a.tilePhoto)}" alt="" style="width:40px;height:40px;border-radius:5px;display:block;object-fit:cover;" onerror="this.outerHTML=songArtPlaceholder()">` : songArtPlaceholder()}</div><span>${esc(s.title)}</span></td>
             <td class="songs-table-links" data-q="${esc((s.title||'') + ' ' + (a.artist||''))}">
               ${s.apple?`<a href="${esc(s.apple)}" class="stream-link apple" target="_blank" rel="noopener">Apple</a>`:''}
               ${s.spotify?`<a href="${esc(s.spotify)}" class="stream-link spotify" target="_blank" rel="noopener">Spotify</a>`:''}
@@ -7401,6 +7697,20 @@ const ONBOARDING_STARTERS = [
 const onboardingStarterCache=new Map();
 let onboardingStarterView={key:'',user:null,rows:[],loading:false,token:0};
 const starterNorm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+function chooseOnboardingStarter(candidates,seed) {
+ const [kind,title,year,creator]=seed;
+ const matches=candidates.filter(p=>(kind==='book'?starterNorm(String(p.title).split(':')[0])===starterNorm(String(title).split(':')[0]):starterNorm(p.title)===starterNorm(title))&&
+  (!creator||starterNorm(p.author||p.artist)===starterNorm(creator))&&
+  // Screen titles can refer to remakes; keep their release year strict.
+  (!year||!['movie','tv'].includes(kind)||String(p.year)===String(year)));
+ if(!matches.length)return null;
+ if(['book','album'].includes(kind)&&creator) {
+  // Catalog editions / clean and explicit releases are the same editorial pick.
+  return matches.sort((a,b)=>Number(!!onboardingArt(b))-Number(!!onboardingArt(a))||Number(String(b.year)===String(year))-Number(String(a.year)===String(year)))[0];
+ }
+ const identities=new Map(matches.map(p=>[onboardingSelectionKey(p),p]));
+ return identities.size===1?[...identities.values()][0]:null;
+}
 async function resolveOnboardingStarter(seed) {
  const [kind,title,year,creator]=seed;let candidates=[];
  if(kind==='movie'||kind==='tv') {
@@ -7409,20 +7719,33 @@ async function resolveOnboardingStarter(seed) {
   if(!response.ok)throw Error('Catalog unavailable');const data=await response.json();
   candidates=(data.results||[]).map(r=>({kind,id:r.id,title:r.title||r.name,year:(r.release_date||r.first_air_date||'').slice(0,4),poster:r.poster_path||'',label:kind==='movie'?'Movie':'TV show'}));
  } else if(kind==='book') {
-  const data=await onboardingSearchJSON(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(creator||'')}&limit=10&fields=key,title,author_name,cover_i,first_publish_year`);
-  candidates=(data.docs||[]).map(r=>({kind,id:r.key,title:r.title,author:r.author_name?.[0]||'',year:String(r.first_publish_year||''),label:'Book',art:preferredBookCover(r.title,r.author_name?.[0]||'')||(r.cover_i?`https://covers.openlibrary.org/b/id/${r.cover_i}-L.jpg`:'')}));
+  try {
+   const data=await onboardingSearchJSON(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(creator||'')}&limit=10&fields=key,title,author_name,cover_i,first_publish_year`);
+   candidates=(data.docs||[]).map(r=>({kind,id:r.key,title:r.title,author:r.author_name?.[0]||'',year:String(r.first_publish_year||''),label:'Book',art:preferredBookCover(r.title,r.author_name?.[0]||'')||(r.cover_i?`https://covers.openlibrary.org/b/id/${r.cover_i}-L.jpg?default=false`:'')}));
+  } catch(_) { /* Try the secondary book catalog below. */ }
+  if(!chooseOnboardingStarter(candidates,seed) || !onboardingArt(chooseOnboardingStarter(candidates,seed))) {
+   try {
+    const data=await onboardingSearchJSON('https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent('intitle:'+title+(creator?' inauthor:'+creator:''))+'&maxResults=10');
+    candidates.push(...(data.items||[]).map(r=>({kind,id:r.id,title:r.volumeInfo?.title||'',author:r.volumeInfo?.authors?.[0]||'',year:(r.volumeInfo?.publishedDate||'').slice(0,4),label:'Book',art:(r.volumeInfo?.imageLinks?.thumbnail||'').replace('http:','https:')})));
+   } catch(_) {}
+  }
  } else if(kind==='artist') {
   candidates=await searchOnboardingArtists(title);
  } else if(kind==='podcast') {
   candidates=await searchExtraCatalog('podcast',title);
  } else if(kind==='album') {
-  const data=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(title+' '+creator)}&entity=album&limit=10`);
+  let data={results:[]};
+  try{data=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(title+' '+creator)}&entity=album&limit=25`);}catch(_){}
   candidates=(data.results||[]).map(r=>({kind,id:r.collectionId,title:r.collectionName,artist:r.artistName,year:(r.releaseDate||'').slice(0,4),art:(r.artworkUrl100||'').replace('100x100bb','400x400bb'),label:'Album'}));
  }
- const matches=candidates.filter(p=>starterNorm(p.title)===starterNorm(title)&&(!year||String(p.year)===String(year))&&(!creator||starterNorm(p.author||p.artist)===starterNorm(creator)));
- const identities=new Map(matches.map(p=>[onboardingSelectionKey(p),p]));
- if(identities.size!==1)return null; // Ambiguous match: let the user search and choose.
- const item=[...identities.values()][0];
+ let item=chooseOnboardingStarter(candidates,seed);
+ // Editorial seeds have a known title and creator, even if an edition lookup is unavailable.
+ if(['album','book'].includes(kind)&&(!item||!onboardingArt(item))){
+  let art='';
+  try{art=kind==='album'?await lookupAlbumCover(title,creator):await fetchBookCover(title,creator);}catch(_){}
+  if(art)item={...(item||{kind,id:'starter:'+JSON.stringify(seed),title,year:String(year||''),label:kind==='album'?'Album':'Book',...(kind==='album'?{artist:creator}:{author:creator})}),art};
+ }
+ if(!item)return null;
  if(kind==='artist'&&!onboardingArt(item))item.art=await summaryArtistPhoto(title);
  return item;
 }
@@ -7435,7 +7758,13 @@ function loadOnboardingStarters(force=false) {
  renderOnboardingStarters();
  let next=0;const rows=onboardingStarterView.rows;
  async function worker(){while(next<rows.length){const row=rows[next++],cacheKey=JSON.stringify(row.seed);
-  try{let item=onboardingStarterCache.get(cacheKey);if(!item){item=await resolveOnboardingStarter(row.seed);if(item)onboardingStarterCache.set(cacheKey,item);}row.item=item;}catch(_){}row.done=true;
+  let item=onboardingStarterCache.get(cacheKey);
+  for(let attempt=0;attempt<2&&!item;attempt++){
+   if(token!==onboardingStarterView.token||user!==currentUser?.id)return;
+   try{item=await resolveOnboardingStarter(row.seed);}catch(_){}
+  }
+  if(item){onboardingStarterCache.set(cacheKey,item);row.item=item;}
+  row.done=true;
   if(token!==onboardingStarterView.token||user!==currentUser?.id)return;
   renderOnboardingStarters();
  }}
@@ -7508,15 +7837,28 @@ function onboardingArt(item) {
   const url = item.cover || item.coverPhoto || item.tilePhoto || item.bandPhoto || item.art || (item.poster ? 'https://image.tmdb.org/t/p/w342' + item.poster : '');
   return /^https?:\/\//i.test(url) ? url : '';
 }
+const onboardingAlbumRecovery=new Map();
+async function recoverOnboardingAlbum(img) {
+ if(img.dataset.recovering)return;
+ img.dataset.recovering='1';
+ const title=img.dataset.albumTitle,artist=img.dataset.albumArtist,broken=img.src;
+ const key=JSON.stringify([title,artist,broken]);
+ if(!onboardingAlbumRecovery.has(key))onboardingAlbumRecovery.set(key,lookupAlbumCover(title,artist,broken).catch(()=>''));
+ const url=await onboardingAlbumRecovery.get(key);
+ if(!img.isConnected)return;
+ if(!url||url===broken){img.hidden=true;return;}
+ for(const row of onboardingStarterView.rows){if(row.item?.kind==='album'&&starterNorm(row.item.title)===starterNorm(title)&&starterNorm(row.item.artist)===starterNorm(artist))row.item.art=url;}
+ img.onerror=()=>{img.hidden=true;};img.src=url;img.hidden=false;
+}
 function onboardingArtwork(item, extra = '') {
-  if(['podcast','episode'].includes(item.kind)||item.medium==='Podcasts')extra+=' ob-podcast-art';
+  if(['album','song','podcast','episode'].includes(item.kind)||item.medium==='Podcasts')extra+=' ob-podcast-art';
   const art = onboardingArt(item);
   if(item.kind==='book'||item.medium==='Books') {
    const title=item.title||item.name||'',author=item.author||'';
    if(!art)requestAnimationFrame(()=>document.querySelectorAll('img[data-ob-book][data-needs-cover]').forEach(img=>onboardingCoverFallback(img)));
    return `<div class="ob-art ob-book-art ${extra}"><span>${esc(title.slice(0,1))}</span><img ${art?`src="${esc(art)}"`:'data-needs-cover="1" hidden'} data-ob-book="${esc(title)}" data-ob-author="${esc(author)}" alt="" loading="lazy" onerror="onboardingCoverFallback(this)" onload="if(this.naturalWidth<10)onboardingCoverFallback(this)"></div>`;
   }
-  return `<div class="ob-art ${extra}">${art ? `<img src="${esc(art)}" alt="" loading="lazy" onerror="this.style.display='none'">` : `<span>${esc((item.title || item.name || '?').slice(0,1))}</span>`}</div>`;
+  return `<div class="ob-art ${extra}"><span>${esc((item.title || item.name || '?').slice(0,1))}</span>${art ? `<img src="${esc(art)}" alt="" loading="lazy" ${item.kind==='album'?`data-album-title="${esc(item.title)}" data-album-artist="${esc(item.artist||'')}" onerror="recoverOnboardingAlbum(this)"`:`onerror="this.hidden=true"`}>` : ''}</div>`;
 }
 const onboardingBookFallbackCache=new Map();
 async function onboardingCoverFallback(img){
@@ -7525,12 +7867,14 @@ async function onboardingCoverFallback(img){
  const key=JSON.stringify([title,author]);
  if(!onboardingBookFallbackCache.has(key))onboardingBookFallbackCache.set(key,(async()=>{
   try{
-   const d=await onboardingSearchJSON('https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent('intitle:'+title+(author?' inauthor:'+author:''))+'&maxResults=6');
-   const v=(d.items||[]).map(x=>x.volumeInfo).find(x=>starterNorm(x.title)===starterNorm(title)&&(!author||(x.authors||[]).some(a=>starterNorm(a)===starterNorm(author))));
-   return (v?.imageLinks?.thumbnail||'').replace('http:','https:');
-  }catch(_){return '';}
+   const candidates=await fetchBookCoverCandidates(title,author);
+   for(const url of candidates){if(url!==img.src && await sharedImageWorks(url))return url;}
+   const alternate=await sharedBookCoverLookup(title,author,{skipPrimary:true,skipOpenLibrary:/openlibrary/.test(img.src)});
+   if(alternate?.art!==img.src && await sharedImageWorks(alternate?.art))return alternate.art;
+  }catch(_){}
+  return '';
  })());
- const url=await onboardingBookFallbackCache.get(key);if(!url){onboardingBookFallbackCache.delete(key);return;}
+ const url=await onboardingBookFallbackCache.get(key);if(url){for(const row of onboardingStarterView.rows){if(row.item?.kind==='book'&&starterNorm(row.item.title)===starterNorm(title)&&starterNorm(row.item.author)===starterNorm(author))row.item.art=url;}}if(!url){onboardingBookFallbackCache.delete(key);return;}
  if(!img.isConnected)return;
  img.onerror=()=>{img.hidden=true;};img.onload=()=>{
   if(img.naturalWidth<10){img.hidden=true;return;}img.hidden=false;
@@ -7544,7 +7888,7 @@ function renderOnboardingJourney() {
   const el = document.getElementById('view-onboarding-container');
   if (!el || currentTopView !== 'onboarding' || !shouldShowOnboarding()) return;
   const state = onboardingVisualState();
-  const step = onboardingState.step;
+  const step = Math.min(onboardingState.step, 1); // Older step-3 sessions land on the combined review.
   const picks = onboardingPicks();
   const ready = profileFavoritesLoaded && viewedProfile?.id === currentUser?.id;
   // While typing, refresh only results. Background artwork updates must not replace the input.
@@ -7558,7 +7902,7 @@ function renderOnboardingJourney() {
   const cards = picks.map(p=>`<div class="ob-pick-card">${onboardingArtwork(p)}<strong>${esc(p.title)}</strong><small>${esc(p.medium)}</small></div>`).join('');
   let body,footer;
   if (step === 0 && state.added) {
-    body = `<div class="ob-added"><div class="ob-celebrate">${onboardingArtwork(state.added)}<i></i><i></i><i></i><i></i></div><h1 id="onboarding-title" tabindex="-1">Added to your list!</h1><strong>${esc(state.added.title)}</strong><p>${esc(state.added.label)}</p>${btn('Add another','onboardingAddAnother()')}</div>`;
+    body = `<div class="ob-added"><div class="ob-celebrate">${onboardingArtwork(state.added)}<i></i><i></i><i></i><i></i></div><h1 id="onboarding-title" tabindex="-1">Added to your list!</h1><strong>${esc(state.added.title)}</strong><p>${esc(state.added.label)}</p>${(state.added.songArtists||[]).length?`<div class="ob-song-prompt"><p>Add their favorite songs too?</p>${state.added.songArtists.map(n=>`<button type="button" class="ob-song-link" onclick="openSongsForArtistName('${jsStr(n)}')">♪ Pick your favorite ${esc(n)} songs →</button>`).join('')}</div>`:''}${btn('Add another','onboardingAddAnother()')}</div>`;
     footer = `${btn('← Back','onboardingAddAnother()')}${btn('Next →','advanceOnboarding(1)',true)}`;
   } else if (step === 0) {
     body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1" aria-live="polite" aria-atomic="true">${esc(onboardingQuestion().q)}</h1><button id="ob-question-switch" type="button" class="ob-question-switch" onclick="cycleOnboardingQuestion()">Try another question <span aria-hidden="true">↻</span></button><p id="ob-question-hint">${esc(onboardingQuestion().hint)}</p></div>
@@ -7569,16 +7913,14 @@ function renderOnboardingJourney() {
       <section id="ob-starters" aria-label="Suggested picks" aria-live="polite"></section>
       <div id="ob-feedback" class="ob-feedback" role="status">${!ready?'Loading your favorites…':''}</div>`;
     footer = `<span class="ob-saved-count"><strong id="ob-selection-count">0 selected</strong><br>${picks.length} ${picks.length===1?'pick':'picks'} saved</span><div><button id="ob-review-button" type="button" class="ob-button" onclick="advanceOnboarding(1)" ${!picks.length?'disabled':''}>Review my picks</button> <button id="ob-add-button" type="button" class="ob-button ob-primary" onclick="saveOnboardingSelection()" disabled>Add to my list</button></div>`;
-  } else if (step === 1) {
-    body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1">Your taste is taking shape.</h1><p>${picks.length} ${picks.length===1?'pick':'picks'} in. Add a few more to make this feel like you.</p></div><div class="ob-pick-grid">${cards}<button type="button" class="ob-add-tile" onclick="onboardingAddAnother()"><span>+</span>Add another</button></div><div class="ob-category-prompt"><p>Need ideas? Try a different category:</p><div class="ob-filters">${[['artist','♫ Music'],['movie','▤ Movies'],['tv','▣ TV'],['book','▥ Books']].map(([key,label])=>btn(label,`onboardingAddAnother('${key}')`)).join('')}</div></div>`;
-    footer = `${btn('← Back','onboardingAddAnother()')}${btn('Next →','advanceOnboarding(2)',true)}`;
   } else {
-    const collage = picks.slice(0,7).map(p=>onboardingArtwork(p)).join('');
     const categories = new Set(picks.map(p=>p.medium));
-    body = `<div class="ob-finish"><div class="ob-personal-collage" aria-label="Your saved favorites">${collage || '<div class="ob-empty-art">Your next favorite<br>is waiting.</div>'}</div><div><h1 id="onboarding-title" tabindex="-1">Looks good.</h1><p>This is just the beginning.<br>You can always add, remove,<br>and explore more.</p><ul><li>✓ &nbsp; ${picks.length} ${picks.length===1?'favorite':'favorites'} added</li><li>✓ &nbsp; ${categories.size} ${categories.size===1?'category':'categories'} explored</li><li>✓ &nbsp; Your taste, in one place</li></ul>${btn('Go to activity feed →',"finishOnboarding('completed')",true)}<button class="ob-text-link" onclick="onboardingAddAnother()">Continue adding</button><button class="ob-text-link" onclick="focusPeopleSearch()">Find friends first</button></div></div>`;
-    footer = `${btn('← Back','advanceOnboarding(1)')}<span class="ob-motto">Same obsessions. A fuller you.</span>`;
+    body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1">Your taste is taking shape.</h1><p>${picks.length} ${picks.length===1?'favorite':'favorites'} saved · ${categories.size} ${categories.size===1?'category':'categories'} explored.<br>You can always add, remove, and explore more.</p></div>
+      <div class="ob-pick-grid">${cards}<button type="button" class="ob-add-tile" onclick="onboardingAddAnother()"><span>+</span>Add another</button></div>
+      <div class="ob-category-prompt"><p>Keep exploring your taste</p><div class="ob-filters">${[['artist','♫ Music'],['movie','▤ Movies'],['tv','▣ TV'],['book','▥ Books'],['podcast','Podcasts']].map(([key,label])=>btn(label,`onboardingAddAnother('${key}')`)).join('')}</div></div>`;
+    footer = `${btn('← Back','onboardingAddAnother()')}<div class="ob-review-finish">${btn('Go to activity feed →',"finishOnboarding('completed')",true)}<button type="button" class="ob-text-link" onclick="focusPeopleSearch()">Find friends first</button></div>`;
   }
-  el.innerHTML = `<section class="ob-frame" aria-labelledby="onboarding-title"><header class="ob-top"><div class="ob-progress" aria-label="Step ${step+1} of 3">${[0,1,2].map(i=>`<span class="${i<=step?'filled':''}"></span>`).join('')}</div><span>${step+1} / 3</span></header><main class="ob-content">${body}</main><footer class="ob-footer"><p id="ob-footer-feedback" role="alert" hidden></p>${footer}</footer><button class="ob-skip" onclick="finishOnboarding('skipped')">Skip for now</button></section>`;
+  el.innerHTML = `<section class="ob-frame" aria-labelledby="onboarding-title"><header class="ob-top"><div class="ob-progress" aria-label="Step ${step+1} of 2">${[0,1].map(i=>`<span class="${i<=step?'filled':''}"></span>`).join('')}</div><span>${step+1} / 2</span></header><main class="ob-content">${body}</main><footer class="ob-footer"><p id="ob-footer-feedback" role="alert" hidden></p>${footer}</footer><button class="ob-skip" onclick="finishOnboarding('skipped')">Skip for now</button></section>`;
   if (step===0 && !state.added) {
     loadOnboardingStarters();
     renderOnboardingSearchResults();
@@ -7633,6 +7975,19 @@ function filterOnboardingSearch(filter){const state=onboardingVisualState();
   // "Search everything instead" after a type word: search the full text across all types.
   if(filter==='all')state.manualFilter=true;
   onOnboardingSearch(state.query);if(filter==='all'&&!parseOnboardingQuery(state.query).kind)state.manualFilter=false;}
+let onboardingJSONPSequence=0;
+function onboardingAppleJSONP(url) {
+ const endpoint=new URL(url);
+ if(endpoint.origin!=='https://itunes.apple.com'||!['/search','/lookup'].includes(endpoint.pathname))return Promise.reject(Error('Unsupported catalog'));
+ return new Promise((resolve,reject)=>{
+  const callback='tlAppleCatalog'+(++onboardingJSONPSequence),script=document.createElement('script');
+  const cleanup=()=>{clearTimeout(timer);script.remove();delete window[callback];};
+  const timer=setTimeout(()=>{cleanup();reject(Error('Catalog timed out'));},8000);
+  window[callback]=data=>{cleanup();resolve(data);};
+  script.onerror=()=>{cleanup();reject(Error('Catalog unavailable'));};
+  endpoint.searchParams.set('callback',callback);script.src=endpoint.href;document.head.appendChild(script);
+ });
+}
 async function onboardingSearchJSON(url) {
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),8000);
@@ -7640,6 +7995,9 @@ async function onboardingSearchJSON(url) {
     const response=await fetch(url,{signal:controller.signal});
     if(!response.ok)throw new Error('Search provider unavailable');
     return await response.json();
+  } catch(error) {
+    if(new URL(url).origin==='https://itunes.apple.com')return await onboardingAppleJSONP(url);
+    throw error;
   } finally {clearTimeout(timer);}
 }
 async function searchOnboardingArtists(query) {
@@ -7814,6 +8172,7 @@ async function saveOnboardingSelection() {
     if(currentUser?.id!==userId)return;
     if(failures.length)state.error=`${saved.length ? saved.length+' saved. ' : ''}Some picks weren’t added. Your remaining selections are kept. ${failures.join(' ')}`;
     else if(saved.length)state.added=saved.length===1?{...saved[0]}:{...saved[0],title:`${saved.length} picks saved`,label:'Saved to '+[...new Set(saved.map(p=>p.category||onboardingQuestion().list))].join(' · ')+'.'};
+    if(state.added)state.added.songArtists=saved.filter(i=>i.kind==='artist').map(i=>i.title).slice(0,3);
     if(saved.length){renderOnboardingJourney();scheduleTasteConstellation();}
   } catch(error) {if(currentUser?.id===userId)state.error=error.message||'Could not save your picks. Please try again.';}
   finally {state.saving=false;if(currentUser?.id===userId)renderOnboardingSearchResults();}
@@ -8249,7 +8608,7 @@ function advanceOnboarding(step) {
   if (!shouldShowOnboarding() || onboardingVisualState().saving) return;
   if(step!==0 && onboardingVisualState().pending.length) return;
   if (step === 1 && onboardingState.step === 0 && !onboardingPicks().length) return;
-  saveOnboardingProgress('pending', step);
+  saveOnboardingProgress('pending', Math.min(step, 1));
   renderOnboardingJourney();
   document.getElementById('onboarding-title')?.focus();
 }
@@ -8266,14 +8625,15 @@ function finishOnboarding(status) {
 function renderProfileOnboardingResume() {
   const el = document.getElementById('profile-onboarding-resume');
   if (!el) return;
-  el.hidden = !(profileFavoritesLoaded && collectConstellationFavorites().length > 0 &&
+  el.hidden = !(profileFavoritesLoaded && profileTasteReadiness().ready &&
     currentUser && isOwnProfile && viewedProfile?.id === currentUser.id);
 }
 async function resumeOnboarding() {
-  if (!currentUser || onboardingUserId !== currentUser.id ||
-      !['pending', 'skipped'].includes(onboardingState?.status)) return;
+  if (!currentUser || !isOwnProfile || viewedProfile?.id !== currentUser.id || onboardingVisualState().saving) return;
   const userId = currentUser.id;
-  const step = onboardingState.step;
+  // Reopen the guided questions without clearing any saved favorites.
+  const canResume = onboardingUserId === userId && ['pending', 'skipped'].includes(onboardingState?.status);
+  const step = canResume && profileTasteReadiness().total > 0 ? onboardingState.step : 0;
   await goToMyProfileView();
   if (currentUser?.id !== userId || viewedProfile?.id !== userId) return;
   saveOnboardingProgress('pending', step);
@@ -11652,7 +12012,7 @@ function toggleMovieEditMode() {
 // ── Arrows on horizontally scrolling rows (Netflix-style) ──────────────────────────────────────────
 // A soft edge fade with a chevron appears on whichever side has more items; hidden at each end and on
 // rows that fit. Attached automatically to every scrolling list row as it's drawn.
-const HSCROLL_SELECTOR = '.artist-grid';
+const HSCROLL_SELECTOR = '.artist-grid';   // includes the Feed's People-you-may-know row (.pymk-row.artist-grid)
 const hsResize = 'ResizeObserver' in window ? new ResizeObserver(entries => entries.forEach(e => updateHScroll(e.target))) : null;
 function setupHScroll(grid) {
   const host = grid.parentElement;
@@ -12797,7 +13157,7 @@ function scheduleTasteConstellation() {
   const state = constellationState();
   if (state.queued) return;
   state.queued = true;
-  queueMicrotask(() => { state.queued = false; refreshTasteConstellation(); renderOnboardingJourney(); });
+  queueMicrotask(() => { state.queued = false; refreshTasteConstellation(); renderOnboardingJourney(); if(profileFavoritesLoaded)renderDynamicProfilePicks(); });
 }
 async function refreshTasteConstellation() {
   const state = constellationState();
@@ -13700,6 +14060,7 @@ function sharedBookFallback(title, author) {
   return hit && (!author || sharedBookKey(author) === sharedBookKey(hit.author)) ? hit : null;
 }
 async function sharedCatalogJSON(url) {
+  if(new URL(url).origin==='https://itunes.apple.com')return onboardingSearchJSON(url);
   const r = await fetch(url,{signal:AbortSignal.timeout(10000)});
   if (!r.ok) throw Error('Catalog unavailable');
   return r.json();
@@ -14289,10 +14650,17 @@ function reactionBadgeHtml(targetType, targetId) {
   const state = LIKE_CACHE[key] || emptyLikeState();
   const topEmoji = Object.entries(state.byReaction).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([e]) => e).join('');
   const pickerId = `reaction-picker-${targetType}-${targetId}`;
-  return `<span style="position:relative;display:inline-flex;">
-    <button class="reaction-badge-btn" onclick="event.stopPropagation(); toggleReactionPicker('${targetType}','${targetId}')" style="display:flex;align-items:center;gap:5px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;font-size:12.5px;color:${state.mine ? '#F97360' : 'var(--muted)'};">
-      <span>${topEmoji || '♡'}</span><span>${state.total || ''}</span>
-    </button>
+  // One reaction control: once you've reacted it shows your emoji first (plus the other top ones) and the
+  // count; tap the emoji to change yours, the count to see who reacted. Before you react: others' summary
+  // (if any) and a gray ♡ to react.
+  const ordered = Object.entries(state.byReaction).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]).map(([e]) => e);
+  const mineFirst = state.mine ? [state.mine, ...ordered.filter(e => e !== state.mine)].slice(0, 3).join('') : '';
+  const pickerBtn = (content, mine) => `<button type="button" class="reaction-badge-btn${mine ? ' is-mine' : ''}" aria-label="${mine ? 'Change your reaction' : 'Add a reaction'}" title="${mine ? 'Change your reaction' : 'Add a reaction'}" onclick="event.stopPropagation(); toggleReactionPicker('${targetType}','${targetId}')" style="display:flex;align-items:center;gap:5px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;font-size:12.5px;color:${mine ? '#F97360' : 'var(--muted)'};"><span>${content}</span></button>`;
+  const countBtn = `<button type="button" class="reaction-summary-btn${state.mine ? ' is-mine' : ''}" aria-label="See who reacted: ${state.total} reaction${state.total === 1 ? '' : 's'}" onclick="event.stopPropagation();openReactionPeople('${targetType}','${targetId}')">`;
+  return `<span style="position:relative;display:inline-flex;align-items:center;gap:5px;">
+    ${state.mine
+      ? `${pickerBtn(mineFirst, true)}${countBtn}<span>${state.total}</span></button>`
+      : `${state.total ? `${ordered.filter(e => e !== '❤️').slice(0, 2).length ? `<span class="reaction-others" aria-hidden="true">${ordered.filter(e => e !== '❤️').slice(0, 2).join('')}</span>` : ''}${pickerBtn('♡', false)}${countBtn}<span>${state.total}</span></button>` : pickerBtn('♡', false)}`}
     <div id="${pickerId}" style="display:none;position:absolute;bottom:100%;left:0;margin-bottom:6px;background:var(--surface3);border:1px solid var(--border2);border-radius:20px;padding:5px 6px;box-shadow:0 6px 20px rgba(0,0,0,0.4);align-items:center;gap:1px;z-index:20;white-space:nowrap;">
       ${REACTION_EMOJIS.map(e => `<button onclick="event.stopPropagation(); pickReaction('${targetType}','${targetId}','${e}')" style="background:${state.mine === e ? 'var(--surface2)' : 'none'};border:none;font-size:17px;line-height:1;padding:5px 6px;cursor:pointer;border-radius:8px;">${e}</button>`).join('')}
     </div>
@@ -14300,6 +14668,47 @@ function reactionBadgeHtml(targetType, targetId) {
 }
 
 
+
+const reactionPeopleState={request:0,rows:[],filter:'',targetType:'',targetId:''};
+function closeReactionPeople(){reactionPeopleState.request++;document.getElementById('reaction-people-dialog')?.close();}
+async function openReactionPeople(targetType,targetId){
+ closeReactionPickers();
+ let dialog=document.getElementById('reaction-people-dialog');
+ if(!dialog){
+  dialog=document.createElement('dialog');dialog.id='reaction-people-dialog';dialog.setAttribute('aria-labelledby','reaction-people-title');
+  dialog.innerHTML=`<header><h2 id="reaction-people-title">Reactions</h2><button type="button" aria-label="Close reactions" onclick="closeReactionPeople()">×</button></header><div id="reaction-people-filters" aria-label="Filter reactions"></div><div id="reaction-people-list" aria-live="polite"></div>`;
+  document.body.appendChild(dialog);dialog.addEventListener('cancel',()=>reactionPeopleState.request++);
+ }
+ const request=++reactionPeopleState.request;
+ Object.assign(reactionPeopleState,{targetType,targetId,rows:[],filter:''});
+ document.getElementById('reaction-people-filters').innerHTML='';
+ const list=document.getElementById('reaction-people-list');list.textContent='Loading reactions…';
+ if(!dialog.open)dialog.showModal();
+ try{
+  if(!sb)throw Error('Unavailable');
+  const {data:likes,error}=await sb.from('likes').select('user_id,reaction').eq('target_type',targetType).eq('target_id',targetId);
+  if(error)throw error;
+  const ids=[...new Set((likes||[]).map(r=>r.user_id).filter(Boolean))];
+  const profiles=ids.length?await sb.from('profiles').select('id,username,display_name,avatar_url').in('id',ids):{data:[]};
+  if(profiles.error)throw profiles.error;
+  if(request!==reactionPeopleState.request||!dialog.open)return;
+  const people=new Map((profiles.data||[]).map(p=>[p.id,p]));
+  reactionPeopleState.rows=(likes||[]).map(r=>({...r,reaction:REACTION_EMOJIS.includes(r.reaction)?r.reaction:'👍',person:people.get(r.user_id)}));
+  renderReactionPeople();
+ }catch(_){if(request===reactionPeopleState.request)list.innerHTML='<p>Couldn’t load reactions.</p><button type="button" class="ed-link" onclick="openReactionPeople(reactionPeopleState.targetType,reactionPeopleState.targetId)">Try again</button>';}
+}
+function filterReactionPeople(reaction){reactionPeopleState.filter=reaction;renderReactionPeople();}
+function renderReactionPeople(){
+ const {rows,filter}=reactionPeopleState;
+ const counts=new Map();rows.forEach(r=>counts.set(r.reaction,(counts.get(r.reaction)||0)+1));
+ document.getElementById('reaction-people-filters').innerHTML=rows.length?`<button type="button" aria-pressed="${!filter}" onclick="filterReactionPeople('')">All ${rows.length}</button>`+[...counts].map(([emoji,count])=>`<button type="button" aria-pressed="${filter===emoji}" onclick="filterReactionPeople('${emoji}')">${emoji} ${count}</button>`).join(''):'';
+ document.getElementById('reaction-people-list').innerHTML=rows.length?rows.filter(r=>!filter||r.reaction===filter).map(r=>{
+  const p=r.person,name=p?.display_name||p?.username||'TasteList member';
+  const art=/^https?:\/\//i.test(p?.avatar_url||'')?p.avatar_url:'';
+  const content=`<span class="reaction-person-avatar"><span>${esc(name.slice(0,1).toUpperCase())}</span>${art?`<img src="${esc(art)}" alt="" onerror="this.hidden=true">`:''}</span><span class="reaction-person-name"><strong>${esc(name)}</strong>${p?.username?`<small>@${esc(p.username)}</small>`:''}</span><span class="reaction-person-emoji">${r.reaction}</span>`;
+  return p?.username?`<a class="reaction-person" href="?u=${encodeURIComponent(p.username)}">${content}</a>`:`<div class="reaction-person">${content}</div>`;
+ }).join(''):'<p>No reactions yet.</p>';
+}
 
 async function loadComments(targetType, targetId) {
   if (!sb || !targetId) return [];
@@ -14570,8 +14979,8 @@ function activityCardHtml(item, globalIndex) {
     <div class="activity-card-body">
             <h3 class="activity-title"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openActivitySummary(${globalIndex})">${esc(item.label)}</button></h3>
       <div class="activity-meta">${item.sub ? `<span style="color:${iconColor}">${esc(item.sub)}</span>` : ''}${item.sub && item.timestamp ? '<span aria-hidden="true">·</span>' : ''}${item.timestamp ? `<span>${item.timestamp}</span>` : ''}</div>
-      ${note}
-      ${item.id ? `<div style="display:flex;align-items:center;gap:14px;margin-top:8px;">
+      ${taggedLineHtml(item.tags)}${note}
+      ${item.id ? `<div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
         ${reactionBadgeHtml('activity_feed', item.id)}
         <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;" onclick="toggleProfileCardComments('${item.id}')">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed', item.id)] || {}).count || ''}</span>
@@ -14587,6 +14996,11 @@ function activityCardHtml(item, globalIndex) {
 // always opens the right item regardless of which feed it was clicked from. Edit controls (toggle +
 // add button) only render on the main 'profile-feed' container, not the smaller per-tab feeds that
 // share the same underlying data, to avoid duplicate controls scattered across the site.
+function compactProfileEmpty(kind){
+ const own=!!currentUser&&isOwnProfile&&viewedProfile?.id===currentUser.id;
+ const next=kind==='next';
+ return `<div class="profile-compact-empty"><p>${own?(next?'Something you want to remember?':'Anything worth talking about lately?'):(next?'No recommendations saved yet.':'No updates shared yet.')}</p>${own?`<button type="button" class="ed-link" onclick="${next?'openPasteRecommendations()':'openActivityItemForm()'}">${next?'Save it for later':'Share a thought'} <span aria-hidden="true">→</span></button>`:''}</div>`;
+}
 function renderActivityFeed(containerId, filterFn) {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -14595,15 +15009,10 @@ function renderActivityFeed(containerId, filterFn) {
     const section=el.closest('.music-section');
     if(section){section.hidden=!items.length;if(section.nextElementSibling?.classList.contains('music-section-divider'))section.nextElementSibling.hidden=!items.length;}
   }
+  if(containerId==='profile-feed' && syncInitialTasteProfile())renderDynamicProfilePicks();
+  if(containerId==='profile-feed')el.closest('.ed-panel')?.classList.toggle('profile-section-empty',!items.length);
   if (!items.length && containerId === 'profile-feed') {
-    el.innerHTML = `
-      <div style="text-align:center;padding:36px 16px;">
-        <div style="width:44px;height:44px;border-radius:12px;background:#7C4DFF1c;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        </div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:${isOwnProfile ? '16px' : '0'};line-height:1.5;">${isOwnProfile ? "What's something you've watched, read, or listened to that's been on your mind lately?" : "Nothing posted yet."}</div>
-        ${isOwnProfile ? `<button onclick="openActivityItemForm()" style="font-size:12.5px;font-weight:600;color:#fff;background:var(--accent);border:none;border-radius:20px;padding:9px 20px;cursor:pointer;font-family:inherit;">+ Add your first update</button>` : ''}
-      </div>`;
+    el.innerHTML = compactProfileEmpty('new');
   } else {
     el.innerHTML = items.map(item => activityCardHtml(item, ACTIVITY_FEED_ITEMS.indexOf(item))).join('');
   }
@@ -14781,12 +15190,188 @@ function feedPostAttachmentHtml(row){const p=row.catalog_item?.attachment;if(!p)
 
 const FEED_POST_PROMPTS=['What have you watched, read, or listened to lately?','What’s something you loved that more people should discover?','What should your friends put on their What’s Next list?'];
 let feedPostDraft={userId:null,text:'',id:null,saving:false,requestId:null};
+
+// ── People you may know (Feed) ─────────────────────────────────────────────────────────────────────
+// Suggestions come from suggested_people(): people who follow you, friends of friends ("Followed by
+// Jenny + 2 more"), people who've interacted with you, then popular profiles. Follow or ✕ to hide.
+let pymkState = { userId: null, loadedAt: 0, items: [], loading: false };
+function pymkDismissKey() { return 'tl_pymk_dismissed:' + (currentUser?.id || ''); }
+function pymkDismissed() { try { return JSON.parse(localStorage.getItem(pymkDismissKey()) || '[]'); } catch (_) { return []; } }
+function ensurePymkSection() {
+  const composer = document.getElementById('feed-composer');
+  if (!composer) return null;
+  let el = document.getElementById('feed-suggestions');
+  if (!el) {
+    el = document.createElement('section');
+    el.id = 'feed-suggestions'; el.className = 'pymk'; el.setAttribute('aria-label', 'People you may know');
+    composer.insertAdjacentElement('afterend', el);
+  }
+  return el;
+}
+async function loadPeopleSuggestions(force = false) {
+  const el = ensurePymkSection();
+  if (!el) return;
+  if (!currentUser || !sb) { el.innerHTML = ''; return; }
+  const fresh = pymkState.userId === currentUser.id && Date.now() - pymkState.loadedAt < 3 * 60 * 1000;
+  if (fresh && !force) { renderPeopleSuggestions(); return; }
+  if (pymkState.loading) return;
+  pymkState.loading = true;
+  const userId = currentUser.id;
+  try {
+    const { data, error } = await sb.rpc('suggested_people', { max_results: 15 });
+    if (error) throw error;
+    if (currentUser?.id !== userId) return;
+    pymkState = { userId, loadedAt: Date.now(), items: (data || []).map(p => ({ ...p, followState: null })), loading: false };
+  } catch (e) { console.error('Suggestions failed:', e); pymkState.loading = false; }
+  pymkState.loading = false;
+  renderPeopleSuggestions();
+}
+function renderPeopleSuggestions() {
+  const el = ensurePymkSection(); if (!el) return;
+  const hidden = pymkDismissed();
+  const items = pymkState.items.filter(p => !hidden.includes(p.id));
+  if (!items.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="pymk-head"><h2>People you may know</h2></div>
+    <div class="pymk-row artist-grid">${items.map(p => {
+      const state = p.followState;
+      const label = state === 'accepted' ? 'Following' : state === 'pending' ? 'Requested' : state === 'busy' ? '…' : 'Follow';
+      return `<article class="pymk-card">
+        <button type="button" class="pymk-dismiss" aria-label="Hide ${esc(p.display_name || p.username)}" onclick="dismissSuggestion('${jsStr(p.id)}')">✕</button>
+        <a href="?u=${encodeURIComponent(p.username)}" class="pymk-person" onclick="event.preventDefault();goToProfile('${jsStr(p.username)}')">
+          ${profileAvatarHtml(p, 56)}
+          <strong>${esc(p.display_name || p.username)}</strong>
+          <small>@${esc(p.username)}</small>
+        </a>
+        <p class="pymk-reason">${esc(p.reason || '')}</p>
+        <button type="button" class="pymk-follow${state ? ' is-done' : ''}" ${state ? 'disabled' : ''} onclick="followSuggestion('${jsStr(p.id)}')">${label}</button>
+      </article>`; }).join('')}</div>`;
+  try { scanHScroll(); } catch (_) {}
+}
+async function followSuggestion(id) {
+  const p = pymkState.items.find(x => x.id === id);
+  if (!p || p.followState || !currentUser || !sb) return;
+  if (!(await requireFreshSession())) { showToast(SESSION_EXPIRED_MESSAGE); return; }
+  const status = p.is_public ? 'accepted' : 'pending';
+  p.followState = 'busy'; renderPeopleSuggestions();
+  const { error } = await sb.from('follows').insert({ follower_id: currentUser.id, followed_id: id, status });
+  if (error && !/duplicate/i.test(error.message || '')) { p.followState = null; renderPeopleSuggestions(); showToast('Couldn’t follow ' + (p.display_name || p.username) + '. Please try again.'); return; }
+  p.followState = status; renderPeopleSuggestions();
+  showToast(status === 'accepted' ? `You’re following ${p.display_name || p.username}.` : `Follow request sent to ${p.display_name || p.username}.`);
+  if (status === 'accepted') { try { loadPublicFeed?.(); } catch (_) {} }   // their posts can show up now
+}
+function dismissSuggestion(id) {
+  const hidden = pymkDismissed(); if (!hidden.includes(id)) hidden.push(id);
+  try { localStorage.setItem(pymkDismissKey(), JSON.stringify(hidden.slice(-200))); } catch (_) {}
+  renderPeopleSuggestions();
+}
+
+
+// ── Tag people: TasteList users ({user_id, username, display_name}) or any written-in name ({name}) ──
+// One field used by the Feed composer, the profile "Add update" form and the favorites picker.
+const TAG_FIELDS = {};
+function tagFieldMarkup(ns, label = 'Tag people', hint = 'optional — search TasteList, or type any name') {
+  return `<div class="tag-field"><label class="tl-label" for="tag-${ns}-input">${esc(label)} <span class="tl-hint">${esc(hint)}</span></label>
+    <div id="tag-${ns}-chips" class="tag-chips"></div>
+    <input id="tag-${ns}-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('${ns}',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('${ns}')}">
+    <div id="tag-${ns}-results" class="tag-results" aria-live="polite"></div></div>`;
+}
+function normalizeTags(list) {
+  const out = [];
+  for (const t of (Array.isArray(list) ? list : [])) {
+    if (!t) continue;
+    const uid = t.user_id || t.id;
+    if (uid || t.username) { if (!out.some(x => (uid && x.user_id === uid) || (t.username && x.username === t.username))) out.push({ user_id: uid || null, username: t.username || '', display_name: t.display_name || '' }); }
+    else if (t.name && String(t.name).trim()) { const n = String(t.name).trim().slice(0, 60); if (!out.some(x => !x.username && x.name?.toLowerCase() === n.toLowerCase())) out.push({ name: n }); }
+  }
+  return out.slice(0, 20);
+}
+function tagFieldInit(ns, tags = []) {
+  const prev = TAG_FIELDS[ns]; if (prev) clearTimeout(prev.timer);
+  TAG_FIELDS[ns] = { selected: normalizeTags(tags), results: [], request: (prev?.request || 0) + 1, timer: null, q: '' };
+  const input = document.getElementById(`tag-${ns}-input`); if (input) input.value = '';
+  const res = document.getElementById(`tag-${ns}-results`); if (res) res.innerHTML = '';
+  renderTagChips(ns);
+}
+function tagState(ns) { return TAG_FIELDS[ns] || (TAG_FIELDS[ns] = { selected: [], results: [], request: 0, timer: null, q: '' }); }
+function renderTagChips(ns) {
+  const el = document.getElementById(`tag-${ns}-chips`); if (!el) return;
+  el.innerHTML = tagState(ns).selected.map((t, i) => `<button type="button" class="tag-chip${t.username ? '' : ' is-name'}" aria-label="Remove ${esc(t.username ? '@' + t.username : t.name)}" onclick="tagFieldRemove('${ns}',${i})">${esc(t.username ? '@' + t.username : t.name)} <span aria-hidden="true">×</span></button>`).join('');
+}
+function tagFieldSearch(ns, value) {
+  const st = tagState(ns); clearTimeout(st.timer);
+  const request = ++st.request, raw = String(value || '').trim(); st.q = raw;
+  const el = document.getElementById(`tag-${ns}-results`); if (!el) return;
+  const q = raw.replace(/^@/, '').replace(/[^a-zA-Z0-9_. -]/g, '').trim();
+  if (raw.length < 2) { el.innerHTML = ''; st.results = []; return; }
+  const writeIn = () => (raw.startsWith('@') ? '' : `<button type="button" class="tag-result tag-write-in" onclick="tagFieldAddName('${ns}')"><span>Add “${esc(raw.slice(0, 60))}” as a name</span><small>Not on TasteList</small></button>`);
+  el.innerHTML = `<p class="tag-searching">Searching…</p>${writeIn()}`;
+  st.timer = setTimeout(async () => {
+    let people = [];
+    try {
+      if (sb && q.length >= 2) {
+        const { data, error } = await sb.from('profile_directory').select('id,username,display_name').or(`username.ilike.%${q}%,display_name.ilike.%${q}%`).limit(6);
+        if (error) throw error; people = data || [];
+      }
+    } catch (_) {}
+    if (request !== st.request) return;
+    st.results = people.filter(p => p.username && p.id !== currentUser?.id && !st.selected.some(x => x.user_id === p.id));
+    el.innerHTML = st.results.map((p, i) => `<button type="button" class="tag-result" onclick="tagFieldPick('${ns}',${i})"><span>${esc(p.display_name || p.username)}</span><small>@${esc(p.username)}</small></button>`).join('') + writeIn();
+  }, 250);
+}
+function tagFieldPick(ns, i) {
+  const st = tagState(ns), p = st.results[i]; if (!p) return;
+  st.selected = normalizeTags([...st.selected, { user_id: p.id, username: p.username, display_name: p.display_name }]);
+  tagFieldClearInput(ns);
+}
+function tagFieldAddName(ns) {
+  const st = tagState(ns), name = String(st.q || '').replace(/^@/, '').trim(); if (name.length < 1) return;
+  st.selected = normalizeTags([...st.selected, { name }]);
+  tagFieldClearInput(ns);
+}
+function tagFieldEnter(ns) {
+  const st = tagState(ns), q = String(st.q || '').replace(/^@/, '').toLowerCase();
+  const exact = st.results.findIndex(p => p.username.toLowerCase() === q);
+  if (exact >= 0) tagFieldPick(ns, exact); else if (st.q && !st.q.startsWith('@')) tagFieldAddName(ns); else if (st.results.length) tagFieldPick(ns, 0);
+}
+function tagFieldClearInput(ns) {
+  const st = tagState(ns); st.request++; clearTimeout(st.timer); st.results = []; st.q = '';
+  const input = document.getElementById(`tag-${ns}-input`); if (input) { input.value = ''; input.focus(); }
+  const el = document.getElementById(`tag-${ns}-results`); if (el) el.innerHTML = '';
+  renderTagChips(ns);
+}
+function tagFieldRemove(ns, i) { tagState(ns).selected.splice(i, 1); renderTagChips(ns); }
+// Final value; tags restored from older posts by username only get their account id looked up.
+async function tagFieldValue(ns) {
+  const list = normalizeTags(tagState(ns).selected);
+  const missing = list.filter(t => t.username && !t.user_id).map(t => t.username);
+  if (missing.length && sb) {
+    try { const { data } = await sb.from('profile_directory').select('id,username,display_name').in('username', missing);
+      (data || []).forEach(p => { const t = list.find(x => x.username === p.username); if (t) { t.user_id = p.id; t.display_name = t.display_name || p.display_name || ''; } }); } catch (_) {}
+  }
+  return list;
+}
+// "with @jennylkwan · Grandma" under a post (usernames open the profile; written-in names are plain).
+function taggedLineHtml(tags) {
+  const list = normalizeTags(tags); if (!list.length) return '';
+  return `<div class="tagged-line">with ${list.map(t => t.username
+    ? `<button type="button" class="tagged-user" onclick="event.stopPropagation();goToProfile('${jsStr(t.username)}')">@${esc(t.username)}</button>`
+    : `<span class="tagged-name">${esc(t.name)}</span>`).join('<span aria-hidden="true"> · </span>')}</div>`;
+}
+
+// Today's date where the person is (not UTC — an evening post in California shouldn't be dated tomorrow).
+function localDateISO(d = new Date()) { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; }
+function feedPostDateValue() {
+  const v = String(feedPostDraft.date || '').slice(0, 10), today = localDateISO();
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) && v <= today && v >= '1900-01-01' ? v : today;   // no future dates
+}
 function renderFeedComposer(){
  const host=document.getElementById('feed-composer');if(!host)return;
  if(!currentUser){host.innerHTML='';return;}
- if(feedPostDraft.userId!==currentUser.id)feedPostDraft={userId:currentUser.id,text:'',id:null,saving:false,requestId:null};
- host.innerHTML=`<section class="feed-composer-card" aria-label="Write a TasteList update"><div class="feed-composer-input-row">${profileAvatarHtml(currentProfile,42)}<textarea id="feed-post-text" aria-label="Write an update" rows="2" maxlength="3000" placeholder="${esc(FEED_POST_PROMPTS[0])}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea></div>${feedTitleMarkup()}<div class="feed-composer-bottom"><small>Visible to people who can view your profile.<span id="feed-post-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span></small><div>${feedPostDraft.id?'<button class="sl-btn" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="ed-primary" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||!feedPostDraft.attachment||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post'}</button></div></div><p id="feed-post-status" role="status" aria-live="polite"></p></section>`;
+ if(feedPostDraft.userId!==currentUser.id){feedPostDraft={userId:currentUser.id,text:'',id:null,saving:false,requestId:null};tagFieldInit('feed');}
+ host.innerHTML=`<section class="feed-composer-card" aria-label="Write a TasteList update"><div class="feed-composer-input-row">${profileAvatarHtml(currentProfile,42)}<textarea id="feed-post-text" aria-label="Write an update" rows="2" maxlength="3000" placeholder="${esc(FEED_POST_PROMPTS[0])}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea></div>${feedTitleMarkup()}${tagFieldMarkup('feed')}<div class="feed-composer-bottom"><small><label class="feed-post-date" title="Change the date to post about something from earlier"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><input type="date" id="feed-post-date" aria-label="Post date" value="${esc(feedPostDraft.date||localDateISO())}" max="${localDateISO()}" onchange="feedPostDraft.date=this.value" ${feedPostDraft.saving?'disabled':''}></label><span id="feed-post-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span></small><div>${feedPostDraft.id?'<button class="sl-btn" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="ed-primary" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||!feedPostDraft.attachment||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post'}</button></div></div><p id="feed-post-status" role="status" aria-live="polite"></p></section>`;
  sizeFeedPostInput();
+ setTimeout(() => loadPeopleSuggestions(), 0);
+ renderTagChips('feed');
 }
 function sizeFeedPostInput(){const input=document.getElementById('feed-post-text');if(!input)return;input.style.height='auto';input.style.height=Math.min(180,Math.max(64,input.scrollHeight))+'px';input.style.overflowY=input.scrollHeight>180?'auto':'hidden';}
 function updateFeedPostDraft(text){feedPostDraft.text=text;const count=document.getElementById('feed-post-count');count.hidden=text.length<2800;count.textContent=text.length.toLocaleString()+' / 3,000';sizeFeedPostInput();document.getElementById('feed-post-submit').disabled=!text.trim()||text.length>3000||!feedPostDraft.attachment||feedPostDraft.saving;inferFeedTitle(text);}
@@ -14800,18 +15385,18 @@ async function publishFeedPost(){
  try{
   if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again to post.');
   const attachment=feedPostDraft.attachment;
-  const row={label:attachment.title,type:'other',sub:attachment.label||'',note:text,art_url:onboardingArt(attachment)||null,catalog_item:{kind:'text_post',attachment}};
+  const row={label:attachment.title,type:'other',sub:attachment.label||'',note:text,art_url:onboardingArt(attachment)||null,catalog_item:{kind:'text_post',attachment},tags:await tagFieldValue('feed'),activity_date:feedPostDateValue()};
   let result;
   if(feedPostDraft.id)result=await sb.from('activity_feed').update(row).eq('id',feedPostDraft.id).eq('user_id',userId).select('id').single();
   else{
    feedPostDraft.requestId ||= crypto.randomUUID();
-   result=await sb.from('activity_feed').insert({...row,id:feedPostDraft.requestId,user_id:userId,activity_date:new Date().toISOString()}).select('id').single();
+   result=await sb.from('activity_feed').insert({...row,id:feedPostDraft.requestId,user_id:userId}).select('id').single();
    // A lost response may hide a successful insert. Confirm this exact owned post before retrying.
    if(result.error?.code==='23505')result=await sb.from('activity_feed').select('id').eq('id',feedPostDraft.requestId).eq('user_id',userId).single();
   }
   if(result.error)throw result.error;
   if(currentUser?.id!==userId)return;
-  feedPostDraft={userId,text:'',id:null,saving:false,requestId:null};feedTitleSearch.manual=false;feedTitleSearch.seq++;renderFeedComposer();
+  feedPostDraft={userId,text:'',id:null,saving:false,requestId:null};tagFieldInit('feed');feedTitleSearch.manual=false;feedTitleSearch.seq++;renderFeedComposer();
   showToast('Update posted');await loadPublicFeed();
   if(viewedProfile?.id===userId)await loadActivityFeedFromSupabase(userId);
  }catch(e){if(currentUser?.id===userId){feedPostDraft.saving=false;renderFeedComposer();document.getElementById('feed-post-status').textContent=e.message||'Could not post. Your draft is still here.';}}
@@ -14821,7 +15406,7 @@ function editFeedTextPost(id){
  const r=feedRows.find(r=>r.id===id)||ACTIVITY_FEED_ITEMS.find(r=>r.id===id);
  if(!r||feedPostDraft.saving)return;
  if(feedPostDraft.text.trim()&&!confirm('Replace your current draft with this post?'))return;
- feedTitleSearch.manual=false;feedTitleSearch.seq++;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null};goToFeedView();renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
+ feedTitleSearch.manual=false;feedTitleSearch.seq++;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null,date:String(r.activity_date||r.activityDate||'').slice(0,10)||null};tagFieldInit('feed',r.tags||[]);goToFeedView();renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
 }
 async function deleteFeedTextPost(id){
  if(!currentUser||!confirm('Delete this update?'))return;
@@ -14838,7 +15423,7 @@ function feedTextPostHtml(row,profile=false){
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
  const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
  const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
- return `<article class="feed-text-post"><header>${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>${row.user_id===currentUser?.id?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div>${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button class="sl-btn" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')">Comment${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?' · '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}</button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
+ return `<article class="feed-text-post"><header>${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>${row.user_id===currentUser?.id?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div>${taggedLineHtml(row.tags)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button class="sl-btn" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')">Comment${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?' · '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}</button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
 }
 
 async function loadPublicFeed() {
@@ -14871,7 +15456,7 @@ async function fetchFeedPage(isFirstPage) {
     document.getElementById('feed-heading').textContent="What's New";
     document.getElementById('feed-context').textContent='Your updates and people you follow';
     let query = sb.from('activity_feed')
-      .select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, user_id, profiles!activity_feed_user_id_fkey(username, display_name, is_public)')
+      .select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, is_public)')
       .order('activity_date', { ascending: false }).order('created_at', { ascending: false })
       .range(feedOffset, feedOffset + FEED_PAGE_SIZE - 1);
     query = query.in('user_id', followedIds);
@@ -14934,9 +15519,104 @@ async function followSuggestedPerson(id,button) {
  }catch(_){button.disabled=false;showToast('Could not follow this person. Please try again.');}
 }
 
-function focusPeopleSearch() {
-  const input = document.getElementById('people-search-input');
-  if (input) { input.focus(); input.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+const friendsPanelState={request:0,timer:null,people:[],relationships:new Map(),busy:new Set(),fromOnboarding:false,inviteUrl:''};
+function focusPeopleSearch(){openFriendsPanel();}
+function closeFriendsPanel(){
+ clearTimeout(friendsPanelState.timer);friendsPanelState.request++;
+ document.getElementById('friends-panel')?.close();
+}
+function continueFromFriends(){
+ const onboarding=friendsPanelState.fromOnboarding;
+ closeFriendsPanel();
+ if(onboarding)finishOnboarding('completed');else setTopView('feed');
+}
+function openFriendsPanel(){
+ let dialog=document.getElementById('friends-panel');
+ if(!dialog){
+  dialog=document.createElement('dialog');dialog.id='friends-panel';
+  dialog.setAttribute('aria-labelledby','friends-panel-title');
+  dialog.innerHTML=`<div class="friends-panel-head"><div><h2 id="friends-panel-title">Find your friends.</h2><p>See what they’re watching, reading, and listening to.</p></div><button type="button" class="friends-close" aria-label="Close find friends" onclick="closeFriendsPanel()">×</button></div>
+   <label for="friends-query">Search by name or username</label><input id="friends-query" type="search" autocomplete="off" placeholder="Try a name or @username" oninput="onFriendsQuery(this.value)">
+   <h3 id="friends-results-title">Meet people on TasteList</h3><div id="friends-results" aria-live="polite"></div>
+   <section class="friends-invite"><h3>Your friends aren’t here yet?</h3><p>Invite them to create their own TasteList. They’ll start with signup and guided setup.</p><button type="button" class="ed-primary" id="friends-copy-invite" onclick="copyFriendsPanelInvite(this)">Copy invitation link</button><div id="friends-invite-status" role="status"></div></section>
+   <footer><button type="button" class="ob-button ob-primary" onclick="continueFromFriends()">Continue to feed →</button></footer>`;
+  document.body.appendChild(dialog);
+  dialog.addEventListener('cancel',()=>{clearTimeout(friendsPanelState.timer);friendsPanelState.request++;});
+ }
+ friendsPanelState.fromOnboarding=currentTopView==='onboarding';
+ friendsPanelState.inviteUrl='';document.getElementById('friends-invite-status').textContent='';
+ document.getElementById('friends-query').value='';
+ if(!dialog.open)dialog.showModal();
+ loadFriendsPanel('');
+ document.getElementById('friends-query').focus();
+}
+function onFriendsQuery(value){
+ clearTimeout(friendsPanelState.timer);friendsPanelState.request++;
+ document.getElementById('friends-results').textContent='Searching…';
+ friendsPanelState.timer=setTimeout(()=>loadFriendsPanel(value.trim().replace(/^@/,'')),250);
+}
+async function loadFriendsPanel(query){
+ const request=++friendsPanelState.request,userId=currentUser?.id;
+ const results=document.getElementById('friends-results');
+ document.getElementById('friends-results-title').textContent=query?'Search results':'Meet people on TasteList';
+ results.textContent='Loading people…';
+ if(!sb||!userId){results.textContent='Sign in to find and follow friends.';return;}
+ const safe=query.replace(/[^\p{L}\p{N} _.-]/gu,'').trim().slice(0,80);
+ try{
+  if(query&&!safe){results.textContent='Enter a name or username.';return;}
+  let search=sb.from('profiles').select('id,username,display_name,avatar_url,is_public').neq('id',userId);
+  search=safe?search.or(`username.ilike.%${safe}%,display_name.ilike.%${safe}%`):search.eq('is_public',true);
+  const [profiles,relationships]=await Promise.all([search.order('username').limit(20),sb.from('follows').select('followed_id,status').eq('follower_id',userId)]);
+  if(profiles.error||relationships.error)throw profiles.error||relationships.error;
+  if(request!==friendsPanelState.request||currentUser?.id!==userId||!document.getElementById('friends-panel').open)return;
+  friendsPanelState.people=(profiles.data||[]).filter(p=>p.username);
+  friendsPanelState.relationships=new Map((relationships.data||[]).map(r=>[r.followed_id,r.status]));
+  renderFriendsPanelRows();
+ }catch(_){if(request===friendsPanelState.request){results.innerHTML=`<p>Couldn’t load people. Please try again.</p><button type="button" class="ed-link" onclick="loadFriendsPanel(document.getElementById('friends-query').value.trim().replace(/^@/,''))">Try again</button>`;}}
+}
+function renderFriendsPanelRows(){
+ const el=document.getElementById('friends-results');if(!el)return;
+ if(!friendsPanelState.people.length){el.innerHTML='<p>No people found yet. Try another name, or invite a friend below.</p>';return;}
+ el.innerHTML=friendsPanelState.people.map((p,i)=>{
+  const status=friendsPanelState.relationships.get(p.id),name=p.display_name||p.username;
+  const avatar=/^https?:\/\//i.test(p.avatar_url||'')?p.avatar_url:'';
+  const label=status==='accepted'?'Following ✓':status==='pending'?'Requested':p.is_public===false?'Request to follow':'Follow';
+  return `<div class="friends-person"><a href="?u=${encodeURIComponent(p.username)}" class="friends-person-link"><span class="friends-avatar"><span>${esc(name.slice(0,1).toUpperCase())}</span>${avatar?`<img src="${esc(avatar)}" alt="" onerror="this.hidden=true">`:''}</span><span><strong>${esc(name)}</strong><small>@${esc(p.username)}${p.is_public===false?' · Private':''}</small></span></a><button type="button" class="friends-follow" ${friendsPanelState.busy.has(p.id)?'disabled':''} aria-label="${esc(status==='accepted'?'Unfollow '+name:status==='pending'?'Cancel follow request to '+name:label+' '+name)}" onclick="toggleFriendsPanelFollow(${i})">${label}</button></div>`;
+ }).join('');
+}
+async function toggleFriendsPanelFollow(index){
+ const person=friendsPanelState.people[index],userId=currentUser?.id;
+ if(!person||!userId||!sb||person.id===userId||friendsPanelState.busy.has(person.id))return;
+ friendsPanelState.busy.add(person.id);renderFriendsPanelRows();
+ const previous=friendsPanelState.relationships.get(person.id);
+ try{
+  const status=person.is_public===false?'pending':'accepted';
+  const result=previous?await sb.from('follows').delete().eq('follower_id',userId).eq('followed_id',person.id):await sb.from('follows').insert({follower_id:userId,followed_id:person.id,status});
+  if(result.error)throw result.error;
+  if(currentUser?.id!==userId)return;
+  if(previous)friendsPanelState.relationships.delete(person.id);else friendsPanelState.relationships.set(person.id,status);
+  feedAudienceIds=null;
+  if(viewedProfile?.id===person.id){followStatus=previous?null:status;updateProfileHeaderAndBanner();}
+  loadFollowStats();
+ }catch(_){showToast('Could not update this follow. Please try again.');}
+ finally{friendsPanelState.busy.delete(person.id);renderFriendsPanelRows();}
+}
+async function copyFriendsPanelInvite(button){
+ const userId=currentUser?.id,output=document.getElementById('friends-invite-status');
+ if(!userId||!sb){output.textContent='Sign in to invite friends.';return;}
+ button.disabled=true;output.textContent='Creating your invitation…';
+ try{
+  if(!friendsPanelState.inviteUrl){
+   const {data,error}=await sb.rpc('create_friend_invite');
+   if(error||!data)throw error||Error('Invitation unavailable');
+   if(currentUser?.id!==userId)return;
+   friendsPanelState.inviteUrl='https://tastelist.app/?invite='+encodeURIComponent(data);
+  }
+  const url=friendsPanelState.inviteUrl;
+  try{await navigator.clipboard.writeText(url);output.textContent='Link copied. Send it to a friend.';}
+  catch(_){output.innerHTML=`<label for="friends-invite-url">Copy this link to share</label><input id="friends-invite-url" readonly value="${esc(url)}">`;document.getElementById('friends-invite-url').select();}
+ }catch(_){output.textContent='Could not create an invitation. Please try again.';}
+ finally{button.disabled=false;}
 }
 
 // Same batching idea as initActivityEngagement, but for an arbitrary page of Feed rows rather
@@ -15199,8 +15879,8 @@ function publicActivityCardHtml(row,profile=false) {
         <span title="${esc(row.type)}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:${meta.color}18;color:${meta.color};flex-shrink:0;">${typeIcon}</span>
         <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(row.sub)}</span>
       </div>
-      ${note}
-      <div style="display:flex;align-items:center;gap:14px;margin-top:8px;" onclick="event.stopPropagation()">
+      ${taggedLineHtml(row.tags)}${note}
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px;" onclick="event.stopPropagation()">
         ${reactionBadgeHtml('activity_feed', row.id)}
         <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;" role="button" tabindex="0" aria-label="Comments" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${row.id}')">
           <span>💬</span><span>${commentCount}</span>
@@ -15406,22 +16086,16 @@ function refreshActivityFeeds() {
 }
 
 function renderFriendRecs() {
+  if(syncInitialTasteProfile())renderDynamicProfilePicks();
   const el = document.getElementById('friend-recs');
   if (!el) return;
+  el.closest('.ed-panel')?.classList.toggle('profile-section-empty',!FRIEND_RECOMMENDATIONS.length);
   // Always available to the owner — adding a recommendation shouldn't require finding Edit first.
   const addBtnHtml = isOwnProfile ? `
     <button class="list-create-cta" onclick="openPasteRecommendations()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
   if (!FRIEND_RECOMMENDATIONS.length) {
-    const hc = document.getElementById('recs-head-controls');
-    if (hc) hc.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a rec</button>` : '';
-    el.innerHTML = `
-      <div style="text-align:center;padding:36px 16px;">
-        <div style="width:44px;height:44px;border-radius:12px;background:#7C4DFF1c;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-        </div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:${isOwnProfile ? '16px' : '0'};line-height:1.5;">${isOwnProfile ? "Nothing here yet — recommendations from friends will show up in this list." : "Nothing here yet."}</div>
-        ${addBtnHtml}
-      </div>`;
+    const hc = document.getElementById('recs-head-controls');if(hc)hc.innerHTML='';
+    el.innerHTML=compactProfileEmpty('next');
     return;
   }
   const headCtl = document.getElementById('recs-head-controls');
@@ -15589,6 +16263,127 @@ function tasteListTier(tab, key, label) {
   if (/favou?rite|best|\btop\b|❤|\blove|rewatch/.test(L)) return 2;
   return 3;
 }
+// Derived from existing favorite lists; no new persisted profile state.
+function profileTasteFavorites(){
+ const groups=[
+  {tab:'music',label:'Music',heading:'My Music Taste',icon:'music',color:'#7C4DFF',items:[]},
+  {tab:'movies',label:'Movies',heading:'My Movie Taste',icon:'film',color:'#F97360',items:[]},
+  {tab:'tv',label:'TV',heading:'My TV Taste',icon:'tv',color:'#3B82F6',items:[]},
+  {tab:'books',label:'Books',heading:'My Book Taste',icon:'books',color:'#22C55E',items:[]}
+ ];
+ const eligible=(tab,key)=>{
+  const label=customListLabel(tab,key);
+  if(tasteListTier(tab,key,label)===4)return false;
+  if(/favou?rite|\bfaves?\b|shaped me/i.test(label))return true;
+  return !/\blibrar(?:y|ies)\b|\bimport(?:ed|s)?\b|goodreads|letterboxd|\bhistory\b|\bdiary\b|\bconsumption\b|\ball (?:books|movies|shows|music)\b|\bread books\b|\bwatched\b|\blistened\b|watchlist|to[- ]read|want to|what.?s next/i.test(label);
+ };
+ const add=(tab,kind,items)=>{
+  const group=groups.find(g=>g.tab===tab);
+  for(const item of items||[]){
+   if(!item||item.videoId||item.is_favorite===false||item.isFavorite===false)continue;
+   const title=String(item.title||item.name||'').trim();if(!title)continue;
+   group.items.push({...item,title,_tasteKind:kind});
+  }
+ };
+ for(const [tab,kind] of Object.entries({music:'artist',albums:'album',movies:'movie',tv:'tv',books:'book'})){
+  for(const [key,items] of Object.entries(CUSTOM_LISTS[tab]||{}))add(tab==='albums'?'music':tab,kind,eligible(tab,key)?items:(items||[]).filter(p=>p.is_favorite===true||p.isFavorite===true));
+ }
+ // The legacy movie section is explicitly Favorite Movies.
+ add('movies','movie',movies||[]);
+ for(const list of extraLists||[])if(list.category==='music'&&eligible('music',list.title||'')){
+  for(const item of list.items||[])if(['song','album','artist'].includes(item.kind))add('music',item.kind,[item]);
+ }
+ for(const group of groups){
+  const seen=new Set();
+  group.items=group.items.filter(p=>{
+   const key=JSON.stringify([p._tasteKind,p.title.toLowerCase(),String(p.artist||p.author||'').trim().toLowerCase()]);
+   if(seen.has(key))return false;seen.add(key);return true;
+  });
+  // Preserve the established defining-pick order, then fill from the remaining favorites.
+  const preferred=assortedTastePicks(group.tab);
+  const rank=p=>{const i=preferred.findIndex(x=>(x.title||x.name)===p.title&&(x._tasteKind|| (group.tab==='music'?'artist':p._tasteKind))===p._tasteKind);return i<0?1000:i;};
+  group.items.sort((a,b)=>rank(a)-rank(b));
+ }
+ return groups;
+}
+function profileTasteReadiness(groups=profileTasteFavorites()){
+ const total=groups.reduce((n,g)=>n+g.items.length,0);
+ return {total,ready:total>=5};
+}
+function addProfileTasteFavorite(tab){
+ if(!currentUser||!isOwnProfile||viewedProfile?.id!==currentUser.id)return;
+ openUnifiedPicker(tab);
+}
+function isInitialTasteProfile() {
+ return !!currentUser && isOwnProfile && viewedProfile?.id===currentUser.id && profileFavoritesLoaded &&
+   !isLockedProfile() && profileTasteReadiness().total===0 &&
+   ACTIVITY_FEED_ITEMS.length===0 && FRIEND_RECOMMENDATIONS.length===0;
+}
+function syncInitialTasteProfile() {
+ const section=document.getElementById('profile-content-sections');
+ if(!section)return false;
+ const initial=isInitialTasteProfile();
+ const changed=section.classList.contains('profile-first-visit')!==initial;
+ section.classList.toggle('profile-first-visit',initial);
+ return changed;
+}
+function initialTasteProfileHtml() {
+ // Presentation-only examples: never passed to a picker or written to favorites.
+ return `<section class="profile-welcome-editorial" aria-labelledby="profile-welcome-title">
+  <div class="profile-welcome-copy"><h3 id="profile-welcome-title">What do you love?</h3>
+  <p>Pick five things that define your taste. A book you couldn't put down. An album you always return to. A film you'll never forget.</p>
+  <button type="button" class="ed-primary" onclick="resumeOnboarding()">Choose your first favorite</button></div>
+  <figure class="profile-example-collage" aria-label="Example artwork, not your favorites">
+   <div class="profile-example-art">
+    <div class="profile-example-cover"><span>OK Computer</span><img src="https://i.scdn.co/image/ab67616d0000b273c8b444df094279e70d0ed856" alt="OK Computer — example album" onerror="this.hidden=true"></div>
+    <div class="profile-example-cover"><span>Martyr!</span><img src="https://covers.openlibrary.org/b/isbn/9780593537619-L.jpg" alt="Martyr! — example book" onerror="this.hidden=true"></div>
+    <div class="profile-example-cover"><span>Super Trouper</span><img src="https://i.scdn.co/image/ab67616d0000b2734864124e98f306c2d18ec280" alt="Super Trouper — example album" onerror="this.hidden=true"></div>
+   </div>
+   <figcaption>A little inspiration · Example artwork, not your picks</figcaption>
+   <div class="profile-example-colors" aria-hidden="true"><i style="--dot:#a78bfa"></i><i style="--dot:#ff705c"></i><i style="--dot:#3b9fff"></i><i style="--dot:#22c55e"></i></div>
+  </figure>
+ </section>`;
+}
+function renderDynamicProfilePicks(){
+ syncInitialTasteProfile();
+ renderLiveTasteSentence();
+ const el=document.getElementById('profile-picks');if(!el)return;
+ const token=el._tasteRenderToken=Symbol('taste-picks'),profileId=viewedProfile?.id;
+ if(isLockedProfile()){el.innerHTML='';return;}
+ const owner=!!currentUser&&isOwnProfile&&profileId===currentUser.id;
+ const groups=profileTasteFavorites(),populated=groups.filter(g=>g.items.length),empty=groups.filter(g=>!g.items.length);
+ const readiness=profileTasteReadiness(groups);el.dataset.profileReady=String(readiness.ready);
+ const share=document.getElementById('profile-share-cta');if(share)share.hidden=!readiness.ready;
+ const resume=document.getElementById('profile-onboarding-resume');if(resume)resume.hidden=!(owner&&readiness.ready);
+ const progress=owner?(readiness.ready?'<div class="taste-readiness" role="status">Your Taste Profile is ready</div>':`<div class="taste-emerging-wrap"><button type="button" class="taste-emerging-card" onclick="openProfileMediaPicker()"><span class="taste-emerging-title">Your taste is taking shape.</span><span class="taste-emerging-cta">+ Add another favorite</span></button></div>`):'';
+ const header=document.getElementById('defining-picks-header');
+ if(header){header.hidden=false;const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile?.username||'Their';header.innerHTML=`${esc(owner?'Your':possessiveName(name))} Defining Picks${populated.length?'<span class="ed-sub">Tap a box to explore that section</span>':''}`;}
+ const current=()=>el._tasteRenderToken===token&&viewedProfile?.id===profileId;
+ const render=()=>{
+  if(!current())return;
+  if(isInitialTasteProfile()){el.innerHTML=initialTasteProfileHtml();return;}
+  el.innerHTML=(populated.length?`<div class="dynamic-taste-grid" data-count="${populated.length}">${populated.map(g=>{
+   const picks=g.items.slice(0,4),first=picks[0];
+   return `<button type="button" class="dynamic-taste-card" style="--taste-color:${g.color}" onclick="goToFavorites('${g.tab}')" aria-label="Explore ${g.label}: ${g.items.length} favorites"><div class="dynamic-taste-card-heading"><span>${badgeIcon(g.icon,14)}</span>${g.heading}</div><div class="dynamic-taste-art" data-count="${picks.length}">${picks.map(p=>{
+    const art=tastePickArt(g.tab,p)||p.art||'';
+    return `<div class="dynamic-taste-cell">${art?`<img src="${esc(art)}" alt="${esc(p.title)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false">`:''}<span ${art?'hidden':''}>${esc(p.title)}</span></div>`;
+   }).join('')}</div><div class="dynamic-taste-caption"><strong>${esc(first.title)}</strong><span>${esc(first.artist||first.author||({artist:'Favorite artist',album:'Favorite album',song:'Favorite song',movie:'Top favorite film',tv:'Top TV pick',book:'Top book pick'}[first._tasteKind]))}</span></div></button>`;
+  }).join('')}</div>`:`<div class="dynamic-taste-empty">${owner?'<h3>Start with five things you love</h3><p>A few favorite songs, albums, artists, movies, shows or books make this profile yours.</p><button type="button" class="ed-primary" onclick="resumeOnboarding()">Add your first favorite</button>':'<p>No favorites shared yet.</p>'}</div>`)+
+  (populated.length?progress:'')+
+  (owner&&readiness.ready&&populated.length&&empty.length?`<section class="dynamic-taste-explore" aria-label="Explore more of your taste"><h3>Explore more of your taste</h3><div>${empty.map(g=>`<button type="button" onclick="addProfileTasteFavorite('${g.tab}')">+ Add ${g.label}</button>`).join('')}</div></section>`:'');
+ };
+ render();
+ for(const g of populated)for(const p of g.items.slice(0,4)){
+  if(tastePickArt(g.tab,p)||p.art)continue;
+  let task;
+  if(g.tab==='music'&&p._tasteKind==='artist')task=summaryArtistPhoto(p.title).then(art=>{p.art=art;});
+  else if(g.tab==='music'&&p._tasteKind==='album')task=lookupAlbumCover(p.title,p.artist).then(art=>{p.art=art;});
+  else if((g.tab==='movies'||g.tab==='tv')&&p.tmdbId)task=(g.tab==='tv'?fetchTVDetail(p.tmdbId):fetchMovieDetail(p.tmdbId)).then(d=>{p.poster=d?.poster||'';});
+  else if(g.tab==='books')task=fetchBookCover(p.title,p.author).then(art=>{p.cover=art;});
+  if(task)task.then(()=>{if(current())render();}).catch(()=>{});
+ }
+}
+
 // Summary and share card use only the defining lists, in their saved order.
 function assortedTastePicks(tab, n = 4) {
   const normalize = value => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -15661,16 +16456,13 @@ function tastePickArt(tab, x) {
   return x.poster ? (x.poster.startsWith('http') ? x.poster : TMDB_IMG + x.poster) : '';
 }
 
-function tastePosterGroups() {
- const preferred=collectConstellationFavorites();
- const dedupe=items=>{const seen=new Set();return items.filter(x=>{const key=String(x.title||x.name||'').trim().toLowerCase();if(!key||seen.has(key))return false;seen.add(key);return true;}).slice(0,4);};
- const poster=x=>x.poster?(x.poster.startsWith('http')?x.poster:TMDB_IMG+x.poster):'';
- return [
-  {label:'Music',tab:'music',color:'#a26aff',items:assortedTastePicks('music').map(x=>({title:x.name||x.title,art:tastePickArt('music',x),musicKind:x._tasteKind||'artist',artist:x.artist}))},
-  {label:'Movies',tab:'movies',color:'#ff7864',items:assortedTastePicks('movies').map(x=>({title:x.title,art:tastePickArt('movies',x),tmdbId:x.tmdbId,tmdbType:x.type==='tv'?'tv':'movie'}))},
-  {label:'TV',tab:'tv',color:'#35a8ff',items:assortedTastePicks('tv').map(x=>({title:x.title,art:tastePickArt('tv',x),tmdbId:x.tmdbId,tmdbType:'tv'}))},
-  {label:'Books',tab:'books',color:'#32cf83',items:assortedTastePicks('books').map(x=>({title:x.title,art:tastePickArt('books',x)}))}
- ];
+function tastePosterGroups(){
+ return profileTasteFavorites().filter(g=>g.items.length).map(g=>({
+  label:g.label,tab:g.tab,color:g.color,items:g.items.slice(0,4).map(p=>({
+   title:p.title,art:tastePickArt(g.tab,p)||p.art||'',musicKind:p._tasteKind,artist:p.artist,author:p.author,
+   tmdbId:p.tmdbId,tmdbType:g.tab==='tv'?'tv':g.tab==='movies'?'movie':null
+  }))
+ }));
 }
 function renderTastePoster() {
  const el=document.getElementById('profile-picks');if(!el)return;
@@ -15822,12 +16614,8 @@ let tasteShareAsset=null,tasteShareRevision=0;
 function tasteShareUrl(){return 'https://tastelist.app/';}
 function openTasteShare() {
  if(isLockedProfile()||!viewedProfile?.username)return;
- const host=document.getElementById('profile-picks');
- const original=host.innerHTML;const heading=document.getElementById('defining-picks-header');const wasHidden=heading?.hidden;
- renderTastePoster();
- const card=host.querySelector('.taste-poster');
- document.getElementById('taste-share-preview').innerHTML=card?card.outerHTML:'<p>Add some favorites to create your card.</p>';
- host.innerHTML=original;if(heading)heading.hidden=wasHidden;
+ const groups=tastePosterGroups(),name=firstNameOnly(viewedProfile?.display_name)||viewedProfile.username;
+ document.getElementById('taste-share-preview').innerHTML=tasteSharePreviewHtml(groups,name);
  const url=tasteShareUrl();
  const hasNativeShare=!!navigator.share;
  document.getElementById('taste-share-native').textContent=hasNativeShare?'Share':'Copy link';
@@ -15843,6 +16631,7 @@ function closeTasteShare(){++tasteShareRevision;tasteShareAsset=null;document.ge
 async function fillMissingSharePosters(groups) {
  const jobs=[];
  for(const p of groups.find(g=>g.tab==='music')?.items||[])if(!p.art)jobs.push((p.musicKind==='album'?lookupAlbumCover(p.title,p.artist):summaryArtistPhoto(p.title)).then(art=>{p.art=art||'';}));
+ for(const p of groups.find(g=>g.tab==='books')?.items||[])if(!p.art)jobs.push(fetchBookCover(p.title,p.author).then(art=>{p.art=art||'';}).catch(()=>{}));
  for(const g of groups)for(const p of g.items){
   if(p.art||!p.tmdbType)continue;
   jobs.push((async()=>{
@@ -15874,47 +16663,65 @@ async function loadShareImageViaProxy(src){
 }
 async function loadShareImage(src){return (await loadShareImageDirect(src))||(await loadShareImageViaProxy(src));}
 
+function tasteShareLayout(groups){
+ const padding=48,gap=16,width=Math.max(480,96+Math.max(1,...groups.map(g=>g.items.length))*201-16);
+ let y=230;
+ const rows=groups.map(g=>{
+  const count=g.items.length,tileWidth=Math.min(185,(width-padding*2-gap*(count-1))/count);
+  const row={x:(width-(count*tileWidth+gap*(count-1)))/2,y,tileWidth,artHeight:220,height:310};y+=row.height;return row;
+ });
+ return {width,height:y+120,rows};
+}
+function tasteSharePreviewHtml(groups,name){
+ if(!groups.length)return '<p>Add a favorite to create your share card.</p>';
+ return `<article class="clean-taste-share"><header><h2>${esc(possessiveName(name))}<br>TasteList</h2><p>You are what you love.</p></header>${groups.map(g=>`<section><h3 style="color:${g.color}">${esc(g.label)}</h3><div class="clean-share-picks">${g.items.map(p=>`<figure><div>${p.art?`<img src="${esc(p.art)}" alt="${esc(p.title)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${esc(p.title)}</span>`:`<span>${esc(p.title)}</span>`}</div><figcaption>${esc(p.title)}</figcaption></figure>`).join('')}</div></section>`).join('')}<footer>Make yours at tastelist.app</footer></article>`;
+}
 async function prepareTasteShareImage(revision) {
  const groups=tastePosterGroups(),name=firstNameOnly(viewedProfile?.display_name)||viewedProfile.username;
+ if(!groups.length)return;
  const url=tasteShareUrl();
- try {
- if(document.fonts)await document.fonts.ready;
- if(revision!==tasteShareRevision)return;
- const fontFamily=getComputedStyle(document.body).fontFamily;
- const canvas=document.createElement('canvas');canvas.width=900;canvas.height=1800;
- const ctx=canvas.getContext('2d');ctx.fillStyle='#0c0d0e';ctx.fillRect(0,0,900,1800);
- ctx.strokeStyle='#383a3a';ctx.strokeRect(1,1,898,1798);ctx.fillStyle='#f5f1e9';
- let size=76;const heading=possessiveName(name).toUpperCase();ctx.font=`700 ${size}px ${fontFamily}`;while(ctx.measureText(heading).width>570&&size>28){ctx.font=`700 ${--size}px ${fontFamily}`;}
- ctx.fillText(heading,50,105);ctx.font=`700 70px ${fontFamily}`;ctx.fillText('TASTE LIST',50,190);
- ctx.save();ctx.translate(658,112);ctx.rotate(-12*Math.PI/180);ctx.font=`italic 700 24px ${fontFamily}`;ctx.fillStyle='#35a8ff';ctx.fillText('YOU ARE',0,0);ctx.fillText('WHAT YOU LOVE.',0,36);ctx.restore();
- let missing=0;
- await fillMissingSharePosters(groups);
- if(revision!==tasteShareRevision)return;
- const assets=await Promise.all(groups.map(g=>Promise.all(g.items.map(p=>new Promise(resolve=>{
-  if(!p.art){resolve(null);return;}loadShareImage(p.art).then(img=>{if(!img)missing++;resolve(img);});
- })))));
- function textLine(text,x,y,max){let t=text;while(ctx.measureText(t).width>max&&t.length>1)t=t.slice(0,-1);ctx.fillText(t===text?t:t.slice(0,-1)+'…',x,y);}
- groups.forEach((g,i)=>{
- const x=i%2?470:50,y=i<2?305:995;
- ctx.fillStyle=g.color;ctx.beginPath();ctx.arc(x+7,y-6,7,0,Math.PI*2);ctx.fill();ctx.font=`700 23px ${fontFamily}`;ctx.fillText(g.label.toUpperCase(),x+25,y);
- g.items.forEach((p,j)=>{
- const ix=x+(j%2)*190,iy=y+28+Math.floor(j/2)*235,img=assets[i][j];ctx.fillStyle='#202222';ctx.fillRect(ix,iy,180,225);
- if(img){const scale=Math.min(180/img.naturalWidth,225/img.naturalHeight);const w=img.naturalWidth*scale,h=img.naturalHeight*scale;ctx.drawImage(img,ix+(180-w)/2,iy+(225-h)/2,w,h);}
- else{ctx.fillStyle='#ccc';ctx.font=`400 16px ${fontFamily}`;textLine(p.title,ix+8,iy+115,164);}
- });
- ctx.fillStyle='#d0cec9';ctx.font=`400 20px ${fontFamily}`;g.items.forEach((p,j)=>textLine(p.title,x,y+525+j*28,370));
- });
- ctx.fillStyle='#f5f1e9';ctx.textAlign='center';
- const logoImg=await loadShareImageDirect(TL_LOGO_SRC);
- if(logoImg){const lw=340,lh=lw*logoImg.naturalHeight/logoImg.naturalWidth;ctx.drawImage(logoImg,450-lw/2,1742-lh,lw,lh);}
- else{ctx.font=`700 54px ${fontFamily}`;ctx.fillText('tastelist',450,1730);}ctx.font=`400 17px ${fontFamily}`;ctx.fillText('MAKE YOURS AT TASTELIST.APP',450,1770);
- const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Image export unavailable');
- if(revision!==tasteShareRevision)return;
- tasteShareAsset={file:new File([blob],'my-tastelist.png',{type:'image/png'}),url};
- document.getElementById('taste-share-native').disabled=false;document.getElementById('taste-share-download').disabled=false;
- document.getElementById('taste-share-status').textContent='';
- }catch(error){if(revision!==tasteShareRevision)return;document.getElementById('taste-share-native').disabled=false;document.getElementById('taste-share-download').hidden=true;}
+ try{
+  if(document.fonts)await document.fonts.ready;
+  await fillMissingSharePosters(groups);
+  if(revision!==tasteShareRevision)return;
+  const assets=await Promise.all(groups.map(g=>Promise.all(g.items.map(p=>p.art?loadShareImage(p.art):Promise.resolve(null)))));
+  if(revision!==tasteShareRevision)return;
+  const layout=tasteShareLayout(groups),canvas=document.createElement('canvas');canvas.width=layout.width;canvas.height=layout.height;
+  const ctx=canvas.getContext('2d'),font=getComputedStyle(document.body).fontFamily;
+  ctx.fillStyle='#0c0d0e';ctx.fillRect(0,0,canvas.width,canvas.height);
+  function line(text,x,y,max){let t=String(text||'');while(ctx.measureText(t).width>max&&t.length>1)t=t.slice(0,-1);ctx.fillText(t===text?t:t.slice(0,-1)+'…',x,y);}
+  ctx.fillStyle='#f5f1e9';ctx.font=`600 42px ${font}`;line(possessiveName(name),48,72,canvas.width-96);
+  ctx.font=`700 66px ${font}`;ctx.fillText('TasteList',48,146);
+  ctx.fillStyle='#aaa6a0';ctx.font=`400 22px ${font}`;ctx.fillText('You are what you love.',48,188);
+  let missing=0;
+  groups.forEach((g,i)=>{
+   const row=layout.rows[i];ctx.strokeStyle='#303033';ctx.beginPath();ctx.moveTo(48,row.y-12);ctx.lineTo(canvas.width-48,row.y-12);ctx.stroke();
+   ctx.fillStyle=g.color;ctx.font=`700 21px ${font}`;ctx.fillText(g.label.toUpperCase(),48,row.y+20);
+   g.items.forEach((p,j)=>{
+    const x=row.x+j*(row.tileWidth+16),y=row.y+40,w=row.tileWidth,h=row.artHeight,img=assets[i][j];
+    ctx.fillStyle='#1d1d21';ctx.fillRect(x,y,w,h);
+    if(img){const scale=Math.min(w/img.naturalWidth,h/img.naturalHeight),iw=img.naturalWidth*scale,ih=img.naturalHeight*scale;ctx.drawImage(img,x+(w-iw)/2,y+(h-ih)/2,iw,ih);}
+    else{missing++;ctx.fillStyle='#aaa6a0';ctx.font=`400 15px ${font}`;line(p.title,x+8,y+h/2,w-16);}
+    ctx.fillStyle='#ede9e3';ctx.font=`500 17px ${font}`;line(p.title,x,y+h+27,w);
+   });
+  });
+  ctx.strokeStyle='#303033';ctx.beginPath();ctx.moveTo(48,canvas.height-96);ctx.lineTo(canvas.width-48,canvas.height-96);ctx.stroke();
+  ctx.fillStyle='#cbb0f4';ctx.font=`500 20px ${font}`;ctx.fillText('MAKE YOURS AT TASTELIST.APP',48,canvas.height-45);
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Image export unavailable');
+  if(revision!==tasteShareRevision)return;
+  tasteShareAsset={file:new File([blob],'my-tastelist.png',{type:'image/png'}),url};
+  const preview=document.getElementById('taste-share-preview'),img=document.createElement('img'),objectUrl=URL.createObjectURL(blob);
+  img.alt=name+'’s TasteList share card';img.style.cssText='display:block;width:100%;height:auto;border-radius:16px';
+  img.onload=img.onerror=()=>URL.revokeObjectURL(objectUrl);img.src=objectUrl;preview.replaceChildren(img);
+  document.getElementById('taste-share-download').disabled=false;
+  document.getElementById('taste-share-status').textContent=missing?'Some artwork couldn’t load. The titles are still included.':'';
+ }catch(error){
+  if(revision!==tasteShareRevision)return;
+  document.getElementById('taste-share-download').hidden=true;
+  document.getElementById('taste-share-status').textContent='The image couldn’t be generated. You can still share the link.';
+ }
 }
+
 async function nativeTasteShare(){
  const url=tasteShareAsset?.url||tasteShareUrl();
  try{
@@ -15948,37 +16755,12 @@ function renderProfileTab() {
   const sectionsEl = document.getElementById('profile-content-sections');
   const loadingEl = document.getElementById('profile-loading-placeholder');
   if (welcomeEl && sectionsEl && loadingEl) {
-    if (isOwnProfile && !profileFavoritesLoaded) {
-      // Still fetching — show neither guess. Showing the normal (still-blank) sections here was
-      // exactly the bug: for a genuinely empty profile, that meant a flash of the old bare-grid
-      // look for the whole load, which only then snapped to the welcome takeover once the data
-      // confirmed it really was empty.
-      document.getElementById('tab-nav')?.classList.remove('empty-profile-nav');
-      loadingEl.style.display = '';
-      welcomeEl.style.display = 'none';
-      sectionsEl.style.display = 'none';
-    } else {
-      const showWelcome = isOwnProfile && profileFavoritesLoaded && (totalArtists + totalAlbums + totalFilms + totalTV + totalBooks + directors.length + extraItems().length) === 0;
-      document.getElementById('tab-nav')?.classList.toggle('empty-profile-nav', showWelcome);
-      loadingEl.style.display = 'none';
-      welcomeEl.style.display = showWelcome ? '' : 'none';
-      sectionsEl.style.display = showWelcome ? 'none' : '';
-      // These tabs would just be empty sections at this point — showing them invites clicking
-      // into a wall of nothing. They come back the moment the welcome takeover disappears (i.e.
-      // the first thing gets added), whether that happens via one of the cards below or from
-      // adding something on the Profile tab itself.
-      ['favorites', 'playlist'].forEach(t => {
-        const tabBtn = document.getElementById(`tab-btn-${t}`);
-        if (tabBtn) tabBtn.style.display = showWelcome ? 'none' : '';
-        // Hiding just the nav button isn't enough on its own — if that tab was ever the active
-        // one earlier in the session, its panel stays visible regardless of whether its button
-        // is shown, and its content ends up stacked below the welcome takeover on the same
-        // scrolling page. Forcibly deactivate the panel itself too whenever the takeover is up.
-        const panel = document.getElementById(`tab-${t}`);
-        if (panel && showWelcome) { panel.classList.remove('active'); panel.style.display = 'none'; }
-      });
-      if (showWelcome) renderWelcomeBanner();
-    }
+    const loading=isOwnProfile&&!profileFavoritesLoaded;
+    welcomeEl.style.display='none';
+    loadingEl.style.display=loading?'':'none';
+    sectionsEl.style.display=loading?'none':'';
+    document.getElementById('tab-nav')?.classList.remove('empty-profile-nav');
+    ['favorites','playlist'].forEach(t=>{const tab=document.getElementById(`tab-btn-${t}`);if(tab)tab.style.display='';});
   }
 
   const stats = [
@@ -15999,119 +16781,7 @@ function renderProfileTab() {
     </div>`
   ).join('');
 
-  // Taste in a sentence
-  const top5 = artists.slice(0,5).map(a=>a.name).filter(Boolean);
-  // NOTE: this used to also overwrite #profile-sentence with an auto-generated bio built from
-  // top5/topFilm/topTV/topBook — removed. updateProfileHeaderAndBanner() already sets the
-  // correct text (the viewer's real stored taste_sentence, or an appropriate placeholder) and
-  // runs before this function; overwriting it here was clobbering real user-written sentences
-  // with Sreya's hardcoded demo bio for anyone who had at least two favorite artists loaded.
-
-  // Defining picks — visual artwork cards
-  const musicPicks = assortedTastePicks('music'), filmPicks = assortedTastePicks('movies');
-  const tvPicks = assortedTastePicks('tv'), bookPicks = assortedTastePicks('books');
-  const topArtist = musicPicks[0];
-  const topFilmObj = filmPicks[0];
-  const topTVObj = tvPicks[0];
-  const topBookObj = bookPicks[0];
-
-  const picksEl = document.getElementById('profile-picks');
-  if (!picksEl) return;
-  const picksRenderToken = picksEl._tasteRenderToken = Symbol('profile-picks');
-
-  const headerEl = document.getElementById('defining-picks-header');
-  if (headerEl) {
-    const rawName = firstNameOnly(viewedProfile?.display_name) || viewedProfile?.username || 'Your';
-    headerEl.hidden=false;
-    headerEl.innerHTML = `${esc(isOwnProfile ? 'Your' : possessiveName(rawName))} Defining Picks<span class="ed-sub">Tap a box to explore that section</span>`;
-  }
-
-  // Render placeholders immediately
-  const picksData = [
-    { id: 'pick-music', label: 'My Music Taste', icon: 'music', name: topArtist?.name || topArtist?.title || '', sub: topArtist?._tasteKind==='song'?'Favorite song':topArtist?._tasteKind==='album'?'Favorite album':'Favorite artist', color: '#7C4DFF', tab: 'music', art: '', mosaic: musicPicks.map(x => tastePickArt('music', x)) },
-    { id: 'pick-film',  label: 'My Movie Taste', icon: 'film',  name: topFilmObj?.title || '', sub: 'Top favorite film', color: '#F97360', tab: 'movies', art: tastePickArt('movies', topFilmObj || {}), mosaic: filmPicks.map(x => tastePickArt('movies', x)) },
-    { id: 'pick-tv',    label: 'My TV Taste',    icon: 'tv',    name: topTVObj?.title || '', sub: 'Top TV pick', color: '#3B82F6', tab: 'tv', art: tastePickArt('tv', topTVObj || {}), mosaic: tvPicks.map(x => tastePickArt('tv', x)) },
-    { id: 'pick-book',  label: 'My Book Taste',  icon: 'books', name: topBookObj?.title || '', sub: 'Top book pick', color: '#22C55E', tab: 'books', art: tastePickArt('books', topBookObj || {}), mosaic: bookPicks.map(x => tastePickArt('books', x)) },
-  ];
-
-  function mosaicCell(src, color) {
-    return src
-      ? `<div style="overflow:hidden;background:${color}18;"><img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.opacity='0'"></div>`
-      : `<div style="background:${color}12;"></div>`;
-  }
-
-  function renderPicks(data) {
-    if(picksEl._tasteRenderToken !== picksRenderToken) return;
-    picksEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">` +
-      data.map(p => {
-        const hasMosaic = p.mosaic && p.mosaic.filter(Boolean).length > 0;
-        const cells = (p.mosaic || []).slice(0, 4);
-        while (cells.length < 4) cells.push(null);
-        const mosaicHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:100%;height:100%;gap:1px;background:${p.color}25;">${cells.map(src => mosaicCell(src, p.color)).join('')}</div>`;
-        const singleArtHtml = `<img src="${p.art}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">`;
-        const iconHtml = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:${p.color};opacity:0.4;">${mediaIcon(p.icon,32)}</div>`;
-        return `
-        <div onclick="goToFavorites('${p.tab}')" style="cursor:pointer;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--surface);transition:transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 30px rgba(0,0,0,0.5)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:${p.color}1f;border-bottom:1px solid ${p.color}33;">
-            <div style="width:22px;height:22px;border-radius:7px;background:${p.color}22;color:${p.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${badgeIcon(p.icon,14)}</div>
-            <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${p.color};">${p.label}</span>
-          </div>
-          <div style="aspect-ratio:2/3;background:${p.color}18;position:relative;overflow:hidden;">
-            ${hasMosaic ? mosaicHtml : (p.art ? singleArtHtml : iconHtml)}
-            <div style="position:absolute;bottom:0;left:0;right:0;padding:8px;background:linear-gradient(transparent,rgba(0,0,0,0.75));">
-              <div style="font-size:11px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.name)}</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.55);margin-top:1px;">${p.sub}</div>
-            </div>
-          </div>
-        </div>`;
-      }).join('') + `</div>`;
-  }
-
-  renderPicks(picksData);
-
-  // Fill all four artist photos, including for visitors. Keep the selected artists/order.
-  musicPicks.forEach((artist,index) => {
-    if(tastePickArt('music',artist))return;
-    (artist._tasteKind==='album'?lookupAlbumCover(artist.name||artist.title,artist.artist):summaryArtistPhoto(artist.name || artist.title)).then(art => {
-      if(!art || picksEl._tasteRenderToken !== picksRenderToken)return;
-      artist.tilePhoto=art;
-      picksData[0].mosaic[index]=art;
-      renderPicks(picksData);
-    });
-  });
-
-  // Fetch film poster from TMDB if not already loaded
-  if (topFilmObj && !topFilmObj.poster) {
-    const endpoint = topFilmObj.type === 'tv' ? `/tv/${topFilmObj.tmdbId}` : `/movie/${topFilmObj.tmdbId}`;
-    tmdbFetch(endpoint).then(r => r.json()).then(d => {
-      if (d.poster_path) { picksData[1].art = `https://image.tmdb.org/t/p/w185${d.poster_path}`; renderPicks(picksData); }
-    }).catch(() => {});
-  }
-
-  // Fetch TV poster from TMDB if not already loaded
-  if (topTVObj && !topTVObj.poster) {
-    tmdbFetch(`/tv/${topTVObj.tmdbId}`).then(r => r.json()).then(d => {
-      if (d.poster_path) { picksData[2].art = `https://image.tmdb.org/t/p/w185${d.poster_path}`; renderPicks(picksData); }
-    }).catch(() => {});
-  }
-
-  // Fetch mosaic thumbnails (top 4 per section) for Movies, TV, and Books.
-  // Uses the real per-user movies/tvDramaShows arrays (already loaded with posters by the
-  // time renderProfileTab() runs) — previously this pulled from the hardcoded MOVIE_PRELOAD /
-  // TV_DRAMA_PRELOAD demo constants unconditionally, so every account's mosaic showed Sreya's
-  // original picks regardless of what the signed-in user actually had saved.
-  // Posters are normally fetched when a tab is opened; fill any gaps in the assortment now.
-  [[1, filmPicks, 'movie'], [2, tvPicks, 'tv']].forEach(([slot, picks, type]) => picks.forEach((x, k) => {
-    if (picksData[slot].mosaic[k] || !x.tmdbId) return;
-    const kind = x.type === 'tv' ? 'tv' : type;
-    (kind === 'tv' ? fetchTVDetail(x.tmdbId) : fetchMovieDetail(x.tmdbId)).then(d => {
-      if (!d?.poster) return;
-      x.poster = d.poster;
-      picksData[slot].mosaic[k] = tastePickArt('movies', x);
-      if (k === 0) picksData[slot].art = picksData[slot].mosaic[k];
-      renderPicks(picksData);
-    }).catch(() => {});
-  }));
+  renderDynamicProfilePicks();
 
   // Activity Feed (shared component — also powers the Music tab's feed)
   refreshActivityFeeds();
@@ -16959,7 +17629,7 @@ renderTasteInfluences();
     <label class="update-sr" for="activity-item-label">Title</label><input id="activity-item-label" oninput="activityCatalogInput()" autocomplete="off" class="update-title" placeholder="What’s caught your attention?" maxlength="300">
     <div id="activity-catalog-results" aria-live="polite"></div><div id="activity-catalog-selected" aria-live="polite"></div>
     <label class="update-sr" for="activity-item-note">Your note</label><textarea id="activity-item-note" class="update-note" rows="4" placeholder="The scene that stuck with you. The song on repeat. Tell us about it."></textarea>
-    <div class="update-tag-area"><label for="activity-tag-search">With / recommended by</label><div id="activity-tag-chips"></div><input id="activity-tag-search" autocomplete="off" placeholder="Tag someone…" oninput="searchActivityTags(this.value)"><div id="activity-tag-results" aria-live="polite"></div></div>
+    <div class="update-tag-area"><div class="tag-field"><label class="tl-label" for="tag-activity-input">With / recommended by <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-activity-chips" class="tag-chips"></div><input id="tag-activity-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('activity',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('activity')}"><div id="tag-activity-results" class="tag-results" aria-live="polite"></div></div></div>
     <details id="activity-update-details"><summary>More details <span>Date, status & artwork</span></summary><div class="update-detail-grid"><label>Date<input id="activity-item-date" type="date"></label><label>Status<input id="activity-item-sub" placeholder="Watched, finished reading…"></label></div><label>Artwork link <span>(optional)</span><input id="activity-item-art" type="url" placeholder="https://…"></label></details>
     <footer class="update-composer-footer"><span>Share a little of your taste.</span><button id="activity-finish-skip" type="button" hidden onclick="markWithoutPosting()">Mark without posting</button><button id="activity-save-button" type="button" onclick="saveActivityItemForm()">Post update <span aria-hidden="true">↑</span></button></footer>
   </section>
@@ -17352,7 +18022,7 @@ renderTasteInfluences();
   <div id="activity-summary-content" style="max-height:85vh;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;overflow-x:hidden;"></div>
 </div>
 
-<dialog id="creator-picks-dialog" style="width:min(640px,calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid var(--border);border-radius:20px;padding:28px;background:var(--surface);color:var(--text)" oncancel="event.preventDefault();closeCreatorPicks()"><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="creator-picks-title"></h2><button aria-label="Close" onclick="closeCreatorPicks()">×</button></div><p style="color:var(--muted)">Search, select your favorites, and put them in your order.</p><div id="creator-picks-selected"></div><form onsubmit="event.preventDefault();searchCreatorPicks()" style="display:flex;gap:8px;margin:20px 0"><input id="creator-picks-query" aria-label="Search titles" placeholder="Search titles…" style="flex:1;min-width:0;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px"><button type="submit" class="ob-button ob-secondary">Search</button></form><div id="creator-picks-results"></div><p id="creator-picks-error" role="alert" style="color:#f2a69a"></p><div class="creator-picks-footer"><button id="creator-picks-save" class="ob-button ob-primary" onclick="saveCreatorPicks()">Save favorites</button></div></dialog>
+<dialog id="creator-picks-dialog" style="width:min(640px,calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid var(--border);border-radius:20px;padding:28px;background:var(--surface);color:var(--text)" oncancel="event.preventDefault();closeCreatorPicks()"><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="creator-picks-title"></h2><button aria-label="Close" onclick="closeCreatorPicks()">×</button></div><p id="creator-picks-lede" style="color:var(--muted)">Search, select your favorites, and put them in your order.</p><div id="creator-picks-selected"></div><form onsubmit="event.preventDefault();searchCreatorPicks()" style="display:flex;gap:8px;margin:20px 0"><input id="creator-picks-query" aria-label="Search titles" placeholder="Search titles…" style="flex:1;min-width:0;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px"><button type="submit" class="ob-button ob-secondary">Search</button></form><div id="creator-picks-results"></div><p id="creator-picks-error" role="alert" style="color:#f2a69a"></p><div class="creator-picks-footer"><button id="creator-picks-save" class="ob-button ob-primary" onclick="saveCreatorPicks()">Save favorites</button></div></dialog>
 <dialog id="taste-share-dialog" aria-labelledby="taste-share-title" oncancel="event.preventDefault();closeTasteShare()" style="width:min(680px,calc(100% - 24px));max-height:90dvh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px"><h2 id="taste-share-title">Share your TasteList</h2><button aria-label="Close sharing" onclick="closeTasteShare()" class="ob-text-link">✕</button></div><div id="taste-share-preview"></div><div class="taste-share-actions" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px"><button id="taste-share-native" class="ob-button ob-primary" style="min-width:160px" onclick="nativeTasteShare()">Share</button><button id="taste-share-download" class="ob-button ob-secondary" onclick="downloadTasteShareImage()">Save image</button></div><div style="text-align:center;margin-top:12px"><button id="taste-share-copy-link" class="ob-text-link" onclick="copyTasteShareLink()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:inherit">Copy link</button></div><p id="taste-share-status" role="status" style="font-size:13px;color:var(--muted);line-height:1.5;text-align:center;min-height:1.5em;margin:6px 0 0"></p></dialog>
 <script>
 (function () {
@@ -17376,6 +18046,6 @@ renderTasteInfluences();
 })();
 </script>
 
-<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div><label for="picker-friend-search">Tag friends <span style="font-weight:normal">(optional)</span></label><input id="picker-friend-search" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="searchPickerFriends(this.value)"><div id="picker-friend-results" aria-live="polite"></div><div id="picker-friend-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div><p style="color:var(--muted);font-size:12px">Selected friends will be tagged on the items you add here.</p><label for="music-picker-query">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Start typing…" oninput="queueFlexibleMusic(this.value)"><div id="music-picker-results" aria-live="polite"></div><p id="music-picker-status" role="status"></p></dialog>
+<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div><div class="tag-field"><label class="tl-label" for="tag-picker-input">Tag friends <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-picker-chips" class="tag-chips"></div><input id="tag-picker-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('picker',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('picker')}"><div id="tag-picker-results" class="tag-results" aria-live="polite"></div></div><div id="picker-friend-tags" hidden></div><div id="picker-friend-results" hidden></div><input id="picker-friend-search" type="hidden"><p style="color:var(--muted);font-size:12px">Selected friends will be tagged on the items you add here.</p><label for="music-picker-query">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Start typing…" oninput="queueFlexibleMusic(this.value)"><div id="music-picker-results" aria-live="polite"></div><p id="music-picker-status" role="status"></p></dialog>
 </body>
 </html>
