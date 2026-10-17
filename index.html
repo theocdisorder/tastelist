@@ -1193,6 +1193,40 @@ if (new URLSearchParams(location.search).has('list')) {
   .sl-desc { font-size:15px; line-height:1.65; color:#d6d1c8; max-width:520px; margin:0 0 16px; }
   .sl-members { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; font-size:12px; color:var(--muted); }
   .sl-members > div { margin:0 !important; }
+  /* Discussion: like/comment row, then the thread and composer, after the last list item */
+  .sl-discussion { max-width:680px; margin:64px 0 24px; padding-top:20px; border-top:1px solid var(--border); }
+  .sl-engage { display:flex; align-items:center; gap:2px; margin:0 0 18px -10px; }
+  .sl-engage-btn { display:inline-flex; align-items:center; gap:7px; min-height:40px; padding:8px 10px; background:none; border:0; border-radius:999px; font:inherit; font-size:14px; font-weight:500; color:var(--muted); cursor:pointer; transition:color .15s, background .15s; }
+  .sl-engage-btn:hover { color:var(--text); background:rgba(255,255,255,.05); }
+  .sl-engage-btn:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .sl-engage-btn.is-liked { color:#F97360; }
+  .sl-engage-btn svg { width:20px; height:20px; flex-shrink:0; }
+  .sl-comments { scroll-margin-top:24px; }
+  .sl-comments-title { font-size:13px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:0 0 4px; }
+  .sl-comments-title span { font-weight:500; letter-spacing:0; margin-left:4px; color:var(--faint); }
+  .sl-comments-more { display:block; background:none; border:0; padding:8px 0 4px; font:inherit; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; }
+  .sl-comments-more:hover { color:var(--text); }
+  .sl-comment-list { list-style:none; margin:0; padding:0; }
+  .sl-comment { display:flex; gap:12px; padding:14px 0; }
+  .sl-comment + .sl-comment { border-top:1px solid rgba(255,255,255,.05); }
+  .sl-comment-main { flex:1; min-width:0; }
+  .sl-comment-meta { display:flex; align-items:baseline; gap:8px; }
+  .sl-comment-author { font-size:13.5px; font-weight:600; color:var(--text); text-decoration:none; }
+  a.sl-comment-author:hover { text-decoration:underline; }
+  .sl-comment-time { font-size:12px; color:var(--faint); }
+  .sl-comment-delete { margin-left:auto; background:none; border:0; padding:2px 0; font:inherit; font-size:12px; color:var(--faint); cursor:pointer; opacity:0; transition:opacity .15s, color .15s; }
+  .sl-comment:hover .sl-comment-delete, .sl-comment-delete:focus-visible { opacity:1; }
+  .sl-comment-delete:hover { color:var(--text); }
+  @media (hover: none) { .sl-comment-delete { opacity:1; } }
+  .sl-comment-body { margin-top:3px; font-size:14px; line-height:1.55; color:#d6d1c8; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .sl-comments-note { font-size:13.5px; color:var(--muted); padding:10px 0 2px; }
+  .sl-comments-note button { background:none; border:0; padding:0; font:inherit; font-weight:600; color:var(--accent); cursor:pointer; }
+  .sl-composer { display:flex; align-items:center; gap:10px; margin-top:14px; }
+  .sl-composer input { flex:1; min-width:0; background:var(--surface2); border:1px solid var(--border2); border-radius:999px; padding:10px 16px; font:inherit; font-size:14px; color:var(--text); outline:none; }
+  .sl-composer input:focus { border-color:var(--accent); }
+  .sl-composer button { flex-shrink:0; background:var(--accent); border:0; border-radius:999px; padding:10px 18px; font:inherit; font-size:13.5px; font-weight:600; color:#fff; cursor:pointer; }
+  .sl-composer-signin { margin-top:14px; font-size:13.5px; color:var(--muted); }
+  .sl-composer-signin a { color:var(--accent); font-weight:600; text-decoration:none; }
   .sl-sections { display:flex; flex-wrap:wrap; gap:44px 40px; align-items:flex-start; }
   .sl-section { flex:0 1 auto; max-width:100%; }
   .sl-section-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
@@ -1229,6 +1263,8 @@ if (new URLSearchParams(location.search).has('list')) {
     .sl-row { display:grid; gap:14px; grid-template-columns:repeat(3,minmax(0,1fr)); }
     .sl-row.sl-row-landscape { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .sl-tile.sl-landscape, .sl-tile.sl-portrait, .sl-tile.sl-square { width:auto; }
+    .sl-discussion { max-width:none; margin-top:44px; }
+    .sl-composer input { font-size:16px; } /* 16px keeps iOS from zooming into the field */
   }
   .collage-grid {
     column-count: 4;
@@ -3060,10 +3096,13 @@ async function landingArtistArtFallback(imgEl, artistName) {
         <p id="taste-list-subtitle" class="sl-desc"></p>
         <div class="sl-members">
           <div id="taste-list-collaborators"></div>
-          <div id="taste-list-engage"></div>
         </div>
       </header>
       <div id="trip-playlist-list"></div>
+      <!-- Discussion about the whole list: reads after the items, never between hero and picks -->
+      <section class="sl-discussion" id="taste-list-discussion" aria-label="Likes and comments" hidden>
+        <div id="taste-list-engage"></div>
+      </section>
     </div>
   </div>
 </div><!-- /#tab-playlist -->
@@ -4742,8 +4781,7 @@ async function openTasteList(listId) {
   if (subEl) subEl.style.display = list.subtitle ? '' : 'none';
   loadTasteListPeople([list.user_id,...(list.collaborators||[]).map(c=>c.user_id)].map(id=>({added_by:id}))).then(()=>{if(currentTasteListId===list.id)renderTasteListCollaborators(list);});
   loadSharedListCover(list);
-  const engageEl = document.getElementById('taste-list-engage');
-  if (engageEl) { engageEl.innerHTML = inlineEngagementBlockHtml('taste_list', listId); loadInlineEngagement('taste_list', listId); }
+  renderTasteListDiscussion(listId);
   await reloadCurrentTasteListItems();
 }
 
@@ -6002,7 +6040,8 @@ async function openCommentTarget(notifId) {
       if (await openInline()) return;
     } else if (type === 'taste_list') {
       await openTasteList(id);
-      if (await openInline()) return;
+      await showTasteListComments(id, { scroll: false });
+      if (await focusReply()) return;
     } else if (type === 'taste_list_item') {
       const { data } = await sb.from('taste_list_items').select('list_id').eq('id', id).maybeSingle();
       if (data?.list_id) {
@@ -14911,7 +14950,7 @@ async function loadComments(targetType, targetId) {
   if (!sb || !targetId) return [];
   try {
     const { data, error } = await sb.from('comments')
-      .select('id, user_id, body, created_at, profiles(username, display_name)')
+      .select('id, user_id, body, created_at, profiles(username, display_name, avatar_url)')
       .eq('target_type', targetType).eq('target_id', targetId)
       .order('created_at', { ascending: true });
     if (error || !data) return [];
@@ -14921,6 +14960,7 @@ async function loadComments(targetType, targetId) {
       body: row.body,
       created_at: row.created_at,
       author: firstNameOnly(row.profiles?.display_name) || row.profiles?.username || 'Someone',
+      profile: row.profiles ? { id: row.user_id, username: row.profiles.username, display_name: row.profiles.display_name, avatar_url: row.profiles.avatar_url } : null,
     }));
     COMMENT_CACHE[engagementKey(targetType, targetId)] = { count: items.length, items };
     return items;
@@ -14963,6 +15003,7 @@ async function deleteComment(commentId, targetType, targetId, onDone) {
 
 function commentsSectionHtml(targetType, targetId) {
   if (!sb || !targetId) return '';
+  if (targetType === 'taste_list') return tasteListCommentsHtml(targetId);
   const key = engagementKey(targetType, targetId);
   const cached = COMMENT_CACHE[key];
   const items = cached?.items;
@@ -15000,6 +15041,7 @@ function commentsSectionHtml(targetType, targetId) {
 // badge + comments thread render directly inside them rather than in a popup.
 
 function inlineEngagementBadgeHtml(targetType, targetId) {
+  if (targetType === 'taste_list') return tasteListEngageButtonsHtml(targetId);
   const key = engagementKey(targetType, targetId);
   const like = LIKE_CACHE[key] || emptyLikeState();
   const comments = COMMENT_CACHE[key];
@@ -15042,6 +15084,137 @@ async function loadInlineEngagement(targetType, targetId) {
   } catch (e) { console.error('Failed to load engagement state:', e); }
   const badgeEl = document.getElementById(`inline-engage-${targetType}-${targetId}`);
   if (badgeEl) badgeEl.innerHTML = inlineEngagementBadgeHtml(targetType, targetId);
+}
+
+// ── SHARED LIST DISCUSSION (below the list items) ──
+// A shared list's like/comment row and comment thread sit after its last item, so visitors read
+// the list first. Comments belong to the whole list (target_type 'taste_list'). The thread is
+// always visible on the page: the latest three by default, everything once expanded. It reuses
+// the element ids of the inline blocks (inline-engage-*, inline-comments-*, comment-input-*) so
+// refreshEngagementUI, submitComment/deleteComment and notification links keep working as-is.
+const TASTE_LIST_COMMENT_PREVIEW = 3;
+let tasteListCommentsExpanded = null;   // list id whose thread shows every comment
+let tasteListCommentsLoading = null;    // list id whose comments are being fetched
+
+const SL_ICON_HEART = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.4C1.5 7.8 3.6 4.5 7 4.5c2.1 0 3.6 1.1 5 2.9 1.4-1.8 2.9-2.9 5-2.9 3.4 0 5.5 3.3 4.3 6.6-1.8 4.8-9.3 9.4-9.3 9.4z"/></svg>';
+const SL_ICON_HEART_FILLED = SL_ICON_HEART.replace('fill="none"', 'fill="currentColor"');
+const SL_ICON_COMMENT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg>';
+
+function tasteListCommentCount(listId) {
+  const c = COMMENT_CACHE[engagementKey('taste_list', listId)];
+  return c ? (c.items ? c.items.length : (c.count || 0)) : 0;
+}
+
+function tasteListEngageButtonsHtml(listId) {
+  const like = LIKE_CACHE[engagementKey('taste_list', listId)] || emptyLikeState();
+  const comments = tasteListCommentCount(listId);
+  const id = jsStr(listId);
+  return `
+    <button type="button" class="sl-engage-btn${like.mine ? ' is-liked' : ''}" aria-pressed="${like.mine ? 'true' : 'false'}" aria-label="${like.mine ? 'Unlike' : 'Like'} this list${like.total ? `, ${like.total} like${like.total === 1 ? '' : 's'}` : ''}"
+      onclick="toggleLike('taste_list','${id}', () => refreshEngagementUI('taste_list','${id}'))">
+      ${like.mine ? SL_ICON_HEART_FILLED : SL_ICON_HEART}<span>${like.total || ''}</span>
+    </button>
+    <button type="button" class="sl-engage-btn" aria-controls="inline-comments-taste_list-${esc(listId)}" aria-label="Comments${comments ? `, ${comments}` : ''}"
+      onclick="showTasteListComments('${id}')">
+      ${SL_ICON_COMMENT}<span>${comments || ''}</span>
+    </button>`;
+}
+
+function tasteListCommentTime(iso) {
+  const t = new Date(iso); if (isNaN(t)) return '';
+  const mins = Math.round((Date.now() - t) / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  if (mins < 60 * 24) return `${Math.round(mins / 60)}h`;
+  if (mins < 60 * 24 * 7) return `${Math.round(mins / 1440)}d`;
+  return t.toLocaleDateString(undefined, { month: 'short', day: 'numeric', ...(t.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) });
+}
+
+function tasteListCommentsHtml(listId) {
+  const items = COMMENT_CACHE[engagementKey('taste_list', listId)]?.items;
+  const id = jsStr(listId);
+  const refresh = `() => refreshEngagementUI('taste_list','${id}')`;
+  let thread;
+  if (items === undefined) {
+    thread = tasteListCommentsLoading === listId
+      ? `<div class="sl-comments-note">Loading comments…</div>`
+      : `<div class="sl-comments-note">Comments couldn’t load. <button type="button" onclick="loadTasteListComments('${id}')">Try again</button></div>`;
+  } else if (!items.length) {
+    thread = `<div class="sl-comments-note">No comments yet${currentUser ? ' — start the conversation.' : '.'}</div>`;
+  } else {
+    const expanded = tasteListCommentsExpanded === listId;
+    const shown = expanded ? items : items.slice(-TASTE_LIST_COMMENT_PREVIEW);
+    const more = !expanded && items.length > shown.length
+      ? `<button type="button" class="sl-comments-more" onclick="showTasteListComments('${id}', { scroll: false })">View all ${items.length} comments</button>` : '';
+    thread = more + `<ul class="sl-comment-list">${shown.map(c => {
+      const p = c.profile || { display_name: c.author };
+      const name = c.profile?.username
+        ? `<a class="sl-comment-author" href="?u=${encodeURIComponent(c.profile.username)}">${esc(c.author)}</a>`
+        : `<span class="sl-comment-author">${esc(c.author)}</span>`;
+      const del = currentUser && c.user_id === currentUser.id
+        ? `<button type="button" class="sl-comment-delete" onclick="deleteComment('${jsStr(c.id)}','taste_list','${id}', ${refresh})">Delete</button>` : '';
+      return `<li class="sl-comment">
+        ${profileAvatarHtml(p, 32)}
+        <div class="sl-comment-main">
+          <div class="sl-comment-meta">${name}<span class="sl-comment-time">${esc(tasteListCommentTime(c.created_at))}</span>${del}</div>
+          <div class="sl-comment-body">${esc(c.body)}</div>
+        </div>
+      </li>`;
+    }).join('')}</ul>`;
+  }
+  const inputId = `comment-input-taste_list-${esc(listId)}`;
+  const composer = currentUser
+    ? `<div class="sl-composer">
+        ${profileAvatarHtml(currentProfile || { display_name: '?' }, 32)}
+        <input id="${inputId}" placeholder="Add a comment…" maxlength="1000" aria-label="Add a comment"
+          onkeydown="if(event.key==='Enter'&&!event.isComposing){submitComment('taste_list','${id}', this, ${refresh})}">
+        <button type="button" onclick="submitComment('taste_list','${id}', document.getElementById('${inputId}'), ${refresh})">Post</button>
+      </div>`
+    : `<div class="sl-composer-signin"><a href="javascript:void(0)" onclick="openAuthModal('signin')">Sign in</a> to join the conversation.</div>`;
+  const count = items ? items.length : tasteListCommentCount(listId);
+  return `<h2 class="sl-comments-title">Comments${count ? `<span>${count}</span>` : ''}</h2>${thread}${composer}`;
+}
+
+function renderTasteListDiscussion(listId) {
+  const section = document.getElementById('taste-list-discussion');
+  const engageEl = document.getElementById('taste-list-engage');
+  if (!section || !engageEl) return;
+  if (!sb || !listId) { section.hidden = true; engageEl.innerHTML = ''; return; }
+  if (tasteListCommentsExpanded !== listId) tasteListCommentsExpanded = null;
+  section.hidden = false;
+  engageEl.innerHTML = `
+    <div id="inline-engage-taste_list-${esc(listId)}" class="sl-engage">${tasteListEngageButtonsHtml(listId)}</div>
+    <div id="inline-comments-taste_list-${esc(listId)}" class="sl-comments" style="display:block;">${tasteListCommentsHtml(listId)}</div>`;
+  loadInlineEngagement('taste_list', listId);
+  loadTasteListComments(listId);
+}
+
+async function loadTasteListComments(listId) {
+  tasteListCommentsLoading = listId;
+  rerenderTasteListComments(listId);
+  await loadComments('taste_list', listId);
+  if (tasteListCommentsLoading === listId) tasteListCommentsLoading = null;
+  if (currentTasteListId !== listId) return;
+  rerenderTasteListComments(listId);
+  const badgeEl = document.getElementById(`inline-engage-taste_list-${listId}`);
+  if (badgeEl) badgeEl.innerHTML = tasteListEngageButtonsHtml(listId);
+}
+
+function rerenderTasteListComments(listId) {
+  const el = document.getElementById(`inline-comments-taste_list-${listId}`);
+  if (el) el.innerHTML = tasteListCommentsHtml(listId);
+}
+
+// Comment icon/count and "View all comments": expand the thread and (by default) bring it into view.
+async function showTasteListComments(listId, { scroll = true } = {}) {
+  tasteListCommentsExpanded = listId;
+  rerenderTasteListComments(listId);
+  const el = document.getElementById(`inline-comments-taste_list-${listId}`);
+  if (scroll && el) {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }
+  if (!COMMENT_CACHE[engagementKey('taste_list', listId)]?.items && tasteListCommentsLoading !== listId) await loadTasteListComments(listId);
 }
 
 // ── LIKES & COMMENTS ON WHOLE LISTS ──
@@ -15101,6 +15274,7 @@ async function loadListTargets(profileId) {
 }
 
 async function toggleInlineComments(targetType, targetId) {
+  if (targetType === 'taste_list') return showTasteListComments(targetId);
   const el = document.getElementById(`inline-comments-${targetType}-${targetId}`);
   if (!el) return;
   if (el.style.display === 'block') { el.style.display = 'none'; return; }
