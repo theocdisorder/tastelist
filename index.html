@@ -2292,6 +2292,26 @@ body.fc-open { overflow: hidden; }
 }
 @media (pointer: coarse) { .fc-close, .fc-change, .fc-cancel, .fc-discard-link { min-height: 44px; min-width: 44px; } }
 @media (prefers-reduced-motion: reduce) { .fc-entry, .fc-submit { transition: none; } }
+
+/* Composer polish: borderless writing area (beats the older #feed-post-text box style),
+   and a light inline tag row (the footer chip already says "Tag people"). */
+#feed-composer-panel #feed-post-text.fc-text { background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0; padding: 12px 2px; margin-top: 10px; }
+#feed-composer-panel #feed-post-text.fc-text:focus { outline: none; }
+#feed-composer-panel .fc-body { border-bottom: 0; }
+#feed-composer-panel #feed-tag-wrap .tag-field { margin-top: 2px; gap: 8px; flex-direction: row; flex-wrap: wrap; align-items: center; }
+#feed-composer-panel #feed-tag-wrap .tag-field > label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+#feed-composer-panel #feed-tag-wrap .tag-chips { display: contents; }
+#feed-composer-panel #feed-tag-wrap .tl-input { flex: 1 1 180px; min-width: 0; width: auto; background: transparent; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 8px 2px; font-size: 14px; }
+#feed-composer-panel #feed-tag-wrap .tl-input:focus { outline: none; border-bottom-color: rgba(185,154,255,.7); box-shadow: none; }
+#feed-composer-panel #feed-tag-wrap .tag-results { flex-basis: 100%; }
+
+/* "Influenced by" username suggestions */
+.influence-suggest { position: absolute; z-index: 3000; display: flex; flex-direction: column; gap: 2px; padding: 6px; background: var(--surface2, #1c1c1f); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,.5); }
+.influence-suggest[hidden] { display: none; }
+.influence-suggest button { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font: inherit; font-size: 13.5px; color: var(--text); background: none; border: 0; border-radius: 7px; padding: 8px 10px; cursor: pointer; text-align: left; }
+.influence-suggest button:hover { background: rgba(124,77,255,.14); }
+.influence-suggest small { color: var(--muted); }
+.influence-suggest p { margin: 6px 8px; font-size: 12.5px; color: var(--muted); }
 /* ── 8. Dialogs: fit the visible screen (keyboard included), scroll inside, keep actions reachable ── */
 #friend-rec-modal, #album-item-modal, #book-grid-modal, #tv-grid-modal, #rich-grid-modal, #artist-item-modal, #yt-item-modal,
 #invite-modal, #taste-item-modal, #auth-modal, #rec-detail-modal, #taste-import-modal, #listen-chooser, #activity-summary-modal, #activity-item-modal, .modal-bg {
@@ -3563,6 +3583,37 @@ function closeFriendRecModal() {
 // forms — a real registered-user reference, not free-text @mention parsing. Returns null (not an
 // error) for an empty or not-found username, since tagging an influence is always optional and
 // shouldn't block saving the item itself.
+
+// "Influenced by" username boxes on the favorites forms: suggest real TasteList users as you type.
+(() => {
+  let box = null, target = null, seq = 0, timer = null;
+  const hide = () => { if (box) box.hidden = true; target = null; };
+  const place = el => { const r = el.getBoundingClientRect(); box.style.left = (r.left + scrollX) + 'px'; box.style.top = (r.bottom + scrollY + 4) + 'px'; box.style.width = r.width + 'px'; };
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (!(el instanceof HTMLInputElement) || !/-influenced-by$/.test(el.id)) return;
+    if (!box) { box = document.createElement('div'); box.className = 'influence-suggest'; box.setAttribute('role', 'listbox'); document.body.appendChild(box); }
+    target = el; clearTimeout(timer);
+    const q = el.value.trim().replace(/^@/, '').replace(/[^a-zA-Z0-9_. -]/g, '');
+    if (q.length < 2 || !sb) { hide(); return; }
+    const mine = ++seq;
+    timer = setTimeout(async () => {
+      let people = [];
+      try { const { data } = await sb.from('profile_directory').select('id,username,display_name').or(`username.ilike.%${q}%,display_name.ilike.%${q}%`).limit(6); people = (data || []).filter(p => p.username && p.id !== currentUser?.id); } catch (_) {}
+      if (mine !== seq || target !== el) return;
+      if (!people.length) { box.innerHTML = '<p>No TasteList user by that name.</p>'; }
+      else box.innerHTML = people.map(p => `<button type="button" role="option" data-username="${esc(p.username)}"><strong>${esc(p.display_name || p.username)}</strong><small>@${esc(p.username)}</small></button>`).join('');
+      place(el); box.hidden = false;
+    }, 220);
+  }, true);
+  document.addEventListener('mousedown', e => {
+    const opt = e.target.closest?.('.influence-suggest button');
+    if (opt && target) { e.preventDefault(); target.value = opt.dataset.username; target.dispatchEvent(new Event('change', { bubbles: true })); hide(); return; }
+    if (box && !box.hidden && !e.target.closest?.('.influence-suggest') && e.target !== target) hide();
+  }, true);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && box && !box.hidden) hide(); }, true);
+})();
+
 async function resolveInfluencerId(usernameInput) {
   const username = (usernameInput || '').trim().replace(/^@/, '');
   if (!username || !sb) return null;
@@ -4242,6 +4293,7 @@ function openTasteItemForm(category, flatIdx) {
   document.getElementById('taste-item-sub').value = '';
   document.getElementById('taste-item-date').value = '';
   document.getElementById('taste-item-by').value = '';
+  tagFieldInit('listitem');
   setTasteItemArt('');
   document.getElementById('taste-item-modal-title').textContent = 'Add item';
 
@@ -4256,6 +4308,7 @@ function openTasteItemForm(category, flatIdx) {
       document.getElementById('taste-item-sub').value = item.sub || '';
       document.getElementById('taste-item-date').value = item.eventDate || '';
       document.getElementById('taste-item-by').value = item.by || '';
+      tagFieldInit('listitem', parseRecommendedBy(item.by));
       setTasteItemArt(item.art || '');
       document.getElementById('taste-item-link').value = item.link || '';
       tasteItemFormState.tmdbId = item.tmdbId || null;
@@ -5014,9 +5067,10 @@ async function saveTasteItemForm() {
   const category = readTasteItemType();
   let sub = document.getElementById('taste-item-sub').value.trim();
   const eventDate = document.getElementById('taste-item-date').value.trim();
-  let by = document.getElementById('taste-item-by').value.trim();
   // Your own name here is redundant — your user tag already shows it's your pick.
-  { const me = [firstNameOnly(currentProfile?.display_name), currentProfile?.username].filter(Boolean).map(v => v.toLowerCase()); if (me.includes(by.toLowerCase())) by = ''; }
+  const meNames = [firstNameOnly(currentProfile?.display_name), currentProfile?.username].filter(Boolean).map(v => v.toLowerCase());
+  const recTags = (await tagFieldValue('listitem')).filter(t => t.username ? t.user_id !== currentUser?.id && t.username.toLowerCase() !== (currentProfile?.username || '').toLowerCase() : !meNames.includes(t.name.toLowerCase()));
+  let by = serializeRecommendedBy(recTags);
   let art = document.getElementById('taste-item-art').value.trim();
   let link = document.getElementById('taste-item-link').value.trim();
   const errEl = document.getElementById('taste-item-modal-error');
@@ -6255,14 +6309,17 @@ function renderLiveTasteSentence() {
   const section = document.getElementById('profile-sentence-section');
   const text = document.getElementById('profile-sentence');
   if (!section || !text) return;
-  const sentence = profileFavoritesLoaded && viewedProfile?.id && !isLockedProfile()
-    ? computeTasteSentenceCandidate() : '';
+  // Best available: the profile's saved sentence (written or AI-generated), then one from the Taste
+  // Insights analysis (follows favorites), and only then the simple "A taste for X, Y and Z" template.
+  const ready = profileFavoritesLoaded && viewedProfile?.id && !isLockedProfile();
+  const saved = String(viewedProfile?.taste_sentence || '').trim();
+  let fromAnalysis = null; try { fromAnalysis = sentenceFromAnalysis(); } catch (_) {}
+  const sentence = ready ? (saved || fromAnalysis || computeTasteSentenceCandidate()) : '';
   text.textContent = sentence;
   section.hidden = !sentence;
-  // This summary now follows favorites automatically instead of saving a stale snapshot.
   for (const id of ['edit-sentence-btn', 'regen-sentence-btn']) {
     const button = document.getElementById(id);
-    if (button) button.style.display = 'none';
+    if (button) button.style.display = ready && isOwnProfile ? '' : 'none';
   }
 }
 
@@ -8212,7 +8269,7 @@ function renderOnboardingSearchResults() {
   const qNow=state.query.trim(), parsedNow=parseOnboardingQuery(qNow), f=state.filter||'all';
   const chips=qNow.length>=2?`<div class="ob-type-filters" role="group" aria-label="Filter by type">${['all',...['artist','album','movie','tv','book','podcast']].map(k=>`<button type="button" data-ob-filter="${k}" aria-pressed="${k===f}" onclick="filterOnboardingSearch('${k}')">${OB_FILTER_LABELS[k]}</button>`).join('')}</div>`
     +(state.autoFilter&&parsedNow.kind?`<p class="ob-type-note">Showing ${esc(parsedNow.kind==='tv'?'TV shows':parsedNow.kind==='screen'?'movies and TV':OB_FILTER_LABELS[parsedNow.kind].toLowerCase())} for “${esc(parsedNow.q)}” · <button type="button" class="ob-type-note-link" onclick="filterOnboardingSearch('all')">Search everything instead</button></p>`:''):'';
-  el.innerHTML=chips+(state.loading&&!state.results.length?'<p class="ob-search-status">Finding matches…</p>':state.results.length?`<div class="ob-results-grid">${state.results.map((item,i)=>!obKindMatches(item.kind,state.filter)?'':`<button type="button" class="ob-result ${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'selected':''}" aria-pressed="${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))}" onclick="selectOnboardingResult(${i})" ${state.saving?'disabled':''}>${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.year?' · '+esc(item.year):''}${item.artist&&item.kind==='album'?' · '+esc(item.artist):item.author?' · '+esc(item.author):''}</small>${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'<span class="ob-selected-mark" aria-hidden="true">✓</span>':'<span class="ob-select-circle" aria-hidden="true">+</span>'}</button>`).join('')}</div>`:state.query.trim().length===1?'<p class="ob-search-status">Type at least 2 letters to see suggestions.</p>':state.query.trim()?(state.searchFailed?'<p class="ob-search-status">Search is temporarily unavailable.</p>':'<p class="ob-search-status">No matches found. Try a few more letters or add the creator’s name.</p>'):'');
+  el.innerHTML=chips+(state.loading&&!state.results.length?'<p class="ob-search-status">Finding matches…</p>':state.results.length?`<div class="ob-results-grid">${state.results.map((item,i)=>!obKindMatches(item.kind,state.filter)?'':`<button type="button" class="ob-result ${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'selected':''}" aria-pressed="${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))}" data-key="${esc(onboardingSelectionKey(item))}" onclick="selectOnboardingResultByKey(this.dataset.key)" ${state.saving?'disabled':''}>${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.year?' · '+esc(item.year):''}${item.artist&&item.kind==='album'?' · '+esc(item.artist):item.author?' · '+esc(item.author):''}</small>${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'<span class="ob-selected-mark" aria-hidden="true">✓</span>':'<span class="ob-select-circle" aria-hidden="true">+</span>'}</button>`).join('')}</div>`:state.query.trim().length===1?'<p class="ob-search-status">Type at least 2 letters to see suggestions.</p>':state.query.trim()?(state.searchFailed?'<p class="ob-search-status">Search is temporarily unavailable.</p>':'<p class="ob-search-status">No matches found. Try a few more letters or add the creator’s name.</p>'):'');
   if(state.searchFailed&&!state.loading)el.innerHTML+='<button type="button" class="ob-button" onclick="runOnboardingSearch()">Retry search</button>';
   const count=document.getElementById('ob-selection-count');if(count)count.textContent=`${state.pending.length} selected`;
   const review=document.getElementById('ob-review-button');if(review)review.disabled=state.saving||!!state.pending.length||!onboardingPicks().length;
@@ -8247,6 +8304,10 @@ function updateOnboardingFooterHighlight(state) {
 }
 function onboardingSelectionKey(item) {
   return JSON.stringify([item.kind, item.kind==='artist'?item.title.trim().toLowerCase():item.id ?? item.title, item.kind==='book'?item.author:item.kind==='album'?item.artist:'']);
+}
+function selectOnboardingResultByKey(key) {
+  const state=onboardingVisualState(); const i=state.results.findIndex(r=>onboardingSelectionKey(r)===key);
+  if(i>=0) selectOnboardingResult(i);
 }
 function selectOnboardingResult(index) {
   const state=onboardingVisualState(),item=state.results[index];
@@ -8736,8 +8797,9 @@ function finishOnboarding(status) {
 function renderProfileOnboardingResume() {
   const el = document.getElementById('profile-onboarding-resume');
   if (!el) return;
-  el.hidden = !(profileFavoritesLoaded && profileTasteReadiness().ready &&
-    currentUser && isOwnProfile && viewedProfile?.id === currentUser.id);
+  // Only for your own profile while it's still sparse (a well-filled profile doesn't need a guided setup).
+  el.hidden = !(profileFavoritesLoaded && currentUser && isOwnProfile && viewedProfile?.id === currentUser.id &&
+    profileTasteReadiness().total < 15);
 }
 async function resumeOnboarding() {
   if (!currentUser || !isOwnProfile || viewedProfile?.id !== currentUser.id || onboardingVisualState().saving) return;
@@ -9968,6 +10030,7 @@ function portraitHtml(p) {
   return `<p class="bio-portrait-headline">${esc(p.headline)}</p><p class="bio-portrait-summary">${esc(p.summary)}</p>`;
 }
 function refreshSectionPortraits() {
+  try { renderLiveTasteSentence(); } catch (_) {}
   for (const fn of [updateFilmProfile, updateTVProfile, updateMusicProfile, updateBooksProfile]) { try { fn(); } catch (_) {} }
 }
 function joinNatural(list) {
@@ -13547,7 +13610,29 @@ async function loadTasteListPeople(rows) {
     renderTripPlaylist();
   } catch (_) {}
 }
+
+// Shared-list "Recommended by" is stored as text: TasteList users as @username, others as names
+// ("@jennylkwan, Grandma"). Older items with a typed name keep working.
+function parseRecommendedBy(str) {
+  return String(str || '').split(/\s*,\s*/).map(t => t.trim()).filter(Boolean)
+    .map(t => /^@[A-Za-z0-9_.]{2,40}$/.test(t) ? { username: t.slice(1) } : { name: t });
+}
+function serializeRecommendedBy(tags) {
+  return normalizeTags(tags).map(t => t.username ? '@' + t.username : t.name).join(', ').slice(0, 300);
+}
 function tastePersonTagHtml(item, size = 'card') {
+  const recTags = parseRecommendedBy(item.by);
+  if (recTags.some(t => t.username) || recTags.length > 1) {
+    const d = size === 'card' ? 18 : 22;
+    const style = `display:inline-flex;align-items:center;gap:6px;margin:8px 6px 0 0;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text);text-decoration:none;max-width:100%;`;
+    const people = [...tasteListPeople.values()];
+    return recTags.map(t => {
+      if (!t.username) return `<span title="Recommended by ${esc(t.name)}" style="${style}">${profileAvatarHtml({ display_name: t.name }, d)}<span>${esc(t.name)}</span></span>`;
+      const p = people.find(x => (x.username || '').toLowerCase() === t.username.toLowerCase()) || { username: t.username, display_name: t.username };
+      const label = firstNameOnly(p.display_name) || p.username;
+      return `<a href="javascript:void(0)" onclick="event.stopPropagation(); goToProfile('${jsStr(p.username)}')" title="Recommended by ${esc(label)}" style="${style}cursor:pointer;">${profileAvatarHtml(p, d)}<span>${esc(label)}</span></a>`;
+    }).join('');
+  }
   const person = item.addedBy ? tasteListPeople.get(item.addedBy) : null;
   // A free-text name means someone outside TasteList recommended it; otherwise it's the adder's pick.
   const name = item.by || (person ? (firstNameOnly(person.display_name) || person.username) : '');
@@ -15560,7 +15645,7 @@ function renderFeedComposer(){
    <div class="fc-media">${feedComposerMediaMarkup()}</div>
    <label class="update-sr" for="feed-post-text">Your take</label>
    <textarea id="feed-post-text" class="fc-text" rows="3" maxlength="3000" placeholder="What’s your take?" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea>
-   <div id="feed-tag-wrap" ${feedComposerTagsOpen()?'':'hidden'}>${tagFieldMarkup('feed','Tag people','search TasteList, or type any name')}</div>
+   <div id="feed-tag-wrap" ${feedComposerTagsOpen()?'':'hidden'}>${tagFieldMarkup('feed','Tag people','search TasteList, or type any name').replace('placeholder="Search a name or @username"','placeholder="Add a name or @username…"')}</div>
    <p id="feed-post-status" class="fc-status" role="status" aria-live="polite"></p>
   </div>
   <footer class="fc-foot"><div class="composer-chips">
@@ -16746,12 +16831,27 @@ async function showListInvitation(){
 }
 
 // Joined a shared list before finishing onboarding: welcome them, and offer profile setup when they're ready.
+let ownFavoriteCount = { userId: null, total: null };
+async function loadOwnFavoriteCount() {
+  if (!currentUser || !sb) return;
+  const uid = currentUser.id;
+  if (ownFavoriteCount.userId === uid && ownFavoriteCount.total != null) return;
+  try {
+    const tables = ['favorite_artists', 'favorite_albums', 'favorite_media_lists', 'favorite_books'];
+    const counts = await Promise.all(tables.map(t => sb.from(t).select('id', { count: 'exact', head: true }).eq('user_id', uid)));
+    if (currentUser?.id !== uid) return;
+    ownFavoriteCount = { userId: uid, total: counts.reduce((n, r) => n + (r.count || 0), 0) };
+  } catch (_) {}
+}
 function renderNewMemberWelcome() {
   const section = document.getElementById('trip-playlist-section');
   if (!section || !currentUser) return;
   const pending = onboardingUserId === currentUser.id && ['pending', 'skipped'].includes(onboardingState?.status);
   let el = document.getElementById('new-member-welcome');
-  if (!pending) { el?.remove(); return; }
+  // Only for people who haven't added much yet (counted from the database, so it's right on any page).
+  const count = ownFavoriteCount.userId === currentUser.id ? ownFavoriteCount.total : null;
+  if (count == null && pending) { loadOwnFavoriteCount().then(renderNewMemberWelcome); }
+  if (!pending || count == null || count >= 5) { el?.remove(); return; }
   if (!el) {
     el = document.createElement('div'); el.id = 'new-member-welcome'; el.className = 'new-member-welcome'; el.setAttribute('role', 'status');
     section.prepend(el);
@@ -18206,8 +18306,8 @@ renderTasteInfluences();
     </div>
 
     <div class="tl-field">
-      <label class="tl-label">Recommended by someone else? <span class="tl-hint">optional</span></label>
-      <input id="taste-item-by" class="tl-input" type="text" placeholder="Leave blank if it's your pick">
+      <input id="taste-item-by" type="hidden">
+      <div class="tag-field" style="margin-top:0"><label class="tl-label" for="tag-listitem-input">Recommended by someone else? <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-listitem-chips" class="tag-chips"></div><input id="tag-listitem-input" class="tl-input" autocomplete="off" placeholder="Leave blank if it’s your pick" oninput="tagFieldSearch('listitem',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('listitem')}"><div id="tag-listitem-results" class="tag-results" aria-live="polite"></div></div>
     </div>
 
     <div class="tl-field">
