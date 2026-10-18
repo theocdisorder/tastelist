@@ -2164,6 +2164,13 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .wn-add-note { font-size: 12px; color: var(--muted); text-align: center; }
 .wn-panel-strip { grid-column: 1 / -1; display: flex; justify-content: center; margin: -4px 0 8px; }
 .wn-panel-strip .wn-add { padding: 0; width: min(100%, 360px); }
+.rec-save-prompt { margin: 14px 0 4px; }
+.rec-detail-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.rec-detail-note-label { font-style: normal; color: var(--faint); }
+.rt-slot:empty { display: none; }
+.rt-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--muted); text-decoration: none; }
+.rt-link:hover { color: var(--text); text-decoration: underline; }
+.rt-dot { width: 10px; height: 10px; border-radius: 50%; background: #FA320A; flex-shrink: 0; }
 
 .list-links-sep { color: var(--muted); font-size: 12.5px; }
 .list-create-import:has(.list-links-sep) { gap: 4px; align-items: center; }
@@ -2250,17 +2257,18 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 @media (max-width: 480px) { .ob-pick-grid.hrow > * { flex-basis: calc((100% - 12px) / 2.15); } }
 /* Horizontal scroll arrows */
 .hscroll-host { position: relative; }
-.hscroll-btn { position: absolute; z-index: 3; width: 56px; padding: 0; border: 0; cursor: pointer; display: flex; align-items: center; color: #fff;
+.hscroll-btn { position: absolute; z-index: 3; width: 76px; padding: 0; border: 0; cursor: pointer; display: flex; align-items: center; color: #fff;
   transition: opacity .18s ease; opacity: .9; }
 .hscroll-prev { justify-content: flex-start; padding-left: 6px; background: linear-gradient(to right, rgba(12,12,13,.85), rgba(12,12,13,0)); }
 .hscroll-next { justify-content: flex-end; padding-right: 6px; background: linear-gradient(to left, rgba(12,12,13,.85), rgba(12,12,13,0)); }
-.hscroll-chev { width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+.hscroll-chev { width: 46px; height: 46px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
   background: rgba(24,24,28,.78); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 4px 14px rgba(0,0,0,.45); transition: transform .15s ease, background .15s ease; }
 .hscroll-host:hover .hscroll-btn { opacity: 1; }
 .hscroll-btn:hover .hscroll-chev, .hscroll-btn:focus-visible .hscroll-chev { background: rgba(124,77,255,.9); border-color: rgba(124,77,255,1); transform: scale(1.08); }
 .hscroll-btn:focus-visible { outline: none; }
 .hscroll-btn.is-off { opacity: 0 !important; pointer-events: none; }
-@media (pointer: coarse) { .hscroll-btn { width: 44px; } .hscroll-chev { width: 30px; height: 30px; } }
+.hscroll-chev svg { width: 22px; height: 22px; }
+@media (pointer: coarse) { .hscroll-btn { width: 60px; opacity: 1; } .hscroll-chev { width: 42px; height: 42px; background: rgba(24,24,28,.88); } .hscroll-chev svg { width: 20px; height: 20px; } }
 @media (prefers-reduced-motion: reduce) { .hscroll-btn, .hscroll-chev { transition: none; } }
 
 /* Comment notifications: the comment itself + a reply cue */
@@ -3340,9 +3348,18 @@ function recPeople(r) {
   if (Array.isArray(r.recommenders) && r.recommenders.length) return r.recommenders;
   return r.from ? [{ userId: null, name: r.fromDisplayName || r.from, username: r.fromUsername || null }] : [];
 }
+// A recommendation's note, unless it just repeats the title ("Sinners" under Sinners).
+function recNoteFor(r) {
+  const note = String(r?.note || '').trim();
+  const norm = v => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return note && norm(note) !== norm(r.title) ? note : '';
+}
 function recPersonTagHtml(p, { removable = false, recIdx = null, k = 0 } = {}) {
   const name = p.username ? (firstNameOnly(p.name) || p.username) : (abbreviateName(p.name) || p.name);
-  const avatar = p.avatar ? `<img class="recs-tag-avatar" src="${esc(p.avatar)}" alt="">` : `<span class="recs-tag-avatar">${esc(initials(p.name || p.username || '?'))}</span>`;
+  // Same photo rules as everywhere else (stored codes like "legacy-sreya", only real image links).
+  const src = profileAvatarSource({ id: p.userId, avatar_url: p.avatar });
+  const fallback = `<span class="recs-tag-avatar">${esc(initials(p.name || p.username || '?'))}</span>`;
+  const avatar = src ? `<img class="recs-tag-avatar" src="${esc(src)}" alt=""${src === TRANSFERRED_SREYA_AVATAR ? ' style="transform:rotate(180deg)"' : ''} onerror="this.outerHTML=${esc(JSON.stringify(fallback))}">` : fallback;
   const remove = removable ? `<button type="button" class="recs-tag-remove" aria-label="Remove ${esc(p.name)}" onclick="event.stopPropagation(); removeRecommender(${recIdx}, ${k})">✕</button>` : '';
   const inner = `${avatar}<span>${esc(name)}</span>`;
   const body = p.username
@@ -3379,6 +3396,7 @@ async function getRecSummary(r) {
     } else if (r.type === 'film' || r.type === 'tv') {
       let id = r.tmdbId;
       if (!id) { const d = await (await tmdbFetch(`/search/${r.type === 'tv' ? 'tv' : 'movie'}?query=${encodeURIComponent(r.title)}&page=1`)).json(); id = d.results?.[0]?.id; }
+      if (id) r._tmdbId = id;
       if (id) { const det = r.type === 'tv' ? await fetchTVDetail(id) : await fetchMovieDetail(id); if (det.overview) out = { text: det.overview, source: 'TMDB', url: `https://www.themoviedb.org/${r.type === 'tv' ? 'tv' : 'movie'}/${id}` }; }
     }
     if (!out) {
@@ -3400,7 +3418,7 @@ async function fillRecDetailSummary(idx) {
   if (!el) return;
   el.classList.remove('is-loading');
   el.innerHTML = sum
-    ? `<p>${esc(shortSummary(sum.text))}</p>${sum.url ? `<a href="${esc(sum.url)}" target="_blank" rel="noopener">From ${esc(sum.source)} ↗</a>` : `<span>From ${esc(sum.source)}</span>`}`
+    ? `<p>${esc(shortSummary(sum.text))}</p><div class="rec-detail-links">${sum.url ? `<a href="${esc(sum.url)}" target="_blank" rel="noopener">From ${esc(sum.source)} ↗</a>` : `<span>From ${esc(sum.source)}</span>`}${['film', 'tv'].includes(r.type) ? rtSlotHtml(r.type === 'tv' ? 'tv' : 'movie', r.tmdbId || r._tmdbId) : ''}</div>`
     : `<p class="rec-detail-empty">No summary found for this one.</p>`;
 }
 
@@ -3435,26 +3453,25 @@ function renderRecDetail() {
       <div style="min-width:0;">
         <div class="rec-detail-kind" style="color:${g.color}">${esc(g.label)}</div>
         <h2 id="rec-detail-title" class="rec-detail-title">${esc(r.title)}</h2>
-        ${r.note ? `<p class="rec-detail-note">“${esc(r.note)}”</p>` : ''}
+        ${recNoteFor(r) ? `<p class="rec-detail-note">${r.fromPaste ? '<span class="rec-detail-note-label">From the message:</span> ' : ''}“${esc(recNoteFor(r))}”</p>` : ''}
         ${r.sourceUrl ? `<a href="${esc(r.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open original link ↗</a>` : ''}
       </div>
     </div>
     ${own?`<div class="rec-detail-actions rec-finish-prompt"><button type="button" class="ed-primary" onclick="finishWhatsNext(${recDetailIdx})">Mark as ${completionWord(r.type)}</button></div>`:''}
+    ${!own && viewedProfile ? `<div class="rec-detail-actions rec-save-prompt">${whatsNextButtonHtml({ title: r.title, kind: r.type === 'film' ? 'movie' : r.type, art: r.art || '', tmdbId: r.tmdbId || null, fromId: viewedProfile.id, fromName: viewedProfile.display_name || viewedProfile.username })}</div>` : ''}
     <div id="rec-detail-summary" class="rec-detail-summary${r.summary ? '' : ' is-loading'}" aria-live="polite">${r.summary
       ? `<p>${esc(shortSummary(r.summary.text))}</p>${r.summary.url ? `<a href="${esc(r.summary.url)}" target="_blank" rel="noopener">From ${esc(r.summary.source)} ↗</a>` : `<span>From ${esc(r.summary.source)}</span>`}`
       : (r.summary === false ? '<p class="rec-detail-empty">No summary found for this one.</p>' : '<p>Loading summary…</p>')}</div>
-    <div class="rec-detail-section">
+    ${people.length || own ? `<div class="rec-detail-section">
       <div class="rec-detail-label">Recommended by</div>
-      <div class="rec-detail-people">${people.length
-        ? people.map((p, k) => recPersonTagHtml(p, { removable: own, recIdx: recDetailIdx, k })).join('')
-        : `<span class="rec-detail-empty">${own ? 'No one yet. Add who told you about it.' : 'No one listed.'}</span>`}</div>
+      ${people.length ? `<div class="rec-detail-people">${people.map((p, k) => recPersonTagHtml(p, { removable: own, recIdx: recDetailIdx, k })).join('')}</div>` : ''}
       ${own ? `
       <div class="rec-detail-add">
         <input id="rec-detail-search" class="tl-input" type="text" autocomplete="off" placeholder="Add a friend, or type any name" aria-label="Add who recommended this"
           oninput="onRecDetailSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();addRecommenderFromInput();}">
         <div id="rec-detail-results" role="listbox" aria-label="Suggestions"></div>
       </div>` : ''}
-    </div>
+    </div>` : ''}
     ${own ? `<div class="rec-detail-actions"><button type="button" class="rec-remove-button" title="Remove from What’s Next" aria-label="Remove ${esc(r.title)} from What’s Next" onclick="deleteFriendRec(recDetailIdx,this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button></div>` : ''}`;
 }
 function onRecDetailSearch() {
@@ -3577,7 +3594,7 @@ function renderRecsExpanded() {
         </div>
         <div class="sl-info"><div class="sl-info-text">
           <div class="sl-name">${esc(r.title)}</div>
-          ${r.note ? `<div class="sl-caption">“${esc(r.note)}”</div>` : ''}
+          ${recNoteFor(r) && !r.fromPaste ? `<div class="sl-caption">“${esc(recNoteFor(r))}”</div>` : ''}
         </div></div></div>
           ${recFromTagHtml(r)}
       </div>`;
@@ -5880,7 +5897,8 @@ async function loadFriendRecsFromSupabase(userId) {
         fromDisplayName: first?.name || null,
         art: row.type==='book'&&bookArtKey(row.title)==='flowersforalgernon'?'https://www.hachette.co.uk/wp-content/uploads/2022/04/hbg-title-flowers-for-algernon-3-307.jpg?w=440':row.art_url || '',
         tmdbId: row.tmdb_id || row.catalog_item?.tmdbId || undefined,
-        note: row.source_text || '',
+        note: row.note || row.source_text || '',
+        fromPaste: !row.note && !!row.source_text,   // the pasted message, not something the person wrote about this item
         sourceUrl: /^https:\/\//i.test(row.source_url||'') ? row.source_url : '',
         catalogItem: row.catalog_item || null,
       });
@@ -12677,6 +12695,7 @@ function toggleMovieExpand(movieId) {
         ${m.rating ? `<span style="font-size:13px;color:var(--muted);">⭐ ${m.rating}/10</span>` : ''}
         ${m.runtime ? `<span style="font-size:13px;color:var(--muted);">🕐 ${m.runtime} min</span>` : ''}
         ${m.director ? `<span style="font-size:13px;color:var(--muted);">🎬 ${esc(m.director)}</span>` : ''}
+        ${rtSlotHtml(m.type === 'tv' ? 'tv' : 'movie', m.tmdbId)}
       </div>
       ${inlineEngagementBlockHtml(m.type === 'tv' ? 'tv' : 'movie', m.rowId)}
     </div>`;
@@ -12757,7 +12776,7 @@ function placeEditToggles() {
 }
 (() => {
   let queued = false;
-  const run = () => { queued = false; placeEditToggles(); scanHScroll(); };
+  const run = () => { queued = false; placeEditToggles(); scanHScroll(); fillRtSlots(); };
   const start = () => {
     const root = document.getElementById('app-content') || document.body;
     new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(root, { childList: true, subtree: true });
@@ -13418,6 +13437,7 @@ function movieDetailPanelHTML(m, closeOnclick) {
         ${m.rating ? `<span style="font-size:13px;color:var(--muted);">⭐ ${m.rating}/10</span>` : ''}
         ${m.runtime ? `<span style="font-size:13px;color:var(--muted);">🕐 ${m.runtime} min</span>` : ''}
         ${m.director ? `<span style="font-size:13px;color:var(--muted);">🎬 ${esc(m.director)}</span>` : ''}
+        ${rtSlotHtml(m.type === 'tv' ? 'tv' : 'movie', m.tmdbId)}
       </div>
       ${inlineEngagementBlockHtml(m.type === 'tv' ? 'tv' : 'movie', m.rowId)}
     </div>`;
@@ -14624,7 +14644,7 @@ function renderTripPlaylist() {
               <div class="sl-name">${esc(item.title)}</div>${favoriteFriendTagsHtml(item)}
               ${meta.map(m => `<div class="sl-sub">${esc(m)}</div>`).join('')}
               ${item.link ? `<a href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-block;margin-top:3px;font-size:12px;color:var(--accent);text-decoration:none;">${esc(linkHost)} ↗</a>` : ''}
-              ${item.caption ? `<div class="sl-caption">“${esc(item.caption)}”</div>` : ''}
+              ${recNoteFor({ note: item.caption, title: item.title }) ? `<div class="sl-caption">“${esc(item.caption)}”</div>` : ''}
               ${tasteContributionHtml(item)}
             </div>
           </div>
@@ -14778,6 +14798,37 @@ const SHARED_BOOK_FALLBACKS = {
 function sharedBookFallback(title, author) {
   const hit = SHARED_BOOK_FALLBACKS[sharedBookKey(title)] || SHARED_BOOK_FALLBACKS[sharedBookKey(String(title||'').split(':')[0].replace(/^the\s+/i,''))];
   return hit && (!author || sharedBookKey(author) === sharedBookKey(hit.author)) ? hit : null;
+}
+// ── Rotten Tomatoes links ──
+// Rotten Tomatoes has no open API, but Wikidata records each film's / show's RT page (P1258)
+// alongside its TMDB id (P4947 movies, P4983 TV). Look it up by TMDB id; no page → no link.
+const RT_LINKS = new Map();
+function rtLink(kind, tmdbId) {
+  if (!tmdbId) return Promise.resolve('');
+  const key = `${kind}:${tmdbId}`;
+  if (RT_LINKS.has(key)) return RT_LINKS.get(key);
+  const prop = kind === 'tv' ? 'P4983' : 'P4947';
+  const query = `SELECT ?rt WHERE { ?item wdt:${prop} "${String(tmdbId).replace(/[^0-9]/g, '')}"; wdt:P1258 ?rt. } LIMIT 1`;
+  const p = sharedCatalogJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query))
+    .then(d => { const id = d?.results?.bindings?.[0]?.rt?.value || ''; return /^(m|tv)\/[\w\-]+(\/[\w\-]+)?$/.test(id) ? 'https://www.rottentomatoes.com/' + id : ''; })
+    .catch(() => { RT_LINKS.delete(key); return ''; });
+  RT_LINKS.set(key, p);
+  return p;
+}
+// Drop <span class="rt-slot" …> anywhere a movie/show is shown; it fills in (or disappears) by itself.
+function rtSlotHtml(kind, tmdbId) {
+  return tmdbId ? `<span class="rt-slot" data-rt-kind="${kind === 'tv' ? 'tv' : 'movie'}" data-rt-id="${esc(String(tmdbId))}"></span>` : '';
+}
+function fillRtSlots() {
+  document.querySelectorAll('.rt-slot:not([data-rt-state])').forEach(el => {
+    el.dataset.rtState = 'loading';
+    rtLink(el.dataset.rtKind, el.dataset.rtId).then(url => {
+      if (!el.isConnected) return;
+      if (!url) { el.remove(); return; }
+      el.dataset.rtState = 'done';
+      el.innerHTML = `<a class="rt-link" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="rt-dot" aria-hidden="true"></span>Rotten Tomatoes ↗</a>`;
+    });
+  });
 }
 async function sharedCatalogJSON(url) {
   if(new URL(url).origin==='https://itunes.apple.com')return onboardingSearchJSON(url);
@@ -15150,6 +15201,7 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
         ${loading ? `<span style="color:var(--faint);">Loading summary…</span>` : (summary ? esc(summary) : `<span style="color:var(--faint);">No summary available.</span>`)}
       </div>
       ${item.summarySource && /^https?:\/\//.test(item.summarySource) ? `<a href="${esc(item.summarySource)}" target="_blank" rel="noopener" style="display:block;padding:0 20px 16px;color:var(--muted);font-size:12px;">Read more about this title ↗</a>` : ''}
+      ${['movie','tv'].includes(summaryIdentity(item).kind) && item.tmdbId ? `<div style="padding:0 20px 16px;">${rtSlotHtml(summaryIdentity(item).kind, item.tmdbId)}</div>` : ''}
       ${!loading && item._summaryMissing ? `<div style="padding:0 20px 16px;font-size:13px;">${item.link && /^https?:\/\//i.test(item.link) ? `<a href="${esc(item.link)}" target="_blank" rel="noopener">Open original item ↗</a> · ` : ''}<button type="button" class="activity-summary-title" onclick="openTripPlaylistSummary(tripPlaylistFlatItems.findIndex(item=>String(item.id)==='${jsStr(String(item.id))}'))">Retry summary</button></div>` : ''}
       ${['artist','album','song'].includes(summaryIdentity(item).kind) && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
       <div class="stream-links listen-wide" style="padding:0 20px 20px;display:flex;gap:8px;" data-q="${esc((item.title||'') + ' ' + (item.sub||''))}">
@@ -15425,8 +15477,8 @@ function renderReactionPeople(){
  document.getElementById('reaction-people-filters').innerHTML=rows.length?`<button type="button" aria-pressed="${!filter}" onclick="filterReactionPeople('')">All ${rows.length}</button>`+[...counts].map(([emoji,count])=>`<button type="button" aria-pressed="${filter===emoji}" onclick="filterReactionPeople('${emoji}')">${emoji} ${count}</button>`).join(''):'';
  document.getElementById('reaction-people-list').innerHTML=rows.length?rows.filter(r=>!filter||r.reaction===filter).map(r=>{
   const p=r.person,name=p?.display_name||p?.username||'TasteList member';
-  const art=/^https?:\/\//i.test(p?.avatar_url||'')?p.avatar_url:'';
-  const content=`<span class="reaction-person-avatar"><span>${esc(name.slice(0,1).toUpperCase())}</span>${art?`<img src="${esc(art)}" alt="" onerror="this.hidden=true">`:''}</span><span class="reaction-person-name"><strong>${esc(name)}</strong>${p?.username?`<small>@${esc(p.username)}</small>`:''}</span><span class="reaction-person-emoji">${r.reaction}</span>`;
+  const art=profileAvatarSource({...(p||{}),id:p?.id||r.user_id});
+  const content=`<span class="reaction-person-avatar"><span>${esc(name.slice(0,1).toUpperCase())}</span>${art?`<img src="${esc(art)}" alt="" onerror="this.hidden=true"${art===TRANSFERRED_SREYA_AVATAR?' style="transform:rotate(180deg)"':''}>`:''}</span><span class="reaction-person-name"><strong>${esc(name)}</strong>${p?.username?`<small>@${esc(p.username)}</small>`:''}</span><span class="reaction-person-emoji">${r.reaction}</span>`;
   return p?.username?`<a class="reaction-person" href="?u=${encodeURIComponent(p.username)}">${content}</a>`:`<div class="reaction-person">${content}</div>`;
  }).join(''):'<p>No reactions yet.</p>';
 }
@@ -18001,6 +18053,7 @@ function tvDetailPanelHTML(m, closeOnclick) {
         ${m.rating ? `<span style="font-size:13px;color:var(--muted);">⭐ ${m.rating}/10</span>` : ''}
         ${m.seasons ? `<span style="font-size:13px;color:var(--muted);">📺 ${m.seasons} season${m.seasons > 1 ? 's' : ''}</span>` : ''}
         ${m.creator ? `<span style="font-size:13px;color:var(--muted);">✎ ${esc(m.creator)}</span>` : ''}
+        ${rtSlotHtml('tv', m.tmdbId)}
       </div>
       ${inlineEngagementBlockHtml('tv', m.rowId)}
     </div>`;
