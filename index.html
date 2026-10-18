@@ -2164,7 +2164,8 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .wn-add-note { font-size: 12px; color: var(--muted); text-align: center; }
 .wn-panel-strip { grid-column: 1 / -1; display: flex; justify-content: center; margin: -4px 0 8px; }
 .wn-panel-strip .wn-add { padding: 0; width: min(100%, 360px); }
-.rec-detail-art-wrap { position: relative; align-self: flex-start; flex-shrink: 0; }
+.rec-detail-art-wrap, .rec-detail-art-wrap.wn-cover { position: relative; align-self: start; flex-shrink: 0; width: 100%; height: auto; }   /* not the 64×64 What's New cover box */
+.rec-detail-art-wrap > .rec-detail-art { width: 100%; }
 .untag-btn { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 2px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.08); color: var(--muted); font: inherit; font-size: 13px; line-height: 1; cursor: pointer; vertical-align: middle; }
 .untag-btn:hover, .untag-btn:focus-visible { background: rgba(252,165,165,.18); color: #fca5a5; }
 @media (pointer: coarse) { .untag-btn { width: 24px; height: 24px; } }
