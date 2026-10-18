@@ -973,6 +973,16 @@ if (new URLSearchParams(location.search).has('list')) {
   .list-engage:empty { display: none; }
   .list-engage > div:first-child { padding: 0 !important; border-bottom: 0 !important; }
   .list-engage { margin-top: 8px; }
+  /* Text-only updates: same like/comment icons as every other card */
+  .feed-text-post footer { border-top: 0 !important; padding-top: 0 !important; margin-top: 12px; gap: 12px !important; }
+  .feed-comment-btn { display: inline-flex; align-items: center; gap: 5px; background: none; border: 0; padding: 0; font: inherit; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+  .feed-comment-btn:hover { color: var(--text); }
+  @media (pointer: coarse) { .feed-comment-btn { min-height: 32px; } }
+  /* On a profile's What's New, text-only updates are entries between rules like the rest, not boxes */
+  #profile-feed .feed-text-post { background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 26px 0; margin: 0; }
+  #profile-feed .feed-text-post:last-child { border-bottom: 0; }
+  #profile-feed .feed-text-post header small { margin-top: 0; font-size: 13px; }
+  #profile-feed .feed-post-body { margin: 8px 0 0; font-size: 15px; line-height: 1.6; color: #d6d1c8; max-width: 64ch; }
   .list-engage .sl-comments { max-width: 680px; padding: 6px 0 4px; }
   .section-controls-row { max-width: 1100px; margin: 0 auto 14px; padding: 0 2rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .music-section-title { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; cursor: pointer; }
@@ -16204,7 +16214,7 @@ function feedTextPostHtml(row,profile=false){
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
  const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
  const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
- return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(row.activity_date)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div>${taggedLineHtml(row.tags)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button class="sl-btn" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')">Comment${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?' · '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}</button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
+ return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(row.activity_date)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div>${taggedLineHtml(row.tags)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
 }
 
 async function loadPublicFeed() {
