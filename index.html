@@ -2164,13 +2164,18 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .wn-add-note { font-size: 12px; color: var(--muted); text-align: center; }
 .wn-panel-strip { grid-column: 1 / -1; display: flex; justify-content: center; margin: -4px 0 8px; }
 .wn-panel-strip .wn-add { padding: 0; width: min(100%, 360px); }
-.rec-save-prompt { margin: 14px 0 4px; }
-.rec-detail-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.rec-detail-art-wrap { position: relative; align-self: flex-start; flex-shrink: 0; }
+.untag-btn { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 2px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.08); color: var(--muted); font: inherit; font-size: 13px; line-height: 1; cursor: pointer; vertical-align: middle; }
+.untag-btn:hover, .untag-btn:focus-visible { background: rgba(252,165,165,.18); color: #fca5a5; }
+@media (pointer: coarse) { .untag-btn { width: 24px; height: 24px; } }
+.rec-detail-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin-top: 8px; }
+.rec-detail-summary .rec-detail-links > a, .rec-detail-summary .rec-detail-links > span, .rec-detail-summary .rec-detail-links .rt-link { margin-top: 0; display: inline-flex; align-items: center; font-size: 12.5px; font-weight: 400; line-height: 1.4; color: var(--muted); }
 .rec-detail-note-label { font-style: normal; color: var(--faint); }
 .rt-slot:empty { display: none; }
-.rt-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--muted); text-decoration: none; }
+.rt-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 400; line-height: 1.4; color: var(--muted); text-decoration: none; }
 .rt-link:hover { color: var(--text); text-decoration: underline; }
-.rt-dot { width: 10px; height: 10px; border-radius: 50%; background: #FA320A; flex-shrink: 0; }
+.rt-dot { width: 8px; height: 8px; border-radius: 50%; background: #FA320A; flex-shrink: 0; }
+.rec-detail-summary .rt-dot { display: inline-block; margin: 0; }
 
 .list-links-sep { color: var(--muted); font-size: 12.5px; }
 .list-create-import:has(.list-links-sep) { gap: 4px; align-items: center; }
@@ -3370,7 +3375,9 @@ function recPersonTagHtml(p, { removable = false, recIdx = null, k = 0 } = {}) {
 function recFromTagHtml(r) {
   const people = recPeople(r);
   if (!people.length) return '';
-  const shown = people.slice(0, 3).map(p => recPersonTagHtml(p)).join('');
+  const own = !!currentUser && isOwnProfile && viewedProfile?.id === currentUser.id;
+  const idx = FRIEND_RECOMMENDATIONS.indexOf(r);
+  const shown = people.slice(0, 3).map((p, k) => recPersonTagHtml(p, own && idx >= 0 ? { removable: true, recIdx: idx, k } : {})).join('');
   return `<div class="recs-tags">${shown}${people.length > 3 ? `<span class="recs-tag recs-tag-more">+${people.length - 3}</span>` : ''}</div>`;
 }
 
@@ -3447,8 +3454,11 @@ function renderRecDetail() {
   const own = !!currentUser && isOwnProfile && viewedProfile?.id === currentUser.id;
   el.innerHTML = `
     <div class="rec-detail-head">
-      <div class="rec-detail-art recs-${g.shape}" style="--c:${g.color}">
-        ${r.art ? `<img src="${esc(r.art)}" alt="" onerror="this.remove()" onload="if(this.naturalWidth<10)this.remove()">` : `<span>${esc(r.title)}</span>`}
+      <div class="rec-detail-art-wrap wn-cover">
+        <div class="rec-detail-art recs-${g.shape}" style="--c:${g.color}">
+          ${r.art ? `<img src="${esc(r.art)}" alt="" onerror="this.remove()" onload="if(this.naturalWidth<10)this.remove()">` : `<span>${esc(r.title)}</span>`}
+        </div>
+        ${!own && viewedProfile ? whatsNextButtonHtml({ title: r.title, kind: r.type === 'film' ? 'movie' : r.type, art: r.art || '', tmdbId: r.tmdbId || null, fromId: viewedProfile.id, fromName: viewedProfile.display_name || viewedProfile.username }) : ''}
       </div>
       <div style="min-width:0;">
         <div class="rec-detail-kind" style="color:${g.color}">${esc(g.label)}</div>
@@ -3458,7 +3468,7 @@ function renderRecDetail() {
       </div>
     </div>
     ${own?`<div class="rec-detail-actions rec-finish-prompt"><button type="button" class="ed-primary" onclick="finishWhatsNext(${recDetailIdx})">Mark as ${completionWord(r.type)}</button></div>`:''}
-    ${!own && viewedProfile ? `<div class="rec-detail-actions rec-save-prompt">${whatsNextButtonHtml({ title: r.title, kind: r.type === 'film' ? 'movie' : r.type, art: r.art || '', tmdbId: r.tmdbId || null, fromId: viewedProfile.id, fromName: viewedProfile.display_name || viewedProfile.username })}</div>` : ''}
+
     <div id="rec-detail-summary" class="rec-detail-summary${r.summary ? '' : ' is-loading'}" aria-live="polite">${r.summary
       ? `<p>${esc(shortSummary(r.summary.text))}</p>${r.summary.url ? `<a href="${esc(r.summary.url)}" target="_blank" rel="noopener">From ${esc(r.summary.source)} ↗</a>` : `<span>From ${esc(r.summary.source)}</span>`}`
       : (r.summary === false ? '<p class="rec-detail-empty">No summary found for this one.</p>' : '<p>Loading summary…</p>')}</div>
@@ -3520,19 +3530,20 @@ async function addRecommenderFromInput() {
   await saveRecommenders(list => list.concat({ userId: null, name, username: null, avatar: null }));
 }
 async function removeRecommender(idx, k) {
-  if (idx !== recDetailIdx) return;
-  await saveRecommenders(list => list.filter((_, j) => j !== k));
+  await saveRecommenders(list => list.filter((_, j) => j !== k), idx);
 }
-async function saveRecommenders(change) {
-  const r = FRIEND_RECOMMENDATIONS[recDetailIdx];
+async function saveRecommenders(change, idx = recDetailIdx) {
+  const r = FRIEND_RECOMMENDATIONS[idx];
   if (!r || !isOwnProfile) return;
   const before = recPeople(r);
   const next = change(before.slice()).filter((p, i, a) => a.findIndex(q => (q.userId && q.userId === p.userId) || (!q.userId && !p.userId && q.name.toLowerCase() === p.name.toLowerCase())) === i).slice(0, 20);
   r.recommenders = next;
   const first = next[0];
   r.from = first?.name; r.fromUsername = first?.username || null; r.fromDisplayName = first?.name || null;
-  renderRecDetail(); renderFriendRecs();
-  setTimeout(() => document.getElementById('rec-detail-search')?.focus(), 0);
+  const cardOpen = recDetailIdx === idx;
+  if (cardOpen) renderRecDetail();
+  renderFriendRecs();
+  if (cardOpen) setTimeout(() => document.getElementById('rec-detail-search')?.focus(), 0);
   if (!sb || !r.id) return;
   if (!(await requireFreshSession())) { showToast(SESSION_EXPIRED_MESSAGE); return; }
   const { error } = await sb.from('friend_recs').update({
@@ -3540,7 +3551,7 @@ async function saveRecommenders(change) {
     from_name: first?.name || null, recommended_by_user_id: first?.userId || null,
   }).eq('id', r.id);
   if (error) {
-    r.recommenders = before; renderRecDetail(); renderFriendRecs();
+    r.recommenders = before; if (recDetailIdx === idx) renderRecDetail(); renderFriendRecs();
     showToast('Couldn’t save that change. Please try again.');
   }
 }
@@ -7484,7 +7495,33 @@ function searchPickerFriends(value){
  el.innerHTML=pickerFriendTags.results.map((p,i)=>`<button type="button" class="extra-result" onclick="selectPickerFriend(${i})"><span>${esc(p.display_name||p.username)}<small>@${esc(p.username)}</small></span></button>`).join('')||'<p>No matching people.</p>';
  }catch(_){if(request===pickerFriendTags.request)el.innerHTML='<p>Could not load people. Try again.</p>';}},250);
 }
-function favoriteFriendTagsHtml(item){const tags=(item.friend_tags||item.friendTags||[]).filter(p=>p&&(p.username||p.name));return tags.length?`<div class="favorite-friend-tags">${tags.map(p=>p.username?`<button type="button" class="activity-summary-title" data-username="${esc(p.username)}" onclick="event.stopPropagation();goToProfile(this.dataset.username)">@${esc(p.username)}</button>`:`<span class="tagged-name">${esc(p.name)}</span>`).join(' ')}</div>`:'';}
+// Friend tags on a favorite. On your own profile each has a × that removes it.
+const FT_ITEMS=new Map();let ftSeq=0;
+function friendTagTarget(item){
+ if(!(currentUser&&isOwnProfile&&viewedProfile?.id===currentUser.id))return null;
+ for(const [tab,table] of [['music','favorite_artists'],['albums','favorite_albums'],['books','favorite_books'],['movies','favorite_media_lists'],['tv','favorite_media_lists']])
+  for(const items of Object.values(CUSTOM_LISTS[tab]||{}))if(items.includes(item))return item.rowId?{table,id:item.rowId}:null;
+ if((typeof movies!=='undefined'?movies:[]).includes(item)&&item.rowId)return {table:'favorite_media_lists',id:item.rowId};
+ const list=(extraLists||[]).find(l=>(l.items||[]).includes(item));if(list)return {extraList:list};
+ return null;
+}
+function favoriteFriendTagsHtml(item){
+ const all=item.friend_tags||item.friendTags||[];
+ const tags=all.map((p,i)=>({p,i})).filter(({p})=>p&&(p.username||p.name));if(!tags.length)return '';
+ let key='';if(friendTagTarget(item)){key='ft'+(++ftSeq);FT_ITEMS.set(key,item);}
+ return `<div class="favorite-friend-tags">${tags.map(({p,i})=>(p.username?`<button type="button" class="activity-summary-title" data-username="${esc(p.username)}" onclick="event.stopPropagation();goToProfile(this.dataset.username)">@${esc(p.username)}</button>`:`<span class="tagged-name">${esc(p.name)}</span>`)+(key?untagButtonHtml(`removeFriendTag('${key}',${i})`,p.username?'@'+p.username:p.name):'')).join(' ')}</div>`;
+}
+async function removeFriendTag(key,i){
+ const item=FT_ITEMS.get(key),target=item&&friendTagTarget(item);if(!target)return;
+ const field=item.friend_tags?'friend_tags':'friendTags',before=item[field]||[],next=before.filter((_,j)=>j!==i);
+ const redraw=()=>{['music','albums','movies','tv','books'].forEach(t=>{try{renderCustomLists(t);}catch(_){}});try{renderMovieGrid();}catch(_){}renderExtraLists();};
+ try{
+  if(target.extraList){await updateExtraList(target.extraList,{items:target.extraList.items.map(x=>x===item?{...x,friend_tags:next}:x)});return;}
+  item[field]=next;redraw();
+  const {error}=await sb.from(target.table).update({friend_tags:next}).eq('id',target.id).eq('user_id',currentUser.id);
+  if(error)throw error;
+ }catch(e){item[field]=before;redraw();showToast('Couldn’t remove that tag. Please try again.');}
+}
 
 const PICKER_IDEAS={music:['Music I Love','On Repeat','Albums That Shaped Me'],albums:['Favorite Albums','No-Skip Albums'],movies:['Favorite Movies','Comfort Movies','Favorite Thrillers'],tv:['Favorite Shows','Favorite Dramas','Favorite Comedies'],books:['Books That Shaped Me','Favorite Books','Recent Reads'],podcasts:['Favorite Podcasts','Current Rotation','Episodes Worth Sharing'],comedy:['Favorite Comedy','Stand-up Favorites']};
 let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null,tab:'music',kindFilter:null,error:false};
@@ -15929,7 +15966,7 @@ function toggleProfileCardComments(itemId) {
 }
 
 function activityCardHtml(item, globalIndex) {
-  if(item.catalogItem?.kind==='text_post')return feedTextPostHtml({id:item.id,note:item.note,activity_date:item.rawDate,user_id:viewedProfile?.id,profiles:viewedProfile,catalog_item:item.catalogItem},true);
+  if(item.catalogItem?.kind==='text_post')return feedTextPostHtml({id:item.id,note:item.note,activity_date:item.rawDate,user_id:viewedProfile?.id,profiles:viewedProfile,catalog_item:item.catalogItem,tags:item.tags},true);
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
   const iconColor = (MEDIA_ICONS[iconType] || MEDIA_ICONS.music).color;
   const typeIcon = badgeIcon(iconType, 13);
@@ -15952,7 +15989,7 @@ function activityCardHtml(item, globalIndex) {
     <div class="activity-card-body">
             <h3 class="activity-title"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openActivitySummary(${globalIndex})">${esc(item.label)}</button></h3>
       <div class="activity-meta">${item.sub ? `<span style="color:${iconColor}">${esc(item.sub)}</span>` : ''}${item.sub && item.timestamp ? '<span aria-hidden="true">·</span>' : ''}${item.timestamp ? `<span>${item.timestamp}</span>` : ''}</div>
-      ${taggedLineHtml(item.tags)}${note}
+      ${taggedLineHtml(item.tags, isOwnProfile && currentUser && viewedProfile?.id === currentUser.id ? item.id : null)}${note}
       ${item.id ? `<div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
         ${reactionBadgeHtml('activity_feed', item.id)}
         <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;" onclick="toggleProfileCardComments('${item.id}')">
@@ -16349,11 +16386,30 @@ async function tagFieldValue(ns) {
   return list;
 }
 // "with @jennylkwan · Grandma" under a post (usernames open the profile; written-in names are plain).
-function taggedLineHtml(tags) {
+function taggedLineHtml(tags, postId = null) {
   const list = normalizeTags(tags); if (!list.length) return '';
-  return `<div class="tagged-line">with ${list.map(t => t.username
+  const x = (t, i) => postId ? untagButtonHtml(`removePostTag('${jsStr(String(postId))}',${i})`, t.username ? '@' + t.username : t.name) : '';
+  return `<div class="tagged-line">with ${list.map((t, i) => (t.username
     ? `<button type="button" class="tagged-user" onclick="event.stopPropagation();goToProfile('${jsStr(t.username)}')">@${esc(t.username)}</button>`
-    : `<span class="tagged-name">${esc(t.name)}</span>`).join('<span aria-hidden="true"> · </span>')}</div>`;
+    : `<span class="tagged-name">${esc(t.name)}</span>`) + x(t, i)).join('<span aria-hidden="true"> · </span>')}</div>`;
+}
+// Small × that removes a tag (shown only on your own content).
+function untagButtonHtml(onclick, who) {
+  return `<button type="button" class="untag-btn" aria-label="Remove ${esc(who || 'tag')}" title="Remove tag" onclick="event.stopPropagation();${onclick}">×</button>`;
+}
+async function removePostTag(postId, i) {
+  if (!currentUser || !sb) return;
+  const rows = [...(typeof feedRows !== 'undefined' ? feedRows : []), ...ACTIVITY_FEED_ITEMS, ...summaryFeedRows.values()].filter(r => String(r.id) === String(postId));
+  if (!rows.length) return;
+  const before = normalizeTags(rows[0].tags), next = before.filter((_, j) => j !== i);
+  rows.forEach(r => { r.tags = next; });
+  refreshActivityFeeds(); if (typeof feedRows !== 'undefined' && feedRows.some(r => String(r.id) === String(postId))) renderPublicFeed(feedRows, feedMode, feedHasMore);
+  const { error } = await sb.from('activity_feed').update({ tags: next }).eq('id', postId).eq('user_id', currentUser.id);
+  if (error) {
+    rows.forEach(r => { r.tags = before; });
+    refreshActivityFeeds(); if (typeof feedRows !== 'undefined' && feedRows.some(r => String(r.id) === String(postId))) renderPublicFeed(feedRows, feedMode, feedHasMore);
+    showToast('Couldn’t remove that tag. Please try again.');
+  }
 }
 
 // Today's date where the person is (not UTC — an evening post in California shouldn't be dated tomorrow).
@@ -16528,7 +16584,7 @@ function feedTextPostHtml(row,profile=false){
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
  const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
  const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
- return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(row.activity_date)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div>${taggedLineHtml(row.tags)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
+ return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(row.activity_date)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div>${taggedLineHtml(row.tags,row.user_id&&row.user_id===currentUser?.id?row.id:null)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
 }
 
 async function loadPublicFeed() {
@@ -16987,7 +17043,7 @@ function publicActivityCardHtml(row,profile=false) {
         <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(row.sub)}</span>
       </div>
       `}
-      ${taggedLineHtml(row.tags)}${note}
+      ${taggedLineHtml(row.tags, row.user_id && row.user_id === currentUser?.id ? row.id : null)}${note}
       <div style="display:flex;align-items:center;gap:12px;margin-top:${profile ? 14 : 8}px;" onclick="event.stopPropagation()">
         ${reactionBadgeHtml('activity_feed', row.id)}
         <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;" role="button" tabindex="0" aria-label="Comments" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${row.id}')">
