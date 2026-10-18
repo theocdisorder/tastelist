@@ -972,6 +972,8 @@ if (new URLSearchParams(location.search).has('list')) {
   .list-engage { max-width: 1100px; margin: 0 auto; padding: 0 2rem 8px; }
   .list-engage:empty { display: none; }
   .list-engage > div:first-child { padding: 0 !important; border-bottom: 0 !important; }
+  .list-engage { margin-top: 8px; }
+  .list-engage .sl-comments { max-width: 680px; padding: 6px 0 4px; }
   .section-controls-row { max-width: 1100px; margin: 0 auto 14px; padding: 0 2rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .music-section-title { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; cursor: pointer; }
   .music-section-title .edit-pencil { font-size: 14px; color: var(--faint); opacity: 0; transition: opacity 0.15s; }
@@ -1202,6 +1204,22 @@ if (new URLSearchParams(location.search).has('list')) {
   .sl-engage-btn.is-liked { color:#F97360; }
   .sl-engage-btn svg { width:20px; height:20px; flex-shrink:0; }
   .sl-comments { scroll-margin-top:24px; }
+  #regen-sentence-btn.is-spinning { cursor:progress; color:var(--text); animation:regen-spin 1s linear infinite; }
+  @keyframes regen-spin { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { #regen-sentence-btn.is-spinning { animation:none; opacity:.6; } }
+  .sl-engage-wrap { display:flex; align-items:center; gap:10px; }
+  .sl-engage-wrap .sl-engage { margin:0; }
+  .sl-engage-wrap { margin-left:-10px; }
+  .list-engage .sl-engage-wrap { margin: 0 0 0 -6px; }
+  /* Under a list: a compact pair of icons, no label */
+  .list-engage .sl-engage { gap: 2px; }
+  .list-engage .sl-engage-btn { min-height: 32px; padding: 4px 6px; gap: 5px; font-size: 13px; }
+  .list-engage .sl-engage-btn svg { width: 17px; height: 17px; }
+  @media (pointer: coarse) { .list-engage .sl-engage-btn { min-height: 40px; } }
+  .sl-discussion .sl-engage-wrap { margin-bottom:18px; }
+  /* An item's likes/comments sit at the foot of its expanded panel, after the songs/summary */
+  .item-discussion { padding:10px 20px 16px; border-top:1px solid var(--border); }
+  .item-discussion .sl-comments { max-width:680px; padding:8px 0 4px; }
   .sl-comments-title { font-size:13px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:0 0 4px; }
   .sl-comments-title span { font-weight:500; letter-spacing:0; margin-left:4px; color:var(--faint); }
   .sl-comments-more { display:block; background:none; border:0; padding:8px 0 4px; font:inherit; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; }
@@ -1423,7 +1441,22 @@ if (new URLSearchParams(location.search).has('list')) {
 #extra-podcasts > .extra-heading{display:flex;flex-direction:column;align-items:center;gap:12px;}
 #extra-podcasts > .extra-heading > h2{display:none;}
 #extra-podcasts > .list-start{display:flex;flex-direction:column;text-align:center;align-items:center;}
-#music-picker-results{display:grid;gap:8px;margin-top:16px;max-height:55vh;overflow:auto;}
+#music-picker-results{display:grid;gap:6px;margin-top:8px;max-height:min(55vh,520px);overflow:auto;}
+#music-picker-status{min-height:20px;margin:10px 0 0;font-size:13.5px;color:#86efac;}
+#music-picker-status:empty{min-height:0;margin:0;}
+#music-picker-status.is-error{color:#fca5a5;}
+#music-picker .extra-result{border-radius:12px;border:1px solid transparent;transition:background .12s,border-color .12s;}
+#music-picker .extra-result:hover{background:rgba(255,255,255,.04);border-color:var(--border);}
+#music-picker .extra-result .picker-add{margin-left:auto;flex-shrink:0;width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:22px;line-height:1;color:#fff;background:var(--accent);}
+#music-picker .extra-result.is-saving{cursor:progress;}
+#music-picker .extra-result.is-saving .picker-add{background:var(--surface3);}
+#music-picker .extra-result.is-added{cursor:default;}
+#music-picker .extra-result.is-added .picker-add{background:#22C55E;font-size:17px;}
+#music-picker .picker-tags{margin-top:16px;border-top:1px solid var(--border);padding-top:12px;}
+#music-picker .picker-tags>summary{cursor:pointer;color:var(--muted);font-size:14px;list-style:none;}
+#music-picker .picker-tags>summary::-webkit-details-marker{display:none;}
+#music-picker .picker-tags>summary::before{content:'+ ';}
+#music-picker .picker-tags[open]>summary::before{content:'− ';}
 #music-picker{width:min(600px,calc(100vw - 32px));background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:18px;padding:24px;}
 #music-picker .extra-result{width:100%;text-align:left;}
 #music-picker{position:fixed!important;inset:0!important;margin:auto!important;box-sizing:border-box;width:min(600px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow-y:auto;padding:28px;}
@@ -1665,6 +1698,70 @@ input::placeholder, textarea::placeholder {
   overflow-x: auto; scrollbar-width: none; }
 .tab-nav::-webkit-scrollbar { display: none; }
 .tab-btn { white-space: nowrap; flex-shrink: 0; }
+/* Even tab spacing: no side padding (so the underline is exactly the word's width and the first
+   tab lines up with the page content), one fixed gap between tabs. */
+.tab-nav { gap: 32px; }
+/* Favorites: one view, filter chips for the types a profile has */
+.fav-filter-bar { max-width: var(--page-max, 1100px); margin: 0 auto; padding: 2rem var(--gutter, 2rem) 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.fav-chips { display: flex; gap: 8px; min-width: 0; flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
+.fav-chips::-webkit-scrollbar { display: none; }
+.fav-cta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; margin-left: auto; }
+.fav-cta .ed-primary { white-space: nowrap; }
+.fav-cta .list-create-import { margin: 0; flex-basis: auto; justify-content: flex-end; }
+.fav-add-menu { position: relative; }
+.fav-add-menu > summary { list-style: none; }
+.fav-add-menu > summary::-webkit-details-marker { display: none; }
+.fav-add-menu-list { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 180px; padding: 6px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.45); }
+.fav-add-menu-list button { display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; color: var(--text); background: none; border: 0; border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+.fav-add-menu-list button:hover, .fav-add-menu-list button:focus-visible { background: rgba(255,255,255,.06); outline: none; }
+@media (max-width: 600px) { .fav-cta { margin-left: 0; width: 100%; align-items: flex-start; } .fav-cta .list-create-import { justify-content: flex-start; } .fav-cta .list-import-link { padding-left: 0; } .fav-add-menu-list { left: 0; right: auto; } }
+/* One add button for Favorites (in the filter bar), so no per-section add boxes */
+#tab-favorites .list-create-row, #tab-favorites .list-start, #tab-favorites #movies-create-list-row, #tab-favorites .extra-heading > .ed-primary { display: none !important; }
+.fav-filter-bar[hidden] { display: none; }
+.fav-chip { flex-shrink: 0; font: inherit; font-size: 13px; font-weight: 600; padding: 7px 16px; border-radius: 999px; cursor: pointer; border: 1px solid var(--border2); background: var(--surface2); color: var(--muted); transition: background .15s, color .15s, border-color .15s; }
+.fav-chip:hover { color: var(--text); }
+.fav-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.fav-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (pointer: coarse) { .fav-chip { min-height: 40px; } }
+.fav-type-section.fav-divided::before { content: ''; display: block; max-width: calc(var(--page-max, 1100px) - 2 * var(--gutter, 2rem)); margin: 2.5rem auto 0; border-top: 1px solid var(--border); }
+/* Per-type "My … Taste List" summary boxes are retired from Favorites: the picks speak for themselves. */
+#tab-favorites .bio-sidebar { display: none !important; }
+/* Favorites: every list (incl. podcast / song lists) shares one width, heading and rhythm */
+#tab-favorites .music-section { padding-bottom: 0.25rem; }
+#tab-favorites .music-section-header { padding-top: 1.75rem; }
+#tab-favorites .music-section-divider { margin-top: 0.75rem; }
+#tab-favorites .list-engage { margin-top: 4px; }
+#tab-favorites .extra-list { max-width: 1100px; margin: 0 auto; padding: 1.75rem 0 0.5rem; border-top: 0; }
+#tab-favorites .extra-list + .extra-list { border-top: 1px solid var(--border); margin-top: 0.75rem; }
+#tab-favorites .extra-list > .extra-heading { padding: 0 2rem; margin-bottom: 0; min-height: 44px; }
+#tab-favorites .extra-list > .extra-heading h3 { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+#tab-favorites .extra-list > .ob-pick-grid { margin: 14px 2rem 0; padding: 0 0 6px; }
+#tab-favorites .extra-list > .extra-muted { padding: 0 2rem; }
+@media (max-width: 700px) { #tab-favorites .extra-list > .ob-pick-grid { margin-left: 1rem; margin-right: 1rem; } }
+/* Podcast / song tiles drawn like the other list tiles: bordered card, framed art, label bar */
+#tab-favorites .ob-pick-grid.hrow { gap: 12px; }
+#tab-favorites .ob-pick-grid.hrow > .ob-pick-card { position: relative; display: flex; flex-direction: column; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; }
+#tab-favorites .ob-pick-grid.hrow > .ob-pick-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.6); }
+#tab-favorites .ob-pick-grid.hrow .ob-art { aspect-ratio: 4 / 3 !important; height: auto !important; border: 0; border-radius: 0; background: var(--surface3); align-self: stretch; }
+#tab-favorites .ob-pick-grid.hrow .ob-art img { object-fit: contain !important; padding: 10px; box-sizing: border-box; }
+#tab-favorites .ob-pick-grid.hrow .ob-pick-card > strong { margin: 0; padding: 8px 10px 0; font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--border); }
+#tab-favorites .ob-pick-grid.hrow .ob-pick-card > small { padding: 2px 10px 9px; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#tab-favorites .ob-pick-grid.hrow .ob-pick-card > .list-icon-control { position: absolute; top: 6px; right: 6px; }
+.fav-type-section.fav-divided::before { max-width: 1100px !important; margin: 0.75rem auto 0 !important; }
+/* The podcast section's own top row only held a hidden title and the old add button */
+#tab-favorites #extra-podcasts > .extra-heading { display: none; }
+/* The divider before album lists only when there are album lists */
+#favorites-section-music .music-section-divider:has(+ #album-lists-container:empty) { display: none; }
+.fav-empty { max-width: var(--page-max, 1100px); margin: 0 auto; padding: 2rem var(--gutter, 2rem) 3rem; }
+.fav-empty[hidden] { display: none; }
+.fav-empty h3 { margin: 0 0 6px; font-size: 20px; color: var(--text); }
+.fav-empty p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+.fav-add-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.fav-add-btn { font: inherit; font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; background: none; border: 1.5px dashed var(--border2); color: var(--text); }
+.fav-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+.tab-btn { padding-left: 0; padding-right: 0; }
+@media (max-width: 700px) { .tab-nav { gap: 26px; } }
+@media (pointer: coarse) { .tab-btn { min-height: 44px; } }
 /* Text never forces the page wider: long words break inside their box. */
 body { overflow-wrap: break-word; }
 img, video, svg { max-width: 100%; }
@@ -1853,7 +1950,9 @@ img.recs-tag-avatar { object-fit: cover; }
 .activity-title { font-family: var(--ob-serif, Georgia, serif); font-size: 21px; font-weight: 500; line-height: 1.2; letter-spacing: -.01em; color: #f2efe9; margin: 0; overflow-wrap: anywhere; text-wrap: balance; }
 .activity-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: 13px; color: var(--muted); }
 .activity-meta span:first-child { font-weight: 600; }
-.activity-note { margin-top: 12px; padding-left: 14px; border-left: 2px solid rgba(255,255,255,.18); font-size: 15px; line-height: 1.6; color: #e4e0d8; }
+.activity-note { margin-top: 12px; padding-left: 14px; border-left: 2px solid rgba(255,255,255,.18); font-size: 15px; line-height: 1.6; color: #d6d1c8; max-width: 64ch; }
+#profile-feed .activity-card { padding: 26px 0; }
+#profile-feed .activity-card-body > .status-card-controls { top: 0; right: 0; }
 @container (max-width: 520px) {
   #profile-feed .activity-card { grid-template-columns: 84px minmax(0, 1fr); }
   #profile-feed .activity-card-art-img, #profile-feed img.activity-card-art-img { height: 126px; }
@@ -2091,6 +2190,13 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 @media (max-width: 420px) { .ti-picked { flex-wrap: wrap; } .ti-picked-badge { order: 3; } }
 @media (pointer: coarse) { .ti-picked-change { min-height: 44px; min-width: 44px; } }
 
+/* Podcast / song / special lists: one scrolling row, same sizing as the other list rows */
+.ob-pick-grid.hrow { display: flex; grid-template-columns: none; gap: 12px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; padding-bottom: 6px; scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+.ob-pick-grid.hrow::-webkit-scrollbar { height: 6px; }
+.ob-pick-grid.hrow::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+.ob-pick-grid.hrow > * { flex: 0 0 calc((100% - 48px) / 5); min-width: 0; scroll-snap-align: start; }
+@media (min-width: 481px) and (max-width: 1023px) { .ob-pick-grid.hrow > * { flex-basis: calc((100% - 36px) / 4); } }
+@media (max-width: 480px) { .ob-pick-grid.hrow > * { flex-basis: calc((100% - 12px) / 2.15); } }
 /* Horizontal scroll arrows */
 .hscroll-host { position: relative; }
 .hscroll-btn { position: absolute; z-index: 3; width: 56px; padding: 0; border: 0; cursor: pointer; display: flex; align-items: center; color: #fff;
@@ -2918,16 +3024,13 @@ async function landingArtistArtFallback(imgEl, artistName) {
 </div>
 
 <div class="tab-panel" id="tab-favorites">
-  <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 0;display:flex;gap:8px;flex-wrap:wrap;">
-    <button class="fav-chip" id="fav-chip-music" onclick="switchFavoritesFilter('music')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Music</button>
-    <button class="fav-chip" id="fav-chip-movies" onclick="switchFavoritesFilter('movies')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Movies</button>
-    <button class="fav-chip" id="fav-chip-tv" onclick="switchFavoritesFilter('tv')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">TV</button>
-    <button class="fav-chip" id="fav-chip-books" onclick="switchFavoritesFilter('books')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Books</button><button class="fav-chip" id="fav-chip-podcasts" onclick="switchFavoritesFilter('podcasts')" style="font-size:13px;font-weight:600;font-family:inherit;padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);">Podcasts</button>
-  </div>
+  <!-- One Favorites view: every media type together ("All") or one at a time. Chips appear only
+       for types this profile actually has; rendered by renderFavoritesFilterBar(). -->
+  <div class="fav-filter-bar" id="fav-filter-bar" role="group" aria-label="Filter favorites" hidden></div>
+  <div class="fav-empty" id="fav-empty" hidden></div>
 
 <div style="display:none" id="favorites-section-comedy" class="extra-category"><div id="extra-comedy"></div></div>
-<div style="display:none" id="favorites-section-podcasts"><div class="music-layout"><aside class="bio-sidebar"><div class="bio-card"><div class="bio-label">My Podcast Taste List</div><div id="podcast-bio-text" class="bio-text"></div></div></aside><div class="music-main"><div id="extra-podcasts"></div></div></div></div>
-<div id="favorites-section-music">
+<div id="favorites-section-music" class="fav-type-section">
 <div class="music-layout">
 
 <!-- STICKY BIO SIDEBAR -->
@@ -2954,7 +3057,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 </div><!-- /#favorites-section-music -->
 
 <!-- TAB: My Movies -->
-<div style="display:none" id="favorites-section-movies">
+<div style="display:none" id="favorites-section-movies" class="fav-type-section">
 <div class="music-layout">
 
 <!-- MOVIE BIO SIDEBAR -->
@@ -2974,7 +3077,6 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title" id="movies-top5-heading">Movies That Shaped Me</h2>
     </div>
-    <div id="movies-top5-engage" class="list-engage"></div>
     <div id="movie-controls" class="section-controls-row"></div>
     <section class="top5-section">
       <div class="artist-grid" id="movie-grid"></div>
@@ -2997,6 +3099,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
         </div>
       </div>
     </section>
+    <div id="movies-top5-engage" class="list-engage"></div>
   </div>
 
   <div class="music-section-divider"></div>
@@ -3010,7 +3113,6 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="music-section-header">
       <h2 class="music-section-title" id="movies-directors-heading">Favorite Directors</h2>
     </div>
-    <div id="movies-directors-engage" class="list-engage"></div>
     <div id="director-controls" class="section-controls-row"></div>
     <section class="top5-section">
       <div class="other-fav-grid" id="directors-grid"></div>
@@ -3029,12 +3131,13 @@ async function landingArtistArtFallback(imgEl, artistName) {
         </div>
       </div>
     </section>
+    <div id="movies-directors-engage" class="list-engage"></div>
   </div>
 
 </div><!-- /.music-main -->
 </div><!-- /.music-layout -->
 </div><!-- /#favorites-section-movies -->
-<div style="display:none" id="favorites-section-tv">
+<div style="display:none" id="favorites-section-tv" class="fav-type-section">
 <div class="music-layout">
 
 <!-- TV BIO SIDEBAR -->
@@ -3053,7 +3156,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 </div><!-- /.music-main -->
 </div><!-- /.music-layout -->
 </div><!-- /#favorites-section-tv -->
-<div style="display:none" id="favorites-section-books">
+<div style="display:none" id="favorites-section-books" class="fav-type-section">
 <div class="music-layout">
 
 <!-- BOOKS BIO SIDEBAR -->
@@ -3072,6 +3175,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 </div><!-- /.music-main -->
 </div><!-- /.music-layout -->
 </div><!-- /#favorites-section-books -->
+<div style="display:none" id="favorites-section-podcasts" class="fav-type-section"><div class="music-layout"><aside class="bio-sidebar"><div class="bio-card"><div class="bio-label">My Podcast Taste List</div><div id="podcast-bio-text" class="bio-text"></div></div></aside><div class="music-main"><div id="extra-podcasts"></div></div></div></div>
 </div><!-- /#tab-favorites -->
 
 <!-- TAB: Playlist (hidden — no nav button, reached via What's New feed / direct link) -->
@@ -5629,6 +5733,13 @@ const ACTIVITY_TYPE_META = {
   list:  { icon: 'list', tab: 'playlist', color: '#7C4DFF' },
 };
 
+// "Oct 16" (adds the year when it isn't this year) for the meta line on What's New cards.
+function shortActivityDate(dateStr) {
+  if (!dateStr) return '';
+  const dt = dateStr.length > 10 ? new Date(dateStr) : (([y, m, d]) => new Date(y, m - 1, d))(dateStr.split('-').map(Number));
+  if (isNaN(dt)) return '';
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(dt.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) });
+}
 function formatActivityDate(dateStr) {
   // Parse the YYYY-MM-DD components directly rather than `new Date(dateStr)`,
   // which treats bare date strings as UTC midnight and can roll back a day in
@@ -6374,19 +6485,54 @@ function sentenceFromAnalysis() {
   return firstSentence || state.result.connections[0].title || null;
 }
 
+// Runs the Taste Insights analysis (the constellation threads) without the section being open.
+// Uses the cached analysis when the favorites haven't changed; otherwise asks for a fresh one.
+async function ensureTasteAnalysis() {
+  await refreshTasteConstellation();
+  const state = tasteAnalysisState();
+  if (state.items.length < 2 || state.items.length > 100) return state;
+  if (state.status === 'loading') {
+    for (let i = 0; i < 240 && state.status === 'loading'; i++) await new Promise(r => setTimeout(r, 500));
+    return state;
+  }
+  if (state.status !== 'ready') {
+    state.status = 'idle';
+    state.version++;          // cancels a pending auto-start from an open section, so it runs once
+    await requestTasteAnalysis();
+  }
+  return state;
+}
+
+let tasteSentenceBusy = false;
 async function generateTasteSentence() {
-  if (!isOwnProfile || !currentUser || !sb) return;
-  const analyzed = sentenceFromAnalysis();
-  const sentence = analyzed || computeTasteSentenceCandidate();
-  if (!sentence) { alert("Add a few favorites first — there's nothing to generate a sentence from yet."); return; }
+  if (!isOwnProfile || !currentUser || !sb || tasteSentenceBusy) return;
+  if (!sentenceFromAnalysis() && !computeTasteSentenceCandidate()) { alert("Add a few favorites first — there's nothing to generate a sentence from yet."); return; }
   if (viewedProfile?.taste_sentence && !confirm('Replace your current sentence with a freshly generated one? This can\'t be undone, though you can always edit or regenerate again after.')) return;
+  const btn = document.getElementById('regen-sentence-btn');
+  tasteSentenceBusy = true;
+  if (btn) { btn.disabled = true; btn.classList.add('is-spinning'); btn.title = 'Analyzing your taste…'; btn.setAttribute('aria-busy', 'true'); }
+  let analyzed = null, analysisPossible = false;
+  try {
+    if (tasteAnalysisState().status !== 'ready') showToast?.('Finding the threads in your taste…');
+    const state = await ensureTasteAnalysis();
+    analysisPossible = state.items.length >= 2 && state.items.length <= 100;
+    analyzed = sentenceFromAnalysis();
+  } catch (_) {}
+  finally {
+    tasteSentenceBusy = false;
+    if (btn) { btn.disabled = false; btn.classList.remove('is-spinning'); btn.title = 'Regenerate from your favorites'; btn.removeAttribute('aria-busy'); }
+  }
+  const sentence = analyzed || computeTasteSentenceCandidate();
+  if (!sentence) return;
   try {
     const { error } = await sb.from('profiles').update({ taste_sentence: sentence }).eq('id', currentUser.id);
     if (error) throw error;
     viewedProfile.taste_sentence = sentence;
     if (currentProfile) currentProfile.taste_sentence = sentence;
     updateProfileHeaderAndBanner();
-    if (!analyzed) showToast?.('Generated from your favorites — open Taste Insights below for a more analytical one.');
+    showToast?.(analyzed ? 'Updated from your Taste Insights — open them below to see every thread.'
+      : analysisPossible ? 'Generated from your favorites. Taste Insights couldn’t run just now; try ↻ again later.'
+      : 'Generated from your favorites.');
   } catch (e) {
     alert('Failed to generate: ' + (e.message || 'unknown error'));
   }
@@ -6751,7 +6897,7 @@ function renderExtraLists(){
  for(const type of ['movie','tv']){
    const el=document.getElementById('extra-specials-'+type);if(!el)continue;
    const picks=extraItems().filter(i=>i.kind==='special'&&i.mediaType===type);
-   el.innerHTML=picks.length?`<section class="extra-list"><h3>Comedy specials</h3><div class="ob-pick-grid">${picks.map(i=>`<div class="ob-pick-card">${onboardingArtwork(i)}<strong>${esc(i.title)}</strong><small>${esc(i.year||'')}</small></div>`).join('')}</div></section>`:'';
+   el.innerHTML=picks.length?`<section class="extra-list"><h3>Comedy specials</h3><div class="ob-pick-grid hrow">${picks.map(i=>`<div class="ob-pick-card">${onboardingArtwork(i)}<strong>${esc(i.title)}</strong><small>${esc(i.year||'')}</small></div>`).join('')}</div></section>`:'';
  }
  for(const category of ['comedy','podcasts','music']){
   const el=document.getElementById('extra-'+category);if(!el)continue;
@@ -6759,7 +6905,7 @@ function renderExtraLists(){
   if(category==='music'&&!lists.length){el.innerHTML='';continue;}
   if(category==='podcasts'){const bio=document.getElementById('podcast-bio-text');const picks=lists.flatMap(l=>l.items||[]);if(bio)bio.innerHTML=picks.length?'<p>'+picks.slice(0,6).map(p=>esc(p.title)).join(' · ')+'</p>':'<p>The shows and episodes you love, in one place.</p>';}
   el.innerHTML=`<div class="extra-heading"><h2>${category==='music'?'Favorite Songs':category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
-   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div class="list-edit-slot"><button type="button" class="list-icon-control" aria-label="${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${listActionIcon(inlineListEditing.has('extra|'+list.id)?'done':'edit')}</button>${inlineListEditing.has('extra|'+list.id)?`<button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button><button class="list-icon-control" aria-label="Rename list" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete list" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">${listActionIcon('trash')}</button>`:''}</div>`:''}</div><div class="ob-pick-grid">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong>${favoriteFriendTagsHtml(item)}<small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile&&inlineListEditing.has('extra|'+list.id)?`<button type="button" class="list-icon-control" aria-label="Remove item" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">${listActionIcon('trash')}</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}</section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
+   lists.map(list=>`<section class="extra-list"><div class="extra-heading"><h3>${esc(list.title)}</h3>${isOwnProfile?`<div class="list-edit-slot"><button type="button" class="list-icon-control" aria-label="${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${listActionIcon(inlineListEditing.has('extra|'+list.id)?'done':'edit')}</button>${inlineListEditing.has('extra|'+list.id)?`<button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button><button class="list-icon-control" aria-label="Rename list" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete list" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">${listActionIcon('trash')}</button>`:''}</div>`:''}</div><div class="ob-pick-grid hrow">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong>${favoriteFriendTagsHtml(item)}<small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile&&inlineListEditing.has('extra|'+list.id)?`<button type="button" class="list-icon-control" aria-label="Remove item" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">${listActionIcon('trash')}</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}</section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
  }
 }
 async function createExtraList(category, suppliedTitle){
@@ -7030,7 +7176,6 @@ function customListSectionHtml(tab, cat) {
       <div class="music-section-header">
         <h2 class="music-section-title">${esc(customListLabel(tab, cat))}</h2>
       </div>
-      ${listEngagementHtml(tab, cat)}
       <div class="section-controls-row">
         ${editing ? `<button onclick="${esc(`openCustomAddModal('${jsStr(tab)}','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ ${addLabel}</button>` : ''}
         <button type="button" class="list-icon-control" title="${editing ? 'Done editing' : 'Edit list'}" aria-label="${editing ? 'Done editing' : 'Edit list'}" aria-pressed="${editing}" onclick="${esc(`toggleCustomListEditMode('${jsStr(tab)}','${jsStr(cat)}')`)}">${listActionIcon(editing ? 'done' : 'edit')}</button>
@@ -7042,6 +7187,7 @@ function customListSectionHtml(tab, cat) {
         <div class="artist-grid custom-poster-grid" id="${gridId}">${customListGridInnerHtml(tab, cat, items)}</div>
         <div class="grid-panel" id="${gridId}-panel">${gridPanelHtml(tab, cat, items)}</div>
       </section>
+      ${listEngagementHtml(tab, cat)}
     </div>`;
 }
 
@@ -7157,7 +7303,7 @@ function openUnifiedPicker(tab,category=null){
  document.getElementById('music-picker-hint').textContent=tab==='books'?'Search a book title or author to find books.':tab==='podcasts'?'Search shows and episodes together.':tab==='music'?'Search songs, albums and artists together.':'Search and select the right title.';
  document.getElementById('music-picker-ideas').innerHTML=(PICKER_IDEAS[tab]||[]).map(name=>`<button type="button" class="profile-control" data-name="${esc(name)}" onclick="document.getElementById('music-picker-name').value=this.dataset.name">${esc(name)}</button>`).join('');
  pickerDestinationChanged();document.getElementById('music-picker-query').value='';document.getElementById('music-picker-results').innerHTML='';document.getElementById('music-picker-status').textContent='';
- document.getElementById('music-picker').showModal();document.getElementById(select.value?'music-picker-query':'music-picker-name').focus();
+ document.getElementById('music-picker').showModal();document.getElementById(select.value||document.getElementById('music-picker-name').value.trim()?'music-picker-query':'music-picker-name').focus();
 }
 function pickerDestinationChanged(){document.getElementById('music-picker-new-list').hidden=!!document.getElementById('music-picker-list').value;}
 function queueFlexibleMusic(q){
@@ -7180,7 +7326,7 @@ async function searchFlexibleMusic(q,request){
  const results=await Promise.allSettled(kinds.map(kind=>onboardingAutocompleteProvider(kind,q)));
  if(request!==flexibleMusic.request||userId!==currentUser?.id)return;
  flexibleMusic.results=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)).slice(0,30);
- el.innerHTML=flexibleMusic.results.map((p,i)=>`<button type="button" class="extra-result" onclick="saveFlexibleMusic(${i})">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.album,p.year].filter(Boolean).join(' · '))}</small></span><span>+</span></button>`).join('')||'<p>No matches. Try another title or creator.</p>';
+ el.innerHTML=flexibleMusic.results.map((p,i)=>`<button type="button" class="extra-result" aria-label="Add ${esc(p.title)}${p.artist||p.author?' by '+esc(p.artist||p.author):''}" onclick="saveFlexibleMusic(${i},this)">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.album,p.year].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">+</span></button>`).join('')||'<p>No matches. Try another title or creator.</p>';
  if(results.some(r=>r.status==='rejected'))el.innerHTML+='<p>Some results could not load. Search again to retry.</p>';
  const artistJobs=flexibleMusic.results.map((p,index)=>({p,index})).filter(({p})=>p.kind==='artist'&&!onboardingArt(p));
  let nextArtist=0;
@@ -7195,13 +7341,14 @@ async function searchFlexibleMusic(q,request){
  }}
  await Promise.allSettled([worker(),worker(),worker()]);
 }
-async function saveFlexibleMusic(index){
- const p=flexibleMusic.results[index];if(!p||flexibleMusic.saving||!isOwnProfile)return;
+async function saveFlexibleMusic(index,row){
+ const p=flexibleMusic.results[index];if(!p||flexibleMusic.saving||!isOwnProfile||row?.classList.contains('is-added'))return;
  const status=document.getElementById('music-picker-status');
+ const setRow=(state,mark)=>{if(!row)return;row.classList.remove('is-saving','is-added');if(state)row.classList.add(state);const m=row.querySelector('.picker-add');if(m)m.textContent=mark;};
  const category=document.getElementById('music-picker-list').value||document.getElementById('music-picker-name').value.trim();
- if(!category){status.textContent='Choose a list or give your new list a name.';document.getElementById('music-picker-name').focus();return;}
+ if(!category){status.className='is-error';status.textContent='Name your new list first, then tap a result to add it.';document.getElementById('music-picker-name').focus();return;}
  if(category.length>120){status.textContent='Use a list name of 120 characters or fewer.';return;}
- const userId=currentUser?.id;flexibleMusic.saving=true;status.textContent='Saving…';
+ const userId=currentUser?.id;flexibleMusic.saving=true;status.className='';status.textContent='Adding '+p.title+'…';setRow('is-saving','…');
  try{
   if(!await requireFreshSession()||currentUser?.id!==userId||viewedProfile?.id!==userId)throw Error('Please sign in to your own profile.');
   const friend_tags=(await tagFieldValue('picker')).map(t=>t.username?{id:t.user_id,username:t.username,display_name:t.display_name||''}:{name:t.name});
@@ -7213,16 +7360,20 @@ async function saveFlexibleMusic(index){
    if(p.kind==='song'&&(isArtistList||isAlbumList))target='Favorite Songs';
    else if(p.kind==='album'&&(isArtistList||isSongList))target='Favorite Albums';
    else if(p.kind==='artist'&&(isAlbumList||isSongList))target=mainListFor('music');
+   // First pick into the default "Favorite Artists" (not created yet): songs and albums get their own lists.
+   else if(category===MAIN_LIST_DEFAULT.music&&!isArtistList&&!isAlbumList&&!isSongList){if(p.kind==='song')target='Favorite Songs';else if(p.kind==='album')target=MAIN_LIST_DEFAULT.albums;}
   }
+  const listName=customListLabel(p.kind==='album'?'albums':flexibleMusic.tab,target);
+  if(onboardingAlreadySaved(p,target)){status.textContent=p.title+' is already in '+listName+'.';setRow('is-added','✓');return;}
   await saveOnboardingItem({...p,category:target,friend_tags},userId);
   if(currentUser?.id!==userId)return;
-  status.textContent=p.title+' added to '+customListLabel(p.kind==='album'?'albums':flexibleMusic.tab,target)+'.';
+  status.textContent='✓ '+p.title+' added to '+listName+'.';setRow('is-added','✓');
   if(p.kind==='artist'){
    const added=(CUSTOM_LISTS.music[target]||[]).find(a=>bookArtKey(a.name)===bookArtKey(p.title));
    if(added?.id){const link=document.createElement('button');link.type='button';link.className='cp-next-link';link.textContent='Pick favorite songs →';
     link.onclick=()=>{document.getElementById('music-picker')?.close?.();openCreatorPicks('artist',String(added.id));};status.append(' ',link);}
   }renderExtraLists();renderProfileTab();scheduleTasteConstellation();
- }catch(e){status.textContent=e.message||'Could not save. Please try again.';}
+ }catch(e){status.className='is-error';status.textContent=e.message||'Could not save. Please try again.';setRow('','+');}
  finally{flexibleMusic.saving=false;}
 }
 
@@ -7236,7 +7387,16 @@ function mainListFor(tab) {
   const label = k => (typeof customListLabel === 'function' ? customListLabel(tab, k) : k);
   return keys.find(k => tasteListTier(tab, k, label(k)) === 1) || keys.find(k => tasteListTier(tab, k, label(k)) === 2) || keys[0] || MAIN_LIST_DEFAULT[tab] || 'Favorites';
 }
-async function addToMainList(tab) { openUnifiedPicker(tab); }
+async function addToMainList(tab) { openUnifiedPicker(tab, pickerDefaultList(tab)); }
+// The list "Add … you love" saves to: your main list of that type when you have one, otherwise the
+// first list you've made of that type, otherwise a sensible new default ("Favorite Artists", …).
+function pickerDefaultList(tab) {
+  const own = Object.keys(CUSTOM_LISTS[tab] || {});
+  const extra = (extraLists || []).filter(l => l.category === tab).map(l => l.title);
+  if (own.length) return mainListFor(tab);
+  if (extra.length) return extra[0];
+  return MAIN_LIST_DEFAULT[tab] || 'Favorites';
+}
 // Main button adds to the main list; "or start a new list" (and import, where available) underneath.
 function applyListCta(tab, html) {
   if (!isOwnProfile || !html) return html;
@@ -7460,7 +7620,6 @@ function musicListSectionHtml(cat) {
       <div class="music-section-header">
         <h2 class="music-section-title">${esc(cat)}</h2>
       </div>
-      ${listEngagementHtml('music', cat)}
       <div class="section-controls-row">
         ${editing ? `<button onclick="${esc(`openArtistItemForm(undefined, '${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add artist</button>` : ''}
         ${editing ? `<button onclick="${esc(`openVideoItemForm('${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add YouTube link</button>` : ''}
@@ -7473,6 +7632,7 @@ function musicListSectionHtml(cat) {
         <div class="artist-grid" id="${gridId}">${musicGridInnerHtml(cat, items)}</div>
         <div class="grid-panel" id="${gridId}-panel">${gridPanelHtml('music', cat, items)}</div>
       </section>
+      ${listEngagementHtml('music', cat)}
     </div>`;
 }
 
@@ -7532,7 +7692,6 @@ function artistDetailPanelHTML(a, closeOnclick) {
           <button class="expand-close" onclick="${closeOnclick}">X</button>
         </div>
       </div>
-      ${inlineEngagementBlockHtml('artist', a.rowId)}
       ${a.whyInfluential ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
         ${renderMentions(a.whyInfluential)}
@@ -7551,6 +7710,7 @@ function artistDetailPanelHTML(a, closeOnclick) {
             </td>
           </tr>`).join('')}</tbody>
       </table>` : `<div style="padding:1.5rem;color:var(--muted);font-size:13px;">No songs added yet.</div>`}
+      ${inlineEngagementBlockHtml('artist', a.rowId)}
     </div>`;
 }
 
@@ -7563,7 +7723,6 @@ function albumListSectionHtml(cat) {
       <div class="music-section-header">
         <h2 class="music-section-title">${esc(cat)}</h2>
       </div>
-      ${listEngagementHtml('albums', cat)}
       <div class="section-controls-row">
         ${editing ? `<button onclick="${esc(`openAlbumItemForm(undefined, '${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add album</button>` : ''}
         <button type="button" class="list-icon-control" title="${editing ? 'Done editing' : 'Edit list'}" aria-label="${editing ? 'Done editing' : 'Edit list'}" aria-pressed="${editing}" onclick="${esc(`toggleCustomListEditMode('albums','${jsStr(cat)}')`)}">${listActionIcon(editing ? 'done' : 'edit')}</button>
@@ -7575,6 +7734,7 @@ function albumListSectionHtml(cat) {
         <div class="artist-grid" id="${gridId}">${albumGridInnerHtml(cat, items)}</div>
         <div class="grid-panel" id="${gridId}-panel">${gridPanelHtml('albums', cat, items)}</div>
       </section>
+      ${listEngagementHtml('albums', cat)}
     </div>`;
 }
 
@@ -7631,7 +7791,6 @@ function albumDetailPanelHTML(a, closeOnclick) {
           <button class="expand-close" onclick="${closeOnclick}">X</button>
         </div>
       </div>
-      ${inlineEngagementBlockHtml('album', a.rowId)}
       ${songs.length ? `<table class="songs-table">
         <thead><tr><th>#</th><th>Song</th><th>Listen</th></tr></thead>
         <tbody>${songs.map((s,si) => `
@@ -7644,6 +7803,7 @@ function albumDetailPanelHTML(a, closeOnclick) {
             </td>
           </tr>`).join('')}</tbody>
       </table>` : `<div style="padding:1.5rem;color:var(--muted);font-size:13px;">No tracklist yet.</div>`}
+      ${inlineEngagementBlockHtml('album', a.rowId)}
     </div>`;
 }
 
@@ -7709,6 +7869,7 @@ async function loadViewedProfileData() {
   resetListTargets();
   applyHardcodedSectionLabels();
   profileFavoritesLoaded = false;
+  favoritesFilter = 'all';
   clearTasteConstellation();
   // A failed category load must not leave another profile's data in the constellation.
   artists = []; albums = []; movies = []; directors = [];
@@ -7740,6 +7901,7 @@ async function loadViewedProfileData() {
   ]).finally(() => { if (PROFILE_ART_JOBS === artJobs) PROFILE_ART_JOBS = null; });
   if (viewedProfile?.id !== id) return;
   profileFavoritesLoaded = true;
+  renderFavoritesFilterBar();
   // When the background artwork has all arrived, refresh what's drawn from it (once).
   Promise.allSettled(artJobs).then(() => {
     if (viewedProfile?.id !== id || !artJobs.length) return;
@@ -9478,11 +9640,11 @@ function videoDetailPanelHTML(a, closeOnclick) {
         <img src="${esc(youtubeThumbUrl(id))}" alt="" onload="ytThumbCheck(this,'${esc(id)}')" onerror="ytThumbFallback(this,'${esc(id)}')">
         <span class="yt-play" aria-hidden="true">▶</span>
       </div>
-      ${inlineEngagementBlockHtml('artist', a.rowId)}
       ${a.whyInfluential ? `<div style="padding:16px 24px;background:var(--surface2);border-top:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why It Matters to Me</span>
         ${renderMentions(a.whyInfluential)}
       </div>` : ''}
+      ${inlineEngagementBlockHtml('artist', a.rowId)}
     </div>`;
 }
 
@@ -9734,7 +9896,6 @@ function toggleArtistExpand(artistId, tileIdx) {
         <button class="expand-close" onclick="toggleArtistExpand('${artistId}',${tileIdx})">✕</button>
       </div>
     </div>
-    ${inlineEngagementBlockHtml('artist', artistId)}
     ${a.whyInfluential ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
       <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
       ${renderMentions(a.whyInfluential)}
@@ -9752,6 +9913,7 @@ function toggleArtistExpand(artistId, tileIdx) {
           </td>
         </tr>`).join('')}</tbody>
     </table>` : `<div style="padding:1.5rem;color:var(--muted);font-size:13px;">No songs yet.</div>`}
+    ${inlineEngagementBlockHtml('artist', artistId)}
   `;
   loadArtForArtist(a);
   loadInlineEngagement('artist', artistId);
@@ -10626,7 +10788,6 @@ function toggleAlbumExpand(albumId, tileIdx) {
         <button class="expand-close" onclick="toggleAlbumExpand('${albumId}',${tileIdx})">✕</button>
       </div>
     </div>
-    ${inlineEngagementBlockHtml('album', albumId)}
     ${songs.length ? `<table class="songs-table">
       <thead><tr><th>#</th><th>Song</th><th>Album</th><th>Listen</th></tr></thead>
       <tbody>${songs.map((s,si) => `
@@ -10640,6 +10801,7 @@ function toggleAlbumExpand(albumId, tileIdx) {
           </td>
         </tr>`).join('')}</tbody>
     </table>` : `<div style="padding:1.5rem;color:var(--muted);font-size:13px;">No tracks yet.</div>`}
+    ${inlineEngagementBlockHtml('album', albumId)}
   `;
   loadArtForAlbum(a);
   loadInlineEngagement('album', albumId);
@@ -11137,25 +11299,88 @@ function switchTab(tab, btn) {
 // Music/Movies/TV/Books used to each be their own top-level tab — collapsed into one Favorites
 // tab with filter chips instead, since with freeform lists there's much less reason each media
 // type needs its own destination. "all" shows every section stacked; picking one hides the rest.
-let favoritesFilter = 'music';
-function switchFavoritesFilter(filter) {
-  if(filter==='comedy')filter='movies';   // Comedy isn't its own category any more; specials live under Movies / TV
-  if(!['music','movies','tv','books','comedy','podcasts'].includes(filter))filter='music';
-  favoritesFilter = filter;
-  ['music', 'movies', 'tv', 'books', 'comedy', 'podcasts'].forEach(k => {
-    const section = document.getElementById('favorites-section-' + k);
-    if (section) section.style.display = filter === k ? '' : 'none';
-    const chip = document.getElementById('fav-chip-' + k);
-    if (chip) { chip.style.background = filter === k ? 'var(--accent)' : 'var(--surface2)'; chip.style.color = filter === k ? '#fff' : 'var(--muted)'; }
+let favoritesFilter = 'all';
+const FAV_TYPES = [
+  { key: 'music', label: 'Music' },
+  { key: 'movies', label: 'Movies' },
+  { key: 'tv', label: 'TV' },
+  { key: 'books', label: 'Books' },
+  { key: 'podcasts', label: 'Podcasts' },
+];
+// How many picks this profile has of each media type (what decides which chips/sections show).
+function favoritesTypeCounts() {
+  const inLists = o => Object.values(o || {}).reduce((n, items) => n + ((items && items.length) || 0), 0);
+  const extra = cat => (extraLists || []).filter(l => l.category === cat).reduce((n, l) => n + ((l.items || []).length), 0);
+  const specials = type => { try { return extraItems().filter(i => i.kind === 'special' && i.mediaType === type).length; } catch (_) { return 0; } };
+  return {
+    music: inLists(CUSTOM_LISTS.music) + inLists(CUSTOM_LISTS.albums) + extra('music'),
+    movies: inLists(CUSTOM_LISTS.movies) + (movies || []).length + (directors || []).length + specials('movie'),
+    tv: inLists(CUSTOM_LISTS.tv) + specials('tv'),
+    books: inLists(CUSTOM_LISTS.books) + (favoriteAuthors || []).length,
+    podcasts: extra('podcasts'),
+  };
+}
+function renderFavoritesFilterBar() {
+  const bar = document.getElementById('fav-filter-bar');
+  const empty = document.getElementById('fav-empty');
+  const counts = favoritesTypeCounts();
+  const present = FAV_TYPES.filter(t => counts[t.key] > 0);
+  const owner = !!currentUser && isOwnProfile && viewedProfile?.id === currentUser.id;
+  // A one-type filter that no longer has anything in it falls back to All (once data is in).
+  if (favoritesFilter !== 'all' && profileFavoritesLoaded && !counts[favoritesFilter]) favoritesFilter = 'all';
+  const filter = favoritesFilter;
+  // Sections: All = every type that has picks, stacked; otherwise just the chosen one.
+  let shown = 0;
+  FAV_TYPES.forEach(t => {
+    const section = document.getElementById('favorites-section-' + t.key);
+    if (!section) return;
+    const visible = filter === 'all' ? counts[t.key] > 0 : filter === t.key;
+    section.style.display = visible ? '' : 'none';
+    section.classList.toggle('fav-divided', visible && shown > 0);
+    if (visible) shown++;
   });
-  const more=document.querySelector('#favorites-more summary');if(more){more.textContent=filter==='comedy'?'Comedy':filter==='podcasts'?'Podcasts':'More';more.classList.toggle('selected',['comedy','podcasts'].includes(filter));}
+  const comedy = document.getElementById('favorites-section-comedy');
+  if (comedy) comedy.style.display = 'none';
+  // Chips: All + the types this profile has. One type alone needs no filter.
+  // The owner gets one add button beside them, worded for the current filter.
+  if (bar) {
+    const chips = present.length > 1 ? [{ key: 'all', label: 'All' }, ...present] : [];
+    const showCta = owner && present.length > 0;
+    bar.hidden = !chips.length && !showCta;
+    const chipsHtml = chips.length ? `<div class="fav-chips">${chips.map(t => `<button type="button" class="fav-chip" id="fav-chip-${t.key}" aria-pressed="${t.key === filter}" onclick="switchFavoritesFilter('${t.key}')">${t.label}</button>`).join('')}</div>` : '';
+    const plus = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+    let ctaHtml = '';
+    if (showCta) {
+      ctaHtml = filter === 'all'
+        ? `<details class="fav-add-menu"><summary class="ed-primary">${plus}Add something you love</summary><div class="fav-add-menu-list" role="menu">${FAV_TYPES.map(t => `<button type="button" role="menuitem" onclick="this.closest('details').open=false;addToMainList('${t.key}')">${t.label}</button>`).join('')}</div></details>`
+        : `<button type="button" class="ed-primary" onclick="addToMainList('${filter}')">${plus}${esc(listCtaLabel(filter))}</button>${listCtaLinksHtml(filter, { books: 'goodreads', movies: 'letterboxd', tv: 'letterboxd' }[filter] || '')}`;
+      ctaHtml = `<div class="fav-cta">${ctaHtml}</div>`;
+    }
+    bar.innerHTML = chipsHtml + ctaHtml;
+  }
+  // Nothing at all yet: one calm starting point instead of four empty sections.
+  if (empty) {
+    const none = profileFavoritesLoaded && !present.length;
+    empty.hidden = !none;
+    empty.innerHTML = !none ? '' : owner
+      ? `<h3>Your favorites start here</h3><p>Add a few things you love — music, movies, TV or books. They all live together here.</p><div class="fav-add-buttons">${FAV_TYPES.slice(0, 4).map(t => `<button type="button" class="fav-add-btn" onclick="addToMainList('${t.key}')">+ ${t.label}</button>`).join('')}</div>`
+      : `<p>No favorites added yet.</p>`;
+  }
+}
+document.addEventListener('click', e => { document.querySelectorAll('.fav-add-menu[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.fav-add-menu[open]').forEach(d => { d.open = false; d.querySelector('summary')?.focus(); }); });
+function switchFavoritesFilter(filter) {
+  if (filter === 'comedy') filter = 'movies';   // Comedy isn't its own category any more; specials live under Movies / TV
+  if (!['all', ...FAV_TYPES.map(t => t.key)].includes(filter)) filter = 'all';
+  favoritesFilter = filter;
+  renderFavoritesFilterBar();
 }
 
 // Jumps straight to Favorites with one filter pre-applied — used by the stats bar and anywhere
 // else that used to link to Music/Movies/TV/Books as their own tab.
 function goToFavorites(filter) {
   switchTab('favorites');
-  switchFavoritesFilter(filter || favoritesFilter);
+  switchFavoritesFilter(filter || 'all');
 }
 
 function toggleTasteGraphSection() {
@@ -12194,7 +12419,6 @@ function toggleMovieExpand(movieId) {
           ${(isOwnProfile && movieEditMode) ? `<button onclick="removeMovie(${movieId})" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.25);color:var(--apple);font-size:11px;font-weight:600;font-family:inherit;padding:4px 10px;border-radius:20px;cursor:pointer;backdrop-filter:blur(4px);">Remove</button>` : ''}
         </div>
       </div>
-      ${inlineEngagementBlockHtml(m.type === 'tv' ? 'tv' : 'movie', m.rowId)}
       ${m.overview ? `<div class="artist-bio">${esc(m.overview)}</div>` : ''}
       ${m.whyInfluential ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
@@ -12205,6 +12429,7 @@ function toggleMovieExpand(movieId) {
         ${m.runtime ? `<span style="font-size:13px;color:var(--muted);">🕐 ${m.runtime} min</span>` : ''}
         ${m.director ? `<span style="font-size:13px;color:var(--muted);">🎬 ${esc(m.director)}</span>` : ''}
       </div>
+      ${inlineEngagementBlockHtml(m.type === 'tv' ? 'tv' : 'movie', m.rowId)}
     </div>`;
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
   loadInlineEngagement(m.type === 'tv' ? 'tv' : 'movie', m.rowId);
@@ -12225,7 +12450,7 @@ function toggleMovieEditMode() {
 // ── Arrows on horizontally scrolling rows (Netflix-style) ──────────────────────────────────────────
 // A soft edge fade with a chevron appears on whichever side has more items; hidden at each end and on
 // rows that fit. Attached automatically to every scrolling list row as it's drawn.
-const HSCROLL_SELECTOR = '.artist-grid';   // includes the Feed's People-you-may-know row (.pymk-row.artist-grid)
+const HSCROLL_SELECTOR = '.artist-grid, .ob-pick-grid.hrow';   // includes the Feed's People-you-may-know row (.pymk-row.artist-grid)
 const hsResize = 'ResizeObserver' in window ? new ResizeObserver(entries => entries.forEach(e => updateHScroll(e.target))) : null;
 function setupHScroll(grid) {
   const host = grid.parentElement;
@@ -12647,7 +12872,6 @@ function renderDirectorsList() {
           </div>
         </div>`).join('')}
       </div>` : `<div style="padding:1.5rem;color:var(--faint);font-size:13px;">No films yet.</div>`}
-      ${d.rowId ? inlineEngagementBlockHtml('director', d.rowId) : ''}
       ${(isOwnProfile && directorEditMode) ? `
       <div style="padding:0 1.5rem 1.25rem;">
         <button onclick="openDirectorMovieSearch(${d.id})" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;font-family:inherit;">+ Add film</button>
@@ -12659,6 +12883,7 @@ function renderDirectorsList() {
           <div class="tile-search-results" id="dir-movie-results-${d.id}"><span class="tile-search-hint">Start typing…</span></div>
         </div>
       </div>` : ''}
+      ${d.rowId ? inlineEngagementBlockHtml('director', d.rowId) : ''}
     </div>`;
   if (d.rowId) loadInlineEngagement('director', d.rowId);
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
@@ -12935,7 +13160,6 @@ function movieDetailPanelHTML(m, closeOnclick) {
           <button class="expand-close" onclick="${closeOnclick}">✕</button>
         </div>
       </div>
-      ${inlineEngagementBlockHtml(m.type === 'tv' ? 'tv' : 'movie', m.rowId)}
       ${m.overview ? `<div class="artist-bio">${esc(m.overview)}</div>` : ''}
       ${m.whyInfluential ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
@@ -12946,6 +13170,7 @@ function movieDetailPanelHTML(m, closeOnclick) {
         ${m.runtime ? `<span style="font-size:13px;color:var(--muted);">🕐 ${m.runtime} min</span>` : ''}
         ${m.director ? `<span style="font-size:13px;color:var(--muted);">🎬 ${esc(m.director)}</span>` : ''}
       </div>
+      ${inlineEngagementBlockHtml(m.type === 'tv' ? 'tv' : 'movie', m.rowId)}
     </div>`;
 }
 
@@ -13370,7 +13595,7 @@ function scheduleTasteConstellation() {
   const state = constellationState();
   if (state.queued) return;
   state.queued = true;
-  queueMicrotask(() => { state.queued = false; refreshTasteConstellation(); renderOnboardingJourney(); if(profileFavoritesLoaded)renderDynamicProfilePicks(); });
+  queueMicrotask(() => { state.queued = false; refreshTasteConstellation(); renderOnboardingJourney(); if(profileFavoritesLoaded)renderDynamicProfilePicks(); renderFavoritesFilterBar(); });
 }
 async function refreshTasteConstellation() {
   const state = constellationState();
@@ -14667,12 +14892,12 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
       </div>
       ${item.summarySource && /^https?:\/\//.test(item.summarySource) ? `<a href="${esc(item.summarySource)}" target="_blank" rel="noopener" style="display:block;padding:0 20px 16px;color:var(--muted);font-size:12px;">Read more about this title ↗</a>` : ''}
       ${!loading && item._summaryMissing ? `<div style="padding:0 20px 16px;font-size:13px;">${item.link && /^https?:\/\//i.test(item.link) ? `<a href="${esc(item.link)}" target="_blank" rel="noopener">Open original item ↗</a> · ` : ''}<button type="button" class="activity-summary-title" onclick="openTripPlaylistSummary(tripPlaylistFlatItems.findIndex(item=>String(item.id)==='${jsStr(String(item.id))}'))">Retry summary</button></div>` : ''}
-      ${item.id ? inlineEngagementBlockHtml('taste_list_item', item.id) : ''}
       ${['artist','album','song'].includes(summaryIdentity(item).kind) && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
       <div class="stream-links listen-wide" style="padding:0 20px 20px;display:flex;gap:8px;" data-q="${esc((item.title||'') + ' ' + (item.sub||''))}">
         ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
         ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
       </div>` : ''}
+      ${item.id ? inlineEngagementBlockHtml('taste_list_item', item.id) : ''}
     </div>`;
 }
 
@@ -14946,6 +15171,16 @@ function renderReactionPeople(){
  }).join(''):'<p>No reactions yet.</p>';
 }
 
+function commentRowToItem(row) {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    body: row.body,
+    created_at: row.created_at,
+    author: firstNameOnly(row.profiles?.display_name) || row.profiles?.username || 'Someone',
+    profile: row.profiles ? { id: row.user_id, username: row.profiles.username, display_name: row.profiles.display_name, avatar_url: row.profiles.avatar_url } : null,
+  };
+}
 async function loadComments(targetType, targetId) {
   if (!sb || !targetId) return [];
   try {
@@ -14954,14 +15189,7 @@ async function loadComments(targetType, targetId) {
       .eq('target_type', targetType).eq('target_id', targetId)
       .order('created_at', { ascending: true });
     if (error || !data) return [];
-    const items = data.map(row => ({
-      id: row.id,
-      user_id: row.user_id,
-      body: row.body,
-      created_at: row.created_at,
-      author: firstNameOnly(row.profiles?.display_name) || row.profiles?.username || 'Someone',
-      profile: row.profiles ? { id: row.user_id, username: row.profiles.username, display_name: row.profiles.display_name, avatar_url: row.profiles.avatar_url } : null,
-    }));
+    const items = data.map(commentRowToItem);
     COMMENT_CACHE[engagementKey(targetType, targetId)] = { count: items.length, items };
     return items;
   } catch (e) {
@@ -15003,7 +15231,7 @@ async function deleteComment(commentId, targetType, targetId, onDone) {
 
 function commentsSectionHtml(targetType, targetId) {
   if (!sb || !targetId) return '';
-  if (targetType === 'taste_list') return tasteListCommentsHtml(targetId);
+  if (DISCUSSION_TYPES.includes(targetType)) return discussionCommentsHtml(targetType, targetId);
   const key = engagementKey(targetType, targetId);
   const cached = COMMENT_CACHE[key];
   const items = cached?.items;
@@ -15041,7 +15269,7 @@ function commentsSectionHtml(targetType, targetId) {
 // badge + comments thread render directly inside them rather than in a popup.
 
 function inlineEngagementBadgeHtml(targetType, targetId) {
-  if (targetType === 'taste_list') return tasteListEngageButtonsHtml(targetId);
+  if (DISCUSSION_TYPES.includes(targetType)) return discussionEngageButtonsHtml(targetType, targetId);
   const key = engagementKey(targetType, targetId);
   const like = LIKE_CACHE[key] || emptyLikeState();
   const comments = COMMENT_CACHE[key];
@@ -15059,11 +15287,7 @@ function inlineEngagementBadgeHtml(targetType, targetId) {
 // item has no real row id yet (e.g. a hardcoded fallback item never saved to the database).
 function inlineEngagementBlockHtml(targetType, targetId) {
   if (!sb || !targetId) return '';
-  return `
-    <div id="inline-engage-${targetType}-${targetId}" style="display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);">
-      ${inlineEngagementBadgeHtml(targetType, targetId)}
-    </div>
-    <div id="inline-comments-${targetType}-${targetId}" style="display:none;"></div>`;
+  return `<div class="item-discussion">${discussionBlockHtml(targetType, targetId)}</div>`;
 }
 
 // Call once, right after a panel opens, to fetch real counts (cached afterward so re-opening the
@@ -15084,43 +15308,53 @@ async function loadInlineEngagement(targetType, targetId) {
   } catch (e) { console.error('Failed to load engagement state:', e); }
   const badgeEl = document.getElementById(`inline-engage-${targetType}-${targetId}`);
   if (badgeEl) badgeEl.innerHTML = inlineEngagementBadgeHtml(targetType, targetId);
+  if (DISCUSSION_TYPES.includes(targetType)) rerenderDiscussionComments(targetType, targetId);
 }
 
-// ── SHARED LIST DISCUSSION (below the list items) ──
-// A shared list's like/comment row and comment thread sit after its last item, so visitors read
-// the list first. Comments belong to the whole list (target_type 'taste_list'). The thread is
-// always visible on the page: the latest three by default, everything once expanded. It reuses
-// the element ids of the inline blocks (inline-engage-*, inline-comments-*, comment-input-*) so
-// refreshEngagementUI, submitComment/deleteComment and notification links keep working as-is.
-const TASTE_LIST_COMMENT_PREVIEW = 3;
-let tasteListCommentsExpanded = null;   // list id whose thread shows every comment
-let tasteListCommentsLoading = null;    // list id whose comments are being fetched
+// ── LIST DISCUSSION (below the list items) ──
+// Whole-list likes and comments sit after a list's last item, so visitors read the list first.
+// Used by shared lists (target_type 'taste_list', one list per page) and by the favorites lists on
+// a profile (target_type 'list'). Comments always belong to the whole list. The thread shows the
+// latest three; "View all comments" (or the comment icon) shows everything. It reuses the ids of
+// the inline blocks (inline-engage-*, inline-comments-*, comment-input-*), so refreshEngagementUI,
+// submitComment/deleteComment and notification links keep working unchanged.
+const DISCUSSION_PREVIEW = 3;
+const DISCUSSION_TYPES = ['taste_list', 'list', 'artist', 'album', 'movie', 'tv', 'book', 'director', 'taste_list_item'];
+const discussionAttempted = new Set(); // engagementKey()s whose comments were fetched at least once
+const discussionExpanded = new Set();   // engagementKey()s showing every comment
+const discussionOpened = new Set();     // profile lists with no comments yet whose composer was opened
+const discussionLoading = new Set();    // engagementKey()s being fetched
 
 const SL_ICON_HEART = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.4C1.5 7.8 3.6 4.5 7 4.5c2.1 0 3.6 1.1 5 2.9 1.4-1.8 2.9-2.9 5-2.9 3.4 0 5.5 3.3 4.3 6.6-1.8 4.8-9.3 9.4-9.3 9.4z"/></svg>';
 const SL_ICON_HEART_FILLED = SL_ICON_HEART.replace('fill="none"', 'fill="currentColor"');
 const SL_ICON_COMMENT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg>';
 
-function tasteListCommentCount(listId) {
-  const c = COMMENT_CACHE[engagementKey('taste_list', listId)];
+function discussionCommentCount(type, id) {
+  const c = COMMENT_CACHE[engagementKey(type, id)];
   return c ? (c.items ? c.items.length : (c.count || 0)) : 0;
 }
+// A shared list's thread is always shown; a profile list's appears once it has comments or
+// someone taps the comment icon, so a page of lists isn't a stack of empty comment boxes.
+function discussionThreadVisible(type, id) {
+  return type === 'taste_list' || discussionCommentCount(type, id) > 0 || discussionOpened.has(engagementKey(type, id));
+}
 
-function tasteListEngageButtonsHtml(listId) {
-  const like = LIKE_CACHE[engagementKey('taste_list', listId)] || emptyLikeState();
-  const comments = tasteListCommentCount(listId);
+function discussionEngageButtonsHtml(type, listId) {
+  const like = LIKE_CACHE[engagementKey(type, listId)] || emptyLikeState();
+  const comments = discussionCommentCount(type, listId);
   const id = jsStr(listId);
   return `
-    <button type="button" class="sl-engage-btn${like.mine ? ' is-liked' : ''}" aria-pressed="${like.mine ? 'true' : 'false'}" aria-label="${like.mine ? 'Unlike' : 'Like'} this list${like.total ? `, ${like.total} like${like.total === 1 ? '' : 's'}` : ''}"
-      onclick="toggleLike('taste_list','${id}', () => refreshEngagementUI('taste_list','${id}'))">
+    <button type="button" class="sl-engage-btn${like.mine ? ' is-liked' : ''}" aria-pressed="${like.mine ? 'true' : 'false'}" title="${like.mine ? 'Unlike' : 'Like'} this ${type === 'list' || type === 'taste_list' ? 'list' : 'pick'}" aria-label="${like.mine ? 'Unlike' : 'Like'} this list${like.total ? `, ${like.total} like${like.total === 1 ? '' : 's'}` : ''}"
+      onclick="toggleLike('${type}','${id}', () => refreshEngagementUI('${type}','${id}'))">
       ${like.mine ? SL_ICON_HEART_FILLED : SL_ICON_HEART}<span>${like.total || ''}</span>
     </button>
-    <button type="button" class="sl-engage-btn" aria-controls="inline-comments-taste_list-${esc(listId)}" aria-label="Comments${comments ? `, ${comments}` : ''}"
-      onclick="showTasteListComments('${id}')">
+    <button type="button" class="sl-engage-btn" aria-controls="inline-comments-${type}-${esc(listId)}" title="Comments" aria-label="Comments${comments ? `, ${comments}` : ''}"
+      onclick="showDiscussionComments('${type}','${id}')">
       ${SL_ICON_COMMENT}<span>${comments || ''}</span>
     </button>`;
 }
 
-function tasteListCommentTime(iso) {
+function discussionCommentTime(iso) {
   const t = new Date(iso); if (isNaN(t)) return '';
   const mins = Math.round((Date.now() - t) / 60000);
   if (mins < 1) return 'now';
@@ -15130,92 +15364,110 @@ function tasteListCommentTime(iso) {
   return t.toLocaleDateString(undefined, { month: 'short', day: 'numeric', ...(t.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) });
 }
 
-function tasteListCommentsHtml(listId) {
-  const items = COMMENT_CACHE[engagementKey('taste_list', listId)]?.items;
+function discussionCommentsHtml(type, listId) {
+  const key = engagementKey(type, listId);
+  const items = COMMENT_CACHE[key]?.items;
   const id = jsStr(listId);
-  const refresh = `() => refreshEngagementUI('taste_list','${id}')`;
+  const refresh = `() => refreshEngagementUI('${type}','${id}')`;
   let thread;
+  if (items === undefined && !discussionLoading.has(key) && !discussionAttempted.has(key)) setTimeout(() => loadDiscussionComments(type, listId), 0);
   if (items === undefined) {
-    thread = tasteListCommentsLoading === listId
+    thread = discussionLoading.has(key) || !discussionAttempted.has(key)
       ? `<div class="sl-comments-note">Loading comments…</div>`
-      : `<div class="sl-comments-note">Comments couldn’t load. <button type="button" onclick="loadTasteListComments('${id}')">Try again</button></div>`;
+      : `<div class="sl-comments-note">Comments couldn’t load. <button type="button" onclick="loadDiscussionComments('${type}','${id}')">Try again</button></div>`;
   } else if (!items.length) {
     thread = `<div class="sl-comments-note">No comments yet${currentUser ? ' — start the conversation.' : '.'}</div>`;
   } else {
-    const expanded = tasteListCommentsExpanded === listId;
-    const shown = expanded ? items : items.slice(-TASTE_LIST_COMMENT_PREVIEW);
+    const expanded = discussionExpanded.has(key);
+    const shown = expanded ? items : items.slice(-DISCUSSION_PREVIEW);
     const more = !expanded && items.length > shown.length
-      ? `<button type="button" class="sl-comments-more" onclick="showTasteListComments('${id}', { scroll: false })">View all ${items.length} comments</button>` : '';
+      ? `<button type="button" class="sl-comments-more" onclick="showDiscussionComments('${type}','${id}', { scroll: false })">View all ${items.length} comments</button>` : '';
     thread = more + `<ul class="sl-comment-list">${shown.map(c => {
       const p = c.profile || { display_name: c.author };
       const name = c.profile?.username
         ? `<a class="sl-comment-author" href="?u=${encodeURIComponent(c.profile.username)}">${esc(c.author)}</a>`
         : `<span class="sl-comment-author">${esc(c.author)}</span>`;
       const del = currentUser && c.user_id === currentUser.id
-        ? `<button type="button" class="sl-comment-delete" onclick="deleteComment('${jsStr(c.id)}','taste_list','${id}', ${refresh})">Delete</button>` : '';
+        ? `<button type="button" class="sl-comment-delete" onclick="deleteComment('${jsStr(c.id)}','${type}','${id}', ${refresh})">Delete</button>` : '';
       return `<li class="sl-comment">
         ${profileAvatarHtml(p, 32)}
         <div class="sl-comment-main">
-          <div class="sl-comment-meta">${name}<span class="sl-comment-time">${esc(tasteListCommentTime(c.created_at))}</span>${del}</div>
+          <div class="sl-comment-meta">${name}<span class="sl-comment-time">${esc(discussionCommentTime(c.created_at))}</span>${del}</div>
           <div class="sl-comment-body">${esc(c.body)}</div>
         </div>
       </li>`;
     }).join('')}</ul>`;
   }
-  const inputId = `comment-input-taste_list-${esc(listId)}`;
+  const inputId = `comment-input-${type}-${esc(listId)}`;
   const composer = currentUser
     ? `<div class="sl-composer">
         ${profileAvatarHtml(currentProfile || { display_name: '?' }, 32)}
         <input id="${inputId}" placeholder="Add a comment…" maxlength="1000" aria-label="Add a comment"
-          onkeydown="if(event.key==='Enter'&&!event.isComposing){submitComment('taste_list','${id}', this, ${refresh})}">
-        <button type="button" onclick="submitComment('taste_list','${id}', document.getElementById('${inputId}'), ${refresh})">Post</button>
+          onkeydown="if(event.key==='Enter'&&!event.isComposing){submitComment('${type}','${id}', this, ${refresh})}">
+        <button type="button" onclick="submitComment('${type}','${id}', document.getElementById('${inputId}'), ${refresh})">Post</button>
       </div>`
     : `<div class="sl-composer-signin"><a href="javascript:void(0)" onclick="openAuthModal('signin')">Sign in</a> to join the conversation.</div>`;
-  const count = items ? items.length : tasteListCommentCount(listId);
+  const count = items ? items.length : discussionCommentCount(type, listId);
   return `<h2 class="sl-comments-title">Comments${count ? `<span>${count}</span>` : ''}</h2>${thread}${composer}`;
 }
 
+// The like/comment row + thread for one list, as placed after its last item.
+function discussionBlockHtml(type, listId) {
+  if (!sb || !listId) return '';
+  const visible = discussionThreadVisible(type, listId);
+  return `
+    <div class="sl-engage-wrap"><div id="inline-engage-${type}-${esc(listId)}" class="sl-engage">${discussionEngageButtonsHtml(type, listId)}</div></div>
+    <div id="inline-comments-${type}-${esc(listId)}" class="sl-comments" style="display:${visible ? 'block' : 'none'};">${visible ? discussionCommentsHtml(type, listId) : ''}</div>`;
+}
+
+function rerenderDiscussionComments(type, listId) {
+  const el = document.getElementById(`inline-comments-${type}-${listId}`);
+  if (!el) return;
+  const visible = discussionThreadVisible(type, listId);
+  el.style.display = visible ? 'block' : 'none';
+  el.innerHTML = visible ? discussionCommentsHtml(type, listId) : '';
+}
+
+async function loadDiscussionComments(type, listId) {
+  const key = engagementKey(type, listId);
+  if (discussionLoading.has(key)) return;
+  discussionLoading.add(key);
+  discussionAttempted.add(key);
+  rerenderDiscussionComments(type, listId);
+  await loadComments(type, listId);
+  discussionLoading.delete(key);
+  rerenderDiscussionComments(type, listId);
+  const badgeEl = document.getElementById(`inline-engage-${type}-${listId}`);
+  if (badgeEl) badgeEl.innerHTML = discussionEngageButtonsHtml(type, listId);
+}
+
+// Comment icon/count and "View all comments": open + expand the thread and (by default) scroll to it.
+async function showDiscussionComments(type, listId, { scroll = true } = {}) {
+  const key = engagementKey(type, listId);
+  discussionExpanded.add(key);
+  discussionOpened.add(key);
+  rerenderDiscussionComments(type, listId);
+  const el = document.getElementById(`inline-comments-${type}-${listId}`);
+  if (scroll && el) {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }
+  if (!COMMENT_CACHE[key]?.items && !discussionLoading.has(key)) await loadDiscussionComments(type, listId);
+}
+
+// Shared list page: the block lives in #taste-list-discussion, after #trip-playlist-list.
 function renderTasteListDiscussion(listId) {
   const section = document.getElementById('taste-list-discussion');
   const engageEl = document.getElementById('taste-list-engage');
   if (!section || !engageEl) return;
   if (!sb || !listId) { section.hidden = true; engageEl.innerHTML = ''; return; }
-  if (tasteListCommentsExpanded !== listId) tasteListCommentsExpanded = null;
+  discussionExpanded.delete(engagementKey('taste_list', listId));
   section.hidden = false;
-  engageEl.innerHTML = `
-    <div id="inline-engage-taste_list-${esc(listId)}" class="sl-engage">${tasteListEngageButtonsHtml(listId)}</div>
-    <div id="inline-comments-taste_list-${esc(listId)}" class="sl-comments" style="display:block;">${tasteListCommentsHtml(listId)}</div>`;
+  engageEl.innerHTML = discussionBlockHtml('taste_list', listId);
   loadInlineEngagement('taste_list', listId);
-  loadTasteListComments(listId);
+  loadDiscussionComments('taste_list', listId);
 }
-
-async function loadTasteListComments(listId) {
-  tasteListCommentsLoading = listId;
-  rerenderTasteListComments(listId);
-  await loadComments('taste_list', listId);
-  if (tasteListCommentsLoading === listId) tasteListCommentsLoading = null;
-  if (currentTasteListId !== listId) return;
-  rerenderTasteListComments(listId);
-  const badgeEl = document.getElementById(`inline-engage-taste_list-${listId}`);
-  if (badgeEl) badgeEl.innerHTML = tasteListEngageButtonsHtml(listId);
-}
-
-function rerenderTasteListComments(listId) {
-  const el = document.getElementById(`inline-comments-taste_list-${listId}`);
-  if (el) el.innerHTML = tasteListCommentsHtml(listId);
-}
-
-// Comment icon/count and "View all comments": expand the thread and (by default) bring it into view.
-async function showTasteListComments(listId, { scroll = true } = {}) {
-  tasteListCommentsExpanded = listId;
-  rerenderTasteListComments(listId);
-  const el = document.getElementById(`inline-comments-taste_list-${listId}`);
-  if (scroll && el) {
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-  }
-  if (!COMMENT_CACHE[engagementKey('taste_list', listId)]?.items && tasteListCommentsLoading !== listId) await loadTasteListComments(listId);
-}
+function showTasteListComments(listId, opts) { return showDiscussionComments('taste_list', listId, opts); }
 
 // ── LIKES & COMMENTS ON WHOLE LISTS ──
 // A freeform list is just a category name on its items, so it has no row of its own to attach a
@@ -15229,12 +15481,12 @@ function resetListTargets() {
 }
 function listEngagementHtml(tab, cat) {
   const id = LIST_TARGETS[`${tab}|${cat}`];
-  return id ? `<div class="list-engage">${inlineEngagementBlockHtml('list', id)}</div>` : '';
+  return id ? `<div class="list-engage">${discussionBlockHtml('list', id)}</div>` : '';
 }
 function renderHardcodedListEngagement() {
   [['movies-top5-engage', 'movies|movies'], ['movies-directors-engage', 'directors|all']].forEach(([elId, key]) => {
     const el = document.getElementById(elId), id = LIST_TARGETS[key];
-    if (el) el.innerHTML = id ? inlineEngagementBlockHtml('list', id) : '';
+    if (el) el.innerHTML = id ? discussionBlockHtml('list', id) : '';
   });
 }
 // One request for all the likes and one for all the comment counts, rather than two per list.
@@ -15243,13 +15495,15 @@ async function loadListEngagementBulk(ids) {
   try {
     const [likesRes, commentsRes] = await Promise.all([
       sb.from('likes').select('target_id, user_id, reaction').eq('target_type', 'list').in('target_id', ids),
-      sb.from('comments').select('target_id').eq('target_type', 'list').in('target_id', ids),
+      sb.from('comments').select('id, target_id, user_id, body, created_at, profiles(username, display_name, avatar_url)').eq('target_type', 'list').in('target_id', ids).order('created_at', { ascending: true }),
     ]);
     const likesBy = {}, counts = {};
     (likesRes.data || []).forEach(r => (likesBy[r.target_id] = likesBy[r.target_id] || []).push(r));
-    (commentsRes.data || []).forEach(r => { counts[r.target_id] = (counts[r.target_id] || 0) + 1; });
+    const commentsBy = {};
+    (commentsRes.data || []).forEach(r => { counts[r.target_id] = (counts[r.target_id] || 0) + 1; (commentsBy[r.target_id] = commentsBy[r.target_id] || []).push(commentRowToItem(r)); });
     ids.forEach(id => {
       const key = engagementKey('list', id);
+      if (!commentsRes.error && !COMMENT_CACHE[key]?.items) COMMENT_CACHE[key] = { count: counts[id] || 0, items: commentsBy[id] || [] };
       if (!LIKE_CACHE[key]) {
         LIKE_CACHE[key] = emptyLikeState();
         absorbLikeRows('list', (likesBy[id] || []).map(r => ({ target_id: id, user_id: r.user_id, reaction: r.reaction })));
@@ -15274,7 +15528,7 @@ async function loadListTargets(profileId) {
 }
 
 async function toggleInlineComments(targetType, targetId) {
-  if (targetType === 'taste_list') return showTasteListComments(targetId);
+  if (DISCUSSION_TYPES.includes(targetType)) return showDiscussionComments(targetType, targetId);
   const el = document.getElementById(`inline-comments-${targetType}-${targetId}`);
   if (!el) return;
   if (el.style.display === 'block') { el.style.display = 'none'; return; }
@@ -15298,6 +15552,7 @@ function refreshEngagementUI(targetType, targetId) {
   if (typeof window.__refreshModalEngagement === 'function') window.__refreshModalEngagement();
   const badgeEl = document.getElementById(`inline-engage-${targetType}-${targetId}`);
   if (badgeEl) badgeEl.innerHTML = inlineEngagementBadgeHtml(targetType, targetId);
+  if (DISCUSSION_TYPES.includes(targetType)) { rerenderDiscussionComments(targetType, targetId); return; }
   const commentsEl = document.getElementById(`inline-comments-${targetType}-${targetId}`);
   if (commentsEl && commentsEl.style.display !== 'none') commentsEl.innerHTML = commentsSectionHtml(targetType, targetId);
 }
@@ -15441,9 +15696,32 @@ async function resolveFeedAudience() {
 // rest of the app actually work: have something on your profile, follow someone, post an update.
 // Re-checked (cheaply, via count-only queries) every time the Feed loads, so it just quietly
 // disappears once all three are done — no separate "completed" flag to keep in sync.
+// Saved favorites across the profile (count-only queries), cached per account for the session.
+const onboardingFavoriteCounts = new Map();
+async function savedFavoriteCount(userId) {
+ if (onboardingFavoriteCounts.has(userId)) return onboardingFavoriteCounts.get(userId);
+ if (!sb) return null;
+ try {
+  const results = await Promise.all(['favorite_artists','favorite_albums','favorite_media_lists','favorite_books','favorite_directors']
+   .map(table => sb.from(table).select('id', { count:'exact', head:true }).eq('user_id', userId)));
+  if (results.some(r => r.error)) return null;
+  const total = results.reduce((n, r) => n + (r.count || 0), 0);
+  onboardingFavoriteCounts.set(userId, total);
+  return total;
+ } catch (_) { return null; }
+}
 async function checkAndRenderOnboarding() {
  const el=document.getElementById('onboarding-checklist');if(!el)return;
- const unfinished=currentUser && onboardingUserId===currentUser.id && ['pending','skipped'].includes(onboardingState?.status);
+ let unfinished=currentUser && onboardingUserId===currentUser.id && ['pending','skipped'].includes(onboardingState?.status);
+ // The setup flag alone can stay "unfinished" on a long-established profile (setup skipped or
+ // reopened and left). Same rule as the profile's resume prompt: a profile with 15+ favorites
+ // doesn't need a guided setup. If the count can't be read, fall back to the flag.
+ if (unfinished) {
+  const userId = currentUser.id;
+  const total = await savedFavoriteCount(userId);
+  if (currentUser?.id !== userId) return;
+  if (total !== null && total >= 15) unfinished = false;
+ }
  el.style.display=unfinished?'':'none';
  el.innerHTML=unfinished?`<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 20px;border:1px solid var(--border);border-radius:12px;margin-bottom:24px;"><span style="color:var(--muted);font-size:13px;">Your picks are saved. Pick up where you left off.</span><button class="onboarding-button" onclick="resumeOnboarding()">Continue setting up your TasteList →</button></div>`:'';
 }
@@ -15902,7 +16180,7 @@ function feedTextPostHtml(row,profile=false){
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
  const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
  const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
- return `<article class="feed-text-post"><header>${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>${row.user_id===currentUser?.id?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div>${taggedLineHtml(row.tags)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button class="sl-btn" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')">Comment${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?' · '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}</button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
+ return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(row.activity_date)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div>${taggedLineHtml(row.tags)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button class="sl-btn" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')">Comment${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?' · '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}</button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
 }
 
 async function loadPublicFeed() {
@@ -16327,7 +16605,7 @@ function publicActivityCardHtml(row,profile=false) {
   summaryFeedRows.set(String(row.id),row);
   const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
   const typeIcon = badgeIcon(meta.icon, 13);
-  const note = row.note ? `<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:8px;">${renderActivityNote(row.note)}</div>` : '';
+  const note = row.note ? (profile ? `<div class="activity-note">${renderActivityNote(row.note)}</div>` : `<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:8px;">${renderActivityNote(row.note)}</div>`) : '';
   const mosaicCells = row._mosaicArt
     ? row._mosaicArt.map(u => `<div style="background-image:url('${esc(u)}');background-size:cover;background-position:center;"></div>`).join('') +
       Array(Math.max(0, 4 - row._mosaicArt.length)).fill(`<div style="background:${meta.color}18;"></div>`).join('')
@@ -16344,11 +16622,13 @@ function publicActivityCardHtml(row,profile=false) {
   const commentCount = (COMMENT_CACHE[engagementKey('activity_feed', row.id)] || {}).count || '';
   const commentsOpen = (profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
   const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
-  const ownerControls=row._editableStatus&&row.user_id===currentUser?.id?`<div class="status-card-controls" onclick="event.stopPropagation()"><button type="button" class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button type="button" class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:'';
+  const ownerControls=row._editableStatus&&row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="status-card-controls" onclick="event.stopPropagation()"><button type="button" class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button type="button" class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:'';
   return `<div class="activity-card" style="position:relative;background:var(--surface2);border:1px solid var(--border);">
     ${activityArtWrap(ART_SRC, art)}
     <div class="activity-card-body">
       ${ownerControls}
+      ${profile ? `<h3 class="activity-title"${ownerControls?' style="padding-right:84px;"':''}><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openFeedItemSummary('${jsStr(String(row.id))}')">${esc(row.label)}</button></h3>
+      <div class="activity-meta">${row.sub ? `<span style="color:${meta.color}">${esc(row.sub)}</span>` : ''}${row.sub && row.activity_date ? '<span aria-hidden="true">·</span>' : ''}${row.activity_date ? `<span>${shortActivityDate(row.activity_date)}</span>` : ''}</div>` : `
       <table style="border-collapse:collapse;width:100%;${ownerControls?'padding-right:88px;':''}"><tr><td style="vertical-align:middle;width:38px;padding:0;">${publicFeedAvatarHtml(who)}</td><td style="vertical-align:middle;padding:0 0 0 10px;">
         <div style="font-size:13.5px;font-weight:600;color:var(--text);"><a href="?u=${encodeURIComponent(uname)}" onclick="event.stopPropagation();goToProfile('${jsStr(uname)}');return false" style="color:inherit;text-decoration:none;">${esc(whoDisplay)}</a></div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);">${formatActivityDate(row.activity_date)}</div>
@@ -16358,11 +16638,12 @@ function publicActivityCardHtml(row,profile=false) {
         <span title="${esc(row.type)}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:${meta.color}18;color:${meta.color};flex-shrink:0;">${typeIcon}</span>
         <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(row.sub)}</span>
       </div>
+      `}
       ${taggedLineHtml(row.tags)}${note}
-      <div style="display:flex;align-items:center;gap:10px;margin-top:8px;" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;gap:12px;margin-top:${profile ? 14 : 8}px;" onclick="event.stopPropagation()">
         ${reactionBadgeHtml('activity_feed', row.id)}
         <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;" role="button" tabindex="0" aria-label="Comments" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${row.id}')">
-          <span>💬</span><span>${commentCount}</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${commentCount}</span>
         </span>
       </div>
       <div id="${panelId}" style="display:${commentsOpen ? 'block' : 'none'};margin:8px -20px -18px;" onclick="event.stopPropagation()">${commentsOpen ? commentsSectionHtml('activity_feed', row.id) : ''}</div>
@@ -16403,7 +16684,7 @@ function renderPublicFeed(rows, mode, hasMore) {
   const footer = hasMore
     ? `<button id="feed-load-more-btn" onclick="loadMoreFeed()" style="align-self:center;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:13px;font-weight:600;font-family:inherit;padding:9px 22px;border-radius:20px;cursor:pointer;">Load more</button>`
     : `<div style="text-align:center;color:var(--faint);font-size:12px;padding:8px 0;">You're all caught up</div>`;
-  el.innerHTML = rows.map(publicActivityCardHtml).join('') + footer + `<button class="onboarding-button" style="align-self:center" onclick="showPeopleToFollow()">Find more people</button>`;
+  el.innerHTML = rows.map(row => publicActivityCardHtml(row)).join('')  /* not .map(fn): map's index would arrive as the `profile` flag */ + footer + `<button class="onboarding-button" style="align-self:center" onclick="showPeopleToFollow()">Find more people</button>`;
 }
 
 
@@ -17408,7 +17689,6 @@ function tvDetailPanelHTML(m, closeOnclick) {
           <button class="expand-close" onclick="${closeOnclick}">✕</button>
         </div>
       </div>
-      ${inlineEngagementBlockHtml('tv', m.rowId)}
       ${m.overview ? `<div class="artist-bio">${esc(m.overview)}</div>` : ''}
       ${m.whyInfluential ? `<div style="padding:16px 24px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.6;color:var(--text);">
         <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why They're Influential to Me</span>
@@ -17419,6 +17699,7 @@ function tvDetailPanelHTML(m, closeOnclick) {
         ${m.seasons ? `<span style="font-size:13px;color:var(--muted);">📺 ${m.seasons} season${m.seasons > 1 ? 's' : ''}</span>` : ''}
         ${m.creator ? `<span style="font-size:13px;color:var(--muted);">✎ ${esc(m.creator)}</span>` : ''}
       </div>
+      ${inlineEngagementBlockHtml('tv', m.rowId)}
     </div>`;
 }
 
@@ -17825,7 +18106,6 @@ function bookDetailPanelHTML(b, closeOnclick) {
           <button class="expand-close" onclick="${closeOnclick}">✕</button>
         </div>
       </div>
-      ${inlineEngagementBlockHtml('book', b.rowId)}
       <div style="padding:1.25rem 1.5rem;font-size:13.5px;line-height:1.6;color:var(--text);min-height:20px;">
         ${b._description === undefined ? `<span style="color:var(--faint);">Loading summary…</span>` : (b._description ? esc(b._description) : `<span style="color:var(--faint);">No summary available.</span>`)}
       </div>
@@ -17833,6 +18113,7 @@ function bookDetailPanelHTML(b, closeOnclick) {
         <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Why It's Influential to Me</span>
         ${renderMentions(b.whyInfluential)}
       </div>` : ''}
+      ${inlineEngagementBlockHtml('book', b.rowId)}
     </div>`;
 }
 
@@ -18588,6 +18869,6 @@ renderTasteInfluences();
 })();
 </script>
 
-<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div><div class="tag-field"><label class="tl-label" for="tag-picker-input">Tag friends <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-picker-chips" class="tag-chips"></div><input id="tag-picker-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('picker',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('picker')}"><div id="tag-picker-results" class="tag-results" aria-live="polite"></div></div><div id="picker-friend-tags" hidden></div><div id="picker-friend-results" hidden></div><input id="picker-friend-search" type="hidden"><p style="color:var(--muted);font-size:12px">Selected friends will be tagged on the items you add here.</p><label for="music-picker-query">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Start typing…" oninput="queueFlexibleMusic(this.value)"><div id="music-picker-results" aria-live="polite"></div><p id="music-picker-status" role="status"></p></dialog>
+<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div><details class="picker-tags"><summary>Tag friends <span class="tl-hint">optional</span></summary><div class="tag-field"><label class="tl-label" for="tag-picker-input">Tag friends <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-picker-chips" class="tag-chips"></div><input id="tag-picker-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('picker',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('picker')}"><div id="tag-picker-results" class="tag-results" aria-live="polite"></div></div><div id="picker-friend-tags" hidden></div><div id="picker-friend-results" hidden></div><input id="picker-friend-search" type="hidden"><p style="color:var(--muted);font-size:12px">Selected friends will be tagged on the items you add here.</p></details><label for="music-picker-query">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Search by title or name…" autocomplete="off" oninput="queueFlexibleMusic(this.value)"><p id="music-picker-status" role="status" aria-live="polite"></p><div id="music-picker-results"></div></dialog>
 </body>
 </html>
