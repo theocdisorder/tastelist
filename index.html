@@ -1452,6 +1452,10 @@ if (new URLSearchParams(location.search).has('list')) {
 #music-picker .extra-result.is-saving .picker-add{background:var(--surface3);}
 #music-picker .extra-result.is-added{cursor:default;}
 #music-picker .extra-result.is-added .picker-add{background:#22C55E;font-size:17px;}
+#music-picker .picker-dest-line{margin:14px 0 0;font-size:14px;color:var(--muted);}
+#music-picker .picker-dest-line strong{color:var(--text);font-weight:600;}
+#music-picker .picker-dest-change{font:inherit;font-size:13.5px;color:var(--accent);background:none;border:0;padding:4px 2px;margin-left:4px;cursor:pointer;}
+#music-picker .picker-dest-change:hover{text-decoration:underline;}
 #music-picker .picker-tags{margin-top:16px;border-top:1px solid var(--border);padding-top:12px;}
 #music-picker .picker-tags>summary{cursor:pointer;color:var(--muted);font-size:14px;list-style:none;}
 #music-picker .picker-tags>summary::-webkit-details-marker{display:none;}
@@ -4731,6 +4735,7 @@ async function loadAllTasteLists(profileId) {
     }));
     allTasteLists = lists;
     renderTasteListsPicker();
+    if (ACTIVITY_FEED_ITEMS.some(i => i.type === 'list' && i.tab === 'playlist')) renderActivityFeed('profile-feed');
   } catch (e) {
     console.error('Failed to load shared lists:', e);
     if (container) container.innerHTML = '';
@@ -7293,6 +7298,8 @@ let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null,ta
 function openFlexibleMusicPicker(category=null){openUnifiedPicker('music',category);}
 function openUnifiedPicker(tab,category=null){
  if(!isOwnProfile||!currentUser||flexibleMusic.saving)return;
+ // Never make anyone name a list before adding: default to their main list of this type.
+ if(!category)category=pickerDefaultList(tab);
  flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.tab=tab;resetPickerFriendTags();
  const tabs=tab==='music'?['music','albums']: [tab];
  const names=[...new Set([...tabs.flatMap(t=>Object.keys(CUSTOM_LISTS[t]||{})),...extraLists.filter(l=>l.category===tab).map(l=>l.title)])];
@@ -7303,9 +7310,19 @@ function openUnifiedPicker(tab,category=null){
  document.getElementById('music-picker-hint').textContent=tab==='books'?'Search a book title or author to find books.':tab==='podcasts'?'Search shows and episodes together.':tab==='music'?'Search songs, albums and artists together.':'Search and select the right title.';
  document.getElementById('music-picker-ideas').innerHTML=(PICKER_IDEAS[tab]||[]).map(name=>`<button type="button" class="profile-control" data-name="${esc(name)}" onclick="document.getElementById('music-picker-name').value=this.dataset.name">${esc(name)}</button>`).join('');
  pickerDestinationChanged();document.getElementById('music-picker-query').value='';document.getElementById('music-picker-results').innerHTML='';document.getElementById('music-picker-status').textContent='';
- document.getElementById('music-picker').showModal();document.getElementById(select.value||document.getElementById('music-picker-name').value.trim()?'music-picker-query':'music-picker-name').focus();
+ document.getElementById('music-picker-dest').hidden=true;document.getElementById('music-picker-dest-line').hidden=false;updatePickerDestLine();
+ document.getElementById('music-picker').showModal();document.getElementById('music-picker-query').focus();
 }
-function pickerDestinationChanged(){document.getElementById('music-picker-new-list').hidden=!!document.getElementById('music-picker-list').value;}
+function pickerDestinationChanged(){document.getElementById('music-picker-new-list').hidden=!!document.getElementById('music-picker-list').value;updatePickerDestLine();}
+function pickerDestinationValue(){return document.getElementById('music-picker-list').value||document.getElementById('music-picker-name').value.trim();}
+function updatePickerDestLine(){
+ const el=document.getElementById('music-picker-dest-name');if(!el)return;
+ const v=pickerDestinationValue();el.textContent=v?customListLabel(flexibleMusic.tab,v):'a new list';
+}
+function showPickerDestination(){
+ document.getElementById('music-picker-dest').hidden=false;document.getElementById('music-picker-dest-line').hidden=true;
+ document.getElementById('music-picker-list').focus();
+}
 function queueFlexibleMusic(q){
  clearTimeout(flexibleMusic.timer);const request=++flexibleMusic.request;flexibleMusic.results=[];
  document.getElementById('music-picker-results').innerHTML='';if(q.trim().length<2)return;
@@ -7346,7 +7363,7 @@ async function saveFlexibleMusic(index,row){
  const status=document.getElementById('music-picker-status');
  const setRow=(state,mark)=>{if(!row)return;row.classList.remove('is-saving','is-added');if(state)row.classList.add(state);const m=row.querySelector('.picker-add');if(m)m.textContent=mark;};
  const category=document.getElementById('music-picker-list').value||document.getElementById('music-picker-name').value.trim();
- if(!category){status.className='is-error';status.textContent='Name your new list first, then tap a result to add it.';document.getElementById('music-picker-name').focus();return;}
+ if(!category){status.className='is-error';status.textContent='Name your new list first, then tap a result to add it.';showPickerDestination();document.getElementById('music-picker-name').focus();return;}
  if(category.length>120){status.textContent='Use a list name of 120 characters or fewer.';return;}
  const userId=currentUser?.id;flexibleMusic.saving=true;status.className='';status.textContent='Adding '+p.title+'…';setRow('is-saving','…');
  try{
@@ -11320,6 +11337,11 @@ function favoritesTypeCounts() {
     podcasts: extra('podcasts'),
   };
 }
+// Someone just starting out (fewer than five picks) gets the guided setup, which asks easy questions
+// instead of asking them to pick a media type or a list.
+function favoritesAreNew(counts = favoritesTypeCounts()) {
+  return Object.values(counts).reduce((n, c) => n + c, 0) < 5;
+}
 function renderFavoritesFilterBar() {
   const bar = document.getElementById('fav-filter-bar');
   const empty = document.getElementById('fav-empty');
@@ -11351,7 +11373,9 @@ function renderFavoritesFilterBar() {
     const plus = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
     let ctaHtml = '';
     if (showCta) {
-      ctaHtml = filter === 'all'
+      ctaHtml = filter === 'all' && favoritesAreNew(counts)
+        ? `<button type="button" class="ed-primary" onclick="resumeOnboarding()">${plus}Add something you love</button>`
+        : filter === 'all'
         ? `<details class="fav-add-menu"><summary class="ed-primary">${plus}Add something you love</summary><div class="fav-add-menu-list" role="menu">${FAV_TYPES.map(t => `<button type="button" role="menuitem" onclick="this.closest('details').open=false;addToMainList('${t.key}')">${t.label}</button>`).join('')}</div></details>`
         : `<button type="button" class="ed-primary" onclick="addToMainList('${filter}')">${plus}${esc(listCtaLabel(filter))}</button>${listCtaLinksHtml(filter, { books: 'goodreads', movies: 'letterboxd', tv: 'letterboxd' }[filter] || '')}`;
       ctaHtml = `<div class="fav-cta">${ctaHtml}</div>`;
@@ -11363,7 +11387,7 @@ function renderFavoritesFilterBar() {
     const none = profileFavoritesLoaded && !present.length;
     empty.hidden = !none;
     empty.innerHTML = !none ? '' : owner
-      ? `<h3>Your favorites start here</h3><p>Add a few things you love — music, movies, TV or books. They all live together here.</p><div class="fav-add-buttons">${FAV_TYPES.slice(0, 4).map(t => `<button type="button" class="fav-add-btn" onclick="addToMainList('${t.key}')">+ ${t.label}</button>`).join('')}</div>`
+      ? `<h3>Your favorites start here</h3><p>Answer a couple of easy questions — what you’re into lately, what’s on repeat — and your favorites will fill in here.</p><div class="fav-add-buttons"><button type="button" class="ed-primary" onclick="resumeOnboarding()">Get started</button></div>`
       : `<p>No favorites added yet.</p>`;
   }
 }
@@ -14924,19 +14948,19 @@ function activityFeedAvatarHtml(){return profileAvatarHtml(viewedProfile,26);}
 
 // Builds a 2x2 mosaic of real playlist thumbnails (one per category, plus a 4th pick) for the
 // "published a new list" What's New card, instead of a plain icon placeholder.
-function tripPlaylistMosaicHtml() {
-  const catColor = new Proxy({}, { get: (_, key) => tasteTypeMeta(key).color });
-  const picks = [];
-  TRIP_PLAYLIST_CATEGORIES.forEach(c => {
-    const items = TRIP_PLAYLIST_ITEMS[c.key] || [];
-    if (items.length) picks.push({ item: items.find(i => i.art) || items[0], cat: c.key });
-  });
-  const extraMovie = TRIP_PLAYLIST_ITEMS.movies?.[1];
-  if (extraMovie) picks.push({ item: extraMovie, cat: 'movies' });
-  const cells = picks.slice(0, 4).map(p => p.item.art
-    ? `<div style="background-image:url('${p.item.art}');background-size:cover;background-position:center;"></div>`
-    : `<div style="background:${catColor[p.cat]}22;"></div>`
-  ).join('');
+// Cover for a "Published a new list" card: that list's first four pictures (the same ones its
+// Shared Lists card shows), always as a full 2×2 — empty squares get a soft tint.
+function tripPlaylistMosaicHtml(listTitle) {
+  const norm = v => String(v || '').trim().toLowerCase();
+  const list = listTitle ? allTasteLists.find(l => norm(l.title) === norm(listTitle)) : null;
+  let urls = list?.previewArt?.length ? list.previewArt.slice(0, 4) : [];
+  if (!urls.length && (!list || list.id === currentTasteListId)) {
+    // Fall back to the open list's items: the first four with art, across every type.
+    urls = TRIP_PLAYLIST_CATEGORIES.flatMap(c => (TRIP_PLAYLIST_ITEMS[c.key] || []).map(i => i.art)).filter(Boolean).slice(0, 4);
+  }
+  if (!urls.length) return `<div class="activity-card-art-img activity-card-art-empty" style="background:#7C4DFF18;display:flex;align-items:center;justify-content:center;">${mediaIcon('list', 42)}</div>`;
+  const cells = urls.map(u => `<div style="background-image:url('${esc(String(u).replace(/'/g, '%27'))}');background-size:cover;background-position:center;"></div>`).join('')
+    + Array(4 - urls.length).fill('<div style="background:#7C4DFF18;"></div>').join('');
   return `<div class="activity-card-art-img activity-card-mosaic" style="display:grid;gap:2px;">${cells}</div>`;
 }
 
@@ -15589,7 +15613,7 @@ function activityCardHtml(item, globalIndex) {
   const note = item.note ? `<div class="activity-note">${renderActivityNote(item.note)}</div>` : '';
   const isPlaylistAnnouncement = item.type === 'list' && item.tab === 'playlist';
   const art = isPlaylistAnnouncement
-    ? tripPlaylistMosaicHtml()
+    ? tripPlaylistMosaicHtml(item.label)
     : (item.art
       ? `<img src="${item.art}" class="activity-card-art-img" style="display:block;" onerror="this.style.display='none'; handleActivityArtError(${globalIndex})">`
       : `<div class="activity-card-art-img activity-card-art-empty" style="background:${iconColor}18;display:flex;align-items:center;justify-content:center;">${mediaIcon(iconType,42)}</div>`);
@@ -18869,6 +18893,6 @@ renderTasteInfluences();
 })();
 </script>
 
-<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div><details class="picker-tags"><summary>Tag friends <span class="tl-hint">optional</span></summary><div class="tag-field"><label class="tl-label" for="tag-picker-input">Tag friends <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-picker-chips" class="tag-chips"></div><input id="tag-picker-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('picker',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('picker')}"><div id="tag-picker-results" class="tag-results" aria-live="polite"></div></div><div id="picker-friend-tags" hidden></div><div id="picker-friend-results" hidden></div><input id="picker-friend-search" type="hidden"><p style="color:var(--muted);font-size:12px">Selected friends will be tagged on the items you add here.</p></details><label for="music-picker-query">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Search by title or name…" autocomplete="off" oninput="queueFlexibleMusic(this.value)"><p id="music-picker-status" role="status" aria-live="polite"></p><div id="music-picker-results"></div></dialog>
+<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><p class="picker-dest-line" id="music-picker-dest-line">Saving to <strong id="music-picker-dest-name"></strong> <button type="button" class="picker-dest-change" onclick="showPickerDestination()">Change</button></p><div id="music-picker-dest" hidden><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" oninput="updatePickerDestLine()" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div></div><details class="picker-tags"><summary>Tag friends <span class="tl-hint">optional</span></summary><div class="tag-field"><label class="tl-label" for="tag-picker-input">Tag friends <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-picker-chips" class="tag-chips"></div><input id="tag-picker-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('picker',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('picker')}"><div id="tag-picker-results" class="tag-results" aria-live="polite"></div></div><div id="picker-friend-tags" hidden></div><div id="picker-friend-results" hidden></div><input id="picker-friend-search" type="hidden"><p style="color:var(--muted);font-size:12px">Selected friends will be tagged on the items you add here.</p></details><label for="music-picker-query">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Search by title or name…" autocomplete="off" oninput="queueFlexibleMusic(this.value)"><p id="music-picker-status" role="status" aria-live="polite"></p><div id="music-picker-results"></div></dialog>
 </body>
 </html>
