@@ -1033,6 +1033,15 @@ if (new URLSearchParams(location.search).has('list')) {
   .other-fav-card-placeholder { width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: var(--faint); background: var(--surface3); letter-spacing: 0.05em; }
   .other-fav-card-name { font-size: 12px; font-weight: 600; color: var(--text); padding: 7px 8px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .other-fav-card-genre { font-size: 11px; color: var(--muted); padding: 0 8px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 700px) { .other-fav-grid { grid-template-columns: repeat(3, 1fr); } }
+  .author-books { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 1.25rem 1.5rem; }
+  @media (max-width: 700px) { .author-books { grid-template-columns: repeat(3, 1fr); padding: 1rem; } }
+  .author-book { display: flex; flex-direction: column; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .author-book-art { position: relative; aspect-ratio: 2/3; background: var(--surface3); display: flex; align-items: center; justify-content: center; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .author-book-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .author-book-label { padding: 6px 8px 7px; border-top: 1px solid var(--border); }
+  .author-book-label div { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .author-book-label small { font-size: 10px; color: var(--muted); }
 
   /* ── COMING SOON ── */
   .coming-soon-panel { max-width: 480px; margin: 6rem auto; text-align: center; padding: 3rem 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; }
@@ -1205,6 +1214,8 @@ if (new URLSearchParams(location.search).has('list')) {
   .sl-desc { font-size:15px; line-height:1.65; color:#d6d1c8; max-width:520px; margin:0 0 16px; }
   .sl-members { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; font-size:12px; color:var(--muted); }
   .sl-members > div { margin:0 !important; }
+  .sl-list-toolbar { display:flex; justify-content:flex-start; margin:0 0 22px; }
+  .sl-list-toolbar[hidden] { display:none; }
   /* Discussion: like/comment row, then the thread and composer, after the last list item */
   .sl-discussion { max-width:680px; margin:64px 0 24px; padding-top:20px; border-top:1px solid var(--border); }
   .sl-engage { display:flex; align-items:center; gap:2px; margin:0 0 18px -10px; }
@@ -1390,6 +1401,27 @@ if (new URLSearchParams(location.search).has('list')) {
 #paste-rec-modal{position:fixed;inset:0;z-index:1200;background:#000b;display:flex;align-items:center;justify-content:center;padding:16px}
 .paste-rec-dialog{background:var(--surface,#181818);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:24px;width:min(720px,100%);max-height:90dvh;overflow:auto}
 .paste-rec-dialog h2{font-size:24px;margin:0 40px 12px 0}.paste-rec-dialog p{font-size:13px;color:var(--muted);line-height:1.5}
+.rec-tabs{display:flex;gap:4px;margin:18px 0 14px;padding:4px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;width:max-content;max-width:100%}
+.rec-tabs button{font:inherit;font-size:13.5px;font-weight:600;color:var(--muted);background:none;border:0;border-radius:999px;padding:8px 16px;cursor:pointer}
+.rec-tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
+#rec-search-panel[hidden],#paste-rec-fields[hidden],#rec-search-done[hidden],#paste-rec-save[hidden]{display:none}
+#rec-search-results{display:grid;gap:6px;margin-top:8px;max-height:min(50vh,480px);overflow:auto}
+#rec-search-results .picker-kinds{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px;position:sticky;top:0;z-index:1;background:var(--surface,#181818)}
+#rec-search-results .picker-kinds .fav-chip{padding:6px 13px;font-size:12.5px}
+#rec-search-results .extra-result{border-radius:12px;border:1px solid transparent}
+#rec-search-results .extra-result:hover{background:rgba(255,255,255,.04);border-color:var(--border)}
+#rec-search-results .picker-add{margin-left:auto;flex-shrink:0;width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:22px;line-height:1;color:#fff;background:var(--accent)}
+#rec-search-results .extra-result.is-added .picker-add{background:#22C55E;font-size:17px}
+#rec-search-results .extra-result.is-saving .picker-add{background:var(--surface3)}
+.rec-art{position:relative;flex-shrink:0;width:44px;height:58px;border-radius:6px;overflow:hidden;background:linear-gradient(145deg,#383044,#1b1c21);display:inline-flex;align-items:center;justify-content:center;color:#d1b9f4;font-size:20px}
+.rec-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rec-search-status{min-height:0;margin:10px 0 0!important;font-size:13.5px!important;color:#86efac!important}
+.rec-search-status:empty{margin:0!important}
+.rec-search-status.is-error{color:#fca5a5!important}
+.rec-search-note{margin:6px 0!important}
+.rec-manual{justify-self:start;font:inherit;font-size:13px;color:var(--accent);background:none;border:0;padding:8px 2px;cursor:pointer;text-align:left}
+.rec-manual:hover{text-decoration:underline}
+#rec-search-done{margin-top:16px}
 .paste-rec-dialog textarea{resize:vertical}.paste-rec-help{margin:8px 0 18px}.paste-rec-actions{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}
 .paste-rec-group{border-top:1px solid var(--border);padding:18px 0}.paste-rec-search{display:flex;gap:8px}.paste-rec-search input{min-width:0;flex:1}.paste-rec-search select{width:130px}
 .paste-rec-matches{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;max-height:340px;overflow:auto}
@@ -1462,6 +1494,9 @@ if (new URLSearchParams(location.search).has('list')) {
 #music-picker .extra-result.is-saving .picker-add{background:var(--surface3);}
 #music-picker .extra-result.is-added{cursor:default;}
 #music-picker .extra-result.is-added .picker-add{background:#22C55E;font-size:17px;}
+#music-picker .picker-kinds{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px;position:sticky;top:0;z-index:1;background:var(--surface);}
+#music-picker .picker-kinds::-webkit-scrollbar{display:none;}
+#music-picker .picker-kinds .fav-chip{padding:6px 13px;font-size:12.5px;}
 #music-picker .picker-dest-line{margin:14px 0 0;font-size:14px;color:var(--muted);}
 #music-picker .picker-dest-line strong{color:var(--text);font-weight:600;}
 #music-picker .picker-dest-change{font:inherit;font-size:13.5px;color:var(--accent);background:none;border:0;padding:4px 2px;margin-left:4px;cursor:pointer;}
@@ -3216,6 +3251,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
           <div id="taste-list-collaborators"></div>
         </div>
       </header>
+      <div id="sl-list-toolbar" class="sl-list-toolbar" hidden></div>
       <div id="trip-playlist-list"></div>
       <!-- Discussion about the whole list: reads after the items, never between hero and picks -->
       <section class="sl-discussion" id="taste-list-discussion" aria-label="Likes and comments" hidden>
@@ -3554,8 +3590,8 @@ function renderRecsExpanded() {
       <div class="sl-topbar">
         <button class="sl-back" onclick="closeRecsExpanded()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>${owner ? esc(owner) + '’s profile' : 'Back'}</button>
         <div class="sl-actions">${isOwnProfile ? (editing
-          ? `<button class="sl-btn" onclick="openFriendRecForm()">+ Add</button><button class="sl-btn primary" onclick="toggleFriendRecsEditMode()">✓ Done</button>`
-          : `<button class="sl-btn primary" onclick="openFriendRecForm()">+ Add recommendation</button><button class="sl-btn" onclick="toggleFriendRecsEditMode()">✎ Edit</button>`) : ''}</div>
+          ? `<button class="sl-btn" onclick="openPasteRecommendations()">+ Add</button><button class="sl-btn primary" onclick="toggleFriendRecsEditMode()">✓ Done</button>`
+          : `<button class="sl-btn primary" onclick="openPasteRecommendations()">+ Add recommendation</button><button class="sl-btn" onclick="toggleFriendRecsEditMode()">✎ Edit</button>`) : ''}</div>
       </div>
       <h1 class="sl-title">What’s Next</h1>
       <p class="sl-desc" style="margin-bottom:6px;">Things ${isOwnProfile ? 'I want' : esc(owner || 'they') + ' wants'} to check out</p>
@@ -3599,7 +3635,83 @@ function openPasteRecommendations(){
  document.getElementById('paste-rec-text').value='';document.getElementById('paste-rec-from').value='';
  document.getElementById('paste-rec-results').innerHTML='';document.getElementById('paste-rec-status').textContent='';
  document.getElementById('paste-rec-modal').hidden=false;document.getElementById('paste-rec-save').disabled=true;
- document.getElementById('paste-rec-text').focus();
+ recSearch={request:0,timer:null,results:[],kind:null,q:'',added:new Set(),saving:false};
+ document.getElementById('rec-search-q').value='';document.getElementById('rec-search-results').innerHTML='';document.getElementById('rec-search-status').textContent='';
+ setRecAddMode('search');
+}
+// ── Add a recommendation: Search (default) or Paste a message ──
+let recSearch={request:0,timer:null,results:[],kind:null,q:'',added:new Set(),saving:false};
+const REC_KIND_ORDER=['film','tv','book','song','album','artist','podcast'];
+const REC_KIND_LABEL={film:'Movies',tv:'TV',book:'Books',song:'Songs',album:'Albums',artist:'Artists',podcast:'Podcasts'};
+function setRecAddMode(mode){
+ const search=mode==='search';
+ document.getElementById('rec-tab-search').setAttribute('aria-selected',search);
+ document.getElementById('rec-tab-paste').setAttribute('aria-selected',!search);
+ document.getElementById('rec-search-panel').hidden=!search;
+ document.getElementById('paste-rec-fields').hidden=search;
+ document.getElementById('paste-rec-save').hidden=search;
+ document.getElementById('rec-search-done').hidden=!search;
+ document.getElementById(search?'rec-search-q':'paste-rec-text').focus();
+}
+function queueRecSearch(q){
+ clearTimeout(recSearch.timer);const request=++recSearch.request;recSearch.q=q.trim();
+ if(recSearch.q.length<2){recSearch.results=[];renderRecSearch();return;}
+ document.getElementById('rec-search-results').innerHTML='<p class="rec-search-note">Searching…</p>';
+ recSearch.timer=setTimeout(()=>runRecSearch(recSearch.q,request),250);
+}
+async function runRecSearch(q,request){
+ const catalog={film:'movies',tv:'tv',book:'books',song:'music',album:'albums',podcast:'podcasts'};
+ const settled=await Promise.allSettled(REC_KIND_ORDER.map(async type=>{
+  const found=type==='artist'?(await searchOnboardingArtists(q)).map(a=>({title:a.title,art:a.art,sub:a.genre||'',id:a.id})):await searchTasteCatalog(catalog[type],q);
+  return found.slice(0,5).map(r=>({...r,type}));
+ }));
+ if(request!==recSearch.request)return;
+ const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ let results=settled.filter(r=>r.status==='fulfilled').flatMap(r=>r.value).filter(r=>r.title);
+ results.sort((a,b)=>Number(norm(b.title)===norm(q))-Number(norm(a.title)===norm(q)));
+ recSearch.results=results.filter((r,j,a)=>a.findIndex(x=>x.type===r.type&&x.title===r.title&&x.sub===r.sub)===j).slice(0,35);
+ recSearch.added=new Set();
+ recSearch.partial=settled.some(r=>r.status==='rejected');
+ renderRecSearch();
+}
+function setRecSearchKind(k){recSearch.kind=k||null;renderRecSearch();}
+function renderRecSearch(){
+ const el=document.getElementById('rec-search-results');if(!el)return;
+ const q=recSearch.q;if(q.length<2){el.innerHTML='';return;}
+ const res=recSearch.results,kinds=REC_KIND_ORDER.filter(k=>res.some(r=>r.type===k)),f=recSearch.kind;
+ const chips=kinds.length>1?`<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setRecSearchKind(null)">All</button>${kinds.map(k=>`<button type="button" class="fav-chip" aria-pressed="${f===k}" onclick="setRecSearchKind('${k}')">${REC_KIND_LABEL[k]}</button>`).join('')}</div>`:'';
+ const rows=res.map((r,i)=>({r,i})).filter(x=>!f||x.r.type===f).map(({r,i})=>{const added=recSearch.added.has(i);return `<button type="button" class="extra-result${added?' is-added':''}" data-index="${i}" aria-label="Add ${esc(r.title)} to What’s Next" onclick="addRecFromSearch(${i},this)"><span class="rec-art">${r.art?`<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span>${esc((r.title||'?').slice(0,1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([pasteRecTypes[r.type],r.sub,r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${added?'✓':'+'}</span></button>`;}).join('');
+ const manual=`<button type="button" class="rec-manual" onclick="addRecManually()">Can’t find it? Add “${esc(q.slice(0,80))}” as written</button>`;
+ el.innerHTML=chips+(rows||'<p class="rec-search-note">No matches yet.</p>')+(recSearch.partial?'<p class="rec-search-note">Some catalogs could not load.</p>':'')+manual;
+}
+async function insertRec(row,label){
+ const status=document.getElementById('rec-search-status');
+ if(!isOwnProfile||!currentUser)return false;
+ const userId=currentUser.id;
+ if(FRIEND_RECOMMENDATIONS.some(r=>r.type===row.type&&tasteNorm(r.title)===tasteNorm(row.title))){status.className='rec-search-status';status.textContent=row.title+' is already in What’s Next.';return true;}
+ recSearch.saving=true;status.className='rec-search-status';status.textContent='Adding '+row.title+'…';
+ try{
+  if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again before saving.');
+  const from=document.getElementById('paste-rec-from').value.trim();
+  const full={user_id:userId,from_name:from||null,recommenders:from?[{name:from}]:[],sort_order:FRIEND_RECOMMENDATIONS.length,...row};
+  const {error}=await sb.from('friend_recs').insert(full);if(error)throw error;
+  status.textContent='✓ '+row.title+' added to What’s Next'+(from?' · from '+from:'')+'.';
+  loadFriendRecsFromSupabase(userId).catch(()=>{});
+  return true;
+ }catch(e){status.className='rec-search-status is-error';status.textContent=e.message||'Could not save. Please try again.';return false;}
+ finally{recSearch.saving=false;}
+}
+async function addRecFromSearch(i,btn){
+ const r=recSearch.results[i];if(!r||recSearch.saving||recSearch.added.has(i))return;
+ const mark=btn?.querySelector('.picker-add');if(mark)mark.textContent='…';btn?.classList.add('is-saving');
+ const ok=await insertRec({title:r.title,type:r.type,art_url:r.art||null,catalog_item:r});
+ btn?.classList.remove('is-saving');
+ if(ok){recSearch.added.add(i);btn?.classList.add('is-added');if(mark)mark.textContent='✓';}else if(mark)mark.textContent='+';
+}
+async function addRecManually(){
+ const title=recSearch.q.trim();if(!title||recSearch.saving)return;
+ const type=recSearch.kind||'other';
+ if(await insertRec({title,type,art_url:null}))document.getElementById('rec-search-q').select();
 }
 function closePasteRecommendations(){if(pasteRecs.busy)return;pasteRecs.version++;document.getElementById('paste-rec-modal').hidden=true;document.querySelector('#recs-head-controls button')?.focus();}
 function pasteRecDialogKey(e){
@@ -3725,6 +3837,16 @@ function openFriendRecForm(idx) {
   }
   renderFriendRecTagConfirmed();
   document.getElementById('friend-rec-from-field').style.display = friendRecFormState.id ? 'none' : '';
+  // Editing: "Recommended by" as removable tags (TasteList friends or any written-in name).
+  const tagsField = document.getElementById('friend-rec-tags-field');
+  if (tagsField) {
+    tagsField.style.display = friendRecFormState.id ? '' : 'none';
+    if (!tagsField.firstChild) tagsField.innerHTML = tagFieldMarkup('recby', 'Recommended by', 'search a friend on TasteList, or type any name');
+    const item = idx !== undefined ? FRIEND_RECOMMENDATIONS[idx] : null;
+    tagFieldInit('recby', item ? recPeople(item).map(p => p.userId || p.username
+      ? { user_id: p.userId || null, username: p.username || '', display_name: p.name || '', name: p.name || '' }
+      : { name: p.name }) : []);
+  }
   document.getElementById('friend-rec-modal').style.display = 'flex';
 }
 
@@ -3867,7 +3989,12 @@ async function saveFriendRecForm() {
   const taggedUsername = friendRecTagState.selectedUsername;
   let row;
   if (friendRecFormState.id) {
-    row = { title, type, art_url: art || null };   // recommenders are edited on the item's detail card
+    row = { title, type, art_url: art || null };
+    // Recommended by: the tags as edited in the form (the first person is also the item's "from").
+    const tags = await tagFieldValue('recby');
+    row.recommenders = tags.map(t => t.user_id ? { user_id: t.user_id, name: t.display_name || t.name || t.username } : { name: t.name });
+    row.from_name = row.recommenders[0]?.name || null;
+    row.recommended_by_user_id = row.recommenders[0]?.user_id || null;
   } else {
     row = taggedUsername
       ? { title, type, from_name: friendRecTagState.selectedDisplayName || taggedUsername, recommended_by_user_id: await resolveInfluencerId(taggedUsername), art_url: art || null }
@@ -4584,9 +4711,39 @@ function authorPhotoHtml(a) {
     : fallback;
 }
 
+// Favorite Authors: photo tiles like Favorite Directors; tapping one opens their books underneath.
+let expandedAuthorId = null;
+function toggleAuthor(id) { id = String(id); expandedAuthorId = expandedAuthorId === id ? null : id; renderFavoriteAuthors(); }
+function authorInitials(name) { return esc(String(name || '').split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase()); }
 function renderFavoriteAuthors() {
  const el=document.getElementById('favorite-authors');if(!el)return;
- el.innerHTML=!favoriteAuthors.length?'':`<div class="music-section"><div class="music-section-header"><h2 class="music-section-title">Favorite Authors</h2></div>${favoriteAuthors.map(a=>`<details style="padding:20px 0;border-bottom:1px solid var(--border)"><summary style="cursor:pointer;display:flex;align-items:center;gap:16px;list-style:none;">${authorPhotoHtml(a)}<span style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:20px;font-weight:600">${esc(a.name)}</span><small style="font-size:12px;color:var(--muted)">${(a.books||[]).length} favorite book${(a.books||[]).length===1?'':'s'}</small></span></summary>${creatorAction('author',a.id,a.books?.length)}<div style="display:flex;gap:16px;flex-wrap:wrap;padding:16px 0">${(a.books||[]).map(b=>`<div style="width:140px">${b.art?`<img src="${esc(b.art)}" alt="${esc(b.title)}" style="width:140px;height:210px;object-fit:contain" onerror="this.style.display='none'">`:''}<p>${esc(b.title)}</p></div>`).join('')}</div></details>`).join('')}</div>`;
+ if(!favoriteAuthors.length){el.innerHTML='';return;}
+ if(expandedAuthorId!==null&&!favoriteAuthors.some(a=>String(a.id)===expandedAuthorId))expandedAuthorId=null;
+ const count=a=>{const n=(a.books||[]).length;return n?`${n} favorite book${n===1?'':'s'}`:'Author';};
+ const tiles=favoriteAuthors.map(a=>`<div class="other-fav-card ${expandedAuthorId===String(a.id)?'tile-active':''}" role="button" tabindex="0" aria-expanded="${expandedAuthorId===String(a.id)}" onclick="toggleAuthor('${jsStr(String(a.id))}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+    <div class="other-fav-card-img-wrap">${a.photo_url
+      ?`<img class="other-fav-card-img" src="${esc(a.photo_url)}" alt="" loading="lazy" style="object-position:center 20%;" onerror="this.outerHTML='<div class=&quot;other-fav-card-placeholder&quot;>${authorInitials(a.name)}</div>'">`
+      :`<div class="other-fav-card-placeholder">${authorInitials(a.name)}</div>`}</div>
+    <div class="other-fav-card-name">${esc(a.name)}</div>
+    <div class="other-fav-card-genre">${count(a)}</div>
+  </div>`).join('');
+ const a=favoriteAuthors.find(x=>String(x.id)===expandedAuthorId);
+ const books=a?(a.books||[]):[];
+ const panel=!a?'':`<div class="author-panel" style="margin-top:16px;">
+    ${creatorAction('author',a.id,books.length)}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:14px;padding:1.125rem 1.5rem;border-bottom:1px solid var(--border);">
+        ${a.photo_url?`<img src="${esc(a.photo_url)}" alt="" style="width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center 20%;flex-shrink:0;">`:`<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#22C55Ecc,#0f5132);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0;">${authorInitials(a.name)}</div>`}
+        <div><div style="font-size:17px;font-weight:700;">${esc(a.name)}</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">${count(a)}</div></div>
+        <button type="button" aria-label="Close" onclick="toggleAuthor('${jsStr(String(a.id))}')" style="margin-left:auto;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:14px;width:30px;height:30px;border-radius:50%;cursor:pointer;">✕</button>
+      </div>
+      ${books.length?`<div class="author-books">${books.map(b=>`<div class="author-book">
+          <div class="author-book-art">${b.art?`<img src="${esc(b.art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span>${esc(b.title)}</span></div>
+          <div class="author-book-label"><div>${esc(b.title)}</div>${b.year?`<small>${esc(String(b.year))}</small>`:''}</div>
+        </div>`).join('')}</div>`:`<div style="padding:1.5rem;color:var(--faint);font-size:13px;">No books picked yet.</div>`}
+    </div>
+  </div>`;
+ el.innerHTML=`<div class="music-section"><div class="music-section-header"><h2 class="music-section-title">Favorite Authors</h2></div><section class="top5-section"><div class="other-fav-grid">${tiles}</div>${panel}</section></div>`;
 }
 async function addFavoriteAuthor(presetName) {
  if(!isOwnProfile||!currentUser)return;
@@ -4935,7 +5092,7 @@ function renderTasteListCollaborators(list) {
   const name=p?(firstNameOnly(p.display_name)||p.username||'Member'):'Member';
   return `<span class="sl-member-chip">${profileAvatarHtml(p||{display_name:name},24)}${esc(name)}${id===list.user_id?'<small>Owner</small>':''}</span>`;
  }).join('');
- el.innerHTML=`<div class="sl-member-row"><span>Made together · ${ids.length} ${ids.length===1?'member':'members'}</span>${chips}${list.isOwner?`<button type="button" class="sl-btn" onclick="inviteCollaborator('${jsStr(list.id)}')">Invite friends</button>`:''}${tasteListPrivacyControl(list)}</div>${canEditTasteList?'<p class="sl-collaboration-note">Add your picks, change the photo, and discover what everyone brings.</p>':''}`;
+ el.innerHTML=`<div class="sl-member-row"><span>Made together · ${ids.length} ${ids.length===1?'member':'members'}</span>${chips}${tasteListPrivacyControl(list)}</div>`;
 }
 function tasteListPrivacyControl(list) {
  const pub=list.is_public===true;
@@ -7304,16 +7461,34 @@ function searchPickerFriends(value){
 function favoriteFriendTagsHtml(item){const tags=(item.friend_tags||item.friendTags||[]).filter(p=>p&&(p.username||p.name));return tags.length?`<div class="favorite-friend-tags">${tags.map(p=>p.username?`<button type="button" class="activity-summary-title" data-username="${esc(p.username)}" onclick="event.stopPropagation();goToProfile(this.dataset.username)">@${esc(p.username)}</button>`:`<span class="tagged-name">${esc(p.name)}</span>`).join(' ')}</div>`:'';}
 
 const PICKER_IDEAS={music:['Music I Love','On Repeat','Albums That Shaped Me'],albums:['Favorite Albums','No-Skip Albums'],movies:['Favorite Movies','Comfort Movies','Favorite Thrillers'],tv:['Favorite Shows','Favorite Dramas','Favorite Comedies'],books:['Books That Shaped Me','Favorite Books','Recent Reads'],podcasts:['Favorite Podcasts','Current Rotation','Episodes Worth Sharing'],comedy:['Favorite Comedy','Stand-up Favorites']};
-let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null,tab:'music'};
+let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null,tab:'music',kindFilter:null,error:false};
+// Search results can mix types; chips let people narrow to one after searching.
+const PICKER_KIND_ORDER=['movie','tv','book','song','album','artist','podcast','episode','comedian','special'];
+const PICKER_KIND_LABEL={song:'Songs',album:'Albums',artist:'Artists',movie:'Movies',tv:'TV',book:'Books',podcast:'Podcasts',episode:'Episodes',comedian:'Comedians',special:'Specials'};
+function pickerTabForKind(k){return ['song','album','artist'].includes(k)?'music':k==='movie'?'movies':k==='tv'?'tv':k==='book'?'books':['podcast','episode'].includes(k)?'podcasts':['comedian','special'].includes(k)?'comedy':'music';}
+const PICKER_TAB_KIND={movies:'movie',tv:'tv',books:'book',podcasts:'podcast'};
+function setPickerKind(k){flexibleMusic.kindFilter=k||null;renderPickerResults();}
+function renderPickerResults(){
+ const el=document.getElementById('music-picker-results');if(!el)return;
+ const res=flexibleMusic.results;
+ if(!res.length){el.innerHTML=flexibleMusic.searched?'<p>No matches. Try another title or creator.</p>':'';return;}
+ const kinds=PICKER_KIND_ORDER.filter(k=>res.some(p=>p.kind===k));
+ const f=flexibleMusic.kindFilter;
+ const chipKinds=f&&!kinds.includes(f)?[...kinds,f]:kinds;
+ const chips=chipKinds.length>1?`<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setPickerKind(null)">All</button>${chipKinds.map(k=>`<button type="button" class="fav-chip" aria-pressed="${f===k}" onclick="setPickerKind('${k}')">${PICKER_KIND_LABEL[k]||k}</button>`).join('')}</div>`:'';
+ const rows=res.map((p,i)=>({p,i})).filter(x=>!f||x.p.kind===f).map(({p,i})=>`<button type="button" class="extra-result" data-index="${i}" aria-label="Add ${esc(p.title)}${p.artist||p.author?' by '+esc(p.artist||p.author):''}" onclick="saveFlexibleMusic(${i},this)">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.album,p.year].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">+</span></button>`).join('');
+ el.innerHTML=chips+(rows||`<p>No ${esc((PICKER_KIND_LABEL[f]||'matches').toLowerCase())} for this search. <button type="button" class="picker-dest-change" onclick="setPickerKind(null)">Show all results</button></p>`)+(flexibleMusic.error?'<p>Some results could not load. Search again to retry.</p>':'');
+}
 function openFlexibleMusicPicker(category=null){openUnifiedPicker('music',category);}
-function openUnifiedPicker(tab,category=null){
+function openUnifiedPicker(tab,category=null,opts={}){
  if(!isOwnProfile||!currentUser||flexibleMusic.saving)return;
+ if(tab==='all')return openAllPicker();
  // Never make anyone name a list before adding: default to their main list of this type.
  if(!category)category=pickerDefaultList(tab);
- flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.tab=tab;resetPickerFriendTags();
+ flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.searched=false;flexibleMusic.tab=tab;flexibleMusic.kindFilter=opts.kind||null;resetPickerFriendTags();
  const tabs=tab==='music'?['music','albums']: [tab];
  const names=[...new Set([...tabs.flatMap(t=>Object.keys(CUSTOM_LISTS[t]||{})),...extraLists.filter(l=>l.category===tab).map(l=>l.title)])];
- const select=document.getElementById('music-picker-list');select.innerHTML='<option value="">Start a new list</option>'+names.map(n=>`<option value="${esc(n)}">${esc(customListLabel(tab,n))}</option>`).join('');
+ const select=document.getElementById('music-picker-list');select.innerHTML='<option value="">+ Start a new list</option>'+names.map(n=>`<option value="${esc(n)}">${esc(customListLabel(tab,n))}</option>`).join('');
  select.value=category&&names.includes(category)?category:'';
  document.getElementById('music-picker-name').value=category&&!names.includes(category)?category:'';
  document.getElementById('music-picker-title').textContent=listCtaLabel(tab);
@@ -7323,11 +7498,38 @@ function openUnifiedPicker(tab,category=null){
  document.getElementById('music-picker-dest').hidden=true;document.getElementById('music-picker-dest-line').hidden=false;updatePickerDestLine();
  document.getElementById('music-picker').showModal();document.getElementById('music-picker-query').focus();
 }
-function pickerDestinationChanged(){document.getElementById('music-picker-new-list').hidden=!!document.getElementById('music-picker-list').value;updatePickerDestLine();}
-function pickerDestinationValue(){return document.getElementById('music-picker-list').value||document.getElementById('music-picker-name').value.trim();}
+function pickerDestinationChanged(){
+ const v=document.getElementById('music-picker-list').value;
+ document.getElementById('music-picker-new-list').hidden=!!v&&v!=='__new';
+ if(v==='__new')setTimeout(()=>document.getElementById('music-picker-name')?.focus(),0);
+ // Searching everything and then choosing a specific list: show just that list's type.
+ if(flexibleMusic.tab==='all'){const t=v.includes('::')?v.slice(0,v.indexOf('::')):'';flexibleMusic.kindFilter=t==='albums'?'album':(PICKER_TAB_KIND[t]||null);renderPickerResults();}
+ updatePickerDestLine();
+}
+// "Add something you love": one search across every type; each pick goes to that type's favorites
+// list unless a specific list is chosen.
+function openAllPicker(){
+ flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.searched=false;flexibleMusic.tab='all';flexibleMusic.kindFilter=null;resetPickerFriendTags();
+ const group=(label,pairs)=>pairs.length?`<optgroup label="${label}">${pairs.map(([t,n])=>`<option value="${esc(t+'::'+n)}">${esc(customListLabel(t,n))}</option>`).join('')}</optgroup>`:'';
+ const extra=c=>extraLists.filter(l=>l.category===c).map(l=>[c,l.title]);
+ const own=t=>Object.keys(CUSTOM_LISTS[t]||{}).map(n=>[t,n]);
+ const select=document.getElementById('music-picker-list');
+ select.innerHTML='<option value="__auto">Favorites</option><option value="__new">+ Start a new list</option>'+group('Music',[...own('music'),...own('albums'),...extra('music')])+group('Movies',own('movies'))+group('TV',own('tv'))+group('Books',own('books'))+group('Podcasts',extra('podcasts'));
+ select.value='__auto';document.getElementById('music-picker-name').value='';
+ document.getElementById('music-picker-title').textContent='Add something you love';
+ document.getElementById('music-picker-hint').textContent='Search movies, shows, books, music and podcasts — then narrow by type.';
+ document.getElementById('music-picker-ideas').innerHTML=['Comfort Picks','Summer 2026','Everyone Should Try'].map(name=>`<button type="button" class="profile-control" data-name="${esc(name)}" onclick="document.getElementById('music-picker-name').value=this.dataset.name;updatePickerDestLine()">${esc(name)}</button>`).join('');
+ pickerDestinationChanged();document.getElementById('music-picker-query').value='';document.getElementById('music-picker-results').innerHTML='';document.getElementById('music-picker-status').textContent='';
+ document.getElementById('music-picker-dest').hidden=true;document.getElementById('music-picker-dest-line').hidden=false;updatePickerDestLine();
+ document.getElementById('music-picker').showModal();document.getElementById('music-picker-query').focus();
+}
+function pickerDestinationValue(){const v=document.getElementById('music-picker-list').value;return v&&v!=='__new'?v:document.getElementById('music-picker-name').value.trim();}
 function updatePickerDestLine(){
  const el=document.getElementById('music-picker-dest-name');if(!el)return;
- const v=pickerDestinationValue();el.textContent=v?customListLabel(flexibleMusic.tab,v):'a new list';
+ const v=pickerDestinationValue();
+ if(flexibleMusic.tab==='all'&&document.getElementById('music-picker-list').value==='__new'){el.textContent=v||'a new list';return;}
+ if(flexibleMusic.tab==='all'){el.textContent=v.includes('::')?customListLabel(v.slice(0,v.indexOf('::')),v.slice(v.indexOf('::')+2)):'Favorites';return;}
+ el.textContent=v?customListLabel(flexibleMusic.tab,v):'a new list';
 }
 function showPickerDestination(){
  document.getElementById('music-picker-dest').hidden=false;document.getElementById('music-picker-dest-line').hidden=true;
@@ -7335,7 +7537,7 @@ function showPickerDestination(){
 }
 function queueFlexibleMusic(q){
  clearTimeout(flexibleMusic.timer);const request=++flexibleMusic.request;flexibleMusic.results=[];
- document.getElementById('music-picker-results').innerHTML='';if(q.trim().length<2)return;
+ flexibleMusic.searched=false;document.getElementById('music-picker-results').innerHTML='';if(q.trim().length<2)return;
  flexibleMusic.timer=setTimeout(()=>searchFlexibleMusic(q.trim(),request),250);
 }
 const artistPreviewPhotos=new Map();
@@ -7349,12 +7551,11 @@ async function previewArtistPhoto(name){
 }
 async function searchFlexibleMusic(q,request){
  const userId=currentUser?.id,el=document.getElementById('music-picker-results');el.innerHTML='<p>Searching…</p>';
- const kinds=({music:['song','album','artist'],albums:['album'],movies:['movie'],tv:['tv'],books:['book'],podcasts:['podcast','episode'],comedy:['comedian','special']})[flexibleMusic.tab]||[];
+ const kinds=({all:['movie','tv','book','song','album','artist','podcast'],music:['song','album','artist'],albums:['album'],movies:['movie'],tv:['tv'],books:['book'],podcasts:['podcast','episode'],comedy:['comedian','special']})[flexibleMusic.tab]||[];
  const results=await Promise.allSettled(kinds.map(kind=>onboardingAutocompleteProvider(kind,q)));
  if(request!==flexibleMusic.request||userId!==currentUser?.id)return;
- flexibleMusic.results=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)).slice(0,30);
- el.innerHTML=flexibleMusic.results.map((p,i)=>`<button type="button" class="extra-result" aria-label="Add ${esc(p.title)}${p.artist||p.author?' by '+esc(p.artist||p.author):''}" onclick="saveFlexibleMusic(${i},this)">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.album,p.year].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">+</span></button>`).join('')||'<p>No matches. Try another title or creator.</p>';
- if(results.some(r=>r.status==='rejected'))el.innerHTML+='<p>Some results could not load. Search again to retry.</p>';
+ flexibleMusic.results=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)).slice(0,flexibleMusic.tab==='all'?42:30);
+ flexibleMusic.searched=true;flexibleMusic.error=results.some(r=>r.status==='rejected');renderPickerResults();
  const artistJobs=flexibleMusic.results.map((p,index)=>({p,index})).filter(({p})=>p.kind==='artist'&&!onboardingArt(p));
  let nextArtist=0;
  async function worker(){while(nextArtist<artistJobs.length){
@@ -7363,7 +7564,7 @@ async function searchFlexibleMusic(q,request){
   if(request!==flexibleMusic.request||userId!==currentUser?.id)return;
   if(!art||flexibleMusic.results[index]!==p)continue;
   p.art=art;
-  const tile=el.querySelectorAll('button.extra-result')[index]?.querySelector('.ob-art');
+  const tile=el.querySelector(`button.extra-result[data-index="${index}"]`)?.querySelector('.ob-art');
   if(tile){const image=document.createElement('img');image.alt='';image.src=art;image.onerror=()=>image.remove();tile.replaceChildren(image);}
  }}
  await Promise.allSettled([worker(),worker(),worker()]);
@@ -7372,7 +7573,13 @@ async function saveFlexibleMusic(index,row){
  const p=flexibleMusic.results[index];if(!p||flexibleMusic.saving||!isOwnProfile||row?.classList.contains('is-added'))return;
  const status=document.getElementById('music-picker-status');
  const setRow=(state,mark)=>{if(!row)return;row.classList.remove('is-saving','is-added');if(state)row.classList.add(state);const m=row.querySelector('.picker-add');if(m)m.textContent=mark;};
- const category=document.getElementById('music-picker-list').value||document.getElementById('music-picker-name').value.trim();
+ const allMode=flexibleMusic.tab==='all', itemTab=allMode?pickerTabForKind(p.kind):flexibleMusic.tab;
+ let category;
+ if(allMode){
+  const v=document.getElementById('music-picker-list').value, t=v.includes('::')?v.slice(0,v.indexOf('::')):'';
+  category=v==='__new'?document.getElementById('music-picker-name').value.trim()
+   :t&&(t===itemTab||(t==='albums'&&itemTab==='music'))?v.slice(v.indexOf('::')+2):pickerDefaultList(itemTab);
+ } else category=document.getElementById('music-picker-list').value||document.getElementById('music-picker-name').value.trim();
  if(!category){status.className='is-error';status.textContent='Name your new list first, then tap a result to add it.';showPickerDestination();document.getElementById('music-picker-name').focus();return;}
  if(category.length>120){status.textContent='Use a list name of 120 characters or fewer.';return;}
  const userId=currentUser?.id;flexibleMusic.saving=true;status.className='';status.textContent='Adding '+p.title+'…';setRow('is-saving','…');
@@ -7382,7 +7589,7 @@ async function saveFlexibleMusic(index,row){
   // A song or album picked while an artist list is selected goes to the matching kind of list
   // (and an artist picked for a song/album list goes to the main artist list).
   let target=category;
-  if(flexibleMusic.tab==='music'){
+  if(itemTab==='music'){
    const isArtistList=!!CUSTOM_LISTS.music?.[category], isAlbumList=!!CUSTOM_LISTS.albums?.[category], isSongList=extraLists.some(l=>l.category==='music'&&l.title===category);
    if(p.kind==='song'&&(isArtistList||isAlbumList))target='Favorite Songs';
    else if(p.kind==='album'&&(isArtistList||isSongList))target='Favorite Albums';
@@ -7390,7 +7597,7 @@ async function saveFlexibleMusic(index,row){
    // First pick into the default "Favorite Artists" (not created yet): songs and albums get their own lists.
    else if(category===MAIN_LIST_DEFAULT.music&&!isArtistList&&!isAlbumList&&!isSongList){if(p.kind==='song')target='Favorite Songs';else if(p.kind==='album')target=MAIN_LIST_DEFAULT.albums;}
   }
-  const listName=customListLabel(p.kind==='album'?'albums':flexibleMusic.tab,target);
+  const listName=customListLabel(p.kind==='album'?'albums':itemTab,target);
   if(onboardingAlreadySaved(p,target)){status.textContent=p.title+' is already in '+listName+'.';setRow('is-added','✓');return;}
   await saveOnboardingItem({...p,category:target,friend_tags},userId);
   if(currentUser?.id!==userId)return;
@@ -9758,6 +9965,7 @@ async function saveVideoItemForm() {
 
 function openArtistItemForm(artistId, category) {
   if (!isOwnProfile) return;
+  if (artistId === undefined && category && !['top5', 'other'].includes(category)) { openUnifiedPicker('music', category, { kind: 'artist' }); return; }
   if (artistId !== undefined && Object.values(CUSTOM_LISTS.music).flat().some(x => x.id === artistId && x.videoId)) return openVideoItemForm(category, artistId);
   artistItemFormState = { id: null, category: category || 'Untitled' };
   document.getElementById('artist-item-modal-error').style.display = 'none';
@@ -10512,6 +10720,7 @@ let albumItemFormState = { id: null };
 
 function openAlbumItemForm(albumId, category) {
   if (!isOwnProfile) return;
+  if (albumId === undefined && category) { openUnifiedPicker('music', category, { kind: 'album' }); return; }
   albumItemFormState = { id: null, category: category || 'Untitled' };
   document.getElementById('album-item-modal-error').style.display = 'none';
   document.getElementById('album-item-name').value = '';
@@ -11383,10 +11592,8 @@ function renderFavoritesFilterBar() {
     const plus = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
     let ctaHtml = '';
     if (showCta) {
-      ctaHtml = filter === 'all' && favoritesAreNew(counts)
-        ? `<button type="button" class="ed-primary" onclick="resumeOnboarding()">${plus}Add something you love</button>`
-        : filter === 'all'
-        ? `<details class="fav-add-menu"><summary class="ed-primary">${plus}Add something you love</summary><div class="fav-add-menu-list" role="menu">${FAV_TYPES.map(t => `<button type="button" role="menuitem" onclick="this.closest('details').open=false;addToMainList('${t.key}')">${t.label}</button>`).join('')}</div></details>`
+      ctaHtml = filter === 'all'
+        ? `<button type="button" class="ed-primary" onclick="openUnifiedPicker('all')">${plus}Add something you love</button>`
         : `<button type="button" class="ed-primary" onclick="addToMainList('${filter}')">${plus}${esc(listCtaLabel(filter))}</button>${listCtaLinksHtml(filter, { books: 'goodreads', movies: 'letterboxd', tv: 'letterboxd' }[filter] || '')}`;
       ctaHtml = `<div class="fav-cta">${ctaHtml}</div>`;
     }
@@ -13334,6 +13541,8 @@ let customAddModalTarget = null; // { tab, cat }
 
 function openCustomAddModal(tab, cat) {
   if (!isOwnProfile) return;
+  // Adding is search-first everywhere: find it, tap it. (The old forms needed typed-in fields.)
+  if (['books', 'movies', 'tv'].includes(tab)) { openUnifiedPicker(tab, cat); return; }
   customAddModalTarget = { tab, cat };
   if (tab === 'books') {
     document.getElementById('book-grid-title').value = '';
@@ -14299,10 +14508,18 @@ function renderTasteListHeader(flat) {
     byline.innerHTML = `${avatar}<div><div class="sl-byline-name">${owner?.username ? `<a href="javascript:void(0)" onclick="goToProfile('${esc(owner.username)}')" style="color:inherit;text-decoration:none;">${esc(name)}</a>` : esc(name)}</div><div class="sl-byline-meta">${meta}</div></div>`;
   }
   const actions = document.getElementById('sl-actions');
-  if (actions) actions.innerHTML = (canEditTasteList ? `<button type="button" class="sl-btn primary" onclick="openTasteItemForm()">+ Add item</button><button type="button" class="list-icon-control sl-icon-control" aria-label="${editMode?'Done editing':'Edit list'}" title="${editMode?'Done editing':'Edit list'}" aria-pressed="${editMode}" onclick="toggleEditMode()">${listActionIcon(editMode?'done':'edit')}</button>` : '')
+  if (actions) actions.innerHTML = (canEditTasteList ? `<button type="button" class="list-icon-control sl-icon-control" aria-label="${editMode?'Done editing':'Edit list'}" title="${editMode?'Done editing':'Edit list'}" aria-pressed="${editMode}" onclick="toggleEditMode()">${listActionIcon(editMode?'done':'edit')}</button>` : '')
     + (list?.isOwner ? `<button type="button" class="list-icon-control sl-icon-control" aria-label="Delete list" title="Delete list" onclick="deleteSharedTasteList('${jsStr(list.id)}')">${listActionIcon('trash')}</button>` : '')
     + (canEditTasteList ? `<button type="button" class="list-icon-control sl-icon-control" aria-label="Change cover photo" title="Change cover photo" onclick="document.getElementById('shared-cover-input').click()">${listActionIcon('camera')}</button>` : '')
-    + (list ? `<button type="button" class="sl-btn" onclick="openSharedListShare()">${list.isOwner?'Invite / share list':'Share list'} ↗</button>` : '');
+    + (list ? (list.isOwner
+        ? `<button type="button" class="sl-btn" onclick="inviteCollaborator('${jsStr(list.id)}')">Invite &amp; share</button>`
+        : `<button type="button" class="sl-btn" onclick="openSharedListShare()">Share list ↗</button>`) : '');
+  // Adding sits with the content it adds to, just above the items (the empty list has its own prompts).
+  const toolbar = document.getElementById('sl-list-toolbar');
+  if (toolbar) {
+    toolbar.hidden = !(canEditTasteList && flat.length);
+    toolbar.innerHTML = toolbar.hidden ? '' : `<button type="button" class="ed-primary" onclick="openTasteItemForm()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add item</button>`;
+  }
   const bg = document.getElementById('sl-hero-bg');
   if (bg) {
     const pick = flat.find(i => i.backdrop) || flat.find(i => ['movies', 'tv'].includes(i.cat) && i.art) || flat.find(i => i.art);
@@ -15659,7 +15876,7 @@ function activityCardHtml(item, globalIndex) {
 function compactProfileEmpty(kind){
  const own=!!currentUser&&isOwnProfile&&viewedProfile?.id===currentUser.id;
  const next=kind==='next';
- return `<div class="profile-compact-empty"><p>${own?(next?'Something you want to remember?':'Anything worth talking about lately?'):(next?'No recommendations saved yet.':'No updates shared yet.')}</p>${own?`<button type="button" class="ed-link" onclick="${next?'openPasteRecommendations()':'openActivityItemForm()'}">${next?'Save it for later':'Share a thought'} <span aria-hidden="true">→</span></button>`:''}</div>`;
+ return `<div class="profile-compact-empty"><p>${own?(next?'Something you want to remember?':'Anything worth talking about lately?'):(next?'No recommendations saved yet.':'No updates shared yet.')}</p>${own?`<button type="button" class="ed-link" onclick="${next?'openPasteRecommendations()':'openFeedComposer()'}">${next?'Save it for later':'Share a thought'} <span aria-hidden="true">→</span></button>`:''}</div>`;
 }
 function renderActivityFeed(containerId, filterFn) {
   const el = document.getElementById(containerId);
@@ -15683,7 +15900,7 @@ function renderActivityFeed(containerId, filterFn) {
       controlsEl.innerHTML = (isOwnProfile && items.length) ? `
         <div style="display:flex;align-items:center;gap:8px;">
           <button type="button" class="ed-link" onclick="toggleActivityEditMode()">${activityEditMode ? 'Done' : 'Edit'}</button>
-          <button type="button" class="ed-primary" onclick="openActivityItemForm()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add update</button>
+          <button type="button" class="ed-primary" onclick="openFeedComposer()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add update</button>
         </div>` : '';
     }
   }
@@ -15792,7 +16009,7 @@ async function onboardingGoAddMovies() {
 
 async function onboardingGoAddUpdate() {
   await goToMyProfileView();
-  openActivityItemForm();
+  openFeedComposer();
 }
 
 // Empty profiles have one entry point; populated profiles use the compact resume button.
@@ -15963,7 +16180,7 @@ function normalizeTags(list) {
   for (const t of (Array.isArray(list) ? list : [])) {
     if (!t) continue;
     const uid = t.user_id || t.id;
-    if (uid || t.username) { if (!out.some(x => (uid && x.user_id === uid) || (t.username && x.username === t.username))) out.push({ user_id: uid || null, username: t.username || '', display_name: t.display_name || '' }); }
+    if (uid || t.username) { if (!out.some(x => (uid && x.user_id === uid) || (t.username && x.username === t.username))) out.push({ user_id: uid || null, username: t.username || '', display_name: t.display_name || t.name || '' }); }
     else if (t.name && String(t.name).trim()) { const n = String(t.name).trim().slice(0, 60); if (!out.some(x => !x.username && x.name?.toLowerCase() === n.toLowerCase())) out.push({ name: n }); }
   }
   return out.slice(0, 20);
@@ -15979,7 +16196,8 @@ function tagState(ns) { return TAG_FIELDS[ns] || (TAG_FIELDS[ns] = { selected: [
 function renderTagChips(ns) {
   if (ns === 'feed') { const chip = document.getElementById('feed-tag-chip'); if (chip) chip.textContent = feedTagChipLabel(); }
   const el = document.getElementById(`tag-${ns}-chips`); if (!el) return;
-  el.innerHTML = tagState(ns).selected.map((t, i) => `<button type="button" class="tag-chip${t.username ? '' : ' is-name'}" aria-label="Remove ${esc(t.username ? '@' + t.username : t.name)}" onclick="tagFieldRemove('${ns}',${i})">${esc(t.username ? '@' + t.username : t.name)} <span aria-hidden="true">×</span></button>`).join('');
+  const chipLabel = t => t.username ? '@' + t.username : (t.name || t.display_name || '');
+  el.innerHTML = tagState(ns).selected.map((t, i) => `<button type="button" class="tag-chip${t.username ? '' : ' is-name'}" aria-label="Remove ${esc(chipLabel(t))}" onclick="tagFieldRemove('${ns}',${i})">${esc(chipLabel(t))} <span aria-hidden="true">×</span></button>`).join('');
 }
 function tagFieldSearch(ns, value) {
   const st = tagState(ns); clearTimeout(st.timer);
@@ -18522,19 +18740,29 @@ renderTasteInfluences();
 <div id="paste-rec-modal" hidden onclick="if(event.target===this)closePasteRecommendations()">
  <div class="paste-rec-dialog" role="dialog" aria-modal="true" aria-labelledby="paste-rec-heading" onkeydown="pasteRecDialogKey(event)">
  <button type="button" class="sl-btn" style="float:right" aria-label="Close" onclick="closePasteRecommendations()">×</button>
- <h2 id="paste-rec-heading">What did your friend recommend?</h2>
+ <h2 id="paste-rec-heading">Add a recommendation</h2>
+ <label class="tl-label" for="paste-rec-from">Recommended by <span class="tl-hint">optional</span></label>
+ <input class="tl-input" id="paste-rec-from" maxlength="120" placeholder="e.g. Jenny">
+ <div class="rec-tabs" role="tablist" aria-label="How to add">
+  <button type="button" role="tab" id="rec-tab-search" aria-selected="true" onclick="setRecAddMode('search')">Search</button>
+  <button type="button" role="tab" id="rec-tab-paste" aria-selected="false" onclick="setRecAddMode('paste')">Paste a message</button>
+ </div>
+ <div id="rec-search-panel" role="tabpanel" aria-labelledby="rec-tab-search">
+  <input class="tl-input" id="rec-search-q" type="search" autocomplete="off" placeholder="Search a movie, show, book, song, artist or podcast…" oninput="queueRecSearch(this.value)">
+  <p id="rec-search-status" class="rec-search-status" role="status" aria-live="polite"></p>
+  <div id="rec-search-results"></div>
+ </div>
+ <fieldset id="paste-rec-fields" role="tabpanel" aria-labelledby="rec-tab-paste" hidden style="border:0;padding:0;margin:0;min-width:0">
  <p>Paste a text, a link, or a few titles. Choose the right matches, then save them together.</p>
- <fieldset id="paste-rec-fields" style="border:0;padding:0;margin:0;min-width:0">
  <label class="tl-label" for="paste-rec-text">Message or links</label>
  <textarea class="tl-input" id="paste-rec-text" maxlength="5000" rows="4" placeholder="Jenny said watch Severance, listen to All-In, and read Tomorrow and Tomorrow and Tomorrow."></textarea>
  <p class="paste-rec-help">For a list of titles, put each on its own line. The original message is saved as a note with your recommendations.</p>
- <label class="tl-label" for="paste-rec-from">Recommended by (optional)</label>
- <input class="tl-input" id="paste-rec-from" maxlength="120" placeholder="e.g. Jenny">
- <div class="paste-rec-actions"><button type="button" class="ed-primary" onclick="findPastedRecommendations()">Find recommendations</button><button type="button" class="ob-text-link" onclick="closePasteRecommendations();openFriendRecForm()">Add manually</button></div>
+ <div class="paste-rec-actions"><button type="button" class="ed-primary" onclick="findPastedRecommendations()">Find recommendations</button></div>
  <p id="paste-rec-status" role="status" aria-live="polite"></p>
  <div id="paste-rec-results"></div>
  </fieldset>
- <button type="button" id="paste-rec-save" class="ed-primary" disabled onclick="savePastedRecommendations()">Save to What’s Next</button>
+ <button type="button" id="paste-rec-save" class="ed-primary" hidden disabled onclick="savePastedRecommendations()">Save to What’s Next</button>
+ <button type="button" id="rec-search-done" class="sl-btn" onclick="closePasteRecommendations()">Done</button>
  </div>
 </div>
 
@@ -18579,6 +18807,7 @@ renderTasteInfluences();
       <div id="rec-tag-results" aria-live="polite"></div>
       <div id="rec-tag-confirmed" style="display:none;"></div>
     </div>
+    <div class="tl-field" id="friend-rec-tags-field" style="display:none;"></div>
 
     <div class="tl-field">
       <label class="tl-label">Cover / poster URL <span class="tl-hint">optional</span></label>
@@ -18755,8 +18984,8 @@ renderTasteInfluences();
       <div id="invite-members" role="list"></div>
     </div>
     <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;">
-      <span style="font-size:12.5px;color:var(--muted);line-height:1.45;">Friend not on TasteList yet? Send them a link to join, then add them here.</span>
-      <button id="invite-copy-link" onclick="copyJoinLink()" style="flex-shrink:0;font:inherit;font-size:12.5px;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:8px 14px;cursor:pointer;">Copy join link</button>
+      <span style="font-size:12.5px;color:var(--muted);line-height:1.45;">Not on TasteList yet, or sharing more widely? Send a link to this list.</span>
+      <button id="invite-copy-link" onclick="closeInviteModal();openSharedListShare()" style="flex-shrink:0;font:inherit;font-size:12.5px;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:8px 14px;cursor:pointer;">Share a link ↗</button>
     </div>
   </div>
 </div>
