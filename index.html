@@ -1257,6 +1257,8 @@ if (new URLSearchParams(location.search).has('list')) {
   .sl-comment:hover .sl-comment-delete, .sl-comment-delete:focus-visible { opacity:1; }
   .sl-comment-delete:hover { color:var(--text); }
   @media (hover: none) { .sl-comment-delete { opacity:1; } }
+  .sl-comment-actions { margin-top:6px; font-size:12.5px; color:var(--muted); }
+  .sl-comment-actions .reaction-badge-btn { font-size:13px !important; }
   .sl-comment-body { margin-top:3px; font-size:14px; line-height:1.55; color:#d6d1c8; white-space:pre-wrap; overflow-wrap:anywhere; }
   .sl-comments-note { font-size:13.5px; color:var(--muted); padding:10px 0 2px; }
   .sl-comments-note button { background:none; border:0; padding:0; font:inherit; font-weight:600; color:var(--accent); cursor:pointer; }
@@ -6274,14 +6276,20 @@ async function loadNotifications() {
   }
 }
 
-const NOTIF_TARGET_NOUN = { activity_feed: 'post', artist: 'artist', album: 'album', book: 'book', movie: 'movie', tv: 'show', director: 'director', list: 'list', taste_list: 'shared list', taste_list_item: 'pick' };
+const NOTIF_TARGET_NOUN = { comment: 'comment', activity_feed: 'post', artist: 'artist', album: 'album', book: 'book', movie: 'movie', tv: 'show', director: 'director', list: 'list', taste_list: 'shared list', taste_list_item: 'pick' };
 const NOTIF_ROWS = new Map();
 // Comment notification → open the commented item on your own profile (or shared list), open its
 // comments, scroll there and put the cursor in the reply box.
 async function openCommentTarget(notifId) {
   const n = NOTIF_ROWS.get(notifId); if (!n) return;
   closeNotificationsDropdown();
-  const type = n.target_type, id = n.target_id;
+  let type = n.target_type, id = n.target_id;
+  // A reaction on a comment opens the thread that comment belongs to.
+  if (type === 'comment' && sb) {
+    const { data } = await sb.from('comments').select('target_type, target_id').eq('id', id).maybeSingle();
+    if (!data) { showToast('Couldn’t find that comment — it may have been removed.'); return; }
+    type = data.target_type; id = data.target_id;
+  }
   const focusReply = async () => {
     for (let t = 0; t < 20; t++) {   // the thread loads asynchronously; wait briefly for its reply box
       const box = document.getElementById(`comment-input-${type}-${id}`);
@@ -6322,13 +6330,13 @@ async function openCommentTarget(notifId) {
       switchTab('favorites'); switchFavoritesFilter(data?.tab === 'albums' ? 'music' : (data?.tab || 'music'));
       if (await openInline()) return;
     } else if (type === 'taste_list') {
-      await openTasteList(id);
-      await showTasteListComments(id, { scroll: false });
-      if (await focusReply()) return;
+      if (await openSharedListById(id)) {
+        await showTasteListComments(id, { scroll: false });
+        if (await focusReply()) return;
+      }
     } else if (type === 'taste_list_item') {
       const { data } = await sb.from('taste_list_items').select('list_id').eq('id', id).maybeSingle();
-      if (data?.list_id) {
-        await openTasteList(data.list_id);
+      if (data?.list_id && await openSharedListById(data.list_id)) {
         const idx = tripPlaylistFlatItems.findIndex(i => String(i.id) === String(id));
         if (idx >= 0) { await openTripPlaylistSummary(idx); if (await focusReply()) return; }
       }
@@ -6377,7 +6385,7 @@ async function openNotificationTarget(notifId) {
 
 const NOTIF_COPY = {
   tag: (who, n) => `${who} tagged you${n.target_label ? ` in <strong>${esc(n.target_label)}</strong>` : ''}`,
-  reaction: (who, n) => `${who} reacted ${n.reaction || '👍'} to ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'your ' + (NOTIF_TARGET_NOUN[n.target_type] || 'post')}`,
+  reaction: (who, n) => n.target_type === 'comment' ? `${who} reacted ${n.reaction || '👍'} to your comment${n.target_label ? `:<span class="notif-comment">“${esc(n.target_label)}”</span>` : ''}` : `${who} reacted ${n.reaction || '👍'} to ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'your ' + (NOTIF_TARGET_NOUN[n.target_type] || 'post')}`,
   comment_reply: (who, n) => `${who} also commented on ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'a post you commented on'}:<span class="notif-comment">“${esc(n.comment_preview || '')}”</span><span class="notif-reply">Reply →</span>`,
   new_post: (who, n) => `${who} posted ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'a new update'}`,
   rec_saved: (who, n) => `${who} added your pick ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : ''} to their What’s Next`,
@@ -6406,7 +6414,7 @@ function renderNotificationsDropdown(rows) {
       const text = copyFn ? copyFn(who, n) : 'Something happened';
       const isRequest = n.type === 'follow_request';
       NOTIF_ROWS.set(n.id, n);
-      const isComment = n.type === 'comment' && n.target_type && n.target_id;
+      const isComment = (n.type === 'comment' || (n.type === 'reaction' && n.target_type === 'comment')) && n.target_type && n.target_id;
       const goesToTarget = (n.target_type === 'activity_feed' && ['new_post','comment_reply','reaction','tag'].includes(n.type)) || ['list_item','list_joined','list_added'].includes(n.type) || (n.type === 'comment_reply' && /^taste_list/.test(n.target_type || ''));
       const action = isComment ? `onclick="openCommentTarget('${n.id}')"` : goesToTarget ? `onclick="openNotificationTarget('${n.id}')"` : (isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`);
       return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);${n.read ? '' : 'background:rgba(124,77,255,0.08);'}display:flex;flex-direction:column;gap:6px;${isRequest ? '' : 'cursor:pointer;'}" ${action}>
@@ -15321,6 +15329,7 @@ async function toggleReaction(targetType, targetId, reaction, onDone) {
     }
     LIKE_CACHE[key] = state;
   } catch (e) {
+    if (targetType === 'comment' && /likes_target_type_check|check constraint/i.test(e.message || '')) { showToast('Reactions on comments need a quick database update first.'); return; }
     alert('Failed to update reaction: ' + (e.message || 'unknown error'));
     return;
   }
@@ -15422,6 +15431,20 @@ function renderReactionPeople(){
  }).join(''):'<p>No reactions yet.</p>';
 }
 
+// Reactions on comments are likes rows with target_type 'comment'. One query per batch of comments.
+async function loadCommentReactions(ids) {
+  ids = [...new Set((ids || []).filter(Boolean))];
+  if (!sb || !ids.length) return;
+  try {
+    const { data, error } = await sb.from('likes').select('target_id, user_id, reaction').eq('target_type', 'comment').in('target_id', ids);
+    if (error) return;
+    ids.forEach(id => { LIKE_CACHE[engagementKey('comment', id)] = emptyLikeState(); });
+    absorbLikeRows('comment', data || []);
+  } catch (_) {}
+}
+function commentReactionHtml(c) {
+  return `<span class="comment-react" id="comment-react-${esc(String(c.id))}">${reactionBadgeHtml('comment', c.id)}</span>`;
+}
 function commentRowToItem(row) {
   return {
     id: row.id,
@@ -15441,6 +15464,7 @@ async function loadComments(targetType, targetId) {
       .order('created_at', { ascending: true });
     if (error || !data) return [];
     const items = data.map(commentRowToItem);
+    await loadCommentReactions(items.map(c => c.id));
     COMMENT_CACHE[engagementKey(targetType, targetId)] = { count: items.length, items };
     return items;
   } catch (e) {
@@ -15498,6 +15522,7 @@ function commentsSectionHtml(targetType, targetId) {
               : ''}
           </div>
           <div style="font-size:13px;color:var(--text);margin-top:2px;line-height:1.4;">${esc(c.body)}</div>
+          <div class="sl-comment-actions">${commentReactionHtml(c)}</div>
         </div>`).join('')
       : `<div style="font-size:12.5px;color:var(--faint);padding:8px 0;">No comments yet.</div>`);
   const composer = currentUser ? `
@@ -15645,6 +15670,7 @@ function discussionCommentsHtml(type, listId) {
         <div class="sl-comment-main">
           <div class="sl-comment-meta">${name}<span class="sl-comment-time">${esc(discussionCommentTime(c.created_at))}</span>${del}</div>
           <div class="sl-comment-body">${esc(c.body)}</div>
+          <div class="sl-comment-actions">${commentReactionHtml(c)}</div>
         </div>
       </li>`;
     }).join('')}</ul>`;
@@ -15675,13 +15701,25 @@ function rerenderDiscussionComments(type, listId) {
   const el = document.getElementById(`inline-comments-${type}-${listId}`);
   if (!el) return;
   const visible = discussionThreadVisible(type, listId);
+  // Keep a half-typed comment (and the cursor) when counts or comments arrive in the background.
+  const inputId = `comment-input-${type}-${listId}`, old = document.getElementById(inputId);
+  const draft = old?.value || '', hadFocus = !!old && document.activeElement === old, caret = old?.selectionStart;
   el.style.display = visible ? 'block' : 'none';
   el.innerHTML = visible ? discussionCommentsHtml(type, listId) : '';
+  const fresh = document.getElementById(inputId);
+  if (fresh && (draft || hadFocus)) { fresh.value = draft; if (hadFocus) { fresh.focus({ preventScroll: true }); try { fresh.setSelectionRange(caret ?? draft.length, caret ?? draft.length); } catch (_) {} } }
 }
 
-async function loadDiscussionComments(type, listId) {
+const discussionLoads = new Map();   // engagementKey() -> in-flight load, so callers can wait for it
+function loadDiscussionComments(type, listId) {
   const key = engagementKey(type, listId);
-  if (discussionLoading.has(key)) return;
+  if (discussionLoads.has(key)) return discussionLoads.get(key);
+  const p = loadDiscussionCommentsNow(type, listId).finally(() => discussionLoads.delete(key));
+  discussionLoads.set(key, p);
+  return p;
+}
+async function loadDiscussionCommentsNow(type, listId) {
+  const key = engagementKey(type, listId);
   discussionLoading.add(key);
   discussionAttempted.add(key);
   rerenderDiscussionComments(type, listId);
@@ -15703,7 +15741,7 @@ async function showDiscussionComments(type, listId, { scroll = true } = {}) {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   }
-  if (!COMMENT_CACHE[key]?.items && !discussionLoading.has(key)) await loadDiscussionComments(type, listId);
+  if (!COMMENT_CACHE[key]?.items || discussionLoads.has(key)) await loadDiscussionComments(type, listId);
 }
 
 // Shared list page: the block lives in #taste-list-discussion, after #trip-playlist-list.
@@ -15751,6 +15789,7 @@ async function loadListEngagementBulk(ids) {
     const likesBy = {}, counts = {};
     (likesRes.data || []).forEach(r => (likesBy[r.target_id] = likesBy[r.target_id] || []).push(r));
     const commentsBy = {};
+    await loadCommentReactions((commentsRes.data || []).map(r => r.id));
     (commentsRes.data || []).forEach(r => { counts[r.target_id] = (counts[r.target_id] || 0) + 1; (commentsBy[r.target_id] = commentsBy[r.target_id] || []).push(commentRowToItem(r)); });
     ids.forEach(id => {
       const key = engagementKey('list', id);
@@ -15796,6 +15835,11 @@ async function toggleInlineComments(targetType, targetId) {
 // Single place every like/comment action refreshes through, regardless of which surface it
 // happened on: the activity feed (cards + its modal) or an inline expand panel.
 function refreshEngagementUI(targetType, targetId) {
+  if (targetType === 'comment') {
+    const el = document.getElementById(`comment-react-${targetId}`);
+    if (el) el.innerHTML = reactionBadgeHtml('comment', targetId);
+    return;
+  }
   if (targetType === 'activity_feed') {
     refreshActivityFeeds();
     if (feedRows.some(r => r.id === targetId)) renderPublicFeed(feedRows, feedMode, feedHasMore);
@@ -17670,16 +17714,23 @@ async function openSharedListRoute(){
  try { return await openSharedListRouteInner(); }
  finally { document.documentElement.classList.remove('opening-list'); }
 }
-async function openSharedListRouteInner(){
- if(await showListInvitation())return;
- const id=new URLSearchParams(location.search).get('list');if(!id||!sb)return;
- // Only database-authorized rows enter allTasteLists; a URL is never an invitation.
+// Opens one shared list by id from anywhere (a ?list= link, a notification): loads it if the
+// current view hasn't, switches to the Shared Lists tab and draws it. Only rows the database lets
+// this account read enter allTasteLists, so a link is never an invitation.
+async function openSharedListById(id){
+ if(!id||!sb)return false;
  let list=allTasteLists.find(l=>l.id===id);
  if(!list){
   const {data,error}=await sb.from('taste_lists').select('id,user_id,title,subtitle,is_public,created_at').eq('id',id).maybeSingle();
-  if(data&&!error){const {data:members}=await sb.from('taste_list_collaborators').select('user_id').eq('list_id',id);list={...data,isOwner:data.user_id===currentUser?.id,collaborators:members||[]};allTasteLists.push(list);}
+  if(data&&!error){const {data:members}=await sb.from('taste_list_collaborators').select('user_id').eq('list_id',id);list={...data,isOwner:data.user_id===currentUser?.id,collaborators:members||[],previewArt:[],itemCount:0};allTasteLists.push(list);}
  }
- if(list){switchTab('playlist');await openTasteList(id);return;}
+ if(!list)return false;
+ switchTab('playlist');await openTasteList(id);return true;
+}
+async function openSharedListRouteInner(){
+ if(await showListInvitation())return;
+ const id=new URLSearchParams(location.search).get('list');if(!id||!sb)return;
+ if(await openSharedListById(id))return;
  document.getElementById('shared-route-message').textContent=currentUser?'This list is unavailable to this account. It may be private, removed, or require access to its owner’s profile. Ask the owner to invite you.':'Sign in to check access to this shared list. Private lists require an invitation.';
  document.getElementById('shared-route-signin').hidden=!!currentUser;
  document.getElementById('shared-route-dialog').showModal();
