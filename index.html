@@ -2975,84 +2975,6 @@ html body #reaction-people-title{font-family:var(--ob-serif)!important;font-size
 .taste-add-favorite:hover{text-decoration:underline;}.taste-add-favorite:focus-visible{outline:2px solid var(--accent);outline-offset:4px;}
 @media(max-width:480px){.taste-emerging{gap:8px;align-items:flex-start;flex-direction:column;}}
 </style>
-<style id="profile-visual-system">
-/* Shared profile presentation: scoped to profile tabs; no interaction overrides. */
-:root{--profile-width:1160px;--profile-gutter:clamp(16px,3vw,32px);--profile-space-sm:8px;--profile-space-md:16px;--profile-space-lg:24px;--profile-space-xl:32px;--profile-radius:14px;--profile-card-surface:var(--surface);--profile-card-border:1px solid var(--border)}
-#tab-profile>div,#tab-playlist>.profile-tab-body,.favorites-portrait,#tab-favorites .fav-filter-bar,#tab-favorites .fav-cat-head,#tab-favorites .music-layout,#tab-favorites .fav-empty{box-sizing:border-box;max-width:var(--profile-width)!important;width:100%;margin-left:auto!important;margin-right:auto!important;padding-left:var(--profile-gutter)!important;padding-right:var(--profile-gutter)!important}
-#tab-profile>div,#tab-playlist>.profile-tab-body,.favorites-portrait{padding-top:var(--profile-space-lg)!important}
-.profile-header,.tab-nav{box-sizing:border-box;max-width:var(--profile-width);padding-left:var(--profile-gutter);padding-right:var(--profile-gutter)}
-.tab-nav .tab-btn{font-family:inherit;font-size:14px;font-weight:500}
-.profile-name,#profile-name{font-family:var(--font-sans,Inter,Arial,sans-serif)!important;font-weight:650;font-size:clamp(30px,4vw,42px);line-height:1.15}
-:is(#tab-profile,#tab-favorites,#tab-playlist) .ed-title{font-size:24px;line-height:1.25;letter-spacing:-.015em}
-:is(#tab-profile,#tab-favorites,#tab-playlist) .ed-head{margin-bottom:var(--profile-space-md);gap:var(--profile-space-md)}
-:is(#tab-profile,#tab-favorites,#tab-playlist) .ed-sub{display:block;margin-top:var(--profile-space-sm);font-family:var(--font-sans,Inter,Arial,sans-serif)!important;font-size:13px;font-weight:400;line-height:1.5;letter-spacing:0;color:var(--muted)}
-:is(#tab-profile,#tab-favorites,#tab-playlist) .ed-panel{min-width:0;padding:0;border:0;background:none}
-.profile-editorial-feed{display:flex!important;flex-direction:column;gap:var(--profile-space-xl)!important;width:100%;max-width:780px;align-items:stretch!important}
-.profile-editorial-feed>.ed-panel{width:100%;box-sizing:border-box;margin:0}
-.profile-editorial-feed>.ed-panel[hidden]{display:none!important}
-#profile-feed{gap:var(--profile-space-md)!important;padding:0!important;max-height:none!important;overflow:visible!important}
-#profile-feed .activity-card,#profile-feed .activity-card:last-child,#profile-feed .feed-text-post,#profile-feed .feed-text-post:last-child{box-sizing:border-box;background:var(--profile-card-surface)!important;border:var(--profile-card-border)!important;border-radius:var(--profile-radius)!important;padding:var(--profile-space-md)!important;margin:0!important}
-#profile-feed .activity-card{grid-template-columns:80px minmax(0,1fr);gap:var(--profile-space-md)}
-#profile-feed .activity-card-art{width:80px;max-width:80px;align-self:start!important;border-radius:8px;overflow:hidden;background:var(--surface2)}
-#profile-feed .activity-card-art-img,#profile-feed img.activity-card-art-img,#profile-feed .activity-card-art-empty{height:112px!important;width:100%!important;object-fit:contain!important}
-#profile-feed .activity-card-body{min-width:0;padding:0;overflow-wrap:anywhere}
-#profile-feed .feed-post-body{font-size:14px;line-height:1.6}
-#friend-recs{max-height:none!important;overflow:visible!important;padding:var(--profile-space-md)!important;box-sizing:border-box;border:var(--profile-card-border);border-radius:var(--profile-radius);background:var(--profile-card-surface);display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:var(--profile-space-md)!important}
-#friend-recs .recs-toolbar,#friend-recs .profile-compact-empty{grid-column:1/-1}
-#friend-recs .recs-group{margin:0;min-width:0}
-#friend-recs .recs-thumb img{object-fit:contain}
-.profile-section-empty #friend-recs{border:0;background:none;padding:0!important}
-:is(#tab-profile,#tab-playlist) .profile-compact-empty{padding:var(--profile-space-md);border:var(--profile-card-border);border-radius:var(--profile-radius);font-size:14px;max-width:540px}
-#favorites-portrait .fav-sentence-slot{margin:0 0 var(--profile-space-lg)}
-#favorites-portrait #profile-sentence-section{padding:var(--profile-space-md)!important;margin-bottom:0!important;border-radius:var(--profile-radius)!important}
-#favorites-portrait #profile-sentence{font-size:16px!important;line-height:1.5!important}
-#favorites-portrait .dynamic-taste-grid{gap:var(--profile-space-md);align-items:stretch;grid-template-columns:repeat(4,minmax(0,1fr));justify-content:start}
-#favorites-portrait .dynamic-taste-grid[data-count="1"]{grid-template-columns:minmax(0,270px)}
-#favorites-portrait .dynamic-taste-grid[data-count="2"]{grid-template-columns:repeat(2,minmax(0,270px))}
-#favorites-portrait .dynamic-taste-grid[data-count="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
-#favorites-portrait .dynamic-taste-card{border:var(--profile-card-border);border-radius:var(--profile-radius);background:var(--profile-card-surface);display:flex;flex-direction:column}
-#favorites-portrait .dynamic-taste-card-heading{min-height:44px;box-sizing:border-box;padding:8px 12px;letter-spacing:.04em;background:transparent}
-#favorites-portrait .dynamic-taste-art{height:192px;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:4px;padding:8px;background:var(--surface2);box-sizing:border-box}
-#favorites-portrait .dynamic-taste-art[data-count="1"]{grid-template-columns:1fr}
-#favorites-portrait .dynamic-taste-cell,#favorites-portrait .dynamic-taste-art[data-count="1"] .dynamic-taste-cell{aspect-ratio:auto;min-height:0;border-radius:6px}
-#favorites-portrait .dynamic-taste-cell img{object-fit:contain}
-#favorites-portrait .dynamic-taste-caption{padding:12px;margin-top:auto}
-#favorites-portrait .dynamic-taste-caption strong{font-size:13px;font-weight:600;line-height:1.4}
-#favorites-portrait .dynamic-taste-caption>span{font-size:12px;line-height:1.4;margin-top:4px}
-#tab-favorites .fav-filter-bar{padding-top:var(--profile-space-lg)}
-#tab-favorites .fav-type-section.fav-divided::before{max-width:calc(var(--profile-width) - 2 * var(--profile-gutter))!important;margin-top:var(--profile-space-lg)!important}
-#taste-lists-picker .collection-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--profile-space-lg);align-items:start}
-#taste-lists-picker .collection-card{display:flex!important;flex-direction:column;gap:0!important;min-width:0;margin:0!important;overflow:hidden;background:var(--profile-card-surface)!important;border:var(--profile-card-border)!important;border-radius:var(--profile-radius)!important;position:relative}
-#taste-lists-picker .collection-card:hover,#taste-lists-picker .collection-card:focus-visible{border-color:var(--accent)!important;outline:2px solid var(--accent);outline-offset:3px}
-#taste-lists-picker .activity-card-art{width:100%!important;max-width:none!important;border-radius:0;overflow:hidden}
-#taste-lists-picker .collection-collage{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:144px;padding:16px;gap:8px;box-sizing:border-box;background:var(--surface2)}
-#taste-lists-picker .collection-collage[data-count="1"]{grid-template-columns:minmax(0,1fr)}
-#taste-lists-picker .collection-collage[data-count="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
-#taste-lists-picker .collection-collage[data-count="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
-.collection-cover{min-width:0;min-height:0;border-radius:6px;overflow:hidden;background:#7c4dff0d}
-.collection-cover img{width:100%;height:100%;object-fit:contain;display:block}
-.collection-cover img[hidden]{display:none}
-#taste-lists-picker .collection-no-art{display:flex;align-items:center;justify-content:center;color:var(--muted)}
-#taste-lists-picker .activity-card-body{box-sizing:border-box;padding:var(--profile-space-md)!important;min-width:0;width:100%;overflow-wrap:anywhere}
-#taste-lists-picker .shared-list-trash{top:8px;right:8px;background:var(--surface);width:32px;height:32px;border:var(--profile-card-border)}
-.collection-open{display:block;margin-top:12px;color:var(--muted);font-size:12px}
-#taste-lists-picker .lists-group{margin:0 0 var(--profile-space-xl)}
-#taste-lists-picker .lists-group-label{margin:0 0 var(--profile-space-md);font-size:14px;font-weight:600}
-@media(max-width:900px){#taste-lists-picker .collection-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#favorites-portrait .dynamic-taste-grid,#favorites-portrait .dynamic-taste-grid[data-count="3"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){#taste-lists-picker .collection-grid{grid-template-columns:minmax(0,1fr)}#favorites-portrait .dynamic-taste-grid,#favorites-portrait .dynamic-taste-grid[data-count]{grid-template-columns:repeat(2,minmax(0,1fr))}#favorites-portrait .dynamic-taste-grid[data-count="1"]{grid-template-columns:minmax(0,270px)}#favorites-portrait .dynamic-taste-art{height:160px}.profile-editorial-feed{gap:24px!important}:is(#tab-profile,#tab-favorites,#tab-playlist) .ed-title{font-size:22px}#profile-feed .activity-card{grid-template-columns:64px minmax(0,1fr);gap:12px}#profile-feed .activity-card-art{width:64px;max-width:64px}#profile-feed .activity-card-art-img,#profile-feed .activity-card-art-empty{height:96px!important}}
-@media(max-width:360px){#favorites-portrait .dynamic-taste-grid,#favorites-portrait .dynamic-taste-grid[data-count]{grid-template-columns:minmax(0,1fr)}}
-
-#profile-card-name{font-family:var(--font-ui,Inter,Arial,sans-serif)!important;font-size:clamp(28px,4vw,40px)!important;line-height:1.15!important;letter-spacing:-.025em;overflow-wrap:anywhere}
-#profile-feed .activity-title{font-family:var(--font-ui,Inter,Arial,sans-serif)!important;font-size:16px;font-weight:600;line-height:1.35}
-#profile-feed .activity-meta{font-size:12px;margin-top:8px}
-#profile-feed .activity-note{font-size:14px;line-height:1.6;margin-top:12px}
-#profile-feed .activity-card-art{width:80px!important}
-#tab-favorites .music-layout :is(.music-section-header,.top5-section,.section-controls-row,.list-engage,.list-create-row){max-width:none;padding-left:0!important;padding-right:0!important}
-#tab-favorites .music-layout .bio-sidebar{padding-left:0!important;padding-right:0!important}
-#favorites-portrait #profile-sentence-section{margin-top:0!important}
-#taste-lists-picker .collection-card .activity-card-body>div:first-child>div{font-size:15px!important;font-weight:600!important;line-height:1.4}
-@media(max-width:600px){#profile-feed .activity-card-art{width:64px!important}#taste-lists-picker .shared-list-trash{width:40px;height:40px}}
-</style>
 </head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
@@ -3304,17 +3226,17 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div id="profile-welcome-banner" style="display:none;"></div>
     <div id="profile-content-sections" style="display:none;">
     <!-- What's New feed + Recommendations -->
-    <div class="whatsnew-rec-grid profile-editorial-feed">
+    <div class="whatsnew-rec-grid">
       <div class="ed-panel">
         <div class="ed-head">
-          <h2 class="ed-title">What’s New <span class="ed-sub">Recent watching, reading &amp; listening</span></h2>
+          <h2 class="ed-title">What’s New <span class="ed-sub">What I’ve been watching, reading &amp; listening to lately</span></h2>
           <div id="activity-feed-controls"></div>
         </div>
         <div id="profile-feed" style="display:flex;flex-direction:column;gap:16px;max-height:640px;overflow-y:auto;padding-right:6px;"></div>
       </div>
 
       <div class="ed-panel">
-        <div class="ed-head recs-section-heading"><h2 class="ed-title"><span class="recs-title-text">What’s Next</span> <span class="ed-sub">Saved for later</span></h2><div id="recs-head-controls"></div></div>
+        <div class="ed-head recs-section-heading"><h2 class="ed-title"><span class="recs-title-text">What’s Next</span> <span class="ed-sub">Things I want to check out</span></h2><div id="recs-head-controls"></div></div>
         <div id="friend-recs" style="display:flex;flex-direction:column;gap:12px;max-height:640px;overflow-y:auto;padding-right:6px;"></div>
       </div>
     </div>
@@ -3514,7 +3436,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
         </div>
         <div style="min-width:0;">
           <div style="font-size:15px;font-weight:700;color:var(--text);">Taste Insights</div>
-          <div style="font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">The threads running through these music, film & TV, and book picks</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">The threads running through your music, film & TV, and books</div>
         </div>
       </div>
       <span id="taste-graph-toggle-label" style="font-size:13px;font-weight:600;color:var(--accent);flex-shrink:0;">View ↓</span>
@@ -3523,7 +3445,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
   <div id="profile-taste-graph-section" style="display:none;">
   <div style="max-width:1100px;margin:0 auto;padding:2rem 2rem 1rem;">
     <h2 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:0.25rem;">Taste Insights</h2>
-    <p style="font-size:14px;color:var(--muted);margin-bottom:2rem;">What connects these favorites — the sound of the music, the writing and performances in film & TV, and the voice of the books.</p>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:2rem;">What connects your favorites within each part of your taste — the sound of your music, the writing and performances in your film & TV, the voice of your books.</p>
     <!-- Taste Influences -->
     <div id="taste-influences-section" style="margin-bottom:2.5rem;">
       <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:14px;display:flex;align-items:center;gap:10px;">Taste Influences <span style="flex:1;height:1px;background:var(--border);"></span></div>
@@ -3541,7 +3463,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 <div class="tab-panel" id="tab-playlist">
   <div class="profile-tab-body">
     <div class="ed-head sl-tab-head" id="sl-tab-head">
-      <h2 class="ed-title">Lists <span class="ed-sub">Collections, solo or together</span></h2>
+      <h2 class="ed-title">Lists <span class="ed-sub">Collections you curate, solo or together</span></h2>
       <div id="sl-tab-controls"></div>
     </div>
 
@@ -5440,13 +5362,14 @@ function renderTasteListsPicker() {
   const cardHtml = list => {
     const names = list.collaborators.map(c => firstNameOnly(c.display_name) || c.username).filter(Boolean);
     const collabLine = names.length ? `<div style="font-size:11.5px;color:var(--muted);margin-top:6px;">with ${esc(names.join(', '))}</div>` : '';
-    const covers=(list.previewArt||[]).slice(0,4);
-    const mosaicCells=covers.map(u=>`<div class="collection-cover"><img src="${esc(u)}" alt="" loading="lazy" onerror="this.hidden=true"></div>`).join('');
-    const art=covers.length?`<div class="collection-collage" data-count="${covers.length}" aria-hidden="true">${mosaicCells}</div>`:
-      `<div class="collection-collage collection-no-art" aria-hidden="true">${mediaIcon('list',32)}</div>`;
+    const mosaicCells = list.previewArt.map(u => `<div style="background-image:url('${esc(u)}');background-size:cover;background-position:center;"></div>`).join('') +
+      Array(Math.max(0, 4 - list.previewArt.length)).fill(`<div style="background:#7C4DFF18;"></div>`).join('');
+    const art = list.previewArt.length
+      ? `<div class="activity-card-art-img activity-card-mosaic" style="display:grid;gap:2px;">${mosaicCells}</div>`
+      : `<div class="activity-card-art-img activity-card-art-empty" style="background:#7C4DFF18;display:flex;align-items:center;justify-content:center;">${mediaIcon('list', 42)}</div>`;
     const canEditThisList = list.isOwner || list.collaborators.some(c => c.user_id === currentUser?.id);
     const renameBtn = canEditThisList ? `<button onclick="event.stopPropagation(); renameTasteList('${jsStr(list.id)}')" title="Rename list" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:2px 4px;flex-shrink:0;">✎</button>` : '';
-    return `<div class="activity-card shared-list-card collection-card" tabindex="0" role="group" aria-label="${esc(list.title || 'Untitled list')}" onkeydown="if(event.target===this &amp;&amp; (event.key==='Enter' || event.key===' ')){event.preventDefault();this.click()}" onclick="${esc(`openTasteList('${jsStr(list.id)}')`)}" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);margin-bottom:12px;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+    return `<div class="activity-card shared-list-card" onclick="${esc(`openTasteList('${jsStr(list.id)}')`)}" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);margin-bottom:12px;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
       ${list.isOwner ? `<button type="button" class="shared-list-trash" aria-label="Delete ${esc(list.title || 'shared list')}" title="Delete list" onclick="event.stopPropagation();deleteSharedTasteList('${jsStr(list.id)}')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button>` : ''}
       <div class="activity-card-art">${art}</div>
       <div class="activity-card-body">
@@ -5455,16 +5378,16 @@ function renderTasteListsPicker() {
           ${renameBtn}
         </div>
         ${list.subtitle ? `<div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(list.subtitle)}</div>` : ''}
-        <div style="font-size:11.5px;color:var(--faint);margin-top:8px;">${list.itemCount} item${list.itemCount === 1 ? '' : 's'} · ${names.length?'Collaborative':'Personal'}${list.isOwner ? '' : ' · shared with you'}</div>
-        ${collabLine}${tasteListPrivacyControl(list)}<span class="collection-open" aria-hidden="true">Explore collection ↗</span>
+        <div style="font-size:11.5px;color:var(--faint);margin-top:8px;">${list.itemCount} item${list.itemCount === 1 ? '' : 's'}${list.isOwner ? '' : ' · shared with you'}</div>
+        ${collabLine}${tasteListPrivacyControl(list)}
       </div>
     </div>`;
   };
   // Personal lists and lists made with other people, under quiet labels; an empty group isn't shown.
   const personal = allTasteLists.filter(l => !(l.collaborators || []).length);
   const shared = allTasteLists.filter(l => (l.collaborators || []).length);
-  const group = (label, lists) => lists.length ? `<section class="lists-group"><h3 class="lists-group-label">${label}<span>${lists.length}</span></h3><div class="collection-grid">${lists.map(cardHtml).join('')}</div></section>` : '';
-  const cards = personal.length && shared.length ? group('Shared', shared) + group('Personal', personal) : `<div class="collection-grid">${allTasteLists.map(cardHtml).join('')}</div>`;
+  const group = (label, lists) => lists.length ? `<section class="lists-group"><h3 class="lists-group-label">${label}<span>${lists.length}</span></h3>${lists.map(cardHtml).join('')}</section>` : '';
+  const cards = personal.length && shared.length ? group('Shared', shared) + group('Personal', personal) : allTasteLists.map(cardHtml).join('');
 
   el.innerHTML = newListBtn + cards;
 }
@@ -16595,7 +16518,7 @@ function renderActivityFeed(containerId, filterFn) {
     if(section){section.hidden=!items.length;if(section.nextElementSibling?.classList.contains('music-section-divider'))section.nextElementSibling.hidden=!items.length;}
   }
   if(containerId==='profile-feed' && syncInitialTasteProfile())renderDynamicProfilePicks();
-  if(containerId==='profile-feed'){const panel=el.closest('.ed-panel');if(panel){panel.classList.toggle('profile-section-empty',!items.length);panel.hidden=!isOwnProfile&&!items.length;}}
+  if(containerId==='profile-feed')el.closest('.ed-panel')?.classList.toggle('profile-section-empty',!items.length);
   if (!items.length && containerId === 'profile-feed') {
     el.innerHTML = compactProfileEmpty('new');
   } else {
@@ -17857,7 +17780,7 @@ function renderFriendRecs() {
   if(syncInitialTasteProfile())renderDynamicProfilePicks();
   const el = document.getElementById('friend-recs');
   if (!el) return;
-  const panel=el.closest('.ed-panel');if(panel){panel.classList.toggle('profile-section-empty',!FRIEND_RECOMMENDATIONS.length);panel.hidden=!isOwnProfile&&!FRIEND_RECOMMENDATIONS.length;}
+  el.closest('.ed-panel')?.classList.toggle('profile-section-empty',!FRIEND_RECOMMENDATIONS.length);
   // Always available to the owner — adding a recommendation shouldn't require finding Edit first.
   const addBtnHtml = isOwnProfile ? `
     <button class="list-create-cta" onclick="openPasteRecommendations()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
@@ -18126,14 +18049,14 @@ function renderDynamicProfilePicks(){
  const resume=document.getElementById('profile-onboarding-resume');if(resume)resume.hidden=!(owner&&readiness.ready);
  const progress=owner?(readiness.ready?'<div class="taste-readiness" role="status">Your Taste Profile is ready</div>':`<div class="taste-emerging-wrap"><button type="button" class="taste-emerging-card" onclick="openProfileMediaPicker()"><span class="taste-emerging-title">Your taste is taking shape.</span><span class="taste-emerging-cta">+ Add another favorite</span></button></div>`):'';
  const header=document.getElementById('defining-picks-header');
- if(header){header.hidden=false;const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile?.username||'Their';header.innerHTML=`${esc(owner?'Your':possessiveName(name))} Defining Picks${populated.length?'<span class="ed-sub">'+(owner?'The things you love':'The things that define their taste')+' — tap a box to explore</span>':''}`;}
+ if(header){header.hidden=false;const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile?.username||'Their';header.innerHTML=`${esc(owner?'Your':possessiveName(name))} Defining Picks${populated.length?'<span class="ed-sub">The things you love — tap a box to explore</span>':''}`;}
  const current=()=>el._tasteRenderToken===token&&viewedProfile?.id===profileId;
  const render=()=>{
   if(!current())return;
   if(isInitialTasteProfile()){el.innerHTML=initialTasteProfileHtml();return;}
   el.innerHTML=(populated.length?`<div class="dynamic-taste-grid" data-count="${populated.length}">${populated.map(g=>{
    const picks=g.items.slice(0,4),first=picks[0];
-   return `<button type="button" class="dynamic-taste-card" style="--taste-color:${g.color}" onclick="goToFavorites('${g.tab}')" aria-label="Explore ${g.label}: ${g.items.length} favorites"><div class="dynamic-taste-card-heading"><span>${badgeIcon(g.icon,14)}</span>${esc(owner?g.heading:g.label+' Taste')}</div><div class="dynamic-taste-art" data-count="${picks.length}">${picks.map(p=>{
+   return `<button type="button" class="dynamic-taste-card" style="--taste-color:${g.color}" onclick="goToFavorites('${g.tab}')" aria-label="Explore ${g.label}: ${g.items.length} favorites"><div class="dynamic-taste-card-heading"><span>${badgeIcon(g.icon,14)}</span>${g.heading}</div><div class="dynamic-taste-art" data-count="${picks.length}">${picks.map(p=>{
     const art=tastePickArt(g.tab,p)||p.art||'';
     return `<div class="dynamic-taste-cell">${art?`<img src="${esc(art)}" alt="${esc(p.title)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false">`:''}<span ${art?'hidden':''}>${esc(p.title)}</span></div>`;
    }).join('')}</div><div class="dynamic-taste-caption"><strong>${esc(first.title)}</strong><span>${esc(first.artist||first.author||({artist:'Favorite artist',album:'Favorite album',song:'Favorite song',movie:'Top favorite film',tv:'Top TV pick',book:'Top book pick'}[first._tasteKind]))}</span></div></button>`;
