@@ -2991,6 +2991,157 @@ html body #reaction-people-title{font-family:var(--ob-serif)!important;font-size
 .taste-add-favorite{background:none;border:0;padding:6px 0;color:#b99aff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;}
 .taste-add-favorite:hover{text-decoration:underline;}.taste-add-favorite:focus-visible{outline:2px solid var(--accent);outline-offset:4px;}
 @media(max-width:480px){.taste-emerging{gap:8px;align-items:flex-start;flex-direction:column;}}
+
+/* Lists: an artwork-first gallery of collections */
+.list-gallery { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap:20px; }
+@media (min-width: 1100px) { .list-gallery { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
+.list-card { position:relative; display:flex; flex-direction:column; min-width:0; background:var(--surface2); border:1px solid var(--border); border-radius:var(--tl-radius, 14px); overflow:visible; transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+.list-card:hover, .list-card:focus-within { border-color:rgba(185,154,255,.55); box-shadow:0 10px 28px rgba(0,0,0,.35); }
+.list-card:hover:not(:has(.lc-menu[open])) { transform:translateY(-2px); }
+.list-card:has(.lc-menu[open]) { z-index:6; }
+.lc-hit { display:block; width:100%; padding:0; border:0; background:none; cursor:pointer; border-radius:var(--tl-radius, 14px) var(--tl-radius, 14px) 0 0; overflow:hidden; }
+.lc-hit::after { content:''; position:absolute; inset:0; border-radius:inherit; z-index:0; }   /* the whole card opens the list */
+.lc-hit:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.lc-collage { display:grid; gap:2px; aspect-ratio:4 / 3; background:#141417; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+.lc-collage[data-count="1"] { grid-template-columns:1fr; grid-template-rows:1fr; }
+.lc-collage[data-count="2"] { grid-template-rows:1fr; }
+.lc-collage[data-count="3"] .lc-cell:first-child { grid-row:1 / span 2; }
+.lc-cell { position:relative; overflow:hidden; background:linear-gradient(145deg,#2a2433,#18181c); }
+.lc-cell img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.lc-collage[data-count="1"] .lc-cell img { object-fit:contain; }
+.lc-collage[data-count="1"] .lc-cell { background:radial-gradient(ellipse at 50% 40%, rgba(124,77,255,.18), transparent 70%), #141417; }
+.lc-collage.is-empty { display:flex; align-items:center; justify-content:center; color:#a78bfa; background:radial-gradient(ellipse at 50% 30%, rgba(124,77,255,.2), transparent 70%), #17161b; }
+.lc-body { position:relative; z-index:1; padding:12px 14px 14px; pointer-events:none; }
+.lc-body .lc-menu, .lc-body .lc-avatars { pointer-events:auto; }
+.lc-title-row { display:flex; align-items:flex-start; gap:8px; }
+.lc-title { flex:1; min-width:0; margin:0; font-size:15px; font-weight:650; line-height:1.3; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.lc-sub { margin:3px 0 0; font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lc-meta { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin-top:8px; font-size:12px; color:var(--muted); }
+.lc-privacy { font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); }
+.lc-avatars { display:inline-flex; align-items:center; margin-left:auto; }
+.lc-avatars > span { margin-left:-4px; box-shadow:0 0 0 2px var(--surface2); }
+.lc-avatars > span:first-child { margin-left:0; }
+.lc-more { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 5px; border-radius:999px; background:var(--surface3, #2a2a2e); font-size:10.5px; font-weight:700; color:var(--muted); }
+.lc-menu { position:relative; flex:0 0 auto; margin:-4px -6px 0 0; }
+.lc-menu > summary { list-style:none; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:50%; color:var(--muted); cursor:pointer; }
+.lc-menu > summary::-webkit-details-marker { display:none; }
+.lc-menu > summary:hover, .lc-menu[open] > summary { color:var(--text); background:rgba(255,255,255,.07); }
+.lc-menu > summary:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+.lc-menu-pop { position:absolute; right:0; top:calc(100% + 4px); z-index:5; min-width:170px; padding:6px; background:var(--surface2, #1c1c1f); border:1px solid var(--border2, var(--border)); border-radius:12px; box-shadow:0 14px 36px rgba(0,0,0,.55); display:flex; flex-direction:column; }
+.lc-menu-pop button { font:inherit; font-size:13.5px; text-align:left; padding:9px 10px; border:0; border-radius:8px; background:none; color:var(--text); cursor:pointer; }
+.lc-menu-pop button:hover, .lc-menu-pop button:focus-visible { background:rgba(255,255,255,.07); outline:none; }
+.lc-menu-pop .is-danger { color:#F97360; }
+.list-card-empty { display:flex; align-items:center; gap:16px; width:100%; max-width:440px; padding:12px; text-align:left; font:inherit; color:var(--text); background:var(--surface2); border:1px dashed var(--border2, var(--border)); border-radius:var(--tl-radius, 14px); cursor:pointer; }
+.list-card-empty:hover { border-color:rgba(185,154,255,.6); }
+.list-card-empty .lc-collage { width:96px; flex:0 0 auto; border-radius:10px; }
+.list-card-empty strong { display:block; font-size:15px; }
+.list-card-empty small { display:block; margin-top:3px; font-size:12.5px; color:var(--muted); line-height:1.45; }
+@media (max-width: 900px) { .list-gallery { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .list-gallery { grid-template-columns:1fr; } }
+@media (pointer: coarse) { .lc-menu > summary { width:40px; height:40px; } .lc-menu-pop button { min-height:44px; } }
+@media (prefers-reduced-motion: reduce) { .list-card { transition:none; } .list-card:hover { transform:none; } }
+.inline-title-input { font: inherit; color: var(--text); background: rgba(255,255,255,.06); border: 1px solid rgba(185,154,255,.6); border-radius: 8px; padding: 2px 8px; margin: -3px 0; width: min(100%, 420px); outline: none; box-shadow: 0 0 0 3px rgba(124,77,255,.15); }
+.list-move-btn { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
+.list-move-btn:hover:not(:disabled) { color: var(--text); border-color: rgba(185,154,255,.6); }
+.list-move-btn:disabled { opacity: .3; cursor: default; }
+@media (pointer: coarse) { .list-move-btn { width: 40px; height: 40px; } }
+/* Add to Favorites / Add to <list>: compact search → select → add */
+#music-picker { width: min(560px, calc(100vw - 32px)) !important; padding: 20px 20px 18px !important; }
+#music-picker h2 { font-size: 22px !important; }
+#music-picker #music-picker-hint:empty { display: none; }
+#music-picker #music-picker-searchbox { margin-top: 14px; }
+#music-picker #music-picker-query { border-radius: 12px; padding: 12px 14px; font-size: 15px; }
+#music-picker-results { gap: 2px !important; margin-top: 8px; max-height: min(46vh, 380px) !important; overscroll-behavior: contain; }
+#music-picker-results > p { margin: 8px 2px; font-size: 13px; color: var(--muted); }
+#music-picker .picker-kinds { padding: 2px 0 6px !important; }
+#music-picker .picker-kinds .fav-chip { padding: 5px 11px !important; font-size: 12px !important; flex-shrink: 0; }
+#music-picker-selected { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+#music-picker-selected[hidden] { display: none !important; }
+.pk-add { align-self: flex-end; padding: 10px 18px !important; font-size: 14px !important; }
+.pk-add:disabled { opacity: .6; cursor: progress; }
+.pk-check { margin-left: auto; color: #86efac; font-weight: 700; padding-right: 6px; }
+.pk-done { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.pk-done-text { flex: 1; color: #86efac; font-size: 14px; }
+#music-picker[data-context="favorite"] .picker-tags, #music-picker[data-context="favorite"] #music-picker-dest, #music-picker[data-context="existing_list"] #music-picker-dest { display: none !important; }
+@media (pointer: coarse) { #music-picker .pk-result { min-height: 52px; } .pk-add { min-height: 44px; } }
+.pk-toggle { margin-left: auto; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 19px; line-height: 1; color: #fff; background: var(--accent); }
+.pk-toggle.is-on { background: #22C55E; font-size: 15px; }
+#ti-search-results .extra-result.is-added .picker-add { background: #22C55E; font-size: 17px; }
+.ti-search-foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+#ti-search-status:empty { display: none; }
+/* ── Profile design tokens, shared by all three tabs ── */
+/* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
+#profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
+#profile-share-cta:hover { border-color:rgba(185,154,255,.6); }
+/* Same gutters and top spacing for every tab body */
+.favorites-portrait, .profile-tab-body, #tab-profile > div { padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; padding-top: 20px !important; }
+#follow-requests-panel:empty, #profile-locked-message:empty { display: none; margin: 0; }
+@media (max-width: 600px) { .favorites-portrait, .profile-tab-body, #tab-profile > div { padding-top: 16px !important; } }
+/* Section heads: title on the left (wrapping if needed), one action on the right, same button on every tab */
+#tab-profile .ed-head, #tab-favorites .ed-head, #tab-playlist .ed-head { flex-wrap: nowrap !important; align-items: center !important; gap: 12px; }
+#tab-profile .ed-head > .ed-title, #tab-favorites .ed-head > .ed-title, #tab-playlist .ed-head > .ed-title { align-self: flex-start; }
+#tab-profile .ed-head .ed-title, #tab-favorites .ed-head .ed-title, #tab-playlist .ed-head .ed-title { flex: 1 1 auto !important; min-width: 0; }
+#tab-profile .ed-head .ed-primary, #tab-favorites .ed-head .ed-primary, #tab-playlist .ed-head .ed-primary, #profile-share-cta { flex: 0 0 auto; white-space: nowrap; min-height: 36px; }
+#activity-feed-controls, #recs-head-controls, #sl-tab-controls { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
+@media (pointer: coarse) { #tab-profile .ed-head .ed-primary, #tab-favorites .ed-head .ed-primary, #tab-playlist .ed-head .ed-primary, #profile-share-cta { min-height: 44px; padding-top: 0; padding-bottom: 0; } }
+@media (max-width: 600px) { #profile-share-cta .share-word-tastelist { display: none; } }
+:root { --tl-radius: 14px; --tl-radius-sm: 8px; --tl-card-bg: var(--surface2, #1c1c1f); --tl-gap-1: 8px; --tl-gap-2: 12px; --tl-gap-3: 16px; --tl-gap-4: 24px; --tl-gap-5: 32px; }
+/* One section-heading scale (serif), one subtitle style, everywhere on the profile */
+#tab-profile .ed-title, #tab-favorites .ed-title, #tab-playlist .ed-title { font-size: clamp(22px, 2.2vw, 26px); }
+#tab-profile .ed-sub, #tab-favorites .ed-sub, #tab-playlist .ed-sub { font-family: var(--font-ui, inherit); font-size: 13px; color: var(--muted); }
+#tab-profile .ed-head, #tab-favorites .ed-head, #tab-playlist .ed-head { padding-bottom: var(--tl-gap-2); margin-bottom: var(--tl-gap-3); }
+/* What's Happening: a compact What's Next strip above a readable What's New feed (no inner scrollbars) */
+.whatsnew-rec-grid.happening { display: flex !important; flex-direction: column; align-items: stretch !important; gap: var(--tl-gap-5); margin-bottom: var(--tl-gap-5); }
+.happening .recs-section-heading .ed-title { flex: 1 1 auto; }
+.happening > [hidden] { display: none !important; }
+.happening-new { width: 100%; }
+#profile-feed { display: flex; flex-direction: column; gap: var(--tl-gap-3); }
+#profile-feed > * { margin-left: 0 !important; margin-right: 0 !important; }
+#profile-feed { padding-right: 0 !important; }
+#friend-recs { display: flex; flex-direction: column; gap: var(--tl-gap-2); }
+.happening > .ed-panel { max-width: none; width: 100%; }   /* full content width, same edges as Favorites and Lists */
+.recs-row { display: flex; align-items: flex-end; gap: 10px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; padding: 2px 0 6px; }
+.recs-row::-webkit-scrollbar { display: none; }
+.recs-row .recs-thumb { flex: 0 0 auto; height: 132px; width: auto; }
+.recs-row .recs-portrait { width: 88px; } .recs-row .recs-square { width: 132px; } .recs-row .recs-landscape { width: 211px; }
+#friend-recs .recs-toolbar { order: 9; margin: 0; }
+.happening-empty { margin: 0; color: var(--muted); font-size: 13.5px; }
+/* What's New posts: one card surface */
+#profile-feed .activity-card { border-radius: var(--tl-radius) !important; background: var(--tl-card-bg) !important; border: 1px solid var(--border) !important; grid-template-columns: 120px minmax(0, 1fr); }
+#profile-feed .activity-card-art-img { height: 180px; }
+#profile-feed .activity-card-body { padding: var(--tl-gap-3) var(--tl-gap-4); }
+/* Favorites: a tighter Taste in a sentence, compact taste boxes of one height */
+.fav-sentence-slot #profile-sentence-section { padding: var(--tl-gap-3) 20px !important; border-radius: var(--tl-radius) !important; }
+.fav-sentence-slot #profile-sentence { font-size: 16px !important; line-height: 1.45 !important; }
+.fav-sentence-slot #profile-sentence-section > div:first-child { margin-bottom: 6px !important; }
+.dynamic-taste-grid { align-items: stretch; gap: var(--tl-gap-3); }
+.dynamic-taste-grid[data-count="1"] { grid-template-columns: minmax(0, 300px); justify-content: start; }
+.dynamic-taste-grid[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 300px)); justify-content: start; }
+.dynamic-taste-card { border-radius: var(--tl-radius); background: var(--tl-card-bg); display: flex; flex-direction: column; }
+.dynamic-taste-card-heading { background: none; border-bottom: 1px solid var(--border); color: var(--taste-color); }
+.dynamic-taste-art { aspect-ratio: 2 / 3; grid-template-rows: repeat(2, minmax(0, 1fr)); background: #141417; overflow: hidden; }
+/* Shaped to the artwork so nothing gets cropped: posters and covers are 2:3 tiles, music is square */
+.dynamic-taste-art[data-count="2"] { aspect-ratio: 4 / 3; }
+.dynamic-taste-art[data-tab="music"] { aspect-ratio: 1 / 1; }
+.dynamic-taste-art[data-tab="music"][data-count="2"] { aspect-ratio: 2 / 1; }
+/* Cards in a row share one height: shorter art (music, fewer picks) grows to fill instead of leaving a gap */
+.dynamic-taste-card > .dynamic-taste-art { flex: 1 0 auto; }
+.dynamic-taste-art[data-count="1"], .dynamic-taste-art[data-count="2"] { grid-template-rows: minmax(0, 1fr); }
+.dynamic-taste-art[data-count="2"] { grid-template-columns: 1fr 1fr; }
+.dynamic-taste-cell, .dynamic-taste-art[data-count="1"] .dynamic-taste-cell { aspect-ratio: auto !important; min-height: 0; position: relative; }
+.dynamic-taste-cell img { position: absolute; inset: 0; }
+.dynamic-taste-cell > span { font-size: 12px; padding: 8px; }
+.dynamic-taste-art[data-count="3"] .dynamic-taste-cell:first-child { grid-row: 1 / span 2; }
+.dynamic-taste-caption { margin-top: auto; padding: 10px 12px; background: none; }
+.dynamic-taste-caption strong { font-size: 12.5px; } .dynamic-taste-caption > span { font-size: 11.5px; }
+/* Lists group labels match Favorites' category labels */
+.lists-group-label { font-size: 12px; letter-spacing: .08em; }
+@media (max-width: 600px) {
+  /* What's Next becomes one swipeable row so the feed starts right after it */
+  .recs-row .recs-thumb { height: 112px; } .recs-row .recs-portrait { width: 75px; } .recs-row .recs-square { width: 112px; } .recs-row .recs-landscape { width: 180px; }
+  #profile-feed .activity-card { grid-template-columns: minmax(0, 1fr); }
+  .dynamic-taste-grid[data-count="1"], .dynamic-taste-grid[data-count="2"] { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+}
 </style>
 </head>
 <body>
@@ -3243,19 +3394,21 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div id="profile-welcome-banner" style="display:none;"></div>
     <div id="profile-content-sections" style="display:none;">
     <!-- What's New feed + Recommendations -->
-    <div class="whatsnew-rec-grid">
-      <div class="ed-panel">
-        <div class="ed-head">
-          <h2 class="ed-title">What’s New <span class="ed-sub">What I’ve been watching, reading &amp; listening to lately</span></h2>
-          <div id="activity-feed-controls"></div>
-        </div>
-        <div id="profile-feed" style="display:flex;flex-direction:column;gap:16px;max-height:640px;overflow-y:auto;padding-right:6px;"></div>
+    <!-- What's Happening: a compact What's Next strip, then the What's New feed at a readable width. -->
+    <div class="whatsnew-rec-grid happening">
+      <div class="ed-panel happening-next" id="happening-next">
+        <div class="ed-head recs-section-heading"><h2 class="ed-title"><span class="recs-title-text">What’s Next</span> <span class="ed-sub" id="happening-next-sub">Things I want to check out</span></h2><div id="recs-head-controls"></div></div>
+        <div id="friend-recs"></div>
       </div>
 
-      <div class="ed-panel">
-        <div class="ed-head recs-section-heading"><h2 class="ed-title"><span class="recs-title-text">What’s Next</span> <span class="ed-sub">Things I want to check out</span></h2><div id="recs-head-controls"></div></div>
-        <div id="friend-recs" style="display:flex;flex-direction:column;gap:12px;max-height:640px;overflow-y:auto;padding-right:6px;"></div>
+      <div class="ed-panel happening-new" id="happening-new">
+        <div class="ed-head">
+          <h2 class="ed-title">What’s New <span class="ed-sub" id="happening-new-sub">What I’ve been watching, reading &amp; listening to lately</span></h2>
+          <div id="activity-feed-controls"></div>
+        </div>
+        <div id="profile-feed"></div>
       </div>
+      <p id="happening-empty" class="profile-compact-empty happening-empty" hidden></p>
     </div>
     </div>
 
@@ -3270,7 +3423,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <section class="ed-panel defining-picks-panel">
       <div class="ed-head defining-picks-heading">
         <h2 id="defining-picks-header" class="ed-title">Your Defining Picks<span class="ed-sub">Tap a box to explore that section</span></h2>
-        <button id="profile-share-cta" class="ob-button ob-secondary" onclick="openTasteShare()" hidden>Share my TasteList ↗</button>
+        <button id="profile-share-cta" class="ob-button ob-secondary" onclick="openTasteShare()" hidden>Share<span class="share-word-tastelist">&nbsp;my TasteList</span>&nbsp;↗</button>
       </div>
       <div class="fav-sentence-slot">
     <!-- Taste in a sentence -->
@@ -3336,7 +3489,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
 <div class="music-main">
 
-  <div id="movies-create-list-row" class="list-create-row" style="display:none;"><button type="button" class="ed-primary" onclick="addToMainList('movies')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add movies you love</button><div class="list-create-import"><button type="button" class="list-import-link" onclick="openTasteImport('letterboxd','profile')">import from Letterboxd</button></div></div>
+  <div id="movies-create-list-row" class="list-create-row" style="display:none;"><button type="button" class="ed-primary" onclick="addToMainList('movies')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add movie</button><div class="list-create-import"><button type="button" class="list-import-link" onclick="openTasteImport('letterboxd','profile')">import from Letterboxd</button></div></div>
 
   <div class="music-section">
     <div class="music-section-header">
@@ -3949,7 +4102,7 @@ function renderRecSearch(){
  const q=recSearch.q;if(q.length<2){el.innerHTML='';return;}
  const res=recSearch.results,kinds=REC_KIND_ORDER.filter(k=>res.some(r=>r.type===k)),f=recSearch.kind;
  const chips=kinds.length>1?`<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setRecSearchKind(null)">All</button>${kinds.map(k=>`<button type="button" class="fav-chip" aria-pressed="${f===k}" onclick="setRecSearchKind('${k}')">${REC_KIND_LABEL[k]}</button>`).join('')}</div>`:'';
- const rows=res.map((r,i)=>({r,i})).filter(x=>!f||x.r.type===f).map(({r,i})=>{const added=recSearch.added.has(i);return `<button type="button" class="extra-result${added?' is-added':''}" data-index="${i}" aria-label="Add ${esc(r.title)} to What’s Next" onclick="addRecFromSearch(${i},this)"><span class="rec-art">${r.art?`<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span>${esc((r.title||'?').slice(0,1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([pasteRecTypes[r.type],r.sub,r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${added?'✓':'+'}</span></button>`;}).join('');
+ const rows=res.map((r,i)=>({r,i})).filter(x=>!f||x.r.type===f).map(({r,i})=>{const added=recSearch.added.has(i);return `<button type="button" class="extra-result${added?' is-added':''}" data-index="${i}" aria-pressed="${added}" aria-label="${added?'Remove':'Add'} ${esc(r.title)} ${added?'from':'to'} What’s Next" onclick="addRecFromSearch(${i},this)"><span class="rec-art">${r.art?`<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span>${esc((r.title||'?').slice(0,1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([pasteRecTypes[r.type],r.sub,r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${added?'✓':'+'}</span></button>`;}).join('');
  const manual=`<button type="button" class="rec-manual" onclick="addRecManually()">Can’t find it? Add “${esc(q.slice(0,80))}” as written</button>`;
  el.innerHTML=chips+(rows||'<p class="rec-search-note">No matches yet.</p>')+(recSearch.partial?'<p class="rec-search-note">Some catalogs could not load.</p>':'')+manual;
 }
@@ -3957,25 +4110,37 @@ async function insertRec(row,label){
  const status=document.getElementById('rec-search-status');
  if(!isOwnProfile||!currentUser)return false;
  const userId=currentUser.id;
- if(FRIEND_RECOMMENDATIONS.some(r=>r.type===row.type&&tasteNorm(r.title)===tasteNorm(row.title))){status.className='rec-search-status';status.textContent=row.title+' is already in What’s Next.';return true;}
+ if(FRIEND_RECOMMENDATIONS.some(r=>r.type===row.type&&tasteNorm(r.title)===tasteNorm(row.title))){status.className='rec-search-status';status.textContent=row.title+' is already in What’s Next.';return false;}
  recSearch.saving=true;status.className='rec-search-status';status.textContent='Adding '+row.title+'…';
  try{
   if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again before saving.');
   const from=document.getElementById('paste-rec-from').value.trim();
   const full={user_id:userId,from_name:from||null,recommenders:from?[{name:from}]:[],sort_order:FRIEND_RECOMMENDATIONS.length,...row};
-  const {error}=await sb.from('friend_recs').insert(full);if(error)throw error;
-  status.textContent='✓ '+row.title+' added to What’s Next'+(from?' · from '+from:'')+'.';
+  const {data:saved,error}=await sb.from('friend_recs').insert(full).select('id').single();if(error)throw error;
+  status.textContent='✓ '+row.title+' added to What’s Next'+(from?' · from '+from:'')+'. Tap it again to undo.';
   loadFriendRecsFromSupabase(userId).catch(()=>{});
-  return true;
+  return saved?.id||true;
  }catch(e){status.className='rec-search-status is-error';status.textContent=e.message||'Could not save. Please try again.';return false;}
  finally{recSearch.saving=false;}
 }
 async function addRecFromSearch(i,btn){
- const r=recSearch.results[i];if(!r||recSearch.saving||recSearch.added.has(i))return;
- const mark=btn?.querySelector('.picker-add');if(mark)mark.textContent='…';btn?.classList.add('is-saving');
+ const r=recSearch.results[i];if(!r||recSearch.saving)return;
+ const mark=btn?.querySelector('.picker-add');
+ recSearch.addedIds=recSearch.addedIds||{};
+ if(recSearch.added.has(i)){   // tapped again: take it back out
+  const id=recSearch.addedIds[i];if(typeof id!=='string')return;
+  recSearch.saving=true;if(mark)mark.textContent='…';
+  try{const {error}=await sb.from('friend_recs').delete().eq('id',id).eq('user_id',currentUser.id);if(error)throw error;
+   recSearch.added.delete(i);delete recSearch.addedIds[i];btn?.classList.remove('is-added');if(mark)mark.textContent='+';
+   const st=document.getElementById('rec-search-status');st.className='rec-search-status';st.textContent='Removed '+r.title+'.';
+   loadFriendRecsFromSupabase(currentUser.id).catch(()=>{});
+  }catch(e){if(mark)mark.textContent='✓';}finally{recSearch.saving=false;}
+  return;
+ }
+ if(mark)mark.textContent='…';btn?.classList.add('is-saving');
  const ok=await insertRec({title:r.title,type:r.type,art_url:r.art||null,catalog_item:r});
  btn?.classList.remove('is-saving');
- if(ok){recSearch.added.add(i);btn?.classList.add('is-added');if(mark)mark.textContent='✓';}else if(mark)mark.textContent='+';
+ if(ok){recSearch.added.add(i);if(typeof ok==='string')recSearch.addedIds[i]=ok;btn?.classList.add('is-added');if(mark)mark.textContent='✓';btn?.setAttribute('aria-pressed','true');}else if(mark)mark.textContent='+';
 }
 async function addRecManually(){
  const title=recSearch.q.trim();if(!title||recSearch.saving)return;
@@ -4490,7 +4655,7 @@ function openActivityItemForm(globalIndex) {
   document.getElementById('activity-item-note').value = '';
   document.getElementById('activity-item-art').value = '';
   document.getElementById('activity-item-date').value = new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
-  document.getElementById('activity-item-modal-title').textContent = 'Add update';
+  document.getElementById('activity-item-modal-title').textContent = 'Post update';
 
   if (globalIndex !== undefined) {
     const item = ACTIVITY_FEED_ITEMS[globalIndex];
@@ -4851,10 +5016,11 @@ function tiSetStep(step) {
   document.getElementById('ti-sub-field').hidden = picked;
   document.getElementById('ti-title-label').hidden = picked;
   document.getElementById('taste-item-title').closest('div[style*="display:flex"]').hidden = picked;
-  document.getElementById('taste-item-modal-title').textContent = tasteItemFormState.id ? 'Edit item' : picked ? 'Add details' : searching ? 'Add to this list' : 'Add item';
+  document.getElementById('taste-item-modal-title').textContent = tasteItemFormState.id ? 'Edit item' : picked ? 'Add details' : searching ? `Add to ${allTasteLists.find(l => l.id === currentTasteListId)?.title || 'this list'}` : 'Edit item';
 }
 function queueTiSearch(q) {
   clearTimeout(tiSearch.timer);
+  if (q.trim() !== tiSearch.q) tiSearch.added = new Map();
   tiSearch.q = q.trim();
   const request = ++tiSearch.request;
   if (tiSearch.q.length < 2) { tiSearch.results = []; tiSearch.loading = false; renderTiSearch(); return; }
@@ -4862,11 +5028,11 @@ function queueTiSearch(q) {
   tiSearch.timer = setTimeout(() => runTiSearch(tiSearch.q, request), 250);
 }
 async function runTiSearch(q, request) {
-  const settled = await Promise.allSettled(TI_SEARCH_TYPES.map(async cat => (await searchTasteCatalog(cat, q)).slice(0, 5).map(r => ({ ...r, cat }))));
+  const settled = await Promise.allSettled(TI_SEARCH_TYPES.map(async cat => (await searchTasteCatalog(cat, q)).slice(0, 5).map((r, i) => ({ ...r, cat, providerRank: i }))));
   if (request !== tiSearch.request) return;
   const norm = v => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const results = settled.filter(r => r.status === 'fulfilled').flatMap(r => r.value).filter(r => r.title);
-  results.sort((a, b) => Number(norm(b.title) === norm(q)) - Number(norm(a.title) === norm(q)));
+  results.sort(catalogCompare(q));
   tiSearch.results = results.filter((r, j, a) => a.findIndex(x => x.cat === r.cat && x.title === r.title && x.sub === r.sub) === j).slice(0, 36);
   tiSearch.partial = settled.some(r => r.status === 'rejected');
   tiSearch.loading = false;
@@ -4876,18 +5042,72 @@ function setTiSearchKind(k) { tiSearch.kind = k || null; renderTiSearch(); }
 function renderTiSearch() {
   const el = document.getElementById('ti-search-results'); if (!el) return;
   // Once results show, their own "Can't find it?" covers adding by hand; keep just the link option.
-  const byHand = document.getElementById('ti-by-hand'); if (byHand) byHand.hidden = tiSearch.q.length >= 2;
   if (tiSearch.q.length < 2) { el.innerHTML = ''; return; }
   const res = tiSearch.results, f = tiSearch.kind;
   const kinds = TI_SEARCH_TYPES.filter(k => res.some(r => r.cat === k) || k === f);
   const chips = kinds.length > 1 || f ? `<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setTiSearchKind(null)">All</button>${kinds.map(k => `<button type="button" class="fav-chip" aria-pressed="${f === k}" onclick="setTiSearchKind('${k}')">${esc(tasteTypeMeta(k).label)}</button>`).join('')}</div>` : '';
   const rows = res.map((r, i) => ({ r, i })).filter(x => !f || x.r.cat === f).map(({ r, i }) => {
     const m = tasteTypeMeta(r.cat);
-    return `<button type="button" class="extra-result" aria-label="Add ${esc(r.title)}${r.sub ? ' by ' + esc(r.sub) : ''}" onclick="pickTiResult(${i})"><span class="rec-art">${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span>${esc((r.title || '?').slice(0, 1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([m.chip, r.sub, r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">+</span></button>`;
+    const on = tiSearch.added?.has(i);
+    return `<button type="button" class="extra-result${on ? ' is-added' : ''}" aria-pressed="${on}" aria-label="${on ? 'Remove' : 'Add'} ${esc(r.title)}${r.sub ? ' by ' + esc(r.sub) : ''}" onclick="toggleTiResult(${i}, this)"><span class="rec-art">${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span>${esc((r.title || '?').slice(0, 1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([m.chip, r.sub, r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${on ? '✓' : '+'}</span></button>`;
   }).join('');
   const empty = tiSearch.loading ? '<p class="rec-search-note">Searching…</p>' : `<p class="rec-search-note">No ${f ? esc(tasteTypeMeta(f).label.toLowerCase()) : 'matches'} for this search.${f ? ` <button type="button" class="rec-manual" style="padding:0" onclick="setTiSearchKind(null)">Show all results</button>` : ''}</p>`;
-  const manual = tiSearch.loading ? '' : `<button type="button" class="rec-manual" onclick="tiAddManually()">Can’t find it? Add “${esc(tiSearch.q.slice(0, 80))}” as written</button>`;
+  const isLink = /^https?:\/\/\S+$/i.test(tiSearch.q);
+  const manual = tiSearch.loading ? '' : isLink
+    ? `<button type="button" class="rec-manual" onclick="tiQuickAdd(true)">Add this link</button>`
+    : `<button type="button" class="rec-manual" onclick="tiQuickAdd(false)">Can’t find it? Add “${esc(tiSearch.q.slice(0, 80))}”${tiSearch.kind ? ` as ${esc(tasteTypeMeta(tiSearch.kind).singular)}` : ''}</button>`;
   el.innerHTML = chips + (rows || empty) + (tiSearch.partial ? '<p class="rec-search-note">Some catalogs could not load.</p>' : '') + manual;
+}
+// Adds go straight into the list (dates and who recommended it can be edited on the item later).
+async function tiInsert(row) {
+  if (!sb || !currentTasteListId || !currentUser) throw Error('Not connected to this list.');
+  if (!(await requireFreshSession())) throw Error(SESSION_EXPIRED_MESSAGE);
+  const { data: last } = await sb.from('taste_list_items').select('sort_order').eq('list_id', currentTasteListId).order('sort_order', { ascending: false, nullsFirst: false }).limit(1);
+  const full = { list_id: currentTasteListId, added_by: currentUser.id, sort_order: ((last?.[0]?.sort_order) ?? -1) + 1, sub: null, event_date: null, recommended_by: null, link_url: null, art_url: null, tmdb_id: null, ...row };
+  const { data, error } = await sb.from('taste_list_items').insert(full).select('id').single();
+  if (error) throw error;
+  tripPlaylistArtFetched = false;
+  reloadCurrentTasteListItems().catch(() => {});
+  return data?.id;
+}
+function tiStatus(text, error) { const el = document.getElementById('ti-search-status'); if (el) { el.textContent = text; el.classList.toggle('is-error', !!error); } }
+async function toggleTiResult(i, btn) {
+  const r = tiSearch.results[i]; if (!r || tiSearch.busy) return;
+  tiSearch.added = tiSearch.added || new Map();
+  const mark = btn?.querySelector('.picker-add');
+  tiSearch.busy = true;
+  try {
+    if (tiSearch.added.has(i)) {
+      if (mark) mark.textContent = '…';
+      const { error } = await sb.from('taste_list_items').delete().eq('id', tiSearch.added.get(i));
+      if (error) throw error;
+      tiSearch.added.delete(i); reloadCurrentTasteListItems().catch(() => {});
+      tiStatus(`Removed ${r.title}.`);
+    } else {
+      const dupe = (TRIP_PLAYLIST_ITEMS[r.cat] || []).some(x => tasteNorm(x.title) === tasteNorm(r.title));
+      if (dupe) { tiStatus(`${r.title} is already in this list.`); return; }
+      if (mark) mark.textContent = '…';
+      const id = await tiInsert({ category: r.cat, title: r.title, sub: r.sub || null, art_url: r.art || null, tmdb_id: r.tmdbId || null });
+      tiSearch.added.set(i, id);
+      tiStatus(`✓ Added ${r.title}. Tap it again to undo.`);
+    }
+  } catch (e) { tiStatus(e.message || 'Could not save. Please try again.', true); }
+  finally { tiSearch.busy = false; renderTiSearch(); }
+}
+async function tiQuickAdd(isLink) {
+  const q = tiSearch.q.trim(); if (!q || tiSearch.busy) return;
+  tiSearch.busy = true;
+  try {
+    let row;
+    if (isLink) {
+      const p = await fetchLinkPreview(q);
+      row = p?.isImage ? { category: tiSearch.kind || 'articles', title: 'Image', art_url: q }
+        : { category: tiSearch.kind || 'articles', title: (usableLinkTitle(p?.title) || new URL(q).hostname).slice(0, 200), art_url: p?.image || null, link_url: q };
+    } else row = { category: tiSearch.kind || 'custom:Other', title: q.slice(0, 200) };
+    await tiInsert(row);
+    tiStatus(`✓ Added ${row.title}.`);
+  } catch (e) { tiStatus(e.message || 'Could not save. Please try again.', true); }
+  finally { tiSearch.busy = false; }
 }
 function pickTiResult(i) {
   const r = tiSearch.results[i]; if (!r) return;
@@ -4961,7 +5181,8 @@ function openTasteItemForm(category, flatIdx) {
   // editing, and "something else", go straight to the details.
   const searchFirst = flatIdx === undefined && category !== '__other';
   clearTimeout(tiSearch.timer); tiSearch.request++;
-  Object.assign(tiSearch, { q: '', results: [], loading: false, partial: false, kind: searchFirst && TI_SEARCH_TYPES.includes(category) ? category : null });
+  Object.assign(tiSearch, { q: '', results: [], loading: false, partial: false, busy: false, added: new Map(), kind: searchFirst && TI_SEARCH_TYPES.includes(category) ? category : null });
+  tiStatus('');
   document.getElementById('ti-search-input').value = '';
   renderTiSearch();
   tiSetStep(searchFirst ? 'search' : 'details');
@@ -5373,38 +5594,51 @@ function renderTasteListsPicker() {
   if (controls) controls.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="createNewTasteList()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Create list</button>` : '';
   const newListBtn = '';
   if (!allTasteLists.length) {
-    el.innerHTML = newListBtn + `<div class="profile-compact-empty"><p>${isOwnProfile ? 'No lists yet. A list is a collection with a purpose — a book club, a road-trip mix, the best of 2026.' : 'No lists yet.'}</p></div>`;
+    el.innerHTML = isOwnProfile
+      ? `<button type="button" class="list-card-empty" onclick="createNewTasteList()"><span class="lc-collage is-empty" aria-hidden="true">${mediaIcon('list', 30)}</span><span><strong>Start a collection</strong><small>A book club, a road-trip mix, the best of 2026 — solo or with friends.</small></span></button>`
+      : `<div class="profile-compact-empty"><p>No lists yet.</p></div>`;
     return;
   }
   const cardHtml = list => {
-    const names = list.collaborators.map(c => firstNameOnly(c.display_name) || c.username).filter(Boolean);
-    const collabLine = names.length ? `<div style="font-size:11.5px;color:var(--muted);margin-top:6px;">with ${esc(names.join(', '))}</div>` : '';
-    const mosaicCells = list.previewArt.map(u => `<div style="background-image:url('${esc(u)}');background-size:cover;background-position:center;"></div>`).join('') +
-      Array(Math.max(0, 4 - list.previewArt.length)).fill(`<div style="background:#7C4DFF18;"></div>`).join('');
-    const art = list.previewArt.length
-      ? `<div class="activity-card-art-img activity-card-mosaic" style="display:grid;gap:2px;">${mosaicCells}</div>`
-      : `<div class="activity-card-art-img activity-card-art-empty" style="background:#7C4DFF18;display:flex;align-items:center;justify-content:center;">${mediaIcon('list', 42)}</div>`;
-    const canEditThisList = list.isOwner || list.collaborators.some(c => c.user_id === currentUser?.id);
-    const renameBtn = canEditThisList ? `<button onclick="event.stopPropagation(); renameTasteList('${jsStr(list.id)}')" title="Rename list" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:2px 4px;flex-shrink:0;">✎</button>` : '';
-    return `<div class="activity-card shared-list-card" onclick="${esc(`openTasteList('${jsStr(list.id)}')`)}" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);margin-bottom:12px;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-      ${list.isOwner ? `<button type="button" class="shared-list-trash" aria-label="Delete ${esc(list.title || 'shared list')}" title="Delete list" onclick="event.stopPropagation();deleteSharedTasteList('${jsStr(list.id)}')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button>` : ''}
-      <div class="activity-card-art">${art}</div>
-      <div class="activity-card-body">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div style="font-size:15px;font-weight:700;color:var(--text);">${esc(list.title || 'Untitled list')}</div>
-          ${renameBtn}
+    const art = (list.previewArt || []).filter(Boolean).slice(0, 4);
+    // Collage that fits however many covers there are: 1 whole, 2 side by side, 3 as one large + two, 4 as 2×2.
+    const collage = art.length
+      ? `<div class="lc-collage" data-count="${art.length}">${art.map(u => `<span class="lc-cell"><img src="${esc(u)}" alt="" loading="lazy" onerror="this.parentElement.classList.add('is-missing');this.remove()"></span>`).join('')}</div>`
+      : `<div class="lc-collage is-empty" aria-hidden="true">${mediaIcon('list', 34)}</div>`;
+    const members = [list.user_id, ...(list.collaborators || []).map(c => c.user_id)].filter((v, i, a) => v && a.indexOf(v) === i);
+    const shared = (list.collaborators || []).length > 0;
+    const person = id => tasteListPeople.get(id) || (list.collaborators || []).find(c => c.user_id === id) || (viewedProfile?.id === id ? viewedProfile : null) || (currentUser?.id === id ? currentProfile : null) || {};
+    const avatars = shared ? `<span class="lc-avatars" title="${esc(members.map(id => firstNameOnly(person(id).display_name) || person(id).username || '').filter(Boolean).join(', '))}">${members.slice(0, 3).map(id => profileAvatarHtml({ ...person(id), id }, 22)).join('')}${members.length > 3 ? `<span class="lc-more">+${members.length - 3}</span>` : ''}</span>` : '';
+    const canEditThisList = list.isOwner || (list.collaborators || []).some(c => c.user_id === currentUser?.id);
+    const isMember = canEditThisList;
+    const pub = list.is_public === true;
+    const meta = [`${list.itemCount} item${list.itemCount === 1 ? '' : 's'}`, shared ? `${members.length} members` : 'Personal'];
+    const privacy = isMember ? `<span class="lc-privacy" title="${pub ? 'Anyone can see this list' : 'Only members can see this list'}">${pub ? 'Public' : 'Private'}</span>` : '';
+    const id = jsStr(list.id);
+    // Management lives in a quiet ⋯ menu; only people who can change the list see it.
+    const menu = canEditThisList ? `<details class="lc-menu" onclick="event.stopPropagation()">
+        <summary aria-label="List options for ${esc(list.title || 'list')}" title="List options"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></summary>
+        <div class="lc-menu-pop" role="menu">
+          <button type="button" role="menuitem" onclick="this.closest('details').open=false;renameTasteList('${id}')">Rename</button>
+          ${list.isOwner ? `<button type="button" role="menuitem" value="${pub ? 'public' : 'private'}" onclick="this.closest('details').open=false;changeTasteListVisibility('${id}','${pub ? 'private' : 'public'}',this)">Make ${pub ? 'private' : 'public'}</button>
+          <button type="button" role="menuitem" class="is-danger" onclick="this.closest('details').open=false;deleteSharedTasteList('${id}')">Delete list</button>` : ''}
         </div>
-        ${list.subtitle ? `<div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${esc(list.subtitle)}</div>` : ''}
-        <div style="font-size:11.5px;color:var(--faint);margin-top:8px;">${list.itemCount} item${list.itemCount === 1 ? '' : 's'}${list.isOwner ? '' : ' · shared with you'}</div>
-        ${collabLine}${tasteListPrivacyControl(list)}
+      </details>` : '';
+    return `<article class="list-card${shared ? ' is-shared' : ''}">
+      <button type="button" class="lc-hit" onclick="openTasteList('${id}')" aria-label="Open ${esc(list.title || 'Untitled list')}">${collage}</button>
+      <div class="lc-body">
+        <div class="lc-title-row"><h3 class="lc-title">${esc(list.title || 'Untitled list')}</h3>${menu}</div>
+        ${list.subtitle ? `<p class="lc-sub">${esc(list.subtitle)}</p>` : ''}
+        <div class="lc-meta"><span>${meta.map(esc).join(' · ')}</span>${privacy}${avatars}</div>
       </div>
-    </div>`;
+    </article>`;
   };
   // Personal lists and lists made with other people, under quiet labels; an empty group isn't shown.
   const personal = allTasteLists.filter(l => !(l.collaborators || []).length);
   const shared = allTasteLists.filter(l => (l.collaborators || []).length);
-  const group = (label, lists) => lists.length ? `<section class="lists-group"><h3 class="lists-group-label">${label}<span>${lists.length}</span></h3>${lists.map(cardHtml).join('')}</section>` : '';
-  const cards = personal.length && shared.length ? group('Shared', shared) + group('Personal', personal) : allTasteLists.map(cardHtml).join('');
+  const grid = lists => `<div class="list-gallery">${lists.map(cardHtml).join('')}</div>`;
+  const group = (label, lists) => lists.length ? `<section class="lists-group"><h3 class="lists-group-label">${label}<span>${lists.length}</span></h3>${grid(lists)}</section>` : '';
+  const cards = personal.length && shared.length ? group('Shared', shared) + group('Personal', personal) : grid(allTasteLists);
 
   el.innerHTML = newListBtn + cards;
 }
@@ -5526,7 +5760,8 @@ function applyHardcodedSectionLabels() {
 async function renameHardcodedSection(id, fallback, headingElId) {
   if (!isOwnProfile || !currentUser || !sb) return;
   const current = sectionLabel(id, fallback);
-  const title = (prompt('Rename this section:', current) || '').trim();
+  const headingNow = document.getElementById(headingElId);
+  const title = headingNow ? await inlineEditTitle(headingNow, current) : (prompt('Rename this section:', current) || '').trim();
   if (!title || title === current) return;
   if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
   try {
@@ -7495,7 +7730,7 @@ const LEGACY_LIST_LABELS = {
   books: { shaped: 'Books That Shaped Me', reread: "Books I've Reread Too Many Times", recent: 'Recent Favorites' },
 };
 function isQuestionListName(name) { return /\?\s*$/.test(String(name || '')); }
-function customListLabel(tab, cat) { if(tab==='tv'&&cat==='movies')return 'Favorites'; if(isQuestionListName(cat))return MAIN_LIST_DEFAULT[tab] || 'Favorites'; return (LEGACY_LIST_LABELS[tab] && LEGACY_LIST_LABELS[tab][cat]) || cat; }
+function customListLabel(tab, cat) { if(tab==='tv'&&cat==='movies')return 'Favorites'; if(tab==='movies'&&cat==='movies')return (document.getElementById('movies-top5-heading')?.textContent||'').trim()||'Favorite Movies'; if(isQuestionListName(cat))return MAIN_LIST_DEFAULT[tab] || 'Favorites'; return (LEGACY_LIST_LABELS[tab] && LEGACY_LIST_LABELS[tab][cat]) || cat; }
 
 let extraLists=[],extraLoadError='',extraBusy=false;
 let extraPicker={listId:null,category:null,results:[],request:0,timer:null};
@@ -7520,7 +7755,7 @@ function renderExtraLists(){
   if(category==='music'&&!lists.length){el.innerHTML='';continue;}
   if(category==='podcasts'){const bio=document.getElementById('podcast-bio-text');const picks=lists.flatMap(l=>l.items||[]);if(bio)bio.innerHTML=picks.length?'<p>'+picks.slice(0,6).map(p=>esc(p.title)).join(' · ')+'</p>':'<p>The shows and episodes you love, in one place.</p>';}
   el.innerHTML=`<div class="extra-heading"><h2>${category==='music'?'Favorite Songs':category==='comedy'?'Comedy':'Podcasts'}</h2>${isOwnProfile&&lists.length?`<button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}`:''}</div>`+(extraLoadError?`<p class="extra-muted">${esc(extraLoadError)}</p><button class="profile-control" onclick="loadExtraLists(viewedProfile.id)">Retry</button>`:'')+
-   lists.map(list=>`<section class="extra-list"><div class="extra-heading${lists.length<=1||isQuestionListName(list.title)?' is-quiet':''}"><h3>${esc(isQuestionListName(list.title)?(MAIN_LIST_DEFAULT[category]||'Favorites'):list.title)}</h3>${isOwnProfile?`<div class="list-edit-slot"><button type="button" class="list-icon-control" aria-label="${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${listActionIcon(inlineListEditing.has('extra|'+list.id)?'done':'edit')}</button>${inlineListEditing.has('extra|'+list.id)?`<button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button><button class="list-icon-control" aria-label="Rename list" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete list" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">${listActionIcon('trash')}</button>`:''}</div>`:''}</div><div class="ob-pick-grid hrow">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong>${favoriteFriendTagsHtml(item)}<small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile&&inlineListEditing.has('extra|'+list.id)?`<button type="button" class="list-icon-control" aria-label="Remove item" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">${listActionIcon('trash')}</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}</section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
+   lists.map(list=>`<section class="extra-list"><div class="extra-heading${isQuestionListName(list.title)&&!inlineListEditing.has('extra|'+list.id)?' is-quiet':''}"><h3>${esc(isQuestionListName(list.title)?(MAIN_LIST_DEFAULT[category]||'Favorites'):list.title)}</h3>${isOwnProfile?`<div class="list-edit-slot"><button type="button" class="list-icon-control" aria-label="${inlineListEditing.has('extra|'+list.id)?'Done editing':'Edit list'}" onclick="toggleInlineListEdit('extra|${jsStr(list.id)}')">${listActionIcon(inlineListEditing.has('extra|'+list.id)?'done':'edit')}</button>${inlineListEditing.has('extra|'+list.id)?`<button class="profile-control" data-id="${esc(list.id)}" onclick="openExtraPicker(this.dataset.id)">+ Add picks</button><button class="list-icon-control" aria-label="Rename list" data-id="${esc(list.id)}" onclick="renameExtraList(this.dataset.id)">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete list" data-id="${esc(list.id)}" onclick="deleteExtraList(this.dataset.id)">${listActionIcon('trash')}</button>`:''}</div>`:''}</div><div class="ob-pick-grid hrow">${(list.items||[]).map((item,i)=>`<div ${inlineOrderAttrs('extra|'+list.id,i,isOwnProfile&&inlineListEditing.has('extra|'+list.id))} class="ob-pick-card">${onboardingArtwork(item)}<strong>${esc(item.title)}</strong>${favoriteFriendTagsHtml(item)}<small>${esc(item.label||'')} ${item.artist?'· '+esc(item.artist):''}</small>${isOwnProfile&&inlineListEditing.has('extra|'+list.id)?`<button type="button" class="list-icon-control" aria-label="Remove item" data-id="${esc(list.id)}" onclick="removeExtraItem(this.dataset.id,${i})">${listActionIcon('trash')}</button>`:''}</div>`).join('')}</div>${!list.items?.length&&isOwnProfile?'<p class="extra-muted">Add your first pick to this list.</p>':''}</section>`).join('')+(!lists.length&&!extraLoadError?(isOwnProfile?`<section class="list-start"><div><h3>Make room for your favorites</h3><p>${category==='comedy'?'Keep your favorite comedians and specials together.':'Keep your favorite shows and episodes together.'}</p></div><button type="button" class="ed-primary" onclick="addToMainList('${category}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${listCtaLabel(category)}</button>${listCtaLinksHtml(category)}</section>`:'<p class="extra-muted">No picks here yet.</p>'):'');
  }
 }
 async function createExtraList(category, suppliedTitle){
@@ -7535,10 +7770,10 @@ async function updateExtraList(list,changes){
  if(error||!data)throw Error('Could not save. Reload your lists and try again.');
  if(viewedProfile?.id===list.user_id){Object.assign(list,data);renderExtraLists();scheduleTasteConstellation();renderProfileTab();}return data;
 }
-async function renameExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;const title=prompt('Rename list',list.title);if(!title?.trim())return;extraBusy=true;try{await updateExtraList(list,{title:title.trim().slice(0,120)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
+async function renameExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;const h=document.activeElement?.closest?.('.extra-list')?.querySelector('h3');const title=h?await inlineEditTitle(h,list.title):prompt('Rename list',list.title);if(title===list.title)return;if(!title?.trim())return;extraBusy=true;try{await updateExtraList(list,{title:title.trim().slice(0,120)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
 async function removeExtraItem(id,index){const list=extraLists.find(l=>l.id===id);if(!list||extraBusy)return;extraBusy=true;try{await updateExtraList(list,{items:list.items.filter((_,i)=>i!==index)});}catch(e){alert(e.message);}finally{extraBusy=false;}}
 async function deleteExtraList(id){const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile||extraBusy||!confirm('Delete this list and its picks?'))return;extraBusy=true;try{const {error}=await sb.from('taste_extra_lists').delete().eq('id',id).eq('user_id',currentUser.id);if(error)throw error;extraLists=extraLists.filter(l=>l.id!==id);renderExtraLists();scheduleTasteConstellation();renderProfileTab();}catch(_){alert('Could not delete the list.');}finally{extraBusy=false;}}
-function openExtraPicker(id){const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile)return;openUnifiedPicker(list.category,list.title);}
+function openExtraPicker(id){const list=extraLists.find(l=>l.id===id);if(!list||!isOwnProfile)return;openUnifiedPicker(list.category,list.title,{context:'existing_list'});}
 
 function queueExtraSearch(){clearTimeout(extraPicker.timer);extraPicker.request++;extraPicker.timer=setTimeout(runExtraSearch,350);}
 async function runExtraSearch(){const request=++extraPicker.request,el=document.getElementById('extra-picker-results'),query=document.getElementById('extra-picker-query').value.trim(),kind=document.getElementById('extra-picker-kind').value;if(!query){el.innerHTML='';return;}el.innerHTML='<p>Searching…</p>';try{const items=await searchExtraCatalog(kind,query);if(request!==extraPicker.request)return;extraPicker.results=items;el.innerHTML=items.length?items.map((item,i)=>`<button class="extra-result" onclick="addExtraResult(${i})">${onboardingArtwork(item)}<span><strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.artist?' · '+esc(item.artist):''}</small></span><span>+</span></button>`).join(''):'<p>No matching results.</p>';}catch(_){if(request===extraPicker.request)el.innerHTML='<p>Search couldn’t load. Please try again.</p>';}}
@@ -7642,16 +7877,24 @@ const CUSTOM_LIST_CONTAINER = { movies: 'movie-lists-container', tv: 'tv-lists-c
 function customListCount(tab) { return Object.values(CUSTOM_LISTS[tab]).reduce((n, arr) => n + arr.length, 0); }
 
 async function loadCustomLists(userId, tab) {
-  CUSTOM_LISTS[tab] = {};
+  CUSTOM_LISTS[tab] = {}; LIST_STARTED[tab] = {};
   if (!sb || !userId) { renderCustomLists(tab); return; }
   try {
     let query = sb.from(CUSTOM_LIST_TABLE[tab]).select('*').eq('user_id', userId).order('sort_order', { ascending: true });
-    if (tab === 'movies') query = query.eq('type', 'movie').neq('category', 'movies');
-    if (tab === 'tv') query = query.eq('type', 'tv');
-    const { data, error } = await query;
+    if (tab === 'movies' || tab === 'tv') query = query.neq('category', 'movies');   // 'movies' is the separate top grid
+    let { data, error } = await query;
     if (error || !data) { renderCustomLists(tab); return; }
+    if (tab === 'movies' || tab === 'tv') {
+      // A list's home is the kind most of its titles are (ties: its first title), so a miniseries
+      // someone keeps in a movie list stays in that movie list instead of spawning a TV list.
+      const home = {};
+      data.forEach(row => { const h = home[row.category] || (home[row.category] = { movie: 0, tv: 0, first: row.type }); h[row.type === 'tv' ? 'tv' : 'movie']++; });
+      const tabOf = cat => { const h = home[cat]; return h.tv > h.movie || (h.tv === h.movie && h.first === 'tv') ? 'tv' : 'movies'; };
+      data = data.filter(row => tabOf(row.category) === tab);
+    }
     data.forEach(row => {
       const cat = row.category || 'Untitled';
+      noteListStarted(tab, cat, row.created_at);
       if (!CUSTOM_LISTS[tab][cat]) CUSTOM_LISTS[tab][cat] = [];
       if (tab === 'books') {
         CUSTOM_LISTS[tab][cat].push({ rowId: row.id, friend_tags: row.friend_tags || [], title: row.title, author: row.author, year: row.year || '', cover: preferredBookCover(row.title,row.author) || row.cover_url || '', savedCover: row.cover_url || '', whyInfluential: row.why_influential || '' });
@@ -7678,7 +7921,7 @@ async function loadCustomLists(userId, tab) {
       if (['tab-profile','tab-favorites'].some(id => document.getElementById(id)?.classList.contains('active'))) { try { renderProfileTab(); } catch (_) {} }
     } else {
       await runInBatches(allItems, 3, 250, async (item) => {
-        const isTV = tab === 'tv';
+        const isTV = item.type ? item.type === 'tv' : tab === 'tv';
         const detail = isTV ? await fetchTVDetail(item.tmdbId) : await fetchMovieDetail(item.tmdbId);
         Object.assign(item, detail);
         renderCustomLists(tab);
@@ -7729,8 +7972,21 @@ function isShapedMeCategory(tab, cat) {
   const label = tab === 'music' ? cat : customListLabel(tab, cat);
   return /shaped me/i.test(label);
 }
+// When each list was started (its oldest item). Lists keep a stable, established order —
+// "___ That Shaped Me" first, then oldest to newest — so a newly made list doesn't jump to the top.
+const LIST_STARTED = {};
+function noteListStarted(tab, cat, when) {
+  const t = Date.parse(when || ''); if (!t) return;
+  const m = LIST_STARTED[tab] || (LIST_STARTED[tab] = {});
+  if (!(m[cat] <= t)) m[cat] = t;
+}
+function listStartedAt(tab, cat) { return LIST_STARTED[tab]?.[cat] ?? Infinity; }
 function sortShapedMeFirst(tab, cats) {
-  return [...cats].sort((a, b) => (isShapedMeCategory(tab, b) ? 1 : 0) - (isShapedMeCategory(tab, a) ? 1 : 0));
+  const saved = savedListOrder(tab);
+  const rank = c => { const i = saved ? saved.indexOf(c) : -1; return i < 0 ? Infinity : i; };
+  return [...cats].sort((a, b) => (rank(a) - rank(b)) || ((isShapedMeCategory(tab, b) ? 1 : 0) - (isShapedMeCategory(tab, a) ? 1 : 0)) || (listStartedAt(tab, a) - listStartedAt(tab, b)));
+  // (default when nothing is saved: "___ That Shaped Me" first, then oldest to newest)
+  return [...cats].sort((a, b) => ((isShapedMeCategory(tab, b) ? 1 : 0) - (isShapedMeCategory(tab, a) ? 1 : 0)) || (listStartedAt(tab, a) - listStartedAt(tab, b)));
 }
 
 function renderCustomLists(tab) {
@@ -7795,7 +8051,7 @@ function customListSectionHtml(tab, cat) {
         ${editing ? `<button onclick="${esc(`openCustomAddModal('${jsStr(tab)}','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ ${addLabel}</button>` : ''}
         ${isOwnProfile ? `<button type="button" class="list-icon-control" title="${editing ? 'Done editing' : 'Edit list'}" aria-label="${editing ? 'Done editing' : 'Edit list'}" aria-pressed="${editing}" onclick="${esc(`toggleCustomListEditMode('${jsStr(tab)}','${jsStr(cat)}')`)}">${listActionIcon(editing ? 'done' : 'edit')}</button>` : ''}
         ${editing ? `
-        <button onclick="${esc(`renameCustomList('${jsStr(tab)}','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">Rename</button>
+        <button onclick="${esc(`renameCustomList('${jsStr(tab)}','${jsStr(cat)}',this)`)}" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">Rename</button>${listMoveButtonsHtml(tab, cat)}
         <button type="button" class="list-icon-control list-icon-danger" aria-label="Delete list" title="Delete list" onclick="${esc(`deleteCustomListSection('${jsStr(tab)}','${jsStr(cat)}')`)}">${listActionIcon('trash')}</button>` : ''}
       </div>
       <section class="top5-section">
@@ -7945,16 +8201,126 @@ function renderPickerResults(){
  const f=flexibleMusic.kindFilter;
  const chipKinds=f&&!kinds.includes(f)?[...kinds,f]:kinds;
  const chips=chipKinds.length>1?`<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setPickerKind(null)">All</button>${chipKinds.map(k=>`<button type="button" class="fav-chip" aria-pressed="${f===k}" onclick="setPickerKind('${k}')">${PICKER_KIND_LABEL[k]||k}</button>`).join('')}</div>`:'';
- const rows=res.map((p,i)=>({p,i})).filter(x=>!f||x.p.kind===f).map(({p,i})=>`<button type="button" class="extra-result" data-index="${i}" aria-label="Add ${esc(p.title)}${p.artist||p.author?' by '+esc(p.artist||p.author):''}" onclick="saveFlexibleMusic(${i},this)">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.album,p.year].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">+</span></button>`).join('');
+ const rows=res.map((p,i)=>({p,i})).filter(x=>!f||x.p.kind===f).map(({p,i})=>`<button type="button" class="pk-result fc-result" data-index="${i}" onclick="togglePickerResult(${i},this)" onkeydown="pickerResultKey(event)" aria-pressed="${flexibleMusic.added?.has(i)?'true':'false'}">${feedThumbHtml(p)}<span class="fc-result-text"><strong>${esc(p.title)}</strong><small>${esc(feedResultMeta(p))}</small></span><span class="pk-toggle${flexibleMusic.added?.has(i)?' is-on':''}" aria-hidden="true">${flexibleMusic.added?.has(i)?'✓':'+'}</span></button>`).join('');
  el.innerHTML=chips+(rows||`<p>No ${esc((PICKER_KIND_LABEL[f]||'matches').toLowerCase())} for this search. <button type="button" class="picker-dest-change" onclick="setPickerKind(null)">Show all results</button></p>`)+(flexibleMusic.error?'<p>Some results could not load. Search again to retry.</p>':'');
 }
-function openFlexibleMusicPicker(category=null){openUnifiedPicker('music',category);}
+function openFlexibleMusicPicker(category=null){openUnifiedPicker('music',category,{context:category?'existing_list':'favorite'});}
+// The picker always opens in an explicit context, set by whatever opened it:
+//  favorite      → "Add to Favorites": search, select, add. No list fields, no destination menu.
+//  existing_list → "Add to <list>": that list is the fixed destination.
+//  new_list      → naming a new list (with suggestions) and adding to it.
+function pickerApplyContext(){
+ const ctx=flexibleMusic.context, dlg=document.getElementById('music-picker');
+ dlg.dataset.context=ctx;
+ const newList=ctx==='new_list';
+ document.getElementById('music-picker-dest-line').hidden=true;
+ document.getElementById('music-picker-dest').hidden=!newList;
+ document.getElementById('music-picker-new-list').hidden=!newList;
+ document.querySelector('#music-picker .picker-tags').hidden=ctx==='favorite';
+ document.getElementById('music-picker-hint').textContent='';
+ const label=flexibleMusic.tab==='all'?'Favorites':customListLabel(flexibleMusic.tab,flexibleMusic.fixedCategory||'');
+ document.getElementById('music-picker-title').textContent=ctx==='favorite'?'Add to Favorites':ctx==='existing_list'?`Add to ${label}`:'Start a new list';
+ flexibleMusic.selected=null;flexibleMusic.lastAdded=null;
+ document.getElementById('music-picker-selected').hidden=true;document.getElementById('music-picker-searchbox').hidden=false;
+}
+function pickerDestinationLabel(p){
+ const ctx=flexibleMusic.context;
+ if(ctx==='favorite')return 'Favorites';
+ if(ctx==='existing_list')return customListLabel(flexibleMusic.tab==='all'?pickerTabForKind(p.kind):flexibleMusic.tab,flexibleMusic.fixedCategory);
+ return document.getElementById('music-picker-name').value.trim()||'your new list';
+}
+// Tap a result to add it; tap it again to take it back out. No extra screens.
+async function togglePickerResult(i,row){
+ const p=flexibleMusic.results[i];if(!p||flexibleMusic.saving)return;
+ flexibleMusic.added=flexibleMusic.added||new Set();flexibleMusic.addedRefs=flexibleMusic.addedRefs||{};
+ const mark=row?.querySelector('.pk-toggle');const status=document.getElementById('music-picker-status');
+ if(flexibleMusic.added.has(i)){
+  const ref=flexibleMusic.addedRefs[i];if(!ref)return;
+  flexibleMusic.saving=true;if(mark)mark.textContent='…';
+  try{await removeAddedFavorite(ref);flexibleMusic.added.delete(i);delete flexibleMusic.addedRefs[i];
+   status.className='';status.textContent='Removed '+p.title+'.';
+   if(mark){mark.textContent='+';mark.classList.remove('is-on');}row?.setAttribute('aria-pressed','false');}
+  catch(e){status.className='is-error';status.textContent=e.message||'Could not remove. Please try again.';if(mark)mark.textContent='✓';}
+  finally{flexibleMusic.saving=false;}
+  return;
+ }
+ if(mark)mark.textContent='…';
+ const ref=await saveFlexibleMusic(i,null);
+ if(ref){flexibleMusic.added.add(i);if(typeof ref==='object')flexibleMusic.addedRefs[i]=ref;
+  if(mark){mark.textContent='✓';mark.classList.add('is-on');}row?.setAttribute('aria-pressed','true');
+  if(status.textContent&&!status.classList.contains('is-error')&&typeof ref==='object')status.textContent=status.textContent.replace(/\.$/,'')+' · tap again to undo.';}
+ else if(mark)mark.textContent='+';
+}
+// Undo an add made from the picker: find the saved row by where it went and remove it.
+async function removeAddedFavorite(ref){
+ if(!(await requireFreshSession()))throw Error(SESSION_EXPIRED_MESSAGE);
+ const {kind,target,title,id}=ref, norm=v=>String(v||'').toLowerCase();
+ if(['song','podcast','episode','comedian','special'].includes(kind)){
+  const list=extraLists.find(l=>l.category===extraCategory(kind)&&l.title===target);if(!list)return;
+  await updateExtraList(list,{items:list.items.filter(x=>String(x.id)!==String(id))});renderExtraLists();return;
+ }
+ const tab=ref.listTab||(kind==='artist'?'music':kind==='album'?'albums':kind==='book'?'books':kind==='tv'?'tv':'movies');
+ if(tab==='movies'&&target==='movies'){
+  const k=movies.findIndex(x=>norm(x.title)===norm(title));if(k<0)return;
+  if(movies[k].rowId){const {error}=await sb.from('favorite_media_lists').delete().eq('id',movies[k].rowId).eq('user_id',currentUser.id);if(error)throw error;}
+  movies.splice(k,1);renderMovieGrid();try{renderProfileTab();}catch(_){}return;
+ }
+ const items=CUSTOM_LISTS[tab]?.[target]||[];
+ const k=items.findIndex(x=>norm(x.title||x.name)===norm(title));if(k<0)return;
+ const item=items[k];
+ if(item.rowId){const {error}=await sb.from(CUSTOM_LIST_TABLE[tab]).delete().eq('id',item.rowId).eq('user_id',currentUser.id);if(error)throw error;}
+ items.splice(k,1);if(!items.length)delete CUSTOM_LISTS[tab][target];
+ if(tab==='music')artists=Object.values(CUSTOM_LISTS.music).flat().filter(a=>!a.videoId);
+ if(tab==='albums')albums=Object.values(CUSTOM_LISTS.albums).flat();
+ renderCustomLists(tab==='albums'?'music':tab);if(tab==='albums')renderCustomLists('albums');
+ try{renderProfileTab();}catch(_){}
+}
+function selectPickerResult(i){
+ const p=flexibleMusic.results[i];if(!p)return;
+ flexibleMusic.selected=i;
+ const box=document.getElementById('music-picker-selected');
+ const dest=pickerDestinationLabel(p);
+ box.innerHTML=`<div class="fc-media-picked pk-picked">${feedThumbHtml(p)}<div class="fc-media-text"><strong>${esc(p.title)}</strong><small>${esc(feedResultMeta(p))}</small></div><button type="button" class="fc-change" onclick="clearPickerSelection()">Change</button></div>
+  <button type="button" class="ed-primary pk-add" id="music-picker-add" onclick="addSelectedPickerResult()">Add to ${esc(dest)}</button>`;
+ box.hidden=false;
+ document.getElementById('music-picker-searchbox').hidden=true;
+ document.getElementById('music-picker-results').hidden=true;
+ document.getElementById('music-picker-status').textContent='';document.getElementById('music-picker-status').className='';
+ setTimeout(()=>document.getElementById('music-picker-add')?.focus(),0);
+}
+function clearPickerSelection(){
+ flexibleMusic.selected=null;
+ document.getElementById('music-picker-selected').hidden=true;
+ document.getElementById('music-picker-searchbox').hidden=false;
+ document.getElementById('music-picker-results').hidden=false;
+ document.getElementById('music-picker-status').textContent='';
+ document.getElementById('music-picker-query').focus();
+}
+async function addSelectedPickerResult(){
+ const i=flexibleMusic.selected;if(i==null)return;
+ const btn=document.getElementById('music-picker-add');if(btn){btn.disabled=true;btn.textContent='Adding…';}
+ const ok=await saveFlexibleMusic(i,null);
+ const p=flexibleMusic.results[i];
+ if(!ok){if(btn){btn.disabled=false;btn.textContent='Add to '+pickerDestinationLabel(p);}return;}
+ // Saved: say so, and offer to keep going from the same search.
+ flexibleMusic.added=flexibleMusic.added||new Set();flexibleMusic.added.add(i);
+ const box=document.getElementById('music-picker-selected');
+ box.querySelector('.fc-change')?.remove();
+ if(btn)btn.outerHTML=`<div class="pk-done"><span class="pk-done-text">✓ ${esc(document.getElementById('music-picker-status').textContent.replace(/^✓\s*/,''))}</span><button type="button" class="fc-link" onclick="clearPickerSelection();renderPickerResults()">Add another</button><button type="button" class="fc-link" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">Done</button></div>`;
+ document.getElementById('music-picker-status').textContent='';
+}
+function pickerResultKey(e){
+ const all=[...document.querySelectorAll('#music-picker-results .pk-result')],i=all.indexOf(e.currentTarget);
+ if(e.key==='ArrowDown'){e.preventDefault();all[Math.min(i+1,all.length-1)]?.focus();}
+ else if(e.key==='ArrowUp'){e.preventDefault();(i>0?all[i-1]:document.getElementById('music-picker-query'))?.focus();}
+}
 function openUnifiedPicker(tab,category=null,opts={}){
  if(!isOwnProfile||!currentUser||flexibleMusic.saving)return;
  if(tab==='all')return openAllPicker();
+ const context=opts.context||(category?'existing_list':'favorite');
  // Never make anyone name a list before adding: default to their main list of this type.
  if(!category)category=pickerDefaultList(tab);
- flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.searched=false;flexibleMusic.tab=tab;flexibleMusic.kindFilter=opts.kind||null;resetPickerFriendTags();
+ flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.added=new Set();flexibleMusic.searched=false;flexibleMusic.tab=tab;document.getElementById('music-picker-results').hidden=false;flexibleMusic.kindFilter=opts.kind||null;resetPickerFriendTags();
  const tabs=tab==='music'?['music','albums']: [tab];
  const names=[...new Set([...tabs.flatMap(t=>Object.keys(CUSTOM_LISTS[t]||{})),...extraLists.filter(l=>l.category===tab).map(l=>l.title)])];
  const select=document.getElementById('music-picker-list');select.innerHTML='<option value="">+ Start a new list</option>'+names.map(n=>`<option value="${esc(n)}">${esc(customListLabel(tab,n))}</option>`).join('');
@@ -7965,6 +8331,7 @@ function openUnifiedPicker(tab,category=null,opts={}){
  document.getElementById('music-picker-ideas').innerHTML=(PICKER_IDEAS[tab]||[]).map(name=>`<button type="button" class="profile-control" data-name="${esc(name)}" onclick="document.getElementById('music-picker-name').value=this.dataset.name">${esc(name)}</button>`).join('');
  pickerDestinationChanged();document.getElementById('music-picker-query').value='';document.getElementById('music-picker-results').innerHTML='';document.getElementById('music-picker-status').textContent='';
  document.getElementById('music-picker-dest').hidden=true;document.getElementById('music-picker-dest-line').hidden=false;updatePickerDestLine();
+ flexibleMusic.context=context;flexibleMusic.fixedCategory=category;pickerApplyContext();
  document.getElementById('music-picker').showModal();document.getElementById('music-picker-query').focus();
 }
 function pickerDestinationChanged(){
@@ -7978,18 +8345,19 @@ function pickerDestinationChanged(){
 // "Add something you love": one search across every type; each pick goes to that type's favorites
 // list unless a specific list is chosen.
 function openAllPicker(){
- flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.searched=false;flexibleMusic.tab='all';flexibleMusic.kindFilter=null;resetPickerFriendTags();
+ flexibleMusic.request++;clearTimeout(flexibleMusic.timer);flexibleMusic.results=[];flexibleMusic.added=new Set();document.getElementById('music-picker-results').hidden=false;flexibleMusic.searched=false;flexibleMusic.tab='all';flexibleMusic.kindFilter=null;resetPickerFriendTags();
  const group=(label,pairs)=>pairs.length?`<optgroup label="${label}">${pairs.map(([t,n])=>`<option value="${esc(t+'::'+n)}">${esc(customListLabel(t,n))}</option>`).join('')}</optgroup>`:'';
  const extra=c=>extraLists.filter(l=>l.category===c).map(l=>[c,l.title]);
  const own=t=>Object.keys(CUSTOM_LISTS[t]||{}).map(n=>[t,n]);
  const select=document.getElementById('music-picker-list');
  select.innerHTML='<option value="__auto">Favorites</option><option value="__new">+ Start a new list</option>'+group('Music',[...own('music'),...own('albums'),...extra('music')])+group('Movies',own('movies'))+group('TV',own('tv'))+group('Books',own('books'))+group('Podcasts',extra('podcasts'));
  select.value='__auto';document.getElementById('music-picker-name').value='';
- document.getElementById('music-picker-title').textContent='Add something you love';
+ document.getElementById('music-picker-title').textContent='Add to Favorites';
  document.getElementById('music-picker-hint').textContent='Search movies, shows, books, music and podcasts — then narrow by type.';
  document.getElementById('music-picker-ideas').innerHTML=['Comfort Picks','Summer 2026','Everyone Should Try'].map(name=>`<button type="button" class="profile-control" data-name="${esc(name)}" onclick="document.getElementById('music-picker-name').value=this.dataset.name;updatePickerDestLine()">${esc(name)}</button>`).join('');
  pickerDestinationChanged();document.getElementById('music-picker-query').value='';document.getElementById('music-picker-results').innerHTML='';document.getElementById('music-picker-status').textContent='';
  document.getElementById('music-picker-dest').hidden=true;document.getElementById('music-picker-dest-line').hidden=false;updatePickerDestLine();
+ flexibleMusic.context='favorite';flexibleMusic.fixedCategory=null;pickerApplyContext();
  document.getElementById('music-picker').showModal();document.getElementById('music-picker-query').focus();
 }
 function pickerDestinationValue(){const v=document.getElementById('music-picker-list').value;return v&&v!=='__new'?v:document.getElementById('music-picker-name').value.trim();}
@@ -8020,10 +8388,10 @@ async function previewArtistPhoto(name){
 }
 async function searchFlexibleMusic(q,request){
  const userId=currentUser?.id,el=document.getElementById('music-picker-results');el.innerHTML='<p>Searching…</p>';
- const kinds=({all:['movie','tv','book','song','album','artist','podcast'],music:['song','album','artist'],albums:['album'],movies:['movie'],tv:['tv'],books:['book'],podcasts:['podcast','episode'],comedy:['comedian','special']})[flexibleMusic.tab]||[];
+ const kinds=({all:['movie','tv','book','song','album','artist','podcast'],music:['song','album','artist'],albums:['album'],movies:['movie','tv'],tv:['tv','movie'],books:['book'],podcasts:['podcast','episode'],comedy:['comedian','special']})[flexibleMusic.tab]||[];
  const results=await Promise.allSettled(kinds.map(kind=>onboardingAutocompleteProvider(kind,q)));
  if(request!==flexibleMusic.request||userId!==currentUser?.id)return;
- flexibleMusic.results=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort((a,b)=>onboardingMatchRank(a,q)-onboardingMatchRank(b,q)).slice(0,flexibleMusic.tab==='all'?42:30);
+ flexibleMusic.results=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort(catalogCompare(q)).slice(0,flexibleMusic.tab==='all'?42:30);
  flexibleMusic.searched=true;flexibleMusic.error=results.some(r=>r.status==='rejected');renderPickerResults();
  const artistJobs=flexibleMusic.results.map((p,index)=>({p,index})).filter(({p})=>p.kind==='artist'&&!onboardingArt(p));
  let nextArtist=0;
@@ -8044,17 +8412,19 @@ async function saveFlexibleMusic(index,row){
  const setRow=(state,mark)=>{if(!row)return;row.classList.remove('is-saving','is-added');if(state)row.classList.add(state);const m=row.querySelector('.picker-add');if(m)m.textContent=mark;};
  const allMode=flexibleMusic.tab==='all', itemTab=allMode?pickerTabForKind(p.kind):flexibleMusic.tab;
  let category;
- if(allMode){
+ if(flexibleMusic.context==='favorite')category=pickerDefaultList(itemTab);
+ else if(flexibleMusic.context==='existing_list')category=flexibleMusic.fixedCategory;
+ else if(allMode){
   const v=document.getElementById('music-picker-list').value, t=v.includes('::')?v.slice(0,v.indexOf('::')):'';
   category=v==='__new'?document.getElementById('music-picker-name').value.trim()
    :t&&(t===itemTab||(t==='albums'&&itemTab==='music'))?v.slice(v.indexOf('::')+2):pickerDefaultList(itemTab);
  } else category=document.getElementById('music-picker-list').value||document.getElementById('music-picker-name').value.trim();
- if(!category){status.className='is-error';status.textContent='Name your new list first, then tap a result to add it.';showPickerDestination();document.getElementById('music-picker-name').focus();return;}
- if(category.length>120){status.textContent='Use a list name of 120 characters or fewer.';return;}
+ if(!category){status.className='is-error';status.textContent='Name your new list first, then choose what to add.';showPickerDestination();document.getElementById('music-picker-name').focus();return false;}
+ if(category.length>120){status.textContent='Use a list name of 120 characters or fewer.';return false;}
  const userId=currentUser?.id;flexibleMusic.saving=true;status.className='';status.textContent='Adding '+p.title+'…';setRow('is-saving','…');
  try{
   if(!await requireFreshSession()||currentUser?.id!==userId||viewedProfile?.id!==userId)throw Error('Please sign in to your own profile.');
-  const friend_tags=(await tagFieldValue('picker')).map(t=>t.username?{id:t.user_id,username:t.username,display_name:t.display_name||''}:{name:t.name});
+  const friend_tags=flexibleMusic.context==='favorite'?[]:(await tagFieldValue('picker')).map(t=>t.username?{id:t.user_id,username:t.username,display_name:t.display_name||''}:{name:t.name});
   // A song or album picked while an artist list is selected goes to the matching kind of list
   // (and an artist picked for a song/album list goes to the main artist list).
   let target=category;
@@ -8066,41 +8436,45 @@ async function saveFlexibleMusic(index,row){
    // First pick into the default "Favorite Artists" (not created yet): songs and albums get their own lists.
    else if(category===MAIN_LIST_DEFAULT.music&&!isArtistList&&!isAlbumList&&!isSongList){if(p.kind==='song')target='Favorite Songs';else if(p.kind==='album')target=MAIN_LIST_DEFAULT.albums;}
   }
-  const listName=customListLabel(p.kind==='album'?'albums':itemTab,target);
-  if(onboardingAlreadySaved(p,target)){status.textContent=p.title+' is already in '+listName+'.';setRow('is-added','✓');return;}
+  const listTab=!allMode&&['movies','tv'].includes(flexibleMusic.tab)&&['movie','tv'].includes(p.kind)?flexibleMusic.tab:null;
+  if(listTab)p.listTab=listTab;
+  const listName=flexibleMusic.context==='favorite'?'your Favorites':customListLabel(p.kind==='album'?'albums':itemTab,target);
+  if(onboardingAlreadySaved(p,target)){status.textContent=p.title+' is already in '+listName+'.';setRow('is-added','✓');return true;}
   await saveOnboardingItem({...p,category:target,friend_tags},userId);
-  if(currentUser?.id!==userId)return;
+  if(currentUser?.id!==userId)return false;
   status.textContent='✓ '+p.title+' added to '+listName+'.';setRow('is-added','✓');
   if(p.kind==='artist'){
    const added=(CUSTOM_LISTS.music[target]||[]).find(a=>bookArtKey(a.name)===bookArtKey(p.title));
    if(added?.id){const link=document.createElement('button');link.type='button';link.className='cp-next-link';link.textContent='Pick favorite songs →';
     link.onclick=()=>{document.getElementById('music-picker')?.close?.();openCreatorPicks('artist',String(added.id));};status.append(' ',link);}
   }renderExtraLists();renderProfileTab();scheduleTasteConstellation();
- }catch(e){status.className='is-error';status.textContent=e.message||'Could not save. Please try again.';setRow('','+');}
+  return {kind:p.kind,target,title:p.title,id:p.id,listTab};
+ }catch(e){status.className='is-error';status.textContent=e.message||'Could not save. Please try again.';setRow('','+');return false;}
  finally{flexibleMusic.saving=false;}
 }
 
-function listCtaLabel(tab) { return `Add ${LIST_CTA_NOUN[tab] || 'things'} you love`; }
+const LIST_CTA_SHORT = { music: 'music', albums: 'music', movies: 'movie', tv: 'show', books: 'book', podcasts: 'podcast', comedy: 'comedy' };
+function listCtaLabel(tab) { return LIST_CTA_SHORT[tab] ? `Add ${LIST_CTA_SHORT[tab]}` : 'Add item'; }
 
 // ── "Add [things] you love" adds items to the person's main list for that tab ────────────────────
 // (Starting a separately named list is the quieter "or start a new list" link underneath.)
 const MAIN_LIST_DEFAULT = { music: 'Favorite Artists', albums: 'Favorite Albums', movies: 'Favorite Movies', tv: 'Favorite Shows', books: 'Favorite Books', comedy: 'Favorite Comedy', podcasts: 'Favorite Podcasts' };
-// Inside Favorites, a type's lists are sub-groups under the category heading. The one list of a type,
-// or its main favorites list ("Favorite Books", or an old question-named list), shows without a name.
+// Inside Favorites, a type's lists are sub-groups under the category heading. Only an old
+// onboarding-question list ("What have you been into lately?") shows without a name.
 function favListQuiet(tab, cat) {
-  const label = customListLabel(tab, cat);
-  const lists = Object.keys(CUSTOM_LISTS[tab] || {}).filter(k => (CUSTOM_LISTS[tab][k] || []).length);
-  return lists.length <= 1 || label === MAIN_LIST_DEFAULT[tab] || isQuestionListName(cat);
+  if (isOwnProfile && CUSTOM_LIST_EDIT[tab]?.[cat]) return false;   // editing: the name is always visible (and renamable)
+  return isQuestionListName(cat);   // only the old onboarding-question lists go unnamed; a name someone chose always shows
 }
 function mainListFor(tab) {
   const keys = Object.keys(CUSTOM_LISTS[tab] || {});
   const label = k => (typeof customListLabel === 'function' ? customListLabel(tab, k) : k);
   return keys.find(k => tasteListTier(tab, k, label(k)) === 1) || keys.find(k => tasteListTier(tab, k, label(k)) === 2) || keys[0] || MAIN_LIST_DEFAULT[tab] || 'Favorites';
 }
-async function addToMainList(tab) { openUnifiedPicker(tab, pickerDefaultList(tab)); }
+async function addToMainList(tab) { openUnifiedPicker(tab, pickerDefaultList(tab), { context: 'favorite' }); }
 // The list "Add … you love" saves to: your main list of that type when you have one, otherwise the
 // first list you've made of that type, otherwise a sensible new default ("Favorite Artists", …).
 function pickerDefaultList(tab) {
+  if (tab === 'movies' && typeof movies !== 'undefined' && movies.length) return 'movies';   // the top "Favorite Movies" grid
   const own = Object.keys(CUSTOM_LISTS[tab] || {});
   const extra = (extraLists || []).filter(l => l.category === tab).map(l => l.title);
   if (own.length) return mainListFor(tab);
@@ -8164,25 +8538,101 @@ async function submitNewList(event){
  createSuggestedList(category,name);
 }
 
-async function renameCustomList(tab, cat) {
+
+// ── Rename in place: the list title turns into a text field (Enter saves, Esc cancels) ──
+function inlineEditTitle(titleEl, current, { maxLength = 120 } = {}) {
+  return new Promise(resolve => {
+    if (!titleEl) { resolve(null); return; }
+    const header = titleEl.closest('.music-section-header, .extra-heading');
+    header?.classList.remove('is-quiet');
+    const original = titleEl.innerHTML;
+    const input = document.createElement('input');
+    input.type = 'text'; input.className = 'inline-title-input'; input.value = current; input.maxLength = maxLength;
+    input.setAttribute('aria-label', 'List name');
+    titleEl.innerHTML = ''; titleEl.appendChild(input);
+    input.focus(); input.select();
+    let done = false;
+    const finish = value => { if (done) return; done = true; titleEl.innerHTML = original; resolve(value); };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); finish(input.value.trim()); }
+      else if (e.key === 'Escape') { e.preventDefault(); finish(null); }
+    });
+    input.addEventListener('blur', () => finish(input.value.trim()));
+    input.addEventListener('click', e => e.stopPropagation());
+  });
+}
+
+// ── List order: saved per profile (profiles.section_labels.list_order), so new lists don't jump around ──
+function savedListOrder(tab) { const o = viewedProfile?.section_labels?.list_order?.[tab]; return Array.isArray(o) ? o : null; }
+function orderedListKeys(tab) {
+  const keys = Object.keys(CUSTOM_LISTS[tab] || {}).filter(k => (CUSTOM_LISTS[tab][k] || []).length);
+  return sortShapedMeFirst(tab, keys);
+}
+function listMoveButtonsHtml(tab, cat) {
+  if (!isOwnProfile) return '';
+  const keys = orderedListKeys(tab), i = keys.indexOf(cat);
+  if (keys.length < 2 || i < 0) return '';
+  const btn = (dir, label, path, disabled) => `<button type="button" class="list-move-btn" aria-label="${label}" title="${label}" ${disabled ? 'disabled' : ''} onclick="${esc(`moveCustomList('${jsStr(tab)}','${jsStr(cat)}',${dir})`)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${path}"/></svg></button>`;
+  return btn(-1, 'Move list up', 'M12 19V5M5 12l7-7 7 7', i === 0) + btn(1, 'Move list down', 'M12 5v14M5 12l7 7 7-7', i === keys.length - 1);
+}
+async function moveCustomList(tab, cat, dir) {
+  if (!isOwnProfile || !currentUser || viewedProfile?.id !== currentUser.id) return;
+  const keys = orderedListKeys(tab), i = keys.indexOf(cat), j = i + dir;
+  if (i < 0 || j < 0 || j >= keys.length) return;
+  [keys[i], keys[j]] = [keys[j], keys[i]];
+  const prev = viewedProfile.section_labels || {};
+  const updated = { ...prev, list_order: { ...(prev.list_order || {}), [tab]: keys } };
+  viewedProfile.section_labels = updated;
+  if (currentProfile) currentProfile.section_labels = updated;
+  renderCustomLists(tab === 'albums' ? 'music' : tab);
+  if (tab === 'albums') renderCustomLists('albums');
+  try {
+    if (!(await requireFreshSession())) throw Error(SESSION_EXPIRED_MESSAGE);
+    const { error } = await sb.from('profiles').update({ section_labels: updated }).eq('id', currentUser.id);
+    if (error) throw error;
+  } catch (e) {
+    viewedProfile.section_labels = prev; if (currentProfile) currentProfile.section_labels = prev;
+    renderCustomLists(tab === 'albums' ? 'music' : tab);
+    showToast('Couldn’t save the new order. ' + (e.message || 'Please try again.'));
+  }
+}
+
+// Movie and TV lists share one table, and the legacy "movies" list holds both kinds (e.g. a
+// miniseries in Movies That Shaped Me), so whole-list changes must stay within the tab's own type.
+function customListScope(query, tab, cat) {
+  if (tab !== 'movies' && tab !== 'tv') return query;
+  const ids = (CUSTOM_LISTS[tab]?.[cat] || []).map(i => i.rowId).filter(Boolean);
+  return ids.length ? query.in('id', ids) : query.eq('type', tab === 'tv' ? 'tv' : 'movie');
+}
+async function renameCustomList(tab, cat, trigger) {
   if (!isOwnProfile) return;
-  const name = (prompt('Rename this list:', cat) || '').trim();
-  if (!name || name === cat) return;
-  if (CUSTOM_LISTS[tab][name]) { alert('A list with that name already exists.'); return; }
+  const section = (trigger || document.activeElement)?.closest?.('.music-section');
+  const titleEl = section?.querySelector('.music-section-title');
+  const current = customListLabel(tab, cat);
+  const name = titleEl ? await inlineEditTitle(titleEl, current) : (prompt('Rename this list:', current) || '').trim();
+  if (!name || name === cat || name === current) return;
+  if (CUSTOM_LISTS[tab][name]) { showToast('You already have a list with that name.'); return; }
   if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
   try {
-    const { error } = await sb.from(CUSTOM_LIST_TABLE[tab]).update({ category: name }).eq('user_id', currentUser.id).eq('category', cat);
+    const { error } = await customListScope(sb.from(CUSTOM_LIST_TABLE[tab]).update({ category: name }).eq('user_id', currentUser.id).eq('category', cat), tab, cat);
     if (error) throw error;
     // likes/comments hang off the list's registry id, so move the id to the new name too
     sb.rpc('rename_profile_list', { p_tab: tab, p_old: cat, p_new: name }).then(r => { if (r.error) console.error('rename_profile_list failed:', r.error); });
     if (LIST_TARGETS[`${tab}|${cat}`]) { LIST_TARGETS[`${tab}|${name}`] = LIST_TARGETS[`${tab}|${cat}`]; delete LIST_TARGETS[`${tab}|${cat}`]; }
     CUSTOM_LISTS[tab][name] = CUSTOM_LISTS[tab][cat];
     delete CUSTOM_LISTS[tab][cat];
+    if (LIST_STARTED[tab]?.[cat] != null) LIST_STARTED[tab][name] = LIST_STARTED[tab][cat];
+    const order = savedListOrder(tab);
+    if (order?.includes(cat)) {
+      const updated = { ...viewedProfile.section_labels, list_order: { ...viewedProfile.section_labels.list_order, [tab]: order.map(k => k === cat ? name : k) } };
+      viewedProfile.section_labels = updated; if (currentProfile) currentProfile.section_labels = updated;
+      sb.from('profiles').update({ section_labels: updated }).eq('id', currentUser.id).then(() => {}, () => {});
+    }
     CUSTOM_LIST_EDIT[tab][name] = CUSTOM_LIST_EDIT[tab][cat];
     delete CUSTOM_LIST_EDIT[tab][cat];
     renderCustomLists(tab);
   } catch (e) {
-    alert('Failed to rename: ' + (e.message || 'unknown error'));
+    showToast('Couldn’t rename the list. ' + (e.message || 'Please try again.'));
   }
 }
 
@@ -8192,7 +8642,7 @@ async function deleteCustomListSection(tab, cat) {
   if (!confirm(`Delete "${customListLabel(tab, cat)}" and its ${items.length} item${items.length === 1 ? '' : 's'}?`)) return;
   if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
   try {
-    const { error } = await sb.from(CUSTOM_LIST_TABLE[tab]).delete().eq('user_id', currentUser.id).eq('category', cat);
+    const { error } = await customListScope(sb.from(CUSTOM_LIST_TABLE[tab]).delete().eq('user_id', currentUser.id).eq('category', cat), tab, cat);
     if (error) throw error;
     delete CUSTOM_LISTS[tab][cat];
     delete CUSTOM_LIST_EDIT[tab][cat];
@@ -8264,13 +8714,14 @@ async function backfillSongArt(userId) {
 }
 
 async function loadMusicCustomLists(userId) {
-  CUSTOM_LISTS.music = {};
+  CUSTOM_LISTS.music = {}; LIST_STARTED.music = {};
   if (!sb || !userId) { artists = []; renderCustomLists('music'); return; }
   try {
     const { data, error } = await sb.from('favorite_artists').select('*').eq('user_id', userId).order('sort_order', { ascending: true });
     if (error || !data) { artists = []; renderCustomLists('music'); return; }
     data.forEach(row => {
       const cat = row.category || 'Untitled';
+      noteListStarted('music', cat, row.created_at);
       if (!CUSTOM_LISTS.music[cat]) CUSTOM_LISTS.music[cat] = [];
       CUSTOM_LISTS.music[cat].push({
         id: row.id, rowId: row.id, friend_tags: row.friend_tags || [], name: row.name, genre: row.genre || '',
@@ -8293,13 +8744,14 @@ async function loadMusicCustomLists(userId) {
 }
 
 async function loadAlbumCustomLists(userId) {
-  CUSTOM_LISTS.albums = {};
+  CUSTOM_LISTS.albums = {}; LIST_STARTED.albums = {};
   if (!sb || !userId) { albums = []; renderCustomLists('albums'); return; }
   try {
     const { data, error } = await sb.from('favorite_albums').select('*').eq('user_id', userId).order('sort_order', { ascending: true });
     if (error || !data) { albums = []; renderCustomLists('albums'); return; }
     data.forEach(row => {
       const cat = row.category || 'Untitled';
+      noteListStarted('albums', cat, row.created_at);
       if (!CUSTOM_LISTS.albums[cat]) CUSTOM_LISTS.albums[cat] = [];
       CUSTOM_LISTS.albums[cat].push({
         id: row.id, rowId: row.id, friend_tags: row.friend_tags || [], name: row.name, artist: row.artist || '', year: row.year || '',
@@ -8335,7 +8787,7 @@ function musicListSectionHtml(cat) {
         ${editing ? `<button onclick="${esc(`openVideoItemForm('${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add YouTube link</button>` : ''}
         ${isOwnProfile ? `<button type="button" class="list-icon-control" title="${editing ? 'Done editing' : 'Edit list'}" aria-label="${editing ? 'Done editing' : 'Edit list'}" aria-pressed="${editing}" onclick="${esc(`toggleCustomListEditMode('music','${jsStr(cat)}')`)}">${listActionIcon(editing ? 'done' : 'edit')}</button>` : ''}
         ${editing ? `
-        <button onclick="${esc(`renameCustomList('music','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">Rename</button>
+        <button onclick="${esc(`renameCustomList('music','${jsStr(cat)}',this)`)}" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">Rename</button>${listMoveButtonsHtml('music', cat)}
         <button type="button" class="list-icon-control list-icon-danger" aria-label="Delete list" title="Delete list" onclick="${esc(`deleteCustomListSection('music','${jsStr(cat)}')`)}">${listActionIcon('trash')}</button>` : ''}
       </div>
       <section class="top5-section">
@@ -8437,7 +8889,7 @@ function albumListSectionHtml(cat) {
         ${editing ? `<button onclick="${esc(`openAlbumItemForm(undefined, '${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add album</button>` : ''}
         ${isOwnProfile ? `<button type="button" class="list-icon-control" title="${editing ? 'Done editing' : 'Edit list'}" aria-label="${editing ? 'Done editing' : 'Edit list'}" aria-pressed="${editing}" onclick="${esc(`toggleCustomListEditMode('albums','${jsStr(cat)}')`)}">${listActionIcon(editing ? 'done' : 'edit')}</button>` : ''}
         ${editing ? `
-        <button onclick="${esc(`renameCustomList('albums','${jsStr(cat)}')`)}" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">Rename</button>
+        <button onclick="${esc(`renameCustomList('albums','${jsStr(cat)}',this)`)}" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">Rename</button>${listMoveButtonsHtml('albums', cat)}
         <button type="button" class="list-icon-control list-icon-danger" aria-label="Delete list" title="Delete list" onclick="${esc(`deleteCustomListSection('albums','${jsStr(cat)}')`)}">${listActionIcon('trash')}</button>` : ''}
       </div>
       <section class="top5-section">
@@ -9100,6 +9552,13 @@ async function searchOnboardingArtists(query) {
   } catch(error){throw new Error('Artist search is temporarily unavailable. Please retry.');}
 }
 const onboardingAutocompleteCache=new Map();
+// One ordering for every catalog search: how well the title matches, then each provider's own
+// relevance (so the best TV match isn't buried under every same-named movie), then popularity.
+function catalogCompare(q){
+ return (a,b)=>(onboardingMatchRank(a,q)-onboardingMatchRank(b,q))
+  ||((a.providerRank??99)-(b.providerRank??99))
+  ||((b.popularity||0)-(a.popularity||0));
+}
 function onboardingMatchRank(item,q){
  const norm=v=>String(v||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
  const title=norm(item.title),query=norm(q),bare=title.replace(/^the /,'');
@@ -9616,9 +10075,9 @@ new MutationObserver(() => { cancelAnimationFrame(enhanceStreamLinks._raf); enha
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('listen-chooser')?.style.display === 'flex') closeListenChooser(); });
 
 function onboardingAlreadySaved(item,category){
- const tab={artist:'music',album:'albums',movie:'movies',tv:'tv',book:'books'}[item.kind];
+ const tab=item.listTab||{artist:'music',album:'albums',movie:'movies',tv:'tv',book:'books'}[item.kind];
  const group=['song','artist','album'].includes(item.kind)?'music':['comedian','special'].includes(item.kind)?'comedy':'podcasts';
- const candidates=tab?(CUSTOM_LISTS[tab]?.[category]||[]):extraLists.filter(l=>l.category===group&&l.title===category).flatMap(l=>l.items||[]);
+ const candidates=tab==='movies'&&category==='movies'?movies:tab?(CUSTOM_LISTS[tab]?.[category]||[]):extraLists.filter(l=>l.category===group&&l.title===category).flatMap(l=>l.items||[]);
  const norm=v=>String(v||'').trim().toLowerCase();
  return candidates.some(p=>{
   if(!tab&&p.kind!==item.kind)return false;
@@ -9649,8 +10108,8 @@ async function saveOnboardingItem(item,userId) {
       table='favorite_books';row={user_id:userId,category,title:item.title,author:item.author,year:item.year||null,cover_url:item.art||null,sort_order:(CUSTOM_LISTS.books[category]||[]).length};
       local={title:item.title,author:item.author,year:item.year,cover:item.art};
     } else {
-      table='favorite_media_lists';const tab=item.kind==='tv'?'tv':'movies';
-      row={user_id:userId,category,tmdb_id:item.id,title:item.title,year:item.year||null,type:item.kind,sort_order:(CUSTOM_LISTS[tab][category]||[]).length};
+      table='favorite_media_lists';const tab=item.listTab||(item.kind==='tv'?'tv':'movies');
+      row={user_id:userId,category,tmdb_id:item.id,title:item.title,year:item.year||null,type:item.kind,sort_order:tab==='movies'&&category==='movies'?movies.length:(CUSTOM_LISTS[tab][category]||[]).length};
       local={title:item.title,tmdbId:item.id,type:item.kind,year:item.year,poster:item.poster,genres:[]};
     }
     if(item.friend_tags?.length){row.friend_tags=item.friend_tags;local.friend_tags=item.friend_tags;}
@@ -9667,7 +10126,14 @@ async function saveOnboardingItem(item,userId) {
       albums=Object.values(CUSTOM_LISTS.albums).flat();
       renderCustomLists('albums');
     }
-    else{local.rowId=data.id;const tab=item.kind==='book'?'books':item.kind==='tv'?'tv':'movies';(CUSTOM_LISTS[tab][category]||(CUSTOM_LISTS[tab][category]=[])).push(local);renderCustomLists(tab);}
+    else if(item.kind!=='book'&&(item.listTab||(item.kind==='tv'?'tv':'movies'))==='movies'&&category==='movies'){
+      // The top "Favorite Movies" grid keeps its own array (ids are 1, 2, 3… for its expand handlers).
+      Object.assign(local,{id:Math.max(0,...movies.map(m=>m.id||0))+1,rowId:data.id,backdrop:'',overview:'',rating:null,runtime:null,director:''});
+      movies.push(local);renderMovieGrid();
+      (item.kind==='tv'?fetchTVDetail(item.id):fetchMovieDetail(item.id)).then(detail=>{if(currentUser?.id!==userId||viewedProfile?.id!==userId)return;Object.assign(local,detail,{title:item.title});renderMovieGrid();}).catch(()=>{});
+      return;
+    }
+    else{local.rowId=data.id;const tab=item.kind==='book'?'books':item.listTab||(item.kind==='tv'?'tv':'movies');(CUSTOM_LISTS[tab][category]||(CUSTOM_LISTS[tab][category]=[])).push(local);renderCustomLists(tab);}
 
     // Enrich artwork/metadata after the successful save so the confirmation is immediate.
     if(item.kind==='album')fetchAlbumTracklist(item.title,item.artist).then(async songs=>{
@@ -9680,7 +10146,7 @@ async function saveOnboardingItem(item,userId) {
       if(!art)return;await sb.from('favorite_artists').update({band_photo:art.bandPhoto,tile_photo:art.tilePhoto}).eq('id',data.id).eq('user_id',userId);
       if(currentUser?.id!==userId||viewedProfile?.id!==userId)return;Object.assign(local,art);if(state.added?.id===item.id)state.added.art=art.tilePhoto;renderCustomLists('music');renderOnboardingJourney();
     }).catch(()=>{});
-    if(item.kind==='movie'||item.kind==='tv')(item.kind==='tv'?fetchTVDetail(item.id):fetchMovieDetail(item.id)).then(detail=>{if(currentUser?.id!==userId||viewedProfile?.id!==userId)return;Object.assign(local,detail);renderCustomLists(item.kind==='tv'?'tv':'movies');}).catch(()=>{});
+    if(item.kind==='movie'||item.kind==='tv')(item.kind==='tv'?fetchTVDetail(item.id):fetchMovieDetail(item.id)).then(detail=>{if(currentUser?.id!==userId||viewedProfile?.id!==userId)return;Object.assign(local,detail);renderCustomLists(item.listTab||(item.kind==='tv'?'tv':'movies'));}).catch(()=>{});
 }
 
 async function openOnboardingPicker(kind) {
@@ -10443,7 +10909,7 @@ async function saveVideoItemForm() {
 
 function openArtistItemForm(artistId, category) {
   if (!isOwnProfile) return;
-  if (artistId === undefined && category && !['top5', 'other'].includes(category)) { openUnifiedPicker('music', category, { kind: 'artist' }); return; }
+  if (artistId === undefined && category && !['top5', 'other'].includes(category)) { openUnifiedPicker('music', category, { kind: 'artist', context: 'existing_list' }); return; }
   if (artistId !== undefined && Object.values(CUSTOM_LISTS.music).flat().some(x => x.id === artistId && x.videoId)) return openVideoItemForm(category, artistId);
   artistItemFormState = { id: null, category: category || 'Untitled' };
   document.getElementById('artist-item-modal-error').style.display = 'none';
@@ -11198,7 +11664,7 @@ let albumItemFormState = { id: null };
 
 function openAlbumItemForm(albumId, category) {
   if (!isOwnProfile) return;
-  if (albumId === undefined && category) { openUnifiedPicker('music', category, { kind: 'album' }); return; }
+  if (albumId === undefined && category) { openUnifiedPicker('music', category, { kind: 'album', context: 'existing_list' }); return; }
   albumItemFormState = { id: null, category: category || 'Untitled' };
   document.getElementById('album-item-modal-error').style.display = 'none';
   document.getElementById('album-item-name').value = '';
@@ -12075,7 +12541,7 @@ function renderFavoritesFilterBar() {
     let ctaHtml = '';
     if (showCta) {
       ctaHtml = filter === 'all'
-        ? `<button type="button" class="ed-primary" onclick="openUnifiedPicker('all')">${plus}Add something you love</button>`
+        ? `<button type="button" class="ed-primary" onclick="openUnifiedPicker('all')">${plus}Add favorite</button>`
         : `<button type="button" class="ed-primary" onclick="addToMainList('${filter}')">${plus}${esc(listCtaLabel(filter))}</button>${listCtaLinksHtml(filter, { books: 'goodreads', movies: 'letterboxd', tv: 'letterboxd' }[filter] || '')}`;
       ctaHtml = `<div class="fav-cta">${ctaHtml}</div>`;
     }
@@ -12092,6 +12558,8 @@ function renderFavoritesFilterBar() {
       : `<p>No favorites added yet.</p>`;
   }
 }
+document.addEventListener('click', e => { document.querySelectorAll('.lc-menu[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.lc-menu[open]').forEach(d => { d.open = false; d.querySelector('summary')?.focus(); }); });
 document.addEventListener('click', e => { document.querySelectorAll('.fav-add-menu[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.fav-add-menu[open]').forEach(d => { d.open = false; d.querySelector('summary')?.focus(); }); });
 function switchFavoritesFilter(filter) {
@@ -13177,7 +13645,7 @@ function toggleMovieEditMode() {
 // ── Arrows on horizontally scrolling rows (Netflix-style) ──────────────────────────────────────────
 // A soft edge fade with a chevron appears on whichever side has more items; hidden at each end and on
 // rows that fit. Attached automatically to every scrolling list row as it's drawn.
-const HSCROLL_SELECTOR = '.artist-grid, .ob-pick-grid.hrow, .sl-tl-track';   // includes the Feed's People-you-may-know row (.pymk-row.artist-grid)
+const HSCROLL_SELECTOR = '.artist-grid, .ob-pick-grid.hrow, .sl-tl-track, .recs-row';   // includes the Feed's People-you-may-know row (.pymk-row.artist-grid)
 const hsResize = 'ResizeObserver' in window ? new ResizeObserver(entries => entries.forEach(e => updateHScroll(e.target))) : null;
 function setupHScroll(grid) {
   const host = grid.parentElement;
@@ -13250,7 +13718,7 @@ function renderMovieControls() {
   if (!isOwnProfile) { el.innerHTML = ''; return; }
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;">
-      ${movieEditMode ? `<button onclick="openMovieSearch()" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add movie or show</button>` : ''}
+      ${movieEditMode ? `<button onclick="openUnifiedPicker('movies','movies',{context:'existing_list'})" style="font-size:11px;font-weight:600;color:var(--accent);background:none;border:1.5px dashed var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">+ Add movie</button>` : ''}
       <button type="button" class="list-icon-control" title="${movieEditMode ? 'Done editing' : 'Edit list'}" aria-label="${movieEditMode ? 'Done editing' : 'Edit list'}" aria-pressed="${movieEditMode}" onclick="toggleMovieEditMode()">${listActionIcon(movieEditMode ? 'done' : 'edit')}</button>
       ${movieEditMode ? `<button onclick="renameHardcodedSection('movies_top5','Movies That Shaped Me','movies-top5-heading')" style="font-size:11px;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;">Rename</button>` : ''}
     </div>`;
@@ -14029,7 +14497,7 @@ let customAddModalTarget = null; // { tab, cat }
 function openCustomAddModal(tab, cat) {
   if (!isOwnProfile) return;
   // Adding is search-first everywhere: find it, tap it. (The old forms needed typed-in fields.)
-  if (['books', 'movies', 'tv'].includes(tab)) { openUnifiedPicker(tab, cat); return; }
+  if (['books', 'movies', 'tv'].includes(tab)) { openUnifiedPicker(tab, cat, { context: 'existing_list' }); return; }
   customAddModalTarget = { tab, cat };
   if (tab === 'books') {
     document.getElementById('book-grid-title').value = '';
@@ -15095,7 +15563,7 @@ function renderTasteListHeader(flat) {
   const toolbar = document.getElementById('sl-list-toolbar');
   if (toolbar) {
     toolbar.hidden = !(canEditTasteList && flat.length);
-    toolbar.innerHTML = toolbar.hidden ? '' : `<button type="button" class="ed-primary" onclick="openTasteItemForm()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add item</button>`;
+    toolbar.innerHTML = toolbar.hidden ? '' : `<button type="button" class="ed-primary" onclick="openTasteItemForm()" aria-label="Add to this list"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add item</button>`;
   }
   const bg = document.getElementById('sl-hero-bg');
   if (bg) {
@@ -16183,7 +16651,8 @@ async function loadInlineEngagement(targetType, targetId) {
     }
     if (!COMMENT_CACHE[key]) {
       const { count } = await sb.from('comments').select('id', { count: 'exact', head: true }).eq('target_type', targetType).eq('target_id', targetId);
-      COMMENT_CACHE[key] = { count: count || 0, items: undefined };
+      // The full thread may have loaded while this count was in flight — never replace it with a bare count.
+      if (!COMMENT_CACHE[key]?.items) COMMENT_CACHE[key] = { count: count || 0, items: undefined };
     }
   } catch (e) { console.error('Failed to load engagement state:', e); }
   const badgeEl = document.getElementById(`inline-engage-${targetType}-${targetId}`);
@@ -16328,6 +16797,8 @@ async function loadDiscussionCommentsNow(type, listId) {
   discussionAttempted.add(key);
   rerenderDiscussionComments(type, listId);
   await loadComments(type, listId);
+  // One quiet retry before showing an error (e.g. a request that raced the session refresh on page load).
+  if (!COMMENT_CACHE[key]?.items) { await new Promise(r => setTimeout(r, 800)); await loadComments(type, listId); }
   discussionLoading.delete(key);
   rerenderDiscussionComments(type, listId);
   const badgeEl = document.getElementById(`inline-engage-${type}-${listId}`);
@@ -16521,6 +16992,20 @@ function activityCardHtml(item, globalIndex) {
 // always opens the right item regardless of which feed it was clicked from. Edit controls (toggle +
 // add button) only render on the main 'profile-feed' container, not the smaller per-tab feeds that
 // share the same underlying data, to avoid duplicate controls scattered across the site.
+// Visitors don't see empty sections; if both are empty they get one quiet line. The owner keeps
+// compact prompts to add something. Subtitles speak about the profile's owner.
+function syncHappeningSections(){
+ const own=!!currentUser&&isOwnProfile&&viewedProfile?.id===currentUser.id;
+ const noNew=!ACTIVITY_FEED_ITEMS.length, noNext=!FRIEND_RECOMMENDATIONS.length;
+ const nextEl=document.getElementById('happening-next'), newEl=document.getElementById('happening-new'), empty=document.getElementById('happening-empty');
+ if(nextEl)nextEl.hidden=!own&&noNext;
+ if(newEl)newEl.hidden=!own&&noNew;
+ const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile?.username||'They';
+ if(empty){empty.hidden=own||!(noNew&&noNext);empty.textContent=`Nothing new from ${name} yet.`;}
+ const ns=document.getElementById('happening-new-sub'),xs=document.getElementById('happening-next-sub');
+ if(ns)ns.textContent=own?'What I’ve been watching, reading & listening to lately':`What ${name}’s been watching, reading & listening to lately`;
+ if(xs)xs.textContent=own?'Things I want to check out':`Things ${name} wants to check out`;
+}
 function compactProfileEmpty(kind){
  const own=!!currentUser&&isOwnProfile&&viewedProfile?.id===currentUser.id;
  const next=kind==='next';
@@ -16535,7 +17020,7 @@ function renderActivityFeed(containerId, filterFn) {
     if(section){section.hidden=!items.length;if(section.nextElementSibling?.classList.contains('music-section-divider'))section.nextElementSibling.hidden=!items.length;}
   }
   if(containerId==='profile-feed' && syncInitialTasteProfile())renderDynamicProfilePicks();
-  if(containerId==='profile-feed')el.closest('.ed-panel')?.classList.toggle('profile-section-empty',!items.length);
+  if(containerId==='profile-feed'){el.closest('.ed-panel')?.classList.toggle('profile-section-empty',!items.length);syncHappeningSections();}
   if (!items.length && containerId === 'profile-feed') {
     el.innerHTML = compactProfileEmpty('new');
   } else {
@@ -16548,7 +17033,7 @@ function renderActivityFeed(containerId, filterFn) {
       controlsEl.innerHTML = (isOwnProfile && items.length) ? `
         <div style="display:flex;align-items:center;gap:8px;">
           <button type="button" class="ed-link" onclick="toggleActivityEditMode()">${activityEditMode ? 'Done' : 'Edit'}</button>
-          <button type="button" class="ed-primary" onclick="openFeedComposer()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add update</button>
+          <button type="button" class="ed-primary" onclick="openFeedComposer()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Post update</button>
         </div>` : '';
     }
   }
@@ -16744,7 +17229,7 @@ function searchFeedTitles(q,manual=false){
  const seen=new Set();
  const rows=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).filter(p=>{const k=[p.kind,String(p.id||''),String(p.title||'').toLowerCase()].join('|');if(seen.has(k))return false;seen.add(k);return true;})
    .filter(p=>f==='all'||p.kind===f||(f==='screen'&&['movie','tv'].includes(p.kind))||(f==='podcast'&&p.kind==='episode'))
-   .sort((a,b)=>onboardingMatchRank(a,rankQ)-onboardingMatchRank(b,rankQ)).slice(0,12);feedTitleSearch.results=rows;
+   .sort(catalogCompare(rankQ)).slice(0,12);feedTitleSearch.results=rows;
  feedTitleSearch.error=!rows.length&&results.length>0&&results.every(r=>r.status==='rejected');
  renderFeedTitleRows();return;
  const box=document.getElementById('feed-title-results');if(!box)return;
@@ -17798,6 +18283,7 @@ function renderFriendRecs() {
   const el = document.getElementById('friend-recs');
   if (!el) return;
   el.closest('.ed-panel')?.classList.toggle('profile-section-empty',!FRIEND_RECOMMENDATIONS.length);
+  syncHappeningSections();
   // Always available to the owner — adding a recommendation shouldn't require finding Edit first.
   const addBtnHtml = isOwnProfile ? `
     <button class="list-create-cta" onclick="openPasteRecommendations()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
@@ -17807,27 +18293,27 @@ function renderFriendRecs() {
     return;
   }
   const headCtl = document.getElementById('recs-head-controls');
-  if (headCtl) headCtl.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a rec</button>` : '';
-  // Collapsed view: one compact strip of covers per category so the panel fits beside What's New.
-  // "See all" opens the expanded view, styled like a shared list page.
+  if (headCtl) headCtl.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add a recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add item</button>` : '';
+  // Collapsed view: one continuous row of covers, types taking turns (a movie, a show, a book, …) so
+  // the row reads as a mix. Categories only appear in "See all".
   const groups = friendRecGroups();
-  const MAX = 4;
-  const strip = groups.map(g => {
-    const shown = g.items.slice(0, MAX), extra = g.items.length - shown.length;
-    const thumbs = shown.map((r, k) => {
-      const more = k === shown.length - 1 && extra > 0;
-      return `<button type="button" class="recs-thumb recs-${g.shape}" style="--c:${g.color}" onclick="${more ? 'openRecsExpanded()' : `openRecDetail(${FRIEND_RECOMMENDATIONS.indexOf(r)})`}"
+  const mixed = [];
+  for (let k = 0; mixed.length < FRIEND_RECOMMENDATIONS.length; k++) {
+    let added = false;
+    groups.forEach(g => { if (g.items[k]) { mixed.push({ r: g.items[k], g }); added = true; } });
+    if (!added) break;
+  }
+  const MAX = 12, shownItems = mixed.slice(0, MAX), extra = mixed.length - shownItems.length;
+  const thumbs = shownItems.map(({ r, g }, k) => {
+    const more = k === shownItems.length - 1 && extra > 0;
+    return `<button type="button" class="recs-thumb recs-${g.shape}" style="--c:${g.color}" onclick="${more ? 'openRecsExpanded()' : `openRecDetail(${FRIEND_RECOMMENDATIONS.indexOf(r)})`}"
         aria-label="${esc(r.title)}${r.from ? ', recommended by ' + esc(r.fromDisplayName || r.from) : ''}${more ? ` and ${extra} more` : ''}" title="${esc(r.title)}">
         ${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="recArtMissing(${FRIEND_RECOMMENDATIONS.indexOf(r)}, this)" onload="if(this.naturalWidth<10)recArtMissing(${FRIEND_RECOMMENDATIONS.indexOf(r)}, this)">` : ''}
         <span class="recs-thumb-title">${esc(r.title)}</span>
         ${more ? `<span class="recs-thumb-more">+${extra}</span>` : ''}
       </button>`;
-    }).join('');
-    return `<section class="recs-group">
-      <h3 class="recs-group-head" style="color:${g.color}">${esc(g.label)}<span>${g.items.length}</span></h3>
-      <div class="recs-strip recs-strip-${g.shape}">${thumbs}</div>
-    </section>`;
   }).join('');
+  const strip = `<div class="recs-row">${thumbs}</div>`;
   el.innerHTML = `
     <div class="recs-toolbar">
       <button type="button" class="ed-link" onclick="openRecsExpanded()">See all ${FRIEND_RECOMMENDATIONS.length}<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -18021,7 +18507,7 @@ function profileTasteReadiness(groups=profileTasteFavorites()){
 }
 function addProfileTasteFavorite(tab){
  if(!currentUser||!isOwnProfile||viewedProfile?.id!==currentUser.id)return;
- openUnifiedPicker(tab);
+ openUnifiedPicker(tab,null,{context:'favorite'});
 }
 function isInitialTasteProfile() {
  return !!currentUser && isOwnProfile && viewedProfile?.id===currentUser.id && profileFavoritesLoaded &&
@@ -18064,16 +18550,16 @@ function renderDynamicProfilePicks(){
  const readiness=profileTasteReadiness(groups);el.dataset.profileReady=String(readiness.ready);
  const share=document.getElementById('profile-share-cta');if(share)share.hidden=!(readiness.ready&&owner);
  const resume=document.getElementById('profile-onboarding-resume');if(resume)resume.hidden=!(owner&&readiness.ready);
- const progress=owner?(readiness.ready?'<div class="taste-readiness" role="status">Your Taste Profile is ready</div>':`<div class="taste-emerging-wrap"><button type="button" class="taste-emerging-card" onclick="openProfileMediaPicker()"><span class="taste-emerging-title">Your taste is taking shape.</span><span class="taste-emerging-cta">+ Add another favorite</span></button></div>`):'';
+ const progress=owner?(readiness.ready?'':`<div class="taste-emerging-wrap"><button type="button" class="taste-emerging-card" onclick="openProfileMediaPicker()"><span class="taste-emerging-title">Your taste is taking shape.</span><span class="taste-emerging-cta">+ Add another favorite</span></button></div>`):'';
  const header=document.getElementById('defining-picks-header');
- if(header){header.hidden=false;const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile?.username||'Their';header.innerHTML=`${esc(owner?'Your':possessiveName(name))} Defining Picks${populated.length?'<span class="ed-sub">The things you love — tap a box to explore</span>':''}`;}
+ if(header){header.hidden=false;const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile?.username||'Their';header.innerHTML=`${esc(owner?'Your':possessiveName(name))} Defining Picks${populated.length?`<span class="ed-sub">${owner?'The things you love':`The things ${esc(name)} loves`} — tap a box to explore</span>`:''}`;}
  const current=()=>el._tasteRenderToken===token&&viewedProfile?.id===profileId;
  const render=()=>{
   if(!current())return;
   if(isInitialTasteProfile()){el.innerHTML=initialTasteProfileHtml();return;}
   el.innerHTML=(populated.length?`<div class="dynamic-taste-grid" data-count="${populated.length}">${populated.map(g=>{
    const picks=g.items.slice(0,4),first=picks[0];
-   return `<button type="button" class="dynamic-taste-card" style="--taste-color:${g.color}" onclick="goToFavorites('${g.tab}')" aria-label="Explore ${g.label}: ${g.items.length} favorites"><div class="dynamic-taste-card-heading"><span>${badgeIcon(g.icon,14)}</span>${g.heading}</div><div class="dynamic-taste-art" data-count="${picks.length}">${picks.map(p=>{
+   return `<button type="button" class="dynamic-taste-card" style="--taste-color:${g.color}" onclick="goToFavorites('${g.tab}')" aria-label="Explore ${g.label}: ${g.items.length} favorites"><div class="dynamic-taste-card-heading"><span>${badgeIcon(g.icon,14)}</span>${esc(g.label)}</div><div class="dynamic-taste-art" data-count="${picks.length}" data-tab="${g.tab}">${picks.map(p=>{
     const art=tastePickArt(g.tab,p)||p.art||'';
     return `<div class="dynamic-taste-cell">${art?`<img src="${esc(art)}" alt="${esc(p.title)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false">`:''}<span ${art?'hidden':''}>${esc(p.title)}</span></div>`;
    }).join('')}</div><div class="dynamic-taste-caption"><strong>${esc(first.title)}</strong><span>${esc(first.artist||first.author||({artist:'Favorite artist',album:'Favorite album',song:'Favorite song',movie:'Top favorite film',tv:'Top TV pick',book:'Top book pick'}[first._tasteKind]))}</span></div></button>`;
@@ -18104,7 +18590,7 @@ function assortedTastePicks(tab, n = 4) {
   };
   const fallback = kind => Object.entries(CUSTOM_LISTS[kind] || {})
     .filter(([key])=>tasteListTier(kind,key,customListLabel(kind,key))<4&&!/recommend|want to|what.?s next|watchlist|to read/i.test(customListLabel(kind,key)))
-    .sort(([a],[b])=>tasteListTier(kind,a,customListLabel(kind,a))-tasteListTier(kind,b,customListLabel(kind,b)))
+    .sort(([a],[b])=>(tasteListTier(kind,a,customListLabel(kind,a))-tasteListTier(kind,b,customListLabel(kind,b)))||(listStartedAt(kind,a)-listStartedAt(kind,b)))
     .flatMap(([,items])=>items||[]);
   const seen = new Set();
   const take = (items, limit) => {
@@ -19401,7 +19887,7 @@ renderTasteInfluences();
 <!-- Activity Feed item summary modal -->
 <div id="activity-item-modal" style="display:none;" onclick="if(event.target===this) closeActivityItemModal()">
   <section class="update-composer" role="dialog" aria-modal="true" aria-labelledby="activity-item-modal-title">
-    <header class="update-composer-header"><div><span class="update-eyebrow">YOUR CULTURE, LATELY</span><h2 id="activity-item-modal-title">Add update</h2></div><button type="button" class="update-close" aria-label="Close" onclick="closeActivityItemModal()">×</button></header>
+    <header class="update-composer-header"><div><span class="update-eyebrow">YOUR CULTURE, LATELY</span><h2 id="activity-item-modal-title">Post update</h2></div><button type="button" class="update-close" aria-label="Close" onclick="closeActivityItemModal()">×</button></header>
     <p id="activity-finish-help" hidden>Sharing is optional. Post an update or mark without posting to remove this item from What’s Next. Closing keeps it on your list.</p>
     <div id="activity-item-modal-error" class="tl-modal-error" role="alert" style="display:none;"></div>
     <div class="update-types" id="activity-type-options" aria-label="Update type"></div>
@@ -19707,7 +20193,7 @@ renderTasteInfluences();
         <input id="ti-search-input" type="search" autocomplete="off" placeholder="Search books, movies, shows, music, podcasts…" aria-label="Search for something to add" oninput="queueTiSearch(this.value)">
       </div>
       <div id="ti-search-results" aria-live="polite"></div>
-      <div class="ti-search-alt"><span id="ti-by-hand" style="display:contents"><button type="button" class="rec-manual" onclick="tiAddManually()">Add something by hand</button><span aria-hidden="true">·</span></span><button type="button" class="rec-manual" onclick="tiAddManually(true)">Paste a link</button></div>
+      <p id="ti-search-status" class="rec-search-status" role="status" aria-live="polite"></p><div class="ti-search-foot"><button type="button" class="ed-primary" onclick="closeTasteItemModal()">Done</button></div>
     </div>
 
     <div id="ti-details-step">
@@ -19849,6 +20335,6 @@ renderTasteInfluences();
 })();
 </script>
 
-<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><p class="picker-dest-line" id="music-picker-dest-line">Saving to <strong id="music-picker-dest-name"></strong> <button type="button" class="picker-dest-change" onclick="showPickerDestination()">Change</button></p><div id="music-picker-dest" hidden><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" oninput="updatePickerDestLine()" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div></div><details class="picker-tags"><summary>Tag friends <span class="tl-hint">optional</span></summary><div class="tag-field"><label class="tl-label" for="tag-picker-input">Tag friends <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-picker-chips" class="tag-chips"></div><input id="tag-picker-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('picker',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('picker')}"><div id="tag-picker-results" class="tag-results" aria-live="polite"></div></div><div id="picker-friend-tags" hidden></div><div id="picker-friend-results" hidden></div><input id="picker-friend-search" type="hidden"><p style="color:var(--muted);font-size:12px">Selected friends will be tagged on the items you add here.</p></details><label for="music-picker-query">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Search by title or name…" autocomplete="off" oninput="queueFlexibleMusic(this.value)"><p id="music-picker-status" role="status" aria-live="polite"></p><div id="music-picker-results"></div></dialog>
+<dialog id="music-picker" aria-labelledby="music-picker-title"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><h2 id="music-picker-title">Add favorites</h2><button type="button" class="list-icon-control" aria-label="Close" onclick="document.getElementById('music-picker').close();flexibleMusic.request++">×</button></div><p id="music-picker-hint"></p><p class="picker-dest-line" id="music-picker-dest-line">Saving to <strong id="music-picker-dest-name"></strong> <button type="button" class="picker-dest-change" onclick="showPickerDestination()">Change</button></p><div id="music-picker-dest" hidden><label for="music-picker-list">Save to</label><select id="music-picker-list" class="tl-input" onchange="pickerDestinationChanged()"></select><div id="music-picker-new-list"><label for="music-picker-name">New list name</label><input id="music-picker-name" class="tl-input" oninput="updatePickerDestLine()" maxlength="120" placeholder="Name your list"><div id="music-picker-ideas" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div></div></div><details class="picker-tags"><summary>Tag friends <span class="tl-hint">optional</span></summary><div class="tag-field"><label class="tl-label" for="tag-picker-input">Tag friends <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-picker-chips" class="tag-chips"></div><input id="tag-picker-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('picker',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('picker')}"><div id="tag-picker-results" class="tag-results" aria-live="polite"></div></div><div id="picker-friend-tags" hidden></div><div id="picker-friend-results" hidden></div><input id="picker-friend-search" type="hidden"><p style="color:var(--muted);font-size:12px">Selected friends will be tagged on the items you add here.</p></details><div id="music-picker-searchbox"><label for="music-picker-query" class="update-sr">Search titles or creators</label><input id="music-picker-query" class="tl-input" type="search" placeholder="Search movies, shows, books, music, podcasts…" autocomplete="off" oninput="queueFlexibleMusic(this.value)" onkeydown="if(event.key==='ArrowDown'){const r=document.querySelector('#music-picker-results .pk-result');if(r){event.preventDefault();r.focus();}}"></div><div id="music-picker-selected" hidden></div><p id="music-picker-status" role="status" aria-live="polite"></p><div id="music-picker-results"></div></dialog>
 </body>
 </html>
