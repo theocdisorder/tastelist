@@ -2557,67 +2557,64 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
   .sl-cal-strip { display: none !important; }
   .sl-agenda { display: block; }
 }
-/* ── 10b. Shared lists: editorial reading timeline (calendar view) ── */
-.sl-tl { --tl-line: color-mix(in srgb, var(--cat) 42%, var(--border)); --tl-node-y: 30px; position: relative; margin: 2px 0 4px; }
-.sl-tl-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sl-tl-eyebrow > :not([aria-hidden]) { color: inherit; }
+/* ── 10b. Shared lists: editorial reading timeline (calendar view) ──
+   Covers match the grid view's portrait tiles (128px, 18px apart). The selected entry expands in place
+   into a detail card; the current pick carries the green flag and marker. */
+.sl-tl { --tl-line: color-mix(in srgb, var(--cat) 42%, var(--border)); --tl-cover: 128px; position: relative; margin: 2px 0 4px; }
 .sl-tl-track { list-style: none; margin: 0; padding: 0 0 6px; display: flex; align-items: flex-start; overflow-x: auto; overscroll-behavior-x: contain;
   scroll-snap-type: x proximity; scroll-behavior: smooth; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .sl-tl-track::-webkit-scrollbar { display: none; }
-.sl-tl-item { --dotx: 50%; --pl: 9px; --pr: 9px; position: relative; flex: 0 0 auto; width: 104px; padding: 0 var(--pr) 0 var(--pl); display: flex; flex-direction: column; align-items: center; text-align: center;
-  cursor: pointer; scroll-snap-align: start; outline: none; color: var(--text); }
+.sl-tl-item { --dotx: 50%; --pl: 9px; --pr: 9px; position: relative; flex: 0 0 auto; width: calc(var(--tl-cover) + var(--pl) + var(--pr)); padding: 0 var(--pr) 0 var(--pl);
+  display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; scroll-snap-align: start; outline: none; color: var(--text); }
 .sl-tl-item.is-first { --pl: 2px; }
-.sl-tl-date { height: 16px; display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+.sl-tl-date { height: 20px; display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+.sl-tl-item.is-current .sl-tl-date { color: var(--cat); }
+.sl-tl-flag { padding: 2px 7px; border-radius: 999px; background: color-mix(in srgb, var(--cat) 16%, transparent); border: 1px solid color-mix(in srgb, var(--cat) 40%, transparent); color: var(--cat); font-size: 9.5px; }
 /* The line: each entry draws the segment into its marker (::before) and out of it (::after), so the
-   whole track reads as one continuous line — solid through the archive, dashed into the future. */
-.sl-tl-node { position: relative; align-self: stretch; height: 22px; margin: 4px 0 8px; }
-.sl-tl-node::before, .sl-tl-node::after { content: ''; position: absolute; top: 50%; height: 1.5px; transform: translateY(-50%); }
-.sl-tl-node::before { left: calc(-1 * var(--pl)); width: calc(var(--dotx) + var(--pl)); background: var(--tl-line); }
-.sl-tl-node::after { left: var(--dotx); right: calc(-1 * var(--pr)); background: var(--tl-line); }
+   whole track reads as one continuous line — solid through the archive, dashed past the current pick. */
+.sl-tl-node { position: relative; align-self: stretch; height: 22px; margin: 2px 0 12px; }
+.sl-tl-node::before, .sl-tl-node::after { content: ''; position: absolute; top: 50%; height: 1.5px; transform: translateY(-50%); background: var(--tl-line); }
+.sl-tl-node::before { left: calc(-1 * var(--pl)); width: calc(var(--dotx) + var(--pl)); }
+.sl-tl-node::after { left: var(--dotx); right: calc(-1 * var(--pr)); }
 .sl-tl-item.is-first .sl-tl-node::before, .sl-tl-item.is-last .sl-tl-node::after { display: none; }
-.sl-tl-item.is-featured .sl-tl-node::after, .sl-tl-item.is-future .sl-tl-node::before, .sl-tl-item.is-future .sl-tl-node::after {
+.sl-tl-item.is-current .sl-tl-node::after, .sl-tl-item.is-future .sl-tl-node::before, .sl-tl-item.is-future .sl-tl-node::after {
   background: repeating-linear-gradient(to right, var(--border2) 0 4px, transparent 4px 8px); }
 .sl-tl-dot { position: absolute; top: 50%; left: var(--dotx); width: 9px; height: 9px; border-radius: 50%; transform: translate(-50%, -50%); z-index: 1;
-  background: color-mix(in srgb, var(--cat) 70%, #0c0c0d); box-shadow: 0 0 0 3px var(--bg, #0c0c0d); transition: transform .18s ease; }
+  background: color-mix(in srgb, var(--cat) 70%, #0c0c0d); box-shadow: 0 0 0 3px var(--bg, #0c0c0d); transition: transform .18s ease, box-shadow .18s ease; }
 .sl-tl-item.is-future .sl-tl-dot { background: var(--bg, #0c0c0d); border: 1.5px solid var(--border2); }
-.sl-tl-cover { position: relative; display: block; width: 72px; aspect-ratio: 2 / 3; border-radius: 4px; overflow: hidden; flex-shrink: 0;
-  background: color-mix(in srgb, var(--cat) 14%, var(--surface)); box-shadow: 0 2px 8px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.06);
+.sl-tl-item.is-current .sl-tl-dot { width: 13px; height: 13px; background: var(--cat); border: 0;
+  box-shadow: 0 0 0 3px var(--bg, #0c0c0d), 0 0 0 5px color-mix(in srgb, var(--cat) 35%, transparent), 0 0 14px color-mix(in srgb, var(--cat) 45%, transparent); }
+.sl-tl-item.is-selected:not(.is-current) .sl-tl-dot { box-shadow: 0 0 0 3px var(--bg, #0c0c0d), 0 0 0 4.5px color-mix(in srgb, var(--cat) 55%, transparent); }
+.sl-tl-cover { position: relative; display: block; width: var(--tl-cover); aspect-ratio: 2 / 3; border-radius: 6px; overflow: hidden; flex-shrink: 0;
+  background: color-mix(in srgb, var(--cat) 14%, var(--surface2)); box-shadow: 0 8px 24px rgba(0,0,0,.35);
   transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
 .sl-tl-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-.sl-tl-cover-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 6px; font: 500 11px/1.25 var(--ob-serif); color: var(--cat); overflow: hidden; }
-.sl-tl-item.is-past .sl-tl-cover { filter: saturate(.82) brightness(.92); }
-.sl-tl-peek { position: absolute; inset: auto 0 0; padding: 14px 0 6px; font-size: 10px; font-weight: 700; letter-spacing: .05em; color: #fff;
-  background: linear-gradient(to top, rgba(0,0,0,.78), transparent); opacity: 0; transition: opacity .18s ease; }
-.sl-tl-title { margin-top: 8px; font-size: 12px; font-weight: 600; line-height: 1.3; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 100%; }
-.sl-tl-sub { margin-top: 2px; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.sl-tl-facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 8px; margin-top: 3px; font-size: 10.5px; color: var(--faint); max-width: 100%; }
+.sl-tl-cover-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; font: 500 13px/1.25 var(--ob-serif); color: var(--cat); overflow: hidden; }
+.sl-tl-item.is-past:not(.is-selected) .sl-tl-cover { filter: saturate(.85) brightness(.9); }
+.sl-tl-title { margin-top: 10px; font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 100%; }
+.sl-tl-sub { margin-top: 2px; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.sl-tl-facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 8px; margin-top: 3px; font-size: 11px; color: var(--faint); max-width: 100%; }
 .sl-tl-facts:empty, .sl-tl-talk:empty { display: none; }
 .sl-tl-talk { color: color-mix(in srgb, var(--cat) 75%, var(--muted)); }
-.sl-tl-item:hover .sl-tl-cover, .sl-tl-item:focus-visible .sl-tl-cover { transform: translateY(-3px); filter: none; box-shadow: 0 8px 20px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.08); }
-.sl-tl-item:hover .sl-tl-peek, .sl-tl-item:focus-visible .sl-tl-peek { opacity: 1; }
+.sl-tl-item:not(.is-selected):hover .sl-tl-cover, .sl-tl-item:not(.is-selected):focus-visible .sl-tl-cover { transform: translateY(-3px); filter: none; box-shadow: 0 14px 34px rgba(0,0,0,.55); }
 .sl-tl-item:hover .sl-tl-dot, .sl-tl-item:focus-visible .sl-tl-dot { transform: translate(-50%, -50%) scale(1.25); }
-.sl-tl-item:hover .sl-tl-date { color: var(--muted); }
-.sl-tl-item:focus-visible .sl-tl-cover { outline: 2px solid var(--cat); outline-offset: 2px; }
-/* Featured: the current/next pick. */
-.sl-tl-item.is-featured { --dotx: 45px; --pl: 22px; --pr: 22px; width: 360px; align-items: flex-start; text-align: left; scroll-snap-align: center; }
-.sl-tl-item.is-featured.is-first { --pl: 12px; }
-.sl-tl-item.is-featured .sl-tl-date { color: var(--cat); }
-.sl-tl-flag { padding: 2px 7px; border-radius: 999px; background: color-mix(in srgb, var(--cat) 16%, transparent); border: 1px solid color-mix(in srgb, var(--cat) 40%, transparent); color: var(--cat); font-size: 9.5px; }
-.sl-tl-item.is-featured .sl-tl-dot { width: 13px; height: 13px; background: var(--cat); box-shadow: 0 0 0 3px var(--bg, #0c0c0d), 0 0 0 5px color-mix(in srgb, var(--cat) 35%, transparent), 0 0 14px color-mix(in srgb, var(--cat) 45%, transparent); }
-.sl-tl-card { display: flex; gap: 14px; align-items: flex-start; width: 100%; padding: 10px; margin-left: -10px; border-radius: 12px;
+.sl-tl-item:not(.is-current):hover .sl-tl-date { color: var(--muted); }
+.sl-tl-item:not(.is-selected):focus-visible .sl-tl-cover { outline: 2px solid var(--cat); outline-offset: 2px; }
+/* Selected: the entry opens into a card — same cover size, details beside it. */
+.sl-tl-item.is-selected { --dotx: calc(var(--tl-cover) / 2); --pr: 20px; width: calc(var(--tl-cover) + 210px + var(--pl) + var(--pr)); align-items: flex-start; text-align: left; scroll-snap-align: center; }
+.sl-tl-card { display: flex; gap: 16px; align-items: stretch; width: calc(100% + 11px); padding: 10px; margin: -11px 0 0 -11px; border-radius: 12px;
   background: linear-gradient(135deg, color-mix(in srgb, var(--cat) 9%, var(--surface)), var(--surface)); border: 1px solid color-mix(in srgb, var(--cat) 26%, var(--border));
-  transition: border-color .18s ease, background .18s ease; }
-.sl-tl-item.is-featured .sl-tl-cover { width: 90px; box-shadow: 0 10px 26px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.08); }
+  transition: border-color .18s ease; animation: slTlOpen .22s ease both; }
+@keyframes slTlOpen { from { opacity: .4; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.sl-tl-item.is-selected .sl-tl-cover { box-shadow: 0 10px 26px rgba(0,0,0,.55); }
 .sl-tl-body { min-width: 0; flex: 1; display: flex; flex-direction: column; padding-top: 2px; }
-.sl-tl-item.is-featured .sl-tl-title { margin: 0; font: 500 18px/1.2 var(--ob-serif); letter-spacing: -.01em; -webkit-line-clamp: 3; }
-.sl-tl-item.is-featured .sl-tl-sub { margin-top: 4px; font-size: 12px; white-space: normal; }
-.sl-tl-item.is-featured .sl-tl-facts { justify-content: flex-start; flex-direction: column; gap: 3px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
-.sl-tl-open { margin-top: auto; padding-top: 10px; font-size: 11px; font-weight: 600; color: var(--cat); opacity: .8; transition: opacity .18s ease; }
-.sl-tl-item.is-featured:hover .sl-tl-card, .sl-tl-item.is-featured:focus-visible .sl-tl-card { border-color: color-mix(in srgb, var(--cat) 50%, var(--border)); }
-.sl-tl-item.is-featured:hover .sl-tl-open { opacity: 1; }
-.sl-tl-item.is-featured:hover .sl-tl-cover { transform: none; }
-.sl-tl-item.is-featured:focus-visible .sl-tl-cover { outline: 0; }
-.sl-tl-item.is-featured:focus-visible .sl-tl-card { outline: 2px solid var(--cat); outline-offset: 2px; }
+.sl-tl-item.is-selected .sl-tl-title { margin: 0; font: 500 19px/1.2 var(--ob-serif); letter-spacing: -.01em; -webkit-line-clamp: 3; }
+.sl-tl-item.is-selected .sl-tl-sub { margin-top: 4px; font-size: 12.5px; white-space: normal; }
+.sl-tl-item.is-selected .sl-tl-facts { justify-content: flex-start; flex-direction: column; gap: 3px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.sl-tl-open { margin-top: auto; padding-top: 10px; font-size: 12px; font-weight: 600; color: var(--cat); opacity: .85; transition: opacity .18s ease; }
+.sl-tl-item.is-selected:hover .sl-tl-card, .sl-tl-item.is-selected:focus-visible .sl-tl-card { border-color: color-mix(in srgb, var(--cat) 50%, var(--border)); }
+.sl-tl-item.is-selected:hover .sl-tl-open { opacity: 1; }
+.sl-tl-item.is-selected:focus-visible .sl-tl-card { outline: 2px solid var(--cat); outline-offset: 2px; }
 /* Subtle arrows, smaller than the shelf rows'. */
 .sl-tl .hscroll-btn { width: 48px; }
 .sl-tl .hscroll-chev { width: 32px; height: 32px; }
@@ -2626,16 +2623,13 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 /* Touch: swiping is the navigation; the next cover peeking in at the edge is the cue. */
 @media (pointer: coarse) { .sl-tl .hscroll-btn { display: none; } }
 @container (max-width: 620px) {
-  .sl-tl-item { width: 88px; --pl: 7px; --pr: 7px; }
+  .sl-tl-item { --pl: 7px; --pr: 7px; }
   .sl-tl-item.is-first { --pl: 2px; }
-  .sl-tl-cover { width: 64px; }
-  .sl-tl-item.is-featured { --dotx: 40px; --pl: 16px; --pr: 16px; width: min(310px, 84cqw); }
-  .sl-tl-item.is-featured.is-first { --pl: 12px; }
-  .sl-tl-item.is-featured .sl-tl-cover { width: 80px; }
-  .sl-tl-item.is-featured .sl-tl-title { font-size: 16.5px; }
+  .sl-tl-item.is-selected { --pr: 12px; width: min(calc(var(--tl-cover) + 200px + var(--pl) + var(--pr)), calc(100cqw - 4px)); }
+  .sl-tl-card { gap: 12px; }
+  .sl-tl-item.is-selected .sl-tl-title { font-size: 17px; }
 }
-@media (hover: none) { .sl-tl-peek { display: none; } }
-@media (prefers-reduced-motion: reduce) { .sl-tl-track { scroll-behavior: auto; } .sl-tl-cover, .sl-tl-dot, .sl-tl-card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .sl-tl-track { scroll-behavior: auto; } .sl-tl-cover, .sl-tl-dot, .sl-tl-card { transition: none; animation: none; } }
 .sl-agenda-month { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; }
 .sl-agenda-month:first-child { margin-top: 0; }
 .sl-agenda-row { width: 100%; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 76px; padding: 8px 12px 8px 8px;
@@ -14466,88 +14460,108 @@ async function loadTripTimelineTalk(ids) {
     });
   } catch (e) { console.error('Failed to load timeline comment counts:', e); }
 }
+function tripTimelineKey(d) { return d.item.id ? String(d.item.id) : 'i' + d.idx; }
+let tripTimelineReveal = null; // category whose newly selected entry should be scrolled into view after the redraw
+// Selecting an entry expands it in place to show its details; selecting the expanded one opens the full panel.
+function selectTripTimelineItem(catKey, key, idx) {
+  if (tripPlaylistCarouselIndex[catKey] === key) { openTripPlaylistSummary(idx); return; }
+  tripPlaylistCarouselIndex[catKey] = key;
+  tripTimelineReveal = catKey;
+  renderTripPlaylist();
+}
 function tripPlaylistCarouselHtml(catKey, dated, cat) {
   if (!dated.length) {
     return `<div style="font-size:12.5px;color:var(--faint);padding:12px 2px;">No dated items yet — add a date to a ${cat.singular} to see it on the calendar.</div>`;
   }
   const now = new Date();
-  let featured = dated.findIndex(d => sharedDateEnd(d.item) >= now);
-  const allPast = featured === -1;
-  if (allPast) featured = dated.length - 1; // everything's already in the past — feature the most recent
-  const fItem = dated[featured].item;
-  const fStarted = sharedItemDate(fItem) <= now;
-  const fLabel = allPast ? 'Latest pick' : fStarted ? (catKey === 'books' ? 'Reading now' : 'Now') : 'Up next';
-  const pastCount = allPast ? dated.length : featured;
+  // "Now" is the most recently started pick (when two share a month, the later one in the list —
+  // the earlier one's been read), as long as its month/day hasn't passed; otherwise the next one
+  // coming up; otherwise everything's in the past and the latest pick anchors the line.
+  let current = -1;
+  dated.forEach((d, i) => { if (sharedItemDate(d.item) <= now) current = i; });
+  let currentLabel = '';
+  if (current !== -1 && sharedDateEnd(dated[current].item) >= now) currentLabel = catKey === 'books' ? 'Reading now' : 'Now';
+  else {
+    const next = dated.findIndex(d => sharedItemDate(d.item) > now);
+    if (next !== -1) { current = next; currentLabel = 'Up next'; }
+    else { current = dated.length - 1; currentLabel = 'Latest pick'; }
+  }
+  const keys = dated.map(tripTimelineKey);
+  let selected = keys.indexOf(tripPlaylistCarouselIndex[catKey]);
+  if (selected === -1) { selected = current; tripPlaylistCarouselIndex[catKey] = keys[current]; }
 
-  const cover = (item, title) => item.art
+  const cover = item => item.art
     ? `<img src="${esc(item.art)}" alt="" loading="lazy" onerror="this.remove()" onload="if(this.naturalWidth<10)this.remove()">`
-    : `<span class="sl-tl-cover-empty">${esc(title)}</span>`;
+    : `<span class="sl-tl-cover-empty">${esc(item.title)}</span>`;
 
   const entries = dated.map((d, i) => {
     const item = d.item;
-    const state = i === featured ? 'featured' : i < featured ? 'past' : 'future';
-    // The featured card can fall back to whoever added it; archive entries only name an explicit picker.
-    const pickedBy = tripTimelinePickedBy(item, state !== 'featured');
-    const pickedVerb = state === 'featured' && !item.by ? 'Added by' : 'Picked by';
-    const talk = tripTimelineTalkHtml(item);
-    const open = `onclick="openTripPlaylistSummary(${d.idx})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"`;
+    const isSel = i === selected;
+    const state = i === current ? 'current' : i < current ? 'past' : 'future';
     const edge = `${i === 0 ? ' is-first' : ''}${i === dated.length - 1 ? ' is-last' : ''}`;
     const dateLabel = esc(sharedDateLabel(item));
-    if (state === 'featured') {
+    const flag = i === current ? `<span class="sl-tl-flag">${esc(currentLabel)}</span>` : '';
+    const act = `onclick="selectTripTimelineItem('${esc(catKey)}', '${esc(jsStr(keys[i]))}', ${d.idx})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"`;
+    const label = `${i === current ? `${currentLabel}: ` : ''}${item.title}${dateLabel ? `, ${sharedDateLabel(item)}` : ''}${isSel ? ' — open details' : ''}`;
+    const head = `<span class="sl-tl-date">${flag}${dateLabel}</span>
+      <span class="sl-tl-node" aria-hidden="true"><span class="sl-tl-dot"></span></span>`;
+    if (isSel) {
+      const pickedBy = tripTimelinePickedBy(item);
       const meeting = sharedMeetingLabel(item);
       const meetText = meeting ? `${sharedDateEnd(item) >= now ? 'Meets' : 'Met'} ${esc(meeting)}` : '';
-      return `<li class="sl-tl-item is-featured${edge}" data-tl-featured ${open} aria-label="${esc(fLabel)}: ${esc(item.title)}${dateLabel ? `, ${dateLabel}` : ''}">
-        <span class="sl-tl-date"><span class="sl-tl-flag">${esc(fLabel)}</span>${dateLabel}</span>
-        <span class="sl-tl-node" aria-hidden="true"><span class="sl-tl-dot"></span></span>
+      return `<li class="sl-tl-item is-${state} is-selected${edge}" data-tl-selected ${act} aria-current="true" aria-label="${esc(label)}">${head}
         <span class="sl-tl-card">
-          <span class="sl-tl-cover">${cover(item, item.title)}</span>
+          <span class="sl-tl-cover">${cover(item)}</span>
           <span class="sl-tl-body">
             <span class="sl-tl-title">${esc(item.title)}</span>
             ${item.sub ? `<span class="sl-tl-sub">${esc(item.sub)}</span>` : ''}
             <span class="sl-tl-facts">
               ${meetText ? `<span>${meetText}</span>` : ''}
-              ${pickedBy ? `<span>${pickedVerb} ${esc(pickedBy)}</span>` : ''}
-              ${talk}
+              ${pickedBy ? `<span>${item.by ? 'Picked by' : 'Added by'} ${esc(pickedBy)}</span>` : ''}
+              ${tripTimelineTalkHtml(item)}
             </span>
             <span class="sl-tl-open">View details<span aria-hidden="true"> →</span></span>
           </span>
         </span>
       </li>`;
     }
-    const tip = [item.title, item.sub, pickedBy ? `Picked by ${pickedBy}` : ''].filter(Boolean).join(' · ');
-    return `<li class="sl-tl-item is-${state}${edge}" ${open} title="${esc(tip)}" aria-label="${esc(item.title)}${dateLabel ? `, ${dateLabel}` : ''}">
-      <span class="sl-tl-date">${dateLabel}</span>
-      <span class="sl-tl-node" aria-hidden="true"><span class="sl-tl-dot"></span></span>
-      <span class="sl-tl-cover">${cover(item, item.title)}<span class="sl-tl-peek" aria-hidden="true">Details</span></span>
+    const pickedBy = tripTimelinePickedBy(item, true);
+    return `<li class="sl-tl-item is-${state}${edge}" ${act} title="${esc([item.title, item.sub].filter(Boolean).join(' · '))}" aria-label="${esc(label)}">${head}
+      <span class="sl-tl-cover">${cover(item)}</span>
       <span class="sl-tl-title">${esc(item.title)}</span>
       ${item.sub ? `<span class="sl-tl-sub">${esc(item.sub)}</span>` : ''}
-      <span class="sl-tl-facts">${pickedBy ? `<span>${esc(pickedBy)}’s pick</span>` : ''}${talk}</span>
+      <span class="sl-tl-facts">${pickedBy ? `<span>${esc(pickedBy)}’s pick</span>` : ''}${tripTimelineTalkHtml(item)}</span>
     </li>`;
   }).join('');
 
   setTimeout(() => loadTripTimelineTalk(dated.map(d => d.item.id)), 0);
-  const noun = catKey === 'books' ? 'read' : 'past';
-  const ahead = allPast ? 0 : dated.length - featured - 1;
-  const eyebrow = [pastCount ? `${pastCount} ${noun}` : '', ahead ? `${ahead} coming up` : ''].filter(Boolean).join('<span aria-hidden="true"> · </span>');
   return `<div class="sl-cal sl-tl" style="--cat:${cat.color}" data-cat="${esc(catKey)}">
-    ${eyebrow ? `<div class="sl-tl-eyebrow">${eyebrow}</div>` : ''}
     <ol class="sl-tl-track" aria-label="${esc(cat.label)} timeline">${entries}</ol>
   </div>`;
 }
-
-// Keep the timeline where the person left it across redraws; on first show, bring the featured
-// pick into view (past picks to its left, so the archive reads as history leading up to it).
+// Keep the timeline where the person left it across redraws (bringing a newly selected entry fully
+// into view); on first show, bring the selected pick into view with the archive leading up to it.
 function centerTripTimelines(root, saved) {
   requestAnimationFrame(() => root.querySelectorAll('.sl-tl').forEach(t => {
     const track = t.querySelector('.sl-tl-track'); if (!track || !track.clientWidth) return;
     track.dataset.placed = '1';
+    const cat = t.dataset.cat, f = track.querySelector('[data-tl-selected]');
     const prev = track.style.scrollBehavior; track.style.scrollBehavior = 'auto';
-    const restore = () => requestAnimationFrame(() => { track.style.scrollBehavior = prev; });
-    if (saved[t.dataset.cat] != null) { track.scrollLeft = saved[t.dataset.cat]; restore(); return; }
-    const f = track.querySelector('[data-tl-featured]'); if (!f) return;
+    const restore = () => requestAnimationFrame(() => { track.style.scrollBehavior = prev; updateHScroll(track); });
+    if (saved[cat] != null) {
+      track.scrollLeft = saved[cat]; restore();
+      if (tripTimelineReveal === cat && f) {
+        tripTimelineReveal = null;
+        const left = f.offsetLeft, right = left + f.offsetWidth, view = track.scrollLeft;
+        const target = left < view ? left - 8 : right > view + track.clientWidth ? right - track.clientWidth + 8 : null;
+        if (target != null) requestAnimationFrame(() => track.scrollTo({ left: target, behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
+      }
+      return;
+    }
+    if (!f) { restore(); return; }
     const narrow = track.clientWidth < 560;
     track.scrollLeft = narrow ? f.offsetLeft - (track.clientWidth - f.offsetWidth) / 2 : f.offsetLeft + f.offsetWidth - track.clientWidth + Math.min(140, track.clientWidth * 0.2);
-    restore(); updateHScroll(track);
+    restore();
   }));
 }
 function shiftTripPlaylistCarousel(catKey, delta) {
