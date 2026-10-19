@@ -3069,6 +3069,9 @@ html body #reaction-people-title{font-family:var(--ob-serif)!important;font-size
 #ti-search-results .extra-result.is-added .picker-add { background: #22C55E; font-size: 17px; }
 .ti-search-foot { display: flex; justify-content: flex-end; margin-top: 12px; }
 #ti-search-status:empty { display: none; }
+#taste-list-title.is-renamable { cursor: text; border-radius: 10px; outline: 1px dashed rgba(255,255,255,.28); outline-offset: 6px; }
+#taste-list-title.is-renamable:hover, #taste-list-title.is-renamable:focus-visible { outline-color: var(--accent); }
+#taste-list-title .inline-title-input { font: inherit; letter-spacing: inherit; color: inherit; background: transparent; border: 0; border-bottom: 2px solid var(--accent); width: min(100%, 18ch); padding: 0; outline: none; }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -3648,7 +3651,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
           <button class="sl-back" onclick="backToTasteListsPicker()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Shared Lists</button>
           <div class="sl-actions" id="sl-actions"></div>
         </div>
-        <h1 id="taste-list-title" class="sl-title">&nbsp;<button id="taste-list-rename-btn" class="sl-rename" onclick="renameTasteList()" style="display:none;" title="Rename list">✎ Rename</button></h1>
+        <h1 id="taste-list-title" class="sl-title">&nbsp;</h1>
         <div class="sl-byline" id="sl-byline"></div><input id="shared-cover-input" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadSharedListCover(this)"><p id="shared-cover-status" role="status" aria-live="polite"></p>
         <p id="taste-list-subtitle" class="sl-desc"></p>
         <div class="sl-members">
@@ -5016,7 +5019,7 @@ function tiSetStep(step) {
   document.getElementById('ti-sub-field').hidden = picked;
   document.getElementById('ti-title-label').hidden = picked;
   document.getElementById('taste-item-title').closest('div[style*="display:flex"]').hidden = picked;
-  document.getElementById('taste-item-modal-title').textContent = tasteItemFormState.id ? 'Edit item' : picked ? 'Add details' : searching ? `Add to ${allTasteLists.find(l => l.id === currentTasteListId)?.title || 'this list'}` : 'Edit item';
+  document.getElementById('taste-item-modal-title').textContent = tasteItemFormState.id ? 'Edit item' : picked ? 'Add details' : searching ? 'Add item' : 'Edit item';
 }
 function queueTiSearch(q) {
   clearTimeout(tiSearch.timer);
@@ -5777,13 +5780,20 @@ async function renameHardcodedSection(id, fallback, headingElId) {
   }
 }
 
-async function renameTasteList(listId) {
+async function renameTasteListInline() {
+  const titleEl = document.getElementById('taste-list-title');
+  const list = allTasteLists.find(l => l.id === currentTasteListId);
+  if (!titleEl || !list || !canEditTasteList || titleEl.querySelector('input')) return;
+  const value = await inlineEditTitle(titleEl, list.title || '');
+  if (value) await renameTasteList(currentTasteListId, value);
+}
+async function renameTasteList(listId, newTitle) {
   const targetId = listId || currentTasteListId;
   const list = allTasteLists.find(l => l.id === targetId);
   const canEdit = listId ? (list?.isOwner || list?.collaborators?.some(c => c.user_id === currentUser?.id)) : canEditTasteList;
   if (!canEdit || !targetId || !sb) return;
   const current = list?.title || '';
-  const title = (prompt('Rename this list:', current) || '').trim();
+  const title = (newTitle !== undefined ? newTitle : (prompt('Rename this list:', current) || '')).trim();
   if (!title || title === current) return;
   if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
   try {
@@ -15559,6 +15569,16 @@ function renderTasteListHeader(flat) {
     + (list ? (list.isOwner
         ? `<button type="button" class="sl-btn" onclick="inviteCollaborator('${jsStr(list.id)}')">Invite &amp; share</button>`
         : `<button type="button" class="sl-btn" onclick="openSharedListShare()">Share list ↗</button>`) : '');
+  // While editing, the title itself is the rename control (no separate Rename button).
+  const titleNode = document.getElementById('taste-list-title');
+  if (titleNode) {
+    const renamable = editMode && canEditTasteList;
+    titleNode.classList.toggle('is-renamable', renamable);
+    titleNode.title = renamable ? 'Click to rename' : '';
+    titleNode.tabIndex = renamable ? 0 : -1;
+    titleNode.onclick = renamable ? renameTasteListInline : null;
+    titleNode.onkeydown = renamable ? e => { if (e.key === 'Enter' && e.target === titleNode) { e.preventDefault(); renameTasteListInline(); } } : null;
+  }
   // Adding sits with the content it adds to, just above the items (the empty list has its own prompts).
   const toolbar = document.getElementById('sl-list-toolbar');
   if (toolbar) {
