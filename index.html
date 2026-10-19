@@ -2440,6 +2440,23 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 @media (min-width: 721px) {
   #view-feed-container .activity-card > .activity-card-art { display: flex !important; align-items: center; justify-content: center; }
 }
+/* Keep the foreground cover inside its grid/flex column, including with comments open.
+   Only the decorative blurred background may crop; existing responsive heights stay intact. */
+#view-feed-container .activity-card > .activity-card-art,
+#profile-feed .activity-card > .activity-card-art {
+  min-width: 0;
+}
+#view-feed-container .activity-card-art > img.activity-card-art-img,
+#profile-feed .activity-card-art > img.activity-card-art-img {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  width: 100% !important;
+  flex: 0 1 auto;
+  object-fit: contain !important;
+  object-position: center;
+  box-sizing: border-box;
+}
 /* Reactions: your reaction + count read as one highlighted control */
 .reaction-summary-btn.is-mine { color: #F97360; }
 
