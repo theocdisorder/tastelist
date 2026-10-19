@@ -16393,6 +16393,9 @@ async function initActivityEngagement() {
       .select('target_id, user_id, reaction')
       .eq('target_type', 'activity_feed')
       .in('target_id', ids);
+    // Start these posts from the server's numbers — the profile and the Feed both load the same posts,
+    // and adding onto an earlier load counted each reaction twice.
+    if (likeRows) ids.forEach(id => { LIKE_CACHE[engagementKey('activity_feed', id)] = emptyLikeState(); });
     absorbLikeRows('activity_feed', likeRows);
     const { data: commentRows } = await sb.from('comments')
       .select('target_id')
@@ -17901,6 +17904,9 @@ async function initFeedEngagement(rows) {
       .select('target_id, user_id, reaction')
       .eq('target_type', 'activity_feed')
       .in('target_id', ids);
+    // Start these posts from the server's numbers — the profile and the Feed both load the same posts,
+    // and adding onto an earlier load counted each reaction twice.
+    if (likeRows) ids.forEach(id => { LIKE_CACHE[engagementKey('activity_feed', id)] = emptyLikeState(); });
     absorbLikeRows('activity_feed', likeRows);
     const { data: commentRows } = await sb.from('comments')
       .select('target_id')
