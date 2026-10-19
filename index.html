@@ -1421,6 +1421,23 @@ if (new URLSearchParams(location.search).has('list')) {
 .rec-search-status:empty{margin:0!important}
 .rec-search-status.is-error{color:#fca5a5!important}
 .rec-search-note{margin:6px 0!important}
+#ti-search-step[hidden],#ti-details-step[hidden],#ti-type-field[hidden],#ti-sub-field[hidden],#ti-title-label[hidden],#taste-item-modal [hidden]{display:none!important}
+.ti-search-box{display:flex;align-items:center;gap:10px;padding:0 14px;height:48px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
+.ti-search-box:focus-within{border-color:var(--accent)}
+.ti-search-box input{flex:1;min-width:0;height:100%;background:none;border:0;outline:none;color:var(--text);font:inherit;font-size:15px}
+#ti-search-results{display:grid;gap:6px;margin-top:10px;max-height:min(52vh,460px);overflow:auto}
+#ti-search-results:empty{margin:0}
+#ti-search-results .picker-kinds{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px;position:sticky;top:0;z-index:1;background:var(--surface,#181818)}
+#ti-search-results .picker-kinds .fav-chip{padding:6px 13px;font-size:12.5px;flex-shrink:0}
+#ti-search-results .extra-result{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:6px 8px;border-radius:12px;border:1px solid transparent;background:none;color:var(--text);font:inherit;cursor:pointer}
+#ti-search-results .extra-result:hover,#ti-search-results .extra-result:focus-visible{background:rgba(255,255,255,.04);border-color:var(--border)}
+#ti-search-results .extra-result>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column}
+#ti-search-results .extra-result strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ti-search-results .extra-result small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ti-search-results .picker-add{margin-left:auto;flex-shrink:0;width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:21px;line-height:1;color:#fff;background:var(--accent)}
+.ti-search-alt{display:flex;align-items:center;gap:6px;margin-top:8px;color:var(--faint);font-size:13px}
+.ti-back{font:inherit;font-size:13px;color:var(--muted);background:none;border:0;padding:0 0 14px;cursor:pointer}
+.ti-back:hover{color:var(--text)}
 .rec-manual{justify-self:start;font:inherit;font-size:13px;color:var(--accent);background:none;border:0;padding:8px 2px;cursor:pointer;text-align:left}
 .rec-manual:hover{text-decoration:underline}
 #rec-search-done{margin-top:16px}
@@ -2732,6 +2749,13 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .sl-contributor{margin-top:9px;}.sl-contributor a{color:var(--text);text-decoration:none;}
 .sl-visibility{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;}
 .sl-visibility select{font:inherit;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:6px 10px;}
+/* In the member row the control reads as one more chip: same height, border, type and color as its neighbors. */
+.sl-member-row .sl-visibility{margin-top:0;height:34px;box-sizing:border-box;gap:6px;padding:0 10px;border:1px solid var(--border);border-radius:24px;font-size:13px;line-height:1;color:var(--muted);}
+.sl-member-row .sl-visibility > span[aria-hidden]{font-size:11px;line-height:1;}
+.sl-member-row label.sl-visibility{position:relative;cursor:pointer;padding-right:8px;}
+.sl-member-row label.sl-visibility:hover,.sl-member-row label.sl-visibility:focus-within{border-color:var(--border2,rgba(255,255,255,.25));color:var(--text);}
+.sl-member-row .sl-visibility select{appearance:none;-webkit-appearance:none;height:100%;margin:0;padding:0 16px 0 0;border:0;border-radius:0;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right center;color:inherit;font:inherit;font-size:13px;line-height:1;cursor:pointer;outline:none;}
+.sl-member-row .sl-visibility select option{color:#111;}
 #shared-cover-status:empty{display:none;}#shared-cover-status{font-size:13px;color:var(--muted);}
 </style><style>
 .dynamic-taste-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start;}
@@ -4595,6 +4619,7 @@ function renderTasteItemPicked() {
   if (save && !tasteItemFormState.id) save.textContent = `Add “${r.title.length > 28 ? r.title.slice(0, 27) + '…' : r.title}”`;
 }
 function clearTasteItemPick() {
+  if (!tasteItemFormState.id) { tiBackToSearch(); return; }
   tasteItemFormState.picked = null; tasteItemFormState.tmdbId = null;
   if (!document.getElementById('taste-item-link').value.trim()) setTasteItemArt('');
   const t = document.getElementById('taste-item-title'); if (t) { t.value = ''; t.focus(); }
@@ -4683,6 +4708,91 @@ function readTasteItemType() {
   return builtIn ? builtIn.key : 'custom:' + label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+// ── Adding to a shared list: search first (every type at once, then narrow by type), the way
+// Favorites and What's Next work. Picking a result fills in the details; nothing is required beyond it.
+const TI_SEARCH_TYPES = ['books', 'movies', 'tv', 'music', 'albums', 'podcasts'];
+const tiSearch = { q: '', results: [], kind: null, request: 0, timer: null, partial: false, loading: false };
+function tiSetStep(step) {
+  const searching = step === 'search';
+  document.getElementById('ti-search-step').hidden = !searching;
+  document.getElementById('ti-details-step').hidden = searching;
+  const picked = !searching && !!tasteItemFormState.picked;
+  // The picked card has its own Change button; the back link is for the by-hand form.
+  document.getElementById('ti-back').hidden = searching || picked || !!tasteItemFormState.id;
+  // A picked result already knows its type, title and creator — show it as a card instead of inputs.
+  document.getElementById('ti-type-field').hidden = picked;
+  document.getElementById('ti-sub-field').hidden = picked;
+  document.getElementById('ti-title-label').hidden = picked;
+  document.getElementById('taste-item-title').closest('div[style*="display:flex"]').hidden = picked;
+  document.getElementById('taste-item-modal-title').textContent = tasteItemFormState.id ? 'Edit item' : picked ? 'Add details' : searching ? 'Add to this list' : 'Add item';
+}
+function queueTiSearch(q) {
+  clearTimeout(tiSearch.timer);
+  tiSearch.q = q.trim();
+  const request = ++tiSearch.request;
+  if (tiSearch.q.length < 2) { tiSearch.results = []; tiSearch.loading = false; renderTiSearch(); return; }
+  tiSearch.loading = true; renderTiSearch();
+  tiSearch.timer = setTimeout(() => runTiSearch(tiSearch.q, request), 250);
+}
+async function runTiSearch(q, request) {
+  const settled = await Promise.allSettled(TI_SEARCH_TYPES.map(async cat => (await searchTasteCatalog(cat, q)).slice(0, 5).map(r => ({ ...r, cat }))));
+  if (request !== tiSearch.request) return;
+  const norm = v => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const results = settled.filter(r => r.status === 'fulfilled').flatMap(r => r.value).filter(r => r.title);
+  results.sort((a, b) => Number(norm(b.title) === norm(q)) - Number(norm(a.title) === norm(q)));
+  tiSearch.results = results.filter((r, j, a) => a.findIndex(x => x.cat === r.cat && x.title === r.title && x.sub === r.sub) === j).slice(0, 36);
+  tiSearch.partial = settled.some(r => r.status === 'rejected');
+  tiSearch.loading = false;
+  renderTiSearch();
+}
+function setTiSearchKind(k) { tiSearch.kind = k || null; renderTiSearch(); }
+function renderTiSearch() {
+  const el = document.getElementById('ti-search-results'); if (!el) return;
+  // Once results show, their own "Can't find it?" covers adding by hand; keep just the link option.
+  const byHand = document.getElementById('ti-by-hand'); if (byHand) byHand.hidden = tiSearch.q.length >= 2;
+  if (tiSearch.q.length < 2) { el.innerHTML = ''; return; }
+  const res = tiSearch.results, f = tiSearch.kind;
+  const kinds = TI_SEARCH_TYPES.filter(k => res.some(r => r.cat === k) || k === f);
+  const chips = kinds.length > 1 || f ? `<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setTiSearchKind(null)">All</button>${kinds.map(k => `<button type="button" class="fav-chip" aria-pressed="${f === k}" onclick="setTiSearchKind('${k}')">${esc(tasteTypeMeta(k).label)}</button>`).join('')}</div>` : '';
+  const rows = res.map((r, i) => ({ r, i })).filter(x => !f || x.r.cat === f).map(({ r, i }) => {
+    const m = tasteTypeMeta(r.cat);
+    return `<button type="button" class="extra-result" aria-label="Add ${esc(r.title)}${r.sub ? ' by ' + esc(r.sub) : ''}" onclick="pickTiResult(${i})"><span class="rec-art">${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span>${esc((r.title || '?').slice(0, 1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([m.chip, r.sub, r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">+</span></button>`;
+  }).join('');
+  const empty = tiSearch.loading ? '<p class="rec-search-note">Searching…</p>' : `<p class="rec-search-note">No ${f ? esc(tasteTypeMeta(f).label.toLowerCase()) : 'matches'} for this search.${f ? ` <button type="button" class="rec-manual" style="padding:0" onclick="setTiSearchKind(null)">Show all results</button>` : ''}</p>`;
+  const manual = tiSearch.loading ? '' : `<button type="button" class="rec-manual" onclick="tiAddManually()">Can’t find it? Add “${esc(tiSearch.q.slice(0, 80))}” as written</button>`;
+  el.innerHTML = chips + (rows || empty) + (tiSearch.partial ? '<p class="rec-search-note">Some catalogs could not load.</p>' : '') + manual;
+}
+function pickTiResult(i) {
+  const r = tiSearch.results[i]; if (!r) return;
+  document.getElementById('taste-item-category').value = r.cat;
+  renderTasteTypeChips();
+  document.getElementById('taste-item-title').value = r.title;
+  document.getElementById('taste-item-sub').value = r.sub || '';
+  tasteItemFormState.picked = r; tasteItemFormState.tmdbId = r.tmdbId || null;
+  setTasteItemArt(r.art || '');
+  tiSetStep('details');
+  renderTasteItemPicked();
+  setTimeout(() => document.getElementById('taste-item-date').focus(), 0);
+}
+function tiAddManually(link) {
+  tasteItemFormState.picked = null; tasteItemFormState.tmdbId = null;
+  const k = tiSearch.kind || tasteItemFormState.category || 'books';
+  document.getElementById('taste-item-category').value = k;
+  renderTasteTypeChips();
+  document.getElementById('taste-item-title').value = link ? '' : tiSearch.q;
+  setTasteItemArt('');
+  tiSetStep('details');
+  renderTasteItemPicked();
+  setTimeout(() => document.getElementById(link ? 'taste-item-link' : 'taste-item-title').focus(), 0);
+}
+function tiBackToSearch() {
+  tasteItemFormState.picked = null; tasteItemFormState.tmdbId = null;
+  setTasteItemArt('');
+  renderTasteItemPicked();
+  tiSetStep('search');
+  document.getElementById('ti-search-input').focus();
+}
+
 function openTasteItemForm(category, flatIdx) {
   tasteItemFormState = { category: category || 'books', id: null, picked: null, tmdbId: null, reresolve: false };
   hideTasteSuggestions();
@@ -4720,7 +4830,15 @@ function openTasteItemForm(category, flatIdx) {
   { const k = document.getElementById('taste-item-category').value, t = document.getElementById('taste-item-title'); t.placeholder = TASTE_SEARCHABLE.includes(k) ? `Start typing to search ${tasteTypeMeta(k).label.toLowerCase()}…` : ''; }
   document.getElementById('taste-item-modal').style.display = 'flex';
   renderTasteItemPicked();
-  if (flatIdx === undefined && category !== '__other') setTimeout(() => document.getElementById('taste-item-title').focus(), 0);
+  // Adding starts with search (pre-filtered when it came from a section's own Add button);
+  // editing, and "something else", go straight to the details.
+  const searchFirst = flatIdx === undefined && category !== '__other';
+  clearTimeout(tiSearch.timer); tiSearch.request++;
+  Object.assign(tiSearch, { q: '', results: [], loading: false, partial: false, kind: searchFirst && TI_SEARCH_TYPES.includes(category) ? category : null });
+  document.getElementById('ti-search-input').value = '';
+  renderTiSearch();
+  tiSetStep(searchFirst ? 'search' : 'details');
+  if (searchFirst) setTimeout(() => document.getElementById('ti-search-input').focus(), 0);
   if (document.getElementById('taste-item-category').value === '__other') document.getElementById('taste-item-custom-type').focus();
 }
 
@@ -5006,7 +5124,7 @@ async function loadAllTasteLists(profileId) {
     ]);
     const byId = new Map();
     (owned || []).forEach(l => byId.set(l.id, { ...l, isOwner: l.user_id === currentUser?.id }));
-    (collabRows || []).forEach(r => { if (r.taste_lists && !byId.has(r.taste_lists.id)) byId.set(r.taste_lists.id, { ...r.taste_lists, isOwner: false }); });
+    (collabRows || []).forEach(r => { if (r.taste_lists && !byId.has(r.taste_lists.id)) byId.set(r.taste_lists.id, { ...r.taste_lists, isOwner: r.taste_lists.user_id === currentUser?.id }); });
     const lists = [...byId.values()].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     await Promise.all(lists.map(async (list) => {
       const [{ data: collabs }, { data: previewItems }, { count }] = await Promise.all([
@@ -5210,7 +5328,7 @@ function renderTasteListCollaborators(list) {
   const name=p?(firstNameOnly(p.display_name)||p.username||'Member'):'Member';
   return `<span class="sl-member-chip">${profileAvatarHtml(p||{display_name:name},24)}${esc(name)}${id===list.user_id?'<small>Owner</small>':''}</span>`;
  }).join('');
- el.innerHTML=`<div class="sl-member-row"><span>Made together · ${ids.length} ${ids.length===1?'member':'members'}</span>${chips}${tasteListPrivacyControl(list)}</div>`;
+ el.innerHTML=`<div class="sl-member-row"><span>${ids.length} ${ids.length===1?'member':'members'}</span>${chips}${tasteListPrivacyControl(list)}</div>`;
 }
 function tasteListPrivacyControl(list) {
  const pub=list.is_public===true;
@@ -16860,7 +16978,7 @@ async function fetchFeedPage(isFirstPage) {
     document.getElementById('feed-heading').textContent="What's New";
     document.getElementById('feed-context').textContent='Your updates and people you follow';
     let query = sb.from('activity_feed')
-      .select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, is_public)')
+      .select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)')
       .order('activity_date', { ascending: false }).order('created_at', { ascending: false })
       .range(feedOffset, feedOffset + FEED_PAGE_SIZE - 1);
     query = query.in('user_id', followedIds);
@@ -17276,10 +17394,10 @@ function publicActivityCardHtml(row,profile=false) {
       ${ownerControls}
       ${profile ? `<h3 class="activity-title"${ownerControls?' style="padding-right:84px;"':''}><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openFeedItemSummary('${jsStr(String(row.id))}')">${esc(row.label)}</button></h3>
       <div class="activity-meta">${row.sub ? `<span style="color:${meta.color}">${esc(row.sub)}</span>` : ''}${row.sub && row.activity_date ? '<span aria-hidden="true">·</span>' : ''}${row.activity_date ? `<span>${shortActivityDate(row.activity_date)}</span>` : ''}</div>` : `
-      <table style="border-collapse:collapse;width:100%;${ownerControls?'padding-right:88px;':''}"><tr><td style="vertical-align:middle;width:38px;padding:0;">${publicFeedAvatarHtml(who)}</td><td style="vertical-align:middle;padding:0 0 0 10px;">
+      <div class="activity-byline" style="display:flex;align-items:center;gap:10px;min-width:0;${ownerControls?'padding-right:88px;':''}">${profileAvatarHtml({...row.profiles,id:row.profiles?.id||row.user_id},36)}<div style="min-width:0;line-height:1.25;">
         <div style="font-size:13.5px;font-weight:600;color:var(--text);"><a href="?u=${encodeURIComponent(uname)}" onclick="event.stopPropagation();goToProfile('${jsStr(uname)}');return false" style="color:inherit;text-decoration:none;">${esc(whoDisplay)}</a></div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);">${formatActivityDate(row.activity_date)}</div>
-      </td></tr></table>
+      </div></div>
       <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;line-height:1.3;overflow-wrap:anywhere;"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openFeedItemSummary('${jsStr(String(row.id))}')">${esc(row.label)}</button></div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
         <span title="${esc(row.type)}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:${meta.color}18;color:${meta.color};flex-shrink:0;">${typeIcon}</span>
@@ -19399,15 +19517,26 @@ renderTasteInfluences();
     <div id="taste-item-modal-title" class="tl-modal-title">Add item</div>
     <div id="taste-item-modal-error" class="tl-modal-error" style="display:none;"></div>
 
-    <div class="tl-field">
-      <label class="tl-label">Type<span class="tl-required">*</span></label>
+    <div id="ti-search-step" hidden>
+      <div class="ti-search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="ti-search-input" type="search" autocomplete="off" placeholder="Search books, movies, shows, music, podcasts…" aria-label="Search for something to add" oninput="queueTiSearch(this.value)">
+      </div>
+      <div id="ti-search-results" aria-live="polite"></div>
+      <div class="ti-search-alt"><span id="ti-by-hand" style="display:contents"><button type="button" class="rec-manual" onclick="tiAddManually()">Add something by hand</button><span aria-hidden="true">·</span></span><button type="button" class="rec-manual" onclick="tiAddManually(true)">Paste a link</button></div>
+    </div>
+
+    <div id="ti-details-step">
+    <button type="button" id="ti-back" class="ti-back" hidden onclick="tiBackToSearch()">← Back to search</button>
+    <div class="tl-field" id="ti-type-field">
+      <label class="tl-label">Type</label>
       <input type="hidden" id="taste-item-category" value="books">
       <div id="taste-item-type-chips" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
       <input id="taste-item-custom-type" class="tl-input" type="text" maxlength="40" placeholder="What is it? e.g. Restaurant, Board game, Museum" style="display:none;margin-top:10px;">
     </div>
 
     <div class="tl-field" style="position:relative;">
-      <label class="tl-label">Title<span class="tl-required">*</span></label>
+      <label class="tl-label" id="ti-title-label">Title</label>
       <div style="display:flex;gap:10px;align-items:center;">
         <img id="taste-item-art-preview" alt="" style="display:none;width:40px;height:54px;object-fit:cover;border-radius:6px;flex-shrink:0;background:var(--surface2);">
         <input id="taste-item-title" class="tl-input" type="text" autocomplete="off" oninput="onTasteTitleInput()" onkeydown="onTasteTitleKeydown(event)" onblur="setTimeout(hideTasteSuggestions,150)" style="flex:1;">
@@ -19416,7 +19545,7 @@ renderTasteInfluences();
       <div id="taste-item-picked" class="ti-picked" hidden aria-live="polite"></div>
     </div>
 
-    <div class="tl-field">
+    <div class="tl-field" id="ti-sub-field">
       <label class="tl-label" id="taste-item-sub-label">Author / Artist</label>
       <input id="taste-item-sub" class="tl-input" type="text">
     </div>
@@ -19431,7 +19560,7 @@ renderTasteInfluences();
       <div class="tag-field" style="margin-top:0"><label class="tl-label" for="tag-listitem-input">Recommended by someone else? <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-listitem-chips" class="tag-chips"></div><input id="tag-listitem-input" class="tl-input" autocomplete="off" placeholder="Leave blank if it’s your pick" oninput="tagFieldSearch('listitem',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('listitem')}"><div id="tag-listitem-results" class="tag-results" aria-live="polite"></div></div>
     </div>
 
-    <div class="tl-field">
+    <div class="tl-field" id="ti-link-field">
       <label class="tl-label">Link <span class="tl-hint">optional — article, episode, or image</span></label>
       <input id="taste-item-link" class="tl-input" type="url" placeholder="https://…" onchange="previewTasteItemLink()" onpaste="setTimeout(previewTasteItemLink,0)">
       <input type="hidden" id="taste-item-art">
@@ -19439,6 +19568,7 @@ renderTasteInfluences();
     </div>
 
     <button id="taste-item-save-btn" class="tl-btn-primary" onclick="saveTasteItemForm()">Save</button>
+    </div>
   </div>
 </div>
 
