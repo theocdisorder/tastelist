@@ -18907,55 +18907,173 @@ async function openSharedListShare(){
  document.getElementById('shared-share-native').textContent=navigator.share?'Share':'Copy link';
  document.getElementById('shared-share-copy').hidden=!navigator.share;
  document.getElementById('shared-share-dialog').showModal();
- // A mosaic of every title in the list: each cover keeps its own shape, packed into full-width rows.
- const now=(tripPlaylistFlatItems||[]).filter(p=>p&&p.title&&p.inProgress);
- const all=(tripPlaylistFlatItems||[]).filter(p=>p&&p.title&&!p.inProgress), MAX=72, items=all.slice(0,MAX);
  try{
-  const fontUI=getComputedStyle(document.body).fontFamily||'Arial';
-  const assets=await Promise.all(items.map(p=>p.art?loadShareImageDirect(slArtUrl(p)).then(async img=>img||await loadShareImageViaProxy(slArtUrl(p))):null));
-  const logoImg=await loadShareImageDirect(TL_LOGO_SRC);
-  if(revision!==sharedShareRevision)return;
-  const W=900,PAD=45,INNER=W-PAD*2,GAP=8,TOP=now.length?186:150;
-  const target=items.length<=4?300:items.length<=8?250:items.length<=16?205:items.length<=32?170:140;
-  const aspect=items.map((p,k)=>{const img=assets[k];return img&&img.naturalWidth&&img.naturalHeight?Math.min(1.8,Math.max(.5,img.naturalWidth/img.naturalHeight)):(['music','albums','podcasts'].includes(p.cat)?1:2/3);});
-  const rows=[];let row=[],sum=0;
-  items.forEach((p,k)=>{row.push(k);sum+=aspect[k];if(sum*target+GAP*(row.length-1)>=INNER){rows.push({ks:row,h:(INNER-GAP*(row.length-1))/sum,full:true});row=[];sum=0;}});
-  if(row.length)rows.push({ks:row,h:Math.min(target,(INNER-GAP*(row.length-1))/sum),full:false});
-  const mosaicH=rows.reduce((n,r)=>n+r.h,0)+GAP*Math.max(0,rows.length-1);
-  const more=all.length-items.length;
-  const LOGO_W=300, LOGO_H=Math.round(LOGO_W*180/870), FOOTER_TOP=TOP+mosaicH+(more?44:0)+64, FOOTER_H=LOGO_H+58;
-  const canvas=document.createElement('canvas'),SC=2;canvas.width=W*SC;canvas.height=(FOOTER_TOP+FOOTER_H)*SC;const ctx=canvas.getContext('2d');ctx.scale(SC,SC);
-  ctx.fillStyle='#0c0d0e';ctx.fillRect(0,0,W,FOOTER_TOP+FOOTER_H);
-  const line=(text,x,y,width)=>{let t=String(text||'');while(t.length>1&&ctx.measureText(t).width>width)t=t.slice(0,-2)+'…';ctx.fillText(t,x,y);};
-  ctx.fillStyle='#f5f1e9';ctx.font=`bold 46px ${fontUI}`;line(list.title||'Shared TasteList',PAD,82,INNER);
-  const kinds=[...new Set(all.map(p=>tasteTypeMeta(p.cat)?.label||p.cat).filter(Boolean))];
-  ctx.fillStyle='#aaa6a0';ctx.font=`400 19px ${fontUI}`;line(`${all.length} ${all.length===1?'pick':'picks'}${kinds.length?' · '+kinds.join(', '):''}`,PAD,118,INNER);
-  if(now.length){ctx.fillStyle='#b99aff';ctx.beginPath();ctx.arc(PAD+5,147,5,0,Math.PI*2);ctx.fill();ctx.font=`600 19px ${fontUI}`;line(`${inProgressLabel(now[0].cat)}: ${now.map(p=>p.title).join(' · ')}`,PAD+18,154,INNER-18);}
-  let y=TOP;
-  rows.forEach(r=>{
-   const rowW=r.ks.reduce((n,k)=>n+aspect[k]*r.h,0)+GAP*(r.ks.length-1);let x=PAD+(r.full?0:(INNER-rowW)/2);
-   r.ks.forEach(k=>{
-    const w=aspect[k]*r.h,img=assets[k],p=items[k];
-    if(img)ctx.drawImage(img,x,y,w,r.h);
-    else{ctx.fillStyle='#1f2023';ctx.fillRect(x,y,w,r.h);ctx.fillStyle=tasteTypeMeta(p.cat)?.color||'#cbb0f4';ctx.fillRect(x,y,w,4);
-     ctx.fillStyle='#e8e4dc';ctx.font=`600 ${Math.max(12,Math.min(18,r.h/9))}px ${fontUI}`;
-     const words=String(p.title).split(/\s+/),lines=[];let cur='';words.forEach(wd=>{const t=cur?cur+' '+wd:wd;if(ctx.measureText(t).width>w-20&&cur){lines.push(cur);cur=wd;}else cur=t;});if(cur)lines.push(cur);
-     lines.slice(0,4).forEach((ln,li)=>line(ln,x+10,y+28+li*22,w-20));}
-    x+=w+GAP;
-   });
-   y+=r.h+GAP;
-  });
-  if(more){ctx.fillStyle='#aaa6a0';ctx.font=`500 18px ${fontUI}`;ctx.textAlign='center';ctx.fillText(`+ ${more} more on TasteList`,W/2,TOP+mosaicH+34);ctx.textAlign='left';}
-  ctx.fillStyle='#f5f1e9';ctx.textAlign='center';
-  if(logoImg){const lh=LOGO_W*logoImg.naturalHeight/logoImg.naturalWidth;ctx.drawImage(logoImg,W/2-LOGO_W/2,FOOTER_TOP,LOGO_W,lh);}
-  else{ctx.font=`700 54px ${fontUI}`;ctx.fillText('TasteList',W/2,FOOTER_TOP+LOGO_H-12);}
-  ctx.font=`400 17px ${fontUI}`;ctx.fillText('MAKE YOURS AT TASTELIST.APP',W/2,FOOTER_TOP+LOGO_H+28);
-  ctx.textAlign='left';
+  const canvas=await drawSharedListPoster(list,tripPlaylistFlatItems||[],()=>revision!==sharedShareRevision);
+  if(!canvas||revision!==sharedShareRevision)return;
   const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));if(!blob)throw Error('Image unavailable');if(revision!==sharedShareRevision)return;
   sharedShareState.file=new File([blob],'shared-tastelist.png',{type:'image/png'});
   const img=document.createElement('img');img.alt=list.title+' — shared list preview';img.src=URL.createObjectURL(blob);img.onload=()=>URL.revokeObjectURL(img.src);document.getElementById('shared-share-preview').replaceChildren(img);
   document.getElementById('shared-share-download').disabled=false;document.getElementById('shared-share-status').textContent='';
  }catch(_){if(revision===sharedShareRevision)document.getElementById('shared-share-status').textContent='Image unavailable. You can still share the list link.';}
+}
+// ── Shared-list share image: an editorial poster ──────────────────────────────────────────────
+// Title (display serif) → count + media summary → "now reading" strip (from in-progress items) →
+// an even grid of covers in list order → a compact footer with the TasteList logo and CTA.
+// 1080px wide (portrait, Stories-friendly); long lists become a preview with the true total.
+const SHARE_POSTER = { W: 1080, PAD: 72, GUTTER: 14, RADIUS: 10, MAX_TILES: 24, BG: '#0b0b0d', CREAM: '#f4efe6', MUTED: '#a9a49b', PURPLE: '#b99aff' };
+function posterGridColumns(n) {
+  if (n <= 4) return Math.max(1, n);
+  let best = 3, bestScore = Infinity;
+  for (let cols = 3; cols <= 6; cols++) {
+    const rows = Math.ceil(n / cols), empty = rows * cols - n;
+    const score = Math.abs((rows * 1.5) / cols - 1.15) + empty * 0.08;   // a grid a little taller than wide
+    if (score < bestScore) { best = cols; bestScore = score; }
+  }
+  return best;
+}
+function posterRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function posterWrap(ctx, text, maxW, maxLines) {
+  const words = String(text || '').split(/\s+/).filter(Boolean), lines = [];
+  let cur = '';
+  for (const w of words) {
+    const t = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines) { lines.length = maxLines; let last = lines[maxLines - 1] + '…'; while (ctx.measureText(last).width > maxW && last.length > 2) last = last.slice(0, -2) + '…'; lines[maxLines - 1] = last; }
+  return lines.map(l => { let t = l; while (ctx.measureText(t).width > maxW && t.length > 2) t = t.slice(0, -2) + '…'; return t; });
+}
+// Average colour of a cover (for the soft fill behind art that doesn't match the tile shape).
+function posterAverageColor(img) {
+  try { const c = document.createElement('canvas'); c.width = c.height = 1; const x = c.getContext('2d'); x.drawImage(img, 0, 0, 1, 1); const d = x.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2]]; } catch (_) { return [32, 32, 36]; }
+}
+// One cover in a 2:3 tile: near-2:3 art fills the tile (trimming at most a sliver); square or wide art
+// is shown whole, centred on a darkened wash of its own colour. Never stretched.
+function drawPosterTile(ctx, img, item, x, y, w, h, fonts) {
+  const S = SHARE_POSTER;
+  ctx.save(); posterRoundRect(ctx, x, y, w, h, S.RADIUS); ctx.clip();
+  if (img && img.naturalWidth && img.naturalHeight) {
+    const ia = img.naturalWidth / img.naturalHeight, ta = w / h;
+    if (Math.abs(ia / ta - 1) <= 0.12) {
+      const sc = Math.max(w / img.naturalWidth, h / img.naturalHeight), dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
+      ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    } else {
+      const [r, g, b] = posterAverageColor(img);
+      ctx.fillStyle = `rgb(${Math.round(r * .35 + 10)},${Math.round(g * .35 + 10)},${Math.round(b * .35 + 12)})`; ctx.fillRect(x, y, w, h);
+      const sc = Math.min(w / img.naturalWidth, h / img.naturalHeight), dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
+      ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    }
+  } else {
+    // Neutral placeholder: type label and title, quietly set.
+    const g = ctx.createLinearGradient(x, y, x, y + h); g.addColorStop(0, '#1c1c20'); g.addColorStop(1, '#141417'); ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+    const pad = Math.max(10, w * 0.09), meta = tasteTypeMeta(item.cat);
+    ctx.fillStyle = S.MUTED; ctx.font = `600 ${Math.round(Math.max(11, w * 0.065))}px ${fonts.ui}`;
+    ctx.fillText(String(meta?.chip || meta?.label || 'Pick').toUpperCase(), x + pad, y + pad + Math.max(11, w * 0.065));
+    const fs = Math.round(Math.max(13, Math.min(24, w * 0.11)));
+    ctx.fillStyle = S.CREAM; ctx.font = `500 ${fs}px ${fonts.display}`;
+    const lines = posterWrap(ctx, item.title, w - pad * 2, Math.max(2, Math.floor((h - pad * 3) / (fs * 1.25)) - 1));
+    const top = y + h - pad - (lines.length - 1) * fs * 1.25;
+    lines.forEach((l, k) => ctx.fillText(l, x + pad, top + k * fs * 1.25));
+  }
+  ctx.restore();
+  ctx.save(); posterRoundRect(ctx, x + .5, y + .5, w - 1, h - 1, S.RADIUS); ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+}
+async function drawSharedListPoster(list, flatItems, cancelled = () => false) {
+  const S = SHARE_POSTER, W = S.W, PAD = S.PAD, INNER = W - PAD * 2;
+  const uiFamily = getComputedStyle(document.body).fontFamily || 'Arial, sans-serif';
+  const fonts = { ui: uiFamily, display: `'Newsreader', ui-serif, Georgia, serif` };
+  try { await Promise.all([document.fonts?.load?.(`500 80px Newsreader`), document.fonts?.load?.(`600 20px Inter`), document.fonts?.ready]); } catch (_) {}
+  const titled = flatItems.filter(p => p && p.title);
+  const featured = titled.filter(p => p.inProgress);
+  const collection = titled.filter(p => !p.inProgress);            // list order, as saved
+  const total = collection.length;
+  const over = total > S.MAX_TILES;
+  const shown = over ? collection.slice(0, S.MAX_TILES - 1) : collection;   // last slot becomes "+N more"
+  const more = total - shown.length;
+  const artFor = p => (p ? slArtUrl(p) : '');
+  const load = src => src ? loadShareImageDirect(src).then(img => img || loadShareImageViaProxy(src)) : Promise.resolve(null);
+  const [assets, featuredImg, logoImg] = await Promise.all([Promise.all(shown.map(p => load(artFor(p)))), load(artFor(featured[0])), loadShareImageDirect(TL_LOGO_SRC)]);
+  if (cancelled()) return null;
+
+  // ── Measure ──
+  const m = document.createElement('canvas').getContext('2d');
+  const title = list.title || 'Shared TasteList';
+  let titleSize = 96, titleLines;
+  for (; titleSize >= 56; titleSize -= 4) { m.font = `500 ${titleSize}px ${fonts.display}`; titleLines = posterWrap(m, title, INNER, 2); if (titleLines.length === 1 || titleSize <= 72) break; }
+  m.font = `500 ${titleSize}px ${fonts.display}`; titleLines = posterWrap(m, title, INNER, 2);
+  const titleLH = Math.round(titleSize * 1.04);
+  const kinds = [...new Set(collection.map(p => tasteTypeMeta(p.cat)?.label || p.cat).filter(Boolean))];
+  const metaText = `${total} ${total === 1 ? 'pick' : 'picks'}${kinds.length ? '  ·  ' + kinds.join(', ') : ''}`;
+  const cols = posterGridColumns(shown.length + (more ? 1 : 0));
+  const tileW = Math.min(cols <= 2 ? 300 : 999, (INNER - S.GUTTER * (cols - 1)) / cols), tileH = Math.round(tileW * 1.5);
+  const slots = shown.length + (more ? 1 : 0), rows = Math.max(1, Math.ceil(slots / cols));
+  const gridW = cols * tileW + (cols - 1) * S.GUTTER, gridH = slots ? rows * tileH + (rows - 1) * S.GUTTER : 0;
+  const FEAT_H = featured.length ? 132 : 0;
+  let y = 104;                                   // top of the eyebrow
+  const eyebrowY = y, titleTop = y + 30, titleBottom = titleTop + titleLines.length * titleLH;
+  const metaY = titleBottom + 18, featTop = metaY + 48, gridTop = featTop + (FEAT_H ? FEAT_H + 40 : 8);
+  const footerTop = gridTop + gridH + 64, LOGO_H = 40, H = Math.round(footerTop + 28 + LOGO_H + 24 + 22 + 64);
+
+  // ── Draw ──
+  const SC = 2, canvas = document.createElement('canvas'); canvas.width = W * SC; canvas.height = H * SC;
+  const ctx = canvas.getContext('2d'); ctx.scale(SC, SC); ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = S.BG; ctx.fillRect(0, 0, W, H);
+  const glow = ctx.createRadialGradient(W * .85, 0, 0, W * .85, 0, W * .9); glow.addColorStop(0, 'rgba(124,77,255,.16)'); glow.addColorStop(1, 'rgba(124,77,255,0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+  // eyebrow
+  ctx.fillStyle = S.PURPLE; ctx.font = `600 18px ${fonts.ui}`; if ('letterSpacing' in ctx) ctx.letterSpacing = '3px';
+  ctx.fillText('A SHARED TASTELIST', PAD, eyebrowY);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+  // title
+  ctx.fillStyle = S.CREAM; ctx.font = `500 ${titleSize}px ${fonts.display}`;
+  titleLines.forEach((l, k) => ctx.fillText(l, PAD - 3, titleTop + titleSize * .82 + k * titleLH));
+  // count + media
+  ctx.fillStyle = S.MUTED; ctx.font = `500 24px ${fonts.ui}`;
+  ctx.fillText(posterWrap(ctx, metaText, INNER, 1)[0], PAD, metaY + 20);
+  // featured strip
+  if (featured.length) {
+    const f = featured[0], x = PAD, w = INNER, h = FEAT_H;
+    ctx.save(); posterRoundRect(ctx, x, featTop, w, h, 16);
+    const fg = ctx.createLinearGradient(x, 0, x + w, 0); fg.addColorStop(0, 'rgba(124,77,255,.22)'); fg.addColorStop(1, 'rgba(124,77,255,.06)');
+    ctx.fillStyle = fg; ctx.fill(); ctx.strokeStyle = 'rgba(185,154,255,.45)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+    // The cover sits at the left when there is one; without art the text simply starts there.
+    const thW = 68, thH = 102, thX = x + 16, thY = featTop + (h - thH) / 2;
+    if (featuredImg) drawPosterTile(ctx, featuredImg, f, thX, thY, thW, thH, fonts);
+    const tx = featuredImg ? thX + thW + 22 : x + 28, tw = w - (tx - x) - 28;
+    ctx.fillStyle = S.PURPLE; ctx.beginPath(); ctx.arc(tx + 6, featTop + 38, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.font = `700 17px ${fonts.ui}`; if ('letterSpacing' in ctx) ctx.letterSpacing = '2.5px';
+    const label = inProgressLabel(f.cat).toUpperCase() + (featured.length > 1 ? `  +${featured.length - 1}` : '');
+    ctx.fillText(label, tx + 20, featTop + 44); if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+    ctx.fillStyle = S.CREAM; ctx.font = `500 30px ${fonts.display}`;
+    posterWrap(ctx, f.title, tw, 2).forEach((l, k) => ctx.fillText(l, tx, featTop + 82 + k * 32));
+  }
+  // grid (list order; the last, incomplete row is centred — no filler tiles)
+  const gridX = PAD + (INNER - gridW) / 2;
+  for (let k = 0; k < slots; k++) {
+    const r = Math.floor(k / cols), c = k % cols, inRow = r === rows - 1 ? slots - r * cols : cols;
+    const rowX = gridX + (cols - inRow) * (tileW + S.GUTTER) / 2;
+    const x = rowX + c * (tileW + S.GUTTER), ty = gridTop + r * (tileH + S.GUTTER);
+    if (k < shown.length) drawPosterTile(ctx, assets[k], shown[k], x, ty, tileW, tileH, fonts);
+    else {
+      ctx.save(); posterRoundRect(ctx, x, ty, tileW, tileH, S.RADIUS); ctx.fillStyle = '#17171b'; ctx.fill(); ctx.strokeStyle = 'rgba(185,154,255,.35)'; ctx.stroke(); ctx.restore();
+      ctx.textAlign = 'center'; ctx.fillStyle = S.CREAM; ctx.font = `500 ${Math.round(tileW * .26)}px ${fonts.display}`;
+      ctx.fillText(`+${more}`, x + tileW / 2, ty + tileH / 2 + tileW * .06);
+      ctx.fillStyle = S.MUTED; ctx.font = `600 ${Math.round(Math.max(12, tileW * .085))}px ${fonts.ui}`; ctx.fillText('MORE', x + tileW / 2, ty + tileH / 2 + tileW * .22);
+      ctx.textAlign = 'left';
+    }
+  }
+  // footer: hairline, small logo, CTA
+  ctx.strokeStyle = 'rgba(244,239,230,.14)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(PAD, footerTop); ctx.lineTo(W - PAD, footerTop); ctx.stroke();
+  const logoY = footerTop + 28;
+  if (logoImg) { const lw = logoImg.naturalWidth * LOGO_H / logoImg.naturalHeight; ctx.drawImage(logoImg, (W - lw) / 2, logoY, lw, LOGO_H); }
+  ctx.textAlign = 'center'; ctx.fillStyle = S.CREAM; ctx.font = `600 20px ${fonts.ui}`; if ('letterSpacing' in ctx) ctx.letterSpacing = '3px';
+  ctx.fillText('MAKE YOURS AT TASTELIST.APP', W / 2, logoY + LOGO_H + 24 + 18);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'; ctx.textAlign = 'left';
+  return canvas;
 }
 function closeSharedListShare(){sharedShareRevision++;sharedShareState=null;document.getElementById('shared-share-dialog').close();}
 async function shareSharedList(){if(!sharedShareState)return;const {title,url,file}=sharedShareState;try{if(navigator.share){const data={title,text:url.includes('?join=')?'I started “'+title+'” for us on TasteList! Create an account and make your TasteList, then join our shared list.':title+' on TasteList',url};if(file&&navigator.canShare?.({files:[file]}))data.files=[file];await navigator.share(data);}else await copySharedListLink();}catch(e){if(e.name!=='AbortError')document.getElementById('shared-share-status').textContent='Couldn’t open sharing — try Copy link instead.';}}
