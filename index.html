@@ -2261,6 +2261,10 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .rec-detail-summary .rec-detail-links > a, .rec-detail-summary .rec-detail-links > span, .rec-detail-summary .rec-detail-links .rt-link { margin-top: 0; display: inline-flex; align-items: center; font-size: 12.5px; font-weight: 400; line-height: 1.4; color: var(--muted); }
 .rec-detail-note-label { font-style: normal; color: var(--faint); }
 .rt-slot:empty { display: none; }
+.rt-slot { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+.rt-score { color: var(--text); font-weight: 700; margin-right: 1px; }
+.tmdb-dot { width: 8px; height: 8px; border-radius: 2px; background: linear-gradient(135deg, #90cea1, #01b4e4); flex-shrink: 0; }
+
 .rt-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 400; line-height: 1.4; color: var(--muted); text-decoration: none; }
 .rt-link:hover { color: var(--text); text-decoration: underline; }
 .rt-dot { width: 8px; height: 8px; border-radius: 50%; background: #FA320A; flex-shrink: 0; }
@@ -3093,6 +3097,90 @@ html body #reaction-people-title{font-family:var(--ob-serif)!important;font-size
 .sl-edit-controls button.is-on { background: #7c4dff; border-color: #b99aff; }
 .sl-now-done { margin-top: 6px; font: inherit; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .sl-now-done:hover { color: var(--text); }
+/* ── Onboarding (all sizes): header with step + exit, compact secondary actions, one-row footer ── */
+.ob-top { gap: 16px; }
+.ob-wordmark { display: none; height: 22px; width: auto; }
+.ob-step { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; color: #b2b0b0; font-size: 12px; }
+.ob-step .ob-progress { flex: 0 1 140px; }
+.ob-exit { border: 0; background: none; color: #a9a5a0; font: inherit; font-size: 13px; cursor: pointer; padding: 8px 4px; white-space: nowrap; }
+.ob-exit:hover { color: #f4f0e9; }
+.ob-heading .ob-question-switch { margin: 0; padding: 6px 10px; font-size: 13px; color: #b9a3e3; }
+.ob-heading:has(.ob-question-switch) h1 { min-height: 0; }
+.ob-import.is-compact { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; margin: 0 auto 6px; font-size: 13px; color: #9f9b96; }
+.ob-import.is-compact button { border: 0; background: none; padding: 6px 2px; color: #d9cdf2; font: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(217,205,242,.4); cursor: pointer; border-radius: 0; }
+.ob-import.is-compact button:hover { color: #fff; }
+.ob-footer.obf { display: flex; flex-wrap: nowrap; align-items: center; gap: 14px; }
+.obf-status { display: flex !important; flex-wrap: nowrap !important; align-items: center; gap: 10px; min-width: 0; flex: 1 1 auto !important; }
+.ob-footer.obf .ob-selection-tray { flex: 0 0 auto; }
+.ob-footer.obf button.ob-tray-art { width: 26px; height: 38px; min-width: 0 !important; min-height: 0 !important; margin-left: -6px; }
+.ob-footer.obf button.ob-tray-art:first-child { margin-left: 0; }
+.obf-text { display: flex; flex-direction: column; min-width: 0; }
+.obf-text strong { font-size: 14px; font-weight: 650; color: #e4d5fb; line-height: 1.25; }
+.obf-text strong:empty { display: none; }
+.obf-text small { font-size: 12.5px; color: #a9a5a0; line-height: 1.35; }
+.ob-footer.obf #ob-selection-count { margin: 0; }
+.ob-footer.obf .obf-primary { flex: 0 0 auto; min-width: 128px; min-height: 46px; padding: 12px 22px; font-weight: 650; }
+.ob-footer.obf .obf-primary:not(:disabled) { background: #7C4DFF; border-color: #7C4DFF; color: #fff; }
+.ob-footer.obf .obf-primary:disabled { opacity: 1; background: #26232e; border-color: #34303d; color: #8d8899; }
+.ob-footer.obf .obf-primary[aria-busy="true"] { opacity: .75; cursor: progress; }
+.ob-footer.obf #ob-footer-feedback { flex-basis: 100%; }
+.ob-footer.obf:has(#ob-footer-feedback:not([hidden])) { flex-wrap: wrap; }
+button.ob-tray-art { padding: 0; cursor: pointer; font: inherit; }
+button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.55); color: #fff; font-size: 18px; }
+
+/* ── Onboarding on phones and small tablets: a focused, app-like shell ── */
+@media (max-width: 768px) {
+  body.ob-active .page-shell:has(.global-header), body.ob-active .global-header { display: none !important; }
+  #view-onboarding-container { padding: 0 !important; background: #0b0b0c !important; }
+  #view-onboarding-container .ob-frame { min-height: calc(var(--vvh, 100dvh)) !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: #0b0b0c !important; }
+  #view-onboarding-container .ob-top { position: sticky; top: 0; z-index: 7; padding: calc(10px + env(safe-area-inset-top, 0px)) 20px 10px; background: rgba(11,11,12,.94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,.06); }
+  #view-onboarding-container .ob-wordmark { display: block; }
+  #view-onboarding-container .ob-step { justify-content: center; gap: 8px; }
+  #view-onboarding-container .ob-step .ob-progress { flex: 0 0 56px; }
+  #view-onboarding-container .ob-step > span { font-size: 12px; white-space: nowrap; }
+  #view-onboarding-container .ob-exit { font-size: 13px; padding: 10px 0 10px 8px; min-height: 44px; }
+  #view-onboarding-container .ob-content { padding: 22px 20px 24px !important; }
+  #view-onboarding-container .ob-heading { margin: 0 0 18px !important; text-align: left; }
+  #view-onboarding-container .ob-frame h1 { font-size: clamp(28px, 8.2vw, 34px) !important; line-height: 1.12 !important; letter-spacing: -.03em; margin: 0 0 8px !important; display: block !important; }
+  #view-onboarding-container .ob-heading p { font-size: 15px !important; line-height: 1.5 !important; margin: 0 0 4px !important; text-align: left; }
+  #view-onboarding-container .ob-heading .ob-question-switch { padding: 8px 0; min-height: 40px; }
+  #view-onboarding-container .ob-search { max-width: none; margin: 0 0 10px !important; padding: 0 6px 0 14px !important; min-height: 50px; gap: 8px; border-radius: 14px; }
+  #view-onboarding-container .ob-search > span { font-size: 20px; flex: 0 0 auto; }
+  #view-onboarding-container .ob-search input { font-size: 16px !important; min-width: 0; padding: 12px 0; }  /* 16px keeps iOS from zooming */
+  #view-onboarding-container .ob-search button { flex: 0 0 auto; width: 40px; height: 40px; font-size: 20px; }
+  #view-onboarding-container .ob-search:has(input:placeholder-shown) button { visibility: hidden; }
+  #view-onboarding-container .ob-import.is-compact { justify-content: flex-start; margin: 0 0 14px; }
+  #view-onboarding-container .ob-multiselect-hint { margin: 6px 0 10px !important; font-size: 13px !important; }
+  #view-onboarding-container .ob-type-filters { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; margin: 0 -20px 12px; padding: 0 20px; gap: 6px; }
+  #view-onboarding-container .ob-type-filters::-webkit-scrollbar { display: none; }
+  #view-onboarding-container .ob-type-filters button { flex: 0 0 auto; padding: 7px 13px; font-size: 13px; }
+  /* Results and ideas: compact rows (art, title, type) instead of big tiles */
+  #view-onboarding-container .ob-results-grid { display: flex !important; flex-direction: column; gap: 2px; max-height: none !important; overflow: visible !important; padding: 0 !important; }
+  #view-onboarding-container .ob-result { width: 100%; align-self: stretch !important; box-sizing: border-box; display: grid !important; grid-template-columns: 44px minmax(0, 1fr) 30px; grid-template-rows: auto auto; column-gap: 12px; align-items: center; padding: 8px 6px !important; border-radius: 12px; min-height: 60px; }
+  #view-onboarding-container .ob-result.selected { background: rgba(124,77,255,.12); }
+  #view-onboarding-container .ob-result .ob-art { grid-row: 1 / span 2; width: 44px; height: 66px; aspect-ratio: auto !important; border-radius: 6px; outline-offset: 1px; }
+  #view-onboarding-container .ob-result .ob-art.ob-podcast-art { height: 44px; }
+  #view-onboarding-container .ob-result .ob-art > span { font-size: 22px; }
+  #view-onboarding-container .ob-result.selected .ob-art { outline-width: 2px; }
+  #view-onboarding-container .ob-result strong { grid-column: 2; margin: 0 !important; font-size: 15px !important; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; align-self: end; }
+  #view-onboarding-container .ob-result small { grid-column: 2; font-size: 12.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; align-self: start; }
+  #view-onboarding-container .ob-result .ob-select-circle, #view-onboarding-container .ob-result .ob-selected-mark { position: static !important; grid-column: 3; grid-row: 1 / span 2; width: 26px; height: 26px; font-size: 16px; }
+  #view-onboarding-container .ob-starter-heading { margin: 12px 0 6px; font-size: 14px; }
+  /* Footer: one row, pinned to the bottom, above the home indicator */
+  #view-onboarding-container .ob-footer.obf, #view-onboarding-container .ob-footer.obf.has-selection { position: sticky !important; bottom: 0 !important; z-index: 8; margin: 0 !important; padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    background: rgba(14,14,17,.96) !important; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 0 !important; border-top: 1px solid rgba(255,255,255,.08) !important; border-radius: 0 !important; box-shadow: 0 -10px 24px rgba(0,0,0,.35) !important; }
+  #view-onboarding-container .ob-footer.obf .obf-primary { min-width: 112px; padding: 12px 18px; }
+  #view-onboarding-container .ob-footer.obf .ob-selection-tray { padding-left: 8px; flex: 0 0 auto; }
+  #view-onboarding-container .ob-footer:not(.obf) { position: sticky; bottom: 0; z-index: 8; margin: 0 !important; padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px)) !important; background: rgba(14,14,17,.96); border-top: 1px solid rgba(255,255,255,.08); flex-wrap: wrap; gap: 10px; }
+  html.kb-open #view-onboarding-container .ob-footer { position: static !important; }   /* keyboard open: don't cover results */
+  #view-onboarding-container .ob-pick-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 12px; }
+}
+#onboarding-title:focus { outline: none; }
+@media (max-width: 360px) {
+  #view-onboarding-container .ob-step > span { display: none; }
+  #view-onboarding-container .ob-footer.obf .obf-text small { display: none; }
+  #view-onboarding-container .ob-footer.obf .obf-text strong:empty + small { display: block; }
+}
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -3853,7 +3941,7 @@ async function fillRecDetailSummary(idx) {
   if (!el) return;
   el.classList.remove('is-loading');
   el.innerHTML = sum
-    ? `<p>${esc(shortSummary(sum.text))}</p><div class="rec-detail-links">${sum.url ? `<a href="${esc(sum.url)}" target="_blank" rel="noopener">From ${esc(sum.source)} ↗</a>` : `<span>From ${esc(sum.source)}</span>`}${['film', 'tv'].includes(r.type) ? rtSlotHtml(r.type === 'tv' ? 'tv' : 'movie', r.tmdbId || r._tmdbId) : ''}</div>`
+    ? `<p>${esc(shortSummary(sum.text))}</p><div class="rec-detail-links">${sum.url ? `<a href="${esc(sum.url)}" target="_blank" rel="noopener">From ${esc(sum.source)} ↗</a>` : `<span>From ${esc(sum.source)}</span>`}${['film', 'tv'].includes(r.type) ? rtSlotHtml(r.type === 'tv' ? 'tv' : 'movie', r.tmdbId || r._tmdbId, r.title, sum.source !== 'TMDB') : ''}</div>`
     : `<p class="rec-detail-empty">No summary found for this one.</p>`;
 }
 
@@ -9503,14 +9591,15 @@ function renderOnboardingJourney() {
     body = `<div class="ob-added"><div class="ob-celebrate">${onboardingArtwork(state.added)}<i></i><i></i><i></i><i></i></div><h1 id="onboarding-title" tabindex="-1">Added to your list!</h1><strong>${esc(state.added.title)}</strong><p>${esc(state.added.label)}</p>${(state.added.songArtists||[]).length?`<div class="ob-song-prompt"><p>Add their favorite songs too?</p>${state.added.songArtists.map(n=>`<button type="button" class="ob-song-link" onclick="openSongsForArtistName('${jsStr(n)}')">♪ Pick your favorite ${esc(n)} songs →</button>`).join('')}</div>`:''}${btn('Add another','onboardingAddAnother()')}</div>`;
     footer = `${btn('← Back','onboardingAddAnother()')}${btn('Next →','advanceOnboarding(1)',true)}`;
   } else if (step === 0) {
-    body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1" aria-live="polite" aria-atomic="true">${esc(onboardingQuestion().q)}</h1><button id="ob-question-switch" type="button" class="ob-question-switch" onclick="cycleOnboardingQuestion()">Try another question <span aria-hidden="true">↻</span></button><p id="ob-question-hint">${esc(onboardingQuestion().hint)}</p></div>
-      <label class="ob-search"><span aria-hidden="true">⌕</span><input id="ob-search" type="search" aria-label="Search songs, artists, movies, shows, books and podcasts" placeholder="Start typing an artist, album, movie, show or book…" value="${esc(state.query)}" oninput="onOnboardingSearch(this.value)" ${!ready?'disabled':''}><button type="button" aria-label="Clear search" onclick="clearOnboardingSearch()">×</button></label>
-      <div class="ob-import" role="group" aria-label="Bring picks from another app"><span>Or bring picks from</span><button type="button" onclick="openTasteImport('letterboxd','onboarding')" ${!ready?'disabled':''}>Letterboxd</button><button type="button" onclick="openTasteImport('goodreads','onboarding')" ${!ready?'disabled':''}>Goodreads</button></div>
+    body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1" aria-live="polite" aria-atomic="true">${esc(onboardingQuestion().q)}</h1><p id="ob-question-hint">${esc(onboardingQuestion().hint)}</p><button id="ob-question-switch" type="button" class="ob-question-switch" onclick="cycleOnboardingQuestion()">Different question <span aria-hidden="true">↻</span></button></div>
+      <label class="ob-search"><span aria-hidden="true">⌕</span><input id="ob-search" type="search" aria-label="Search songs, artists, movies, shows, books and podcasts" placeholder="Search anything…" value="${esc(state.query)}" oninput="onOnboardingSearch(this.value)" ${!ready?'disabled':''}><button type="button" aria-label="Clear search" onclick="clearOnboardingSearch()">×</button></label>
+      <div class="ob-import is-compact" role="group" aria-label="Import picks from another app"><span>Import picks from</span><button type="button" onclick="openTasteImport('letterboxd','onboarding')" ${!ready?'disabled':''}>Letterboxd</button><span aria-hidden="true">·</span><button type="button" onclick="openTasteImport('goodreads','onboarding')" ${!ready?'disabled':''}>Goodreads</button></div>
 
-      <p id="ob-list-destination" class="ob-multiselect-hint">Your picks go to your Favorites. Select as many as you like.</p><div id="ob-results" aria-live="polite"></div>
+      <p id="ob-list-destination" class="ob-multiselect-hint">Tap to select as many as you like. They go to your Favorites.</p><div id="ob-results" aria-live="polite"></div>
       <section id="ob-starters" aria-label="Suggested picks" aria-live="polite"></section>
       <div id="ob-feedback" class="ob-feedback" role="status">${!ready?'Loading your favorites…':''}</div>`;
-    footer = `<span class="ob-saved-count"><strong id="ob-selection-count">0 selected</strong><br>${picks.length} ${picks.length===1?'pick':'picks'} saved</span><div><button id="ob-review-button" type="button" class="ob-button" onclick="advanceOnboarding(1)" ${!picks.length?'disabled':''}>Review my picks</button> <button id="ob-add-button" type="button" class="ob-button ob-primary" onclick="saveOnboardingSelection()" disabled>Add to my list</button></div>`;
+    // One status, one primary action: Add (while picks are selected) or Continue (once some are saved).
+    footer = `<div class="obf-status"><span id="ob-selection-tray" class="ob-selection-tray"></span><span class="obf-text"><strong id="ob-selection-count"></strong><small id="ob-footer-hint"></small></span></div><button id="ob-add-button" type="button" class="ob-button ob-primary obf-primary" onclick="obFooterPrimary()" disabled>Continue</button>`;
   } else {
     const categories = new Set(picks.map(p=>p.medium));
     body = `<div class="ob-heading"><h1 id="onboarding-title" tabindex="-1">Your taste is taking shape.</h1><p>${picks.length} ${picks.length===1?'favorite':'favorites'} saved · ${categories.size} ${categories.size===1?'category':'categories'} explored.<br>You can always add, remove, and explore more.</p></div>
@@ -9518,7 +9607,7 @@ function renderOnboardingJourney() {
       <div class="ob-category-prompt"><p>Keep exploring your taste</p><div class="ob-filters">${[['artist','♫ Music'],['movie','▤ Movies'],['tv','▣ TV'],['book','▥ Books'],['podcast','Podcasts']].map(([key,label])=>btn(label,`onboardingAddAnother('${key}')`)).join('')}</div></div>`;
     footer = `${btn('← Back','onboardingAddAnother()')}<div class="ob-review-finish">${btn('Go to activity feed →',"finishOnboarding('completed')",true)}<button type="button" class="ob-text-link" onclick="focusPeopleSearch()">Find friends first</button></div>`;
   }
-  el.innerHTML = `<section class="ob-frame" aria-labelledby="onboarding-title"><header class="ob-top"><div class="ob-progress" aria-label="Step ${step+1} of 2">${[0,1].map(i=>`<span class="${i<=step?'filled':''}"></span>`).join('')}</div><span>${step+1} / 2</span></header><main class="ob-content">${body}</main><footer class="ob-footer"><p id="ob-footer-feedback" role="alert" hidden></p>${footer}</footer><button class="ob-skip" onclick="finishOnboarding('skipped')">Skip for now</button></section>`;
+  el.innerHTML = `<section class="ob-frame" aria-labelledby="onboarding-title"><header class="ob-top"><img class="ob-wordmark" src="${TL_LOGO_SRC}" alt="TasteList"><div class="ob-step"><div class="ob-progress" aria-label="Step ${step+1} of 2">${[0,1].map(i=>`<span class="${i<=step?'filled':''}"></span>`).join('')}</div><span>Step ${step+1} of 2</span></div><button type="button" class="ob-exit" onclick="finishOnboarding('skipped')">Skip for now</button></header><main class="ob-content">${body}</main><footer class="ob-footer${step===0&&!state.added?' obf':''}"><p id="ob-footer-feedback" role="alert" hidden></p>${footer}</footer></section>`;
   if (step===0 && !state.added) {
     loadOnboardingStarters();
     renderOnboardingSearchResults();
@@ -9708,11 +9797,10 @@ function renderOnboardingSearchResults() {
     +(state.autoFilter&&parsedNow.kind?`<p class="ob-type-note">Showing ${esc(parsedNow.kind==='tv'?'TV shows':parsedNow.kind==='screen'?'movies and TV':OB_FILTER_LABELS[parsedNow.kind].toLowerCase())} for “${esc(parsedNow.q)}” · <button type="button" class="ob-type-note-link" onclick="filterOnboardingSearch('all')">Search everything instead</button></p>`:''):'';
   el.innerHTML=chips+(state.loading&&!state.results.length?'<p class="ob-search-status">Finding matches…</p>':state.results.length?`<div class="ob-results-grid">${state.results.map((item,i)=>!obKindMatches(item.kind,state.filter)?'':`<button type="button" class="ob-result ${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'selected':''}" aria-pressed="${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))}" data-key="${esc(onboardingSelectionKey(item))}" onclick="selectOnboardingResultByKey(this.dataset.key)" ${state.saving?'disabled':''}>${onboardingArtwork(item)}<strong>${esc(item.title)}</strong><small>${esc(item.label)}${item.year?' · '+esc(item.year):''}${item.artist&&item.kind==='album'?' · '+esc(item.artist):item.author?' · '+esc(item.author):''}</small>${state.pending.some(p=>onboardingSelectionKey(p)===onboardingSelectionKey(item))?'<span class="ob-selected-mark" aria-hidden="true">✓</span>':'<span class="ob-select-circle" aria-hidden="true">+</span>'}</button>`).join('')}</div>`:state.query.trim().length===1?'<p class="ob-search-status">Type at least 2 letters to see suggestions.</p>':state.query.trim()?(state.searchFailed?'<p class="ob-search-status">Search is temporarily unavailable.</p>':'<p class="ob-search-status">No matches found. Try a few more letters or add the creator’s name.</p>'):'');
   if(state.searchFailed&&!state.loading)el.innerHTML+='<button type="button" class="ob-button" onclick="runOnboardingSearch()">Retry search</button>';
-  const count=document.getElementById('ob-selection-count');if(count)count.textContent=`${state.pending.length} selected`;
-  const review=document.getElementById('ob-review-button');if(review)review.disabled=state.saving||!!state.pending.length||!onboardingPicks().length;
+
   const feedback=document.getElementById('ob-feedback');if(feedback)feedback.textContent=state.error;
   const footerError=document.getElementById('ob-footer-feedback');if(footerError){footerError.hidden=!state.error;footerError.textContent=state.error;}
-  const button=document.getElementById('ob-add-button');if(button){button.disabled=!state.pending.length||state.saving;button.textContent=state.saving?'Adding…':state.pending.length ? `Add ${state.pending.length} ${state.pending.length===1?'pick':'picks'} to my list →` : 'Select picks to add';}
+  updateOnboardingFooter(state);
   updateOnboardingFooterHighlight(state);
 }
 // Once something is selected, the footer becomes a floating bar pinned to the bottom of the screen,
@@ -9730,14 +9818,34 @@ function updateOnboardingFooterHighlight(state) {
     tray.id = 'ob-selection-tray'; tray.className = 'ob-selection-tray'; tray.setAttribute('aria-hidden', 'true');
     countEl.parentElement.prepend(tray);
   }
-  if (tray) tray.innerHTML = state.pending.slice(-4).map(p => {
+  if (tray) { tray.removeAttribute('aria-hidden'); tray.setAttribute('role', 'group'); tray.setAttribute('aria-label', 'Selected picks'); }
+  const start = Math.max(0, n - 4);
+  if (tray) tray.innerHTML = state.pending.slice(start).map((p, k) => {
     const src = p.art || (p.poster ? (String(p.poster).startsWith('http') ? p.poster : TMDB_IMG + p.poster) : '');
-    return `<span class="ob-tray-art">${src ? `<img src="${esc(src)}" alt="" onerror="this.remove()">` : ''}<span>${esc(String(p.title || '?').trim().charAt(0).toUpperCase())}</span></span>`;
+    return `<button type="button" class="ob-tray-art" onclick="removeOnboardingSelection(${start + k})" aria-label="Remove ${esc(p.title || 'pick')}" title="Remove ${esc(p.title || 'pick')}">${src ? `<img src="${esc(src)}" alt="" onerror="this.remove()">` : ''}<span>${esc(String(p.title || '?').trim().charAt(0).toUpperCase())}</span></button>`;
   }).join('');
   if (n > before) {
     const btn = document.getElementById('ob-add-button');
     if (btn) { btn.classList.remove('ob-pulse'); void btn.offsetWidth; btn.classList.add('ob-pulse'); }
   }
+}
+// Footer: what's selected or saved, and the one next step.
+function updateOnboardingFooter(state) {
+  const n = state.pending.length, saved = onboardingPicks().length;
+  const count = document.getElementById('ob-selection-count'), hint = document.getElementById('ob-footer-hint'), button = document.getElementById('ob-add-button');
+  if (count) count.textContent = n ? `${n} selected` : saved ? `${saved} ${saved === 1 ? 'pick' : 'picks'} saved` : '';
+  if (hint) hint.textContent = n ? 'Tap again to remove' : saved ? 'Add more, or continue' : 'Search to add your first favorite.';
+  if (button) {
+    button.disabled = state.saving || (!n && !saved);
+    button.setAttribute('aria-busy', String(!!state.saving));
+    button.textContent = state.saving ? 'Adding…' : n ? `Add ${n} →` : 'Continue →';
+    button.setAttribute('aria-label', state.saving ? 'Adding your picks' : n ? `Add ${n} ${n === 1 ? 'pick' : 'picks'} to your Favorites` : 'Continue to review your picks');
+  }
+}
+function obFooterPrimary() {
+  const state = onboardingVisualState();
+  if (state.saving) return;
+  if (state.pending.length) saveOnboardingSelection(); else advanceOnboarding(1);
 }
 function onboardingSelectionKey(item) {
   return JSON.stringify([item.kind, item.kind==='artist'?item.title.trim().toLowerCase():item.id ?? item.title, item.kind==='book'?item.author:item.kind==='album'?item.artist:'']);
@@ -12667,6 +12775,7 @@ function setTopView(view) {
   currentTopView = view;
   const onboardingEl = document.getElementById('view-onboarding-container');
   if (onboardingEl) onboardingEl.style.display = view === 'onboarding' ? '' : 'none';
+  document.body.classList.toggle('ob-active', view === 'onboarding');
   const feedEl = document.getElementById('view-feed-container');
   const profileShell = document.querySelectorAll('.page-shell')[1]; // [0] is the persistent global bar, [1] is the profile header+tab-nav
   const panels = document.querySelectorAll('.tab-panel');
@@ -13690,7 +13799,7 @@ function toggleMovieExpand(movieId) {
         ${m.rating ? `<span style="font-size:13px;color:var(--muted);">⭐ ${m.rating}/10</span>` : ''}
         ${m.runtime ? `<span style="font-size:13px;color:var(--muted);">🕐 ${m.runtime} min</span>` : ''}
         ${m.director ? `<span style="font-size:13px;color:var(--muted);">🎬 ${esc(m.director)}</span>` : ''}
-        ${rtSlotHtml(m.type === 'tv' ? 'tv' : 'movie', m.tmdbId)}
+        ${rtSlotHtml(m.type === 'tv' ? 'tv' : 'movie', m.tmdbId, m.title)}
       </div>
       ${inlineEngagementBlockHtml(m.type === 'tv' ? 'tv' : 'movie', m.rowId)}
     </div>`;
@@ -13773,8 +13882,8 @@ function placeEditToggles() {
   let queued = false;
   const run = () => { queued = false; placeEditToggles(); scanHScroll(); fillRtSlots(); };
   const start = () => {
-    const root = document.getElementById('app-content') || document.body;
-    new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(root, { childList: true, subtree: true });
+    // Whole page, so pop-ups outside the main content (item summaries, What's Next details) get their links too.
+    new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(document.body, { childList: true, subtree: true });
     placeEditToggles();
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
@@ -14432,7 +14541,7 @@ function movieDetailPanelHTML(m, closeOnclick) {
         ${m.rating ? `<span style="font-size:13px;color:var(--muted);">⭐ ${m.rating}/10</span>` : ''}
         ${m.runtime ? `<span style="font-size:13px;color:var(--muted);">🕐 ${m.runtime} min</span>` : ''}
         ${m.director ? `<span style="font-size:13px;color:var(--muted);">🎬 ${esc(m.director)}</span>` : ''}
-        ${rtSlotHtml(m.type === 'tv' ? 'tv' : 'movie', m.tmdbId)}
+        ${rtSlotHtml(m.type === 'tv' ? 'tv' : 'movie', m.tmdbId, m.title)}
       </div>
       ${inlineEngagementBlockHtml(m.type === 'tv' ? 'tv' : 'movie', m.rowId)}
     </div>`;
@@ -15904,30 +16013,58 @@ function sharedBookFallback(title, author) {
 // Rotten Tomatoes has no open API, but Wikidata records each film's / show's RT page (P1258)
 // alongside its TMDB id (P4947 movies, P4983 TV). Look it up by TMDB id; no page → no link.
 const RT_LINKS = new Map();
-function rtLink(kind, tmdbId) {
-  if (!tmdbId) return Promise.resolve('');
+// Rotten Tomatoes page (and, when Wikidata records it, the Tomatometer %) for a TMDB id.
+// Resolves to { url, score } — score like "93%" or ''.
+function rtInfo(kind, tmdbId) {
+  if (!tmdbId) return Promise.resolve({ url: '', score: '' });
   const key = `${kind}:${tmdbId}`;
   if (RT_LINKS.has(key)) return RT_LINKS.get(key);
   const prop = kind === 'tv' ? 'P4983' : 'P4947';
-  const query = `SELECT ?rt WHERE { ?item wdt:${prop} "${String(tmdbId).replace(/[^0-9]/g, '')}"; wdt:P1258 ?rt. } LIMIT 1`;
+  const id = String(tmdbId).replace(/[^0-9]/g, '');
+  // Tomatometer: a review score by Rotten Tomatoes (Q105584), measured as the Tomatometer (Q108403393) or a plain "NN%".
+  const query = `SELECT ?rt ?score ?date WHERE { ?item wdt:${prop} "${id}"; wdt:P1258 ?rt.
+    OPTIONAL { ?item p:P444 ?st. ?st ps:P444 ?score; pq:P447 wd:Q105584.
+      OPTIONAL { ?st pq:P459 ?method } OPTIONAL { ?st pq:P585 ?date }
+      FILTER((!BOUND(?method) || ?method = wd:Q108403393) && REGEX(?score, "^[0-9]{1,3} ?%$")) } } ORDER BY DESC(?date) LIMIT 1`;
   const p = sharedCatalogJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query))
-    .then(d => { const id = d?.results?.bindings?.[0]?.rt?.value || ''; return /^(m|tv)\/[\w\-]+(\/[\w\-]+)?$/.test(id) ? 'https://www.rottentomatoes.com/' + id : ''; })
-    .catch(() => { RT_LINKS.delete(key); return ''; });
+    .then(d => {
+      const b = d?.results?.bindings?.[0] || {}, rt = b.rt?.value || '';
+      const url = /^(m|tv)\/[\w\-]+(\/[\w\-]+)?$/.test(rt) ? 'https://www.rottentomatoes.com/' + rt : '';
+      const score = url && /^\d{1,3} ?%$/.test(b.score?.value || '') ? b.score.value.replace(/\s/g, '') : '';
+      return { url, score };
+    })
+    .catch(() => { RT_LINKS.delete(key); return { url: '', score: '' }; });
   RT_LINKS.set(key, p);
   return p;
 }
+function rtLink(kind, tmdbId) { return rtInfo(kind, tmdbId).then(r => r.url); }
 // Drop <span class="rt-slot" …> anywhere a movie/show is shown; it fills in (or disappears) by itself.
-function rtSlotHtml(kind, tmdbId) {
-  return tmdbId ? `<span class="rt-slot" data-rt-kind="${kind === 'tv' ? 'tv' : 'movie'}" data-rt-id="${esc(String(tmdbId))}"></span>` : '';
+// Every movie/show gets a Rotten Tomatoes link: its exact page when Wikidata knows it, otherwise a
+// Rotten Tomatoes search for the title (newer releases often aren't mapped yet).
+// The slot also carries a TMDB link (exact page by id, or a TMDB search by title), unless the spot
+// already shows one (pass withTmdb = false).
+function rtSlotHtml(kind, tmdbId, title, withTmdb = true) {
+  return (tmdbId || title) ? `<span class="rt-slot" data-rt-kind="${kind === 'tv' ? 'tv' : 'movie'}" data-rt-id="${esc(String(tmdbId || ''))}" data-rt-title="${esc(String(title || ''))}"${withTmdb ? '' : ' data-no-tmdb="1"'}></span>` : '';
 }
+function tmdbPageUrl(kind, tmdbId, title) {
+  const id = String(tmdbId || '').replace(/[^0-9]/g, '');
+  if (id) return `https://www.themoviedb.org/${kind === 'tv' || /:tv:/.test(String(tmdbId)) ? 'tv' : 'movie'}/${id}`;
+  return title ? 'https://www.themoviedb.org/search?query=' + encodeURIComponent(title) : '';
+}
+function rtSearchUrl(title) { return title ? 'https://www.rottentomatoes.com/search?search=' + encodeURIComponent(title) : ''; }
 function fillRtSlots() {
   document.querySelectorAll('.rt-slot:not([data-rt-state])').forEach(el => {
     el.dataset.rtState = 'loading';
-    rtLink(el.dataset.rtKind, el.dataset.rtId).then(url => {
+    const tmdb = el.dataset.noTmdb ? '' : tmdbPageUrl(el.dataset.rtKind, el.dataset.rtId, el.dataset.rtTitle);
+    const tmdbHtml = tmdb ? `<a class="rt-link tmdb-link" href="${esc(tmdb)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="tmdb-dot" aria-hidden="true"></span>TMDB ↗</a>` : '';
+    el.innerHTML = tmdbHtml;                      // TMDB shows right away; Rotten Tomatoes joins once it's looked up
+    rtInfo(el.dataset.rtKind, el.dataset.rtId).then(found => {
       if (!el.isConnected) return;
-      if (!url) { el.remove(); return; }
+      const url = found.url || rtSearchUrl(el.dataset.rtTitle);
       el.dataset.rtState = 'done';
-      el.innerHTML = `<a class="rt-link" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="rt-dot" aria-hidden="true"></span>Rotten Tomatoes ↗</a>`;
+      if (!url) { if (!tmdbHtml) el.remove(); return; }
+      const score = found.url && found.score ? `<strong class="rt-score" title="Tomatometer">${esc(found.score)}</strong>` : '';
+      el.innerHTML = `<a class="rt-link" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="rt-dot" aria-hidden="true"></span>${score}Rotten Tomatoes ↗</a>${tmdbHtml}`;
     });
   });
 }
@@ -16241,7 +16378,7 @@ async function lookupItemSummary(item) {
         const hit=matches.find(r=>!year||String(r.release_date||r.first_air_date||'').startsWith(String(year)))||matches[0];
         catalogId=hit?.id;
       }
-      if(catalogId){const detail=await (kind==='tv'?fetchTVDetail(catalogId):fetchMovieDetail(catalogId));summary=detail.overview||summary;}
+      if(catalogId){item._tmdbId=catalogId;const detail=await (kind==='tv'?fetchTVDetail(catalogId):fetchMovieDetail(catalogId));summary=detail.overview||summary;}
     } else if(kind==='book') {
       const metadata=await sharedBookMetadata(title,creator||(!item.type?item.sub:''));
       summary=metadata.summary||summary;item.summarySource=metadata.source;
@@ -16302,7 +16439,7 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
         ${loading ? `<span style="color:var(--faint);">Loading summary…</span>` : (summary ? esc(summary) : `<span style="color:var(--faint);">No summary available.</span>`)}
       </div>
       ${item.summarySource && /^https?:\/\//.test(item.summarySource) ? `<a href="${esc(item.summarySource)}" target="_blank" rel="noopener" style="display:block;padding:0 20px 16px;color:var(--muted);font-size:12px;">Read more about this title ↗</a>` : ''}
-      ${['movie','tv'].includes(summaryIdentity(item).kind) && item.tmdbId ? `<div style="padding:0 20px 16px;">${rtSlotHtml(summaryIdentity(item).kind, item.tmdbId)}</div>` : ''}
+      ${['movie','tv'].includes(summaryIdentity(item).kind) && !loading ? `<div style="padding:0 20px 16px;">${rtSlotHtml(summaryIdentity(item).kind, item.tmdbId || item.tmdbTvId || item._tmdbId, summaryIdentity(item).title)}</div>` : ''}
       ${!loading && item._summaryMissing ? `<div style="padding:0 20px 16px;font-size:13px;">${item.link && /^https?:\/\//i.test(item.link) ? `<a href="${esc(item.link)}" target="_blank" rel="noopener">Open original item ↗</a> · ` : ''}<button type="button" class="activity-summary-title" onclick="openTripPlaylistSummary(tripPlaylistFlatItems.findIndex(item=>String(item.id)==='${jsStr(String(item.id))}'))">Retry summary</button></div>` : ''}
       ${['artist','album','song'].includes(summaryIdentity(item).kind) && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
       <div class="stream-links listen-wide" style="padding:0 20px 20px;display:flex;gap:8px;" data-q="${esc((item.title||'') + ' ' + (item.sub||''))}">
@@ -18234,6 +18371,7 @@ function activitySummaryHtml(item, summary, loading) {
       <div style="padding:0 20px 20px;font-size:13.5px;line-height:1.6;color:var(--text);min-height:20px;">
         ${loading ? `<span style="color:var(--faint);">Loading summary…</span>` : (summary ? esc(summary) : `<span style="color:var(--faint);">No summary available.</span>`)}
       </div>
+      ${['movie','tv','special'].includes(summaryIdentity(item).kind) && !loading ? `<div style="padding:0 20px 16px;">${rtSlotHtml(summaryIdentity(item).kind === 'tv' ? 'tv' : 'movie', item.tmdbId || item.tmdbTvId || item._tmdbId, summaryIdentity(item).title || item.label)}</div>` : ''}
       ${['artist','album','song'].includes(summaryIdentity(item).kind) && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
       <div class="stream-links listen-wide" style="padding:0 20px 14px;display:flex;gap:8px;" data-q="${esc(item.artQuery || ((item.label||'') + ' ' + (item.sub||'')))}">
         ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
@@ -19381,7 +19519,7 @@ function tvDetailPanelHTML(m, closeOnclick) {
         ${m.rating ? `<span style="font-size:13px;color:var(--muted);">⭐ ${m.rating}/10</span>` : ''}
         ${m.seasons ? `<span style="font-size:13px;color:var(--muted);">📺 ${m.seasons} season${m.seasons > 1 ? 's' : ''}</span>` : ''}
         ${m.creator ? `<span style="font-size:13px;color:var(--muted);">✎ ${esc(m.creator)}</span>` : ''}
-        ${rtSlotHtml('tv', m.tmdbId)}
+        ${rtSlotHtml('tv', m.tmdbId, m.title)}
       </div>
       ${inlineEngagementBlockHtml('tv', m.rowId)}
     </div>`;
