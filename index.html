@@ -3382,6 +3382,32 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
   .ob-done-actions .ob-button.ob-primary { flex: 1 1 auto; min-width: 0; order: 2; }
   .ob-done-actions .ob-text-link { order: 1; white-space: nowrap; }
 }
+/* ── Sparse profiles: the same centred reveal as the end of onboarding ── */
+.taste-reveal { display: flex; flex-direction: column; align-items: center; padding: 26px 16px 30px; border: 1px solid var(--border); border-radius: var(--tl-radius, 16px); background: radial-gradient(ellipse at 50% 0, rgba(124,77,255,.07), transparent 65%), #0e0e10; }
+.taste-reveal-lede { margin: 0 0 6px; font-family: var(--ob-serif, Georgia, serif) !important; font-weight: 500; font-size: 24px; letter-spacing: -.02em; color: #f2efe9; text-align: center; }
+.taste-reveal .ob-done-count { margin: 0 0 16px !important; }
+.taste-reveal .ob-done-gallery .ob-pick-card { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.taste-reveal .ob-done-gallery .ob-pick-card:hover .ob-art { transform: translateY(-3px); }
+.taste-reveal .ob-done-gallery .ob-art { transition: transform .18s ease; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.taste-reveal .ob-done-gallery .ob-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.taste-reveal .ob-done-gallery .ob-art.ob-podcast-art img { object-fit: contain; }
+.taste-reveal .ob-done-gallery .ob-art > span { font: 48px var(--ob-serif, Georgia, serif); color: #d1b9f4; opacity: .6; }
+.taste-reveal .ob-done-gallery .ob-pick-card strong { color: var(--text); }
+.taste-reveal .ob-done-add { margin-top: 20px; }
+@media (max-width: 600px) {
+  .taste-reveal { padding: 20px 14px 22px; }
+  .taste-reveal-lede { font-size: 21px; }
+}
+/* Share card preview: the real 4:5 image, sized to fit */
+#taste-share-preview { display: flex; justify-content: center; }
+#taste-share-preview img { width: min(100%, 440px) !important; height: auto; border-radius: 14px !important; box-shadow: 0 18px 50px rgba(0,0,0,.5); }
+.taste-card-loading { width: min(100%, 440px); aspect-ratio: 4 / 5; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #a9a49b; font-size: 14px;
+  background: linear-gradient(110deg, #141416 30%, #1d1c22 50%, #141416 70%); background-size: 200% 100%; animation: tlShimmer 1.4s linear infinite; border: 1px solid rgba(255,255,255,.06); }
+@keyframes tlShimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .taste-card-loading { animation: none; } }
+#taste-share-dialog { width: min(520px, calc(100% - 24px)) !important; padding: 20px !important; }
+#taste-share-dialog > div:first-child { margin-bottom: 14px !important; }
+#taste-share-dialog .taste-share-actions { margin-top: 16px !important; }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -3428,8 +3454,8 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
 .fav-sentence-slot #profile-sentence { font-size: 16px !important; line-height: 1.45 !important; }
 .fav-sentence-slot #profile-sentence-section > div:first-child { margin-bottom: 6px !important; }
 .dynamic-taste-grid { align-items: stretch; gap: var(--tl-gap-3); }
-.dynamic-taste-grid[data-count="1"] { grid-template-columns: minmax(0, 300px); justify-content: start; }
-.dynamic-taste-grid[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 300px)); justify-content: start; }
+.dynamic-taste-grid[data-count="1"] { grid-template-columns: minmax(0, 300px); justify-content: center; }
+.dynamic-taste-grid[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 300px)); justify-content: center; }
 .dynamic-taste-card { border-radius: var(--tl-radius); background: var(--tl-card-bg); display: flex; flex-direction: column; }
 .dynamic-taste-card-heading { background: none; border-bottom: 1px solid var(--border); color: var(--taste-color); }
 .dynamic-taste-art { aspect-ratio: 2 / 3; grid-template-rows: repeat(2, minmax(0, 1fr)); background: #141417; overflow: hidden; }
@@ -18924,7 +18950,8 @@ function profileTasteFavorites(){
   {tab:'music',label:'Music',heading:'My Music Taste',icon:'music',color:'#7C4DFF',items:[]},
   {tab:'movies',label:'Movies',heading:'My Movie Taste',icon:'film',color:'#F97360',items:[]},
   {tab:'tv',label:'TV',heading:'My TV Taste',icon:'tv',color:'#3B82F6',items:[]},
-  {tab:'books',label:'Books',heading:'My Book Taste',icon:'books',color:'#22C55E',items:[]}
+  {tab:'books',label:'Books',heading:'My Book Taste',icon:'books',color:'#22C55E',items:[]},
+  {tab:'podcasts',label:'Podcasts',heading:'My Podcast Taste',icon:'podcast',color:'#F59E0B',items:[]}
  ];
  const eligible=(tab,key)=>{
   const label=customListLabel(tab,key);
@@ -18947,6 +18974,13 @@ function profileTasteFavorites(){
  add('movies','movie',movies||[]);
  for(const list of extraLists||[])if(list.category==='music'&&eligible('music',list.title||'')){
   for(const item of list.items||[])if(['song','album','artist'].includes(item.kind))add('music',item.kind,[item]);
+ }
+ // Podcasts and comedy live in their own lists; they're favorites too.
+ for(const list of extraLists||[])if(['podcasts','comedy'].includes(list.category)){
+  const label=String(list.title||'');
+  if(/recommend|want to|what.?s next|watchlist|queue|to listen/i.test(label))continue;
+  // Comedy specials and comedians sit with TV rather than getting a box of their own.
+  for(const item of list.items||[])add(list.category==='comedy'?'tv':'podcasts',item.kind||(list.category==='podcasts'?'podcast':'special'),[item]);
  }
  for(const group of groups){
   const seen=new Set();
@@ -18999,6 +19033,19 @@ function initialTasteProfileHtml() {
   </figure>
  </section>`;
 }
+// Under five favorites: one centred gallery of everything (any type), like the end of onboarding,
+// instead of category boxes with empty space beside them.
+function tasteRevealHtml(groups,owner,ready=false){
+ const kindLabel={artist:'Artist',album:'Album',song:'Song',movie:'Movie',tv:'TV show',book:'Book',podcast:'Podcast',episode:'Podcast episode',special:'Comedy',comedian:'Comedy'};
+ const picks=groups.flatMap(g=>g.items.map(p=>({p,g}))).slice(0,ready?6:8);
+ const n=groups.reduce((t,g)=>t+g.items.length,0);
+ const cards=picks.map(({p,g})=>{
+  const art=tastePickArt(g.tab,p)||p.art||'';
+  const square=['artist','album','song','podcast','episode'].includes(p._tasteKind);
+  return `<button type="button" class="ob-pick-card taste-reveal-card" onclick="goToFavorites('${g.tab}')" aria-label="${esc(p.title)}: open ${esc(g.label)}"><div class="ob-art${square?' ob-podcast-art':''}">${art?`<img src="${esc(art)}" alt="" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false">`:''}<span ${art?'hidden':''}>${esc(p.title.slice(0,1))}</span></div><strong>${esc(p.title)}</strong><small>${esc(kindLabel[p._tasteKind]||g.label)}</small></button>`;
+ }).join('');
+ return `<section class="taste-reveal${ready?' is-ready':''}" aria-label="${ready?'Favorites':'Favorites so far'}">${owner&&!ready?'<p class="taste-reveal-lede">Your taste profile is taking shape.</p>':''}<p class="ob-done-count">${n} ${n===1?'favorite':'favorites'}${owner&&!ready?' added':''}</p><div class="ob-done-gallery" data-count="${Math.min(picks.length,4)}">${cards}</div>${owner&&!ready?'<button type="button" class="ob-done-add" onclick="openProfileMediaPicker()"><span aria-hidden="true">+</span> Add another favorite</button>':''}</section>`;
+}
 function renderDynamicProfilePicks(){
  syncInitialTasteProfile();
  renderLiveTasteSentence();
@@ -19008,15 +19055,17 @@ function renderDynamicProfilePicks(){
  const owner=!!currentUser&&isOwnProfile&&profileId===currentUser.id;
  const groups=profileTasteFavorites(),populated=groups.filter(g=>g.items.length),empty=groups.filter(g=>!g.items.length);
  const readiness=profileTasteReadiness(groups);el.dataset.profileReady=String(readiness.ready);
- const share=document.getElementById('profile-share-cta');if(share)share.hidden=!(readiness.ready&&owner);
+ const share=document.getElementById('profile-share-cta');if(share)share.hidden=!(owner&&populated.length);   // any favorites make a share card
  const resume=document.getElementById('profile-onboarding-resume');if(resume)resume.hidden=!(owner&&readiness.ready);
  const progress=owner?(readiness.ready?'':`<div class="taste-emerging-wrap"><button type="button" class="taste-emerging-card" onclick="openProfileMediaPicker()"><span class="taste-emerging-title">Your taste is taking shape.</span><span class="taste-emerging-cta">+ Add another favorite</span></button></div>`):'';
  const header=document.getElementById('defining-picks-header');
- if(header){header.hidden=false;const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile?.username||'Their';header.innerHTML=`${esc(owner?'Your':possessiveName(name))} Defining Picks${populated.length?`<span class="ed-sub">${owner?'The things you love':`The things ${esc(name)} loves`} — tap a box to explore</span>`:''}`;}
+ if(header){header.hidden=false;const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile?.username||'Their';header.innerHTML=`${esc(owner?'Your':possessiveName(name))} Defining Picks${populated.length?`<span class="ed-sub">${owner?'The things you love':`The things ${esc(name)} loves`} — tap ${readiness.ready&&populated.length>1?'a box':'one'} to explore</span>`:''}`;}
  const current=()=>el._tasteRenderToken===token&&viewedProfile?.id===profileId;
  const render=()=>{
   if(!current())return;
   if(isInitialTasteProfile()){el.innerHTML=initialTasteProfileHtml();return;}
+  // Under five picks, or everything in one category: one centred gallery instead of a lone box.
+  if(populated.length&&(!readiness.ready||populated.length===1)){el.innerHTML=tasteRevealHtml(populated,owner,readiness.ready);return;}
   el.innerHTML=(populated.length?`<div class="dynamic-taste-grid" data-count="${populated.length}">${populated.map(g=>{
    const picks=g.items.slice(0,4),first=picks[0];
    return `<button type="button" class="dynamic-taste-card" style="--taste-color:${g.color}" onclick="goToFavorites('${g.tab}')" aria-label="Explore ${g.label}: ${g.items.length} favorites"><div class="dynamic-taste-card-heading"><span>${badgeIcon(g.icon,14)}</span>${esc(g.label)}</div><div class="dynamic-taste-art" data-count="${picks.length}" data-tab="${g.tab}">${picks.map(p=>{
@@ -19112,8 +19161,11 @@ function tastePickArt(tab, x) {
 }
 
 function tastePosterGroups(){
- return profileTasteFavorites().filter(g=>g.items.length).map(g=>({
-  label:g.label,tab:g.tab,color:g.color,items:g.items.slice(0,4).map(p=>({
+ const populated=profileTasteFavorites().filter(g=>g.items.length);
+ // One category gets the whole card, so it can show more of it (a full grid of 3, 6 or 9).
+ const solo=populated.length===1, n=populated[0]?.items.length||0, limit=solo?(n>=9?9:n>=6?6:n>=3?Math.min(n,6)-(Math.min(n,6)%3):n):4;
+ return populated.map(g=>({
+  label:g.label,tab:g.tab,color:g.color,items:g.items.slice(0,limit||n).map(p=>({
    title:p.title,art:tastePickArt(g.tab,p)||p.art||'',musicKind:p._tasteKind,artist:p.artist,author:p.author,
    tmdbId:p.tmdbId,tmdbType:g.tab==='tv'?'tv':g.tab==='movies'?'movie':null
   }))
@@ -19489,7 +19541,7 @@ function tasteShareUrl(){return 'https://tastelist.app/';}
 function openTasteShare() {
  if(isLockedProfile()||!viewedProfile?.username)return;
  const groups=tastePosterGroups(),name=firstNameOnly(viewedProfile?.display_name)||viewedProfile.username;
- document.getElementById('taste-share-preview').innerHTML=tasteSharePreviewHtml(groups,name);
+ document.getElementById('taste-share-preview').innerHTML=groups.length?'<div class="taste-card-loading" role="status">Creating your card…</div>':tasteSharePreviewHtml(groups,name);
  const url=tasteShareUrl();
  const hasNativeShare=!!navigator.share;
  document.getElementById('taste-share-native').textContent=hasNativeShare?'Share':'Copy link';
@@ -19541,51 +19593,98 @@ function tasteSharePreviewHtml(groups,name){
  if(!groups.length)return '<p>Add a favorite to create your share card.</p>';
  return `<article class="taste-poster"><header class="taste-poster-heading"><h2>${esc(possessiveName(name))}<br>Taste List</h2><p class="taste-poster-motto">You are<br>what you love.</p></header><div class="taste-poster-grid">${groups.map(g=>`<div class="taste-poster-category"><h3 style="color:${g.color}"><span style="background:${g.color}"></span>${esc(g.label)}</h3><div class="taste-poster-art">${g.items.map(p=>`<div>${p.art?`<img src="${esc(p.art)}" alt="${esc(p.title)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${esc(p.title)}</span>`:`<span>${esc(p.title)}</span>`}</div>`).join('')}</div><ul>${g.items.map(p=>`<li>${esc(p.title)}</li>`).join('')}</ul></div>`).join('')}</div><footer class="taste-poster-footer"><img class="tl-logo" src="${TL_LOGO_SRC}" alt="TasteList" style="--logo-h:34px"><span class="taste-poster-create">Make yours at tastelist.app</span></footer></article>`;
 }
+// Up to six defining picks, taken in turn from each category so a mixed profile shows its range.
+function tasteShareCardPicks(max=6){
+ const groups=profileTasteFavorites().filter(g=>g.items.length).map(g=>({g,items:g.items.slice()}));
+ const picks=[];
+ while(picks.length<max&&groups.some(x=>x.items.length)){
+  for(const x of groups){if(!x.items.length||picks.length>=max)continue;const p=x.items.shift();
+   picks.push({title:p.title,art:tastePickArt(x.g.tab,p)||p.art||'',tab:x.g.tab,label:x.g.label,color:x.g.color,musicKind:p._tasteKind,kind:p._tasteKind,artist:p.artist,author:p.author,tmdbId:p.tmdbId,tmdbType:x.g.tab==='tv'?'tv':x.g.tab==='movies'?'movie':null});}
+ }
+ return picks;
+}
+// The share card: 1080×1350 (4:5). Name's taste → the artwork → a quiet TasteList footer.
+async function drawTasteShareCard(name,picks){
+ const W=1080,H=1350,PAD=72,INNER=W-PAD*2;
+ const ui=getComputedStyle(document.body).fontFamily||'Arial, sans-serif', serif=`'Newsreader', ui-serif, Georgia, serif`;
+ try{await Promise.all([document.fonts?.load?.('500 64px Newsreader'),document.fonts?.load?.('600 20px Inter'),document.fonts?.ready]);}catch(_){}
+ const [assets,logo]=await Promise.all([Promise.all(picks.map(p=>p.art?loadShareImage(p.art):null)),loadShareImageDirect(TL_LOGO_SRC)]);
+ const c=document.createElement('canvas'),SC=2;c.width=W*SC;c.height=H*SC;const ctx=c.getContext('2d');ctx.scale(SC,SC);
+ const fit=(t,max)=>{t=String(t||'');if(ctx.measureText(t).width<=max)return t;while(t.length>1&&ctx.measureText(t+'…').width>max)t=t.slice(0,-1);return t.trimEnd()+'…';};
+ const spaced=(on)=>{if('letterSpacing' in ctx)ctx.letterSpacing=on;};
+ // background
+ ctx.fillStyle='#0b0b0d';ctx.fillRect(0,0,W,H);
+ const glow=ctx.createRadialGradient(W*.82,H*.02,0,W*.82,H*.02,W*.95);glow.addColorStop(0,'rgba(124,77,255,.20)');glow.addColorStop(1,'rgba(124,77,255,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+ // header: "Name's taste." (serif), tagline, category dots
+ let y=PAD+8;
+ ctx.fillStyle='#b99aff';ctx.font=`600 17px ${ui}`;spaced('3px');ctx.fillText('MY TASTELIST',PAD,y+14);spaced('0px');
+ const headline=`${possessiveName(name)} taste.`;let hs=68;
+ for(;hs>40;hs-=4){ctx.font=`500 ${hs}px ${serif}`;if(ctx.measureText(headline).width<=INNER)break;}
+ ctx.font=`500 ${hs}px ${serif}`;ctx.fillStyle='#f4efe6';y+=34+hs*.86;ctx.fillText(fit(headline,INNER),PAD-2,y);
+ y+=40;ctx.font=`400 22px ${ui}`;ctx.fillStyle='#a9a49b';ctx.fillText('You are what you love.',PAD,y);
+ const cats=[...new Map(picks.map(p=>[p.label,p.color])).entries()];
+ let cx=PAD;y+=40;ctx.font=`600 15px ${ui}`;spaced('2px');
+ for(const [label,color] of cats){ctx.fillStyle=color;ctx.beginPath();ctx.arc(cx+5,y-5,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#cfc9bf';const t=label.toUpperCase();ctx.fillText(t,cx+16,y);cx+=16+ctx.measureText(t).width+26;}
+ spaced('0px');
+ // footer geometry
+ const footTop=H-118;
+ // artwork area
+ const top=y+40,bottom=footTop-36,areaH=bottom-top,n=picks.length;
+ const cols=n<=3?n:n===4?2:3, rows=Math.ceil(n/cols), GAP=n<=3?28:22, CAP=n<=3?64:58;
+ const tileW=Math.floor(Math.min((INNER-GAP*(cols-1))/cols,((areaH-rows*CAP-GAP*(rows-1))/rows)/1.5, n===1?460:999)), tileH=Math.round(tileW*1.5);
+ const gridH=rows*(tileH+CAP)+(rows-1)*GAP, gy=top+Math.max(0,(areaH-gridH)/2);
+ // Where each cover goes. Three picks get an editorial layout: a large lead cover beside two stacked ones.
+ const rects=picks.map((p,k)=>{
+  const r=Math.floor(k/cols),inRow=Math.min(cols,n-r*cols),rowW=inRow*tileW+(inRow-1)*GAP;
+  return {x:(W-rowW)/2+(k%cols)*(tileW+GAP),y:gy+r*(tileH+CAP+GAP),w:tileW,h:tileH,cap:n<=2?24:n===3?21:19};
+ });
+ if(n===3){
+  const G=26,capL=64,capS=56,heroH=Math.min(areaH-capL,Math.round((INNER*.56)*1.5)),heroW=Math.round(heroH/1.5);
+  const smallH=Math.round((heroH+capL-2*capS-G)/2),smallW=Math.round(smallH/1.5),totalW=heroW+G+smallW,x0=(W-totalW)/2,y0=top+Math.max(0,(areaH-heroH-capL)/2);
+  rects[0]={x:x0,y:y0,w:heroW,h:heroH,cap:24};
+  rects[1]={x:x0+heroW+G,y:y0,w:smallW,h:smallH,cap:19};
+  rects[2]={x:x0+heroW+G,y:y0+smallH+capS+G,w:smallW,h:smallH,cap:19};
+ }
+ picks.forEach((p,k)=>{
+  const {x,y:ty,w:tileW,h:tileH,cap}=rects[k],img=assets[k];
+  // shadow + tile
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=30;ctx.shadowOffsetY=14;posterRoundRect(ctx,x,ty,tileW,tileH,14);ctx.fillStyle='#17171a';ctx.fill();ctx.restore();
+  ctx.save();posterRoundRect(ctx,x,ty,tileW,tileH,14);ctx.clip();
+  if(img&&img.naturalWidth){
+   const ia=img.naturalWidth/img.naturalHeight,ta=tileW/tileH;
+   if(Math.abs(ia/ta-1)<=.12){const sc=Math.max(tileW/img.naturalWidth,tileH/img.naturalHeight);ctx.drawImage(img,x+(tileW-img.naturalWidth*sc)/2,ty+(tileH-img.naturalHeight*sc)/2,img.naturalWidth*sc,img.naturalHeight*sc);}
+   else{const [rr,gg,bb]=posterAverageColor(img);ctx.fillStyle=`rgb(${Math.round(rr*.35+10)},${Math.round(gg*.35+10)},${Math.round(bb*.35+12)})`;ctx.fillRect(x,ty,tileW,tileH);
+    const sc=Math.min(tileW/img.naturalWidth,tileH/img.naturalHeight);ctx.drawImage(img,x+(tileW-img.naturalWidth*sc)/2,ty+(tileH-img.naturalHeight*sc)/2,img.naturalWidth*sc,img.naturalHeight*sc);}
+  }else{
+   const g=ctx.createLinearGradient(x,ty,x,ty+tileH);g.addColorStop(0,'#1d1d22');g.addColorStop(1,'#141417');ctx.fillStyle=g;ctx.fillRect(x,ty,tileW,tileH);
+   const fs=Math.round(Math.max(18,Math.min(34,tileW*.11)));ctx.fillStyle='#f4efe6';ctx.font=`500 ${fs}px ${serif}`;
+   const lines=posterWrap(ctx,p.title,tileW-40,4);lines.forEach((l,i)=>ctx.fillText(l,x+20,ty+tileH-24-(lines.length-1-i)*fs*1.2));
+  }
+  ctx.restore();
+  ctx.save();posterRoundRect(ctx,x+.5,ty+.5,tileW-1,tileH-1,14);ctx.strokeStyle='rgba(255,255,255,.08)';ctx.stroke();ctx.restore();
+  // caption: title, then a small coloured category label
+  ctx.textAlign='center';
+  const ts=cap;ctx.font=`600 ${ts}px ${ui}`;ctx.fillStyle='#f1ece3';ctx.fillText(fit(p.title,tileW),x+tileW/2,ty+tileH+ts+12);
+  ctx.font=`600 12.5px ${ui}`;spaced('2px');ctx.fillStyle=p.color;ctx.fillText(p.label.toUpperCase(),x+tileW/2,ty+tileH+ts+36);spaced('0px');
+  ctx.textAlign='left';
+ });
+ // footer: hairline, small wordmark, CTA
+ ctx.strokeStyle='rgba(244,239,230,.12)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD,footTop);ctx.lineTo(W-PAD,footTop);ctx.stroke();
+ const LH=34;if(logo){const lw=logo.naturalWidth*LH/logo.naturalHeight;ctx.drawImage(logo,PAD,footTop+30,lw,LH);}
+ else{ctx.fillStyle='#f4efe6';ctx.font=`700 30px ${serif}`;ctx.fillText('TasteList',PAD,footTop+58);}
+ ctx.textAlign='right';ctx.fillStyle='#d9d3c8';ctx.font=`600 16px ${ui}`;spaced('2.5px');ctx.fillText('MAKE YOURS AT TASTELIST.APP',W-PAD,footTop+54);spaced('0px');ctx.textAlign='left';
+ return {canvas:c,missing:picks.filter((p,k)=>!assets[k]).length};
+}
 async function prepareTasteShareImage(revision) {
- const groups=tastePosterGroups(),name=firstNameOnly(viewedProfile?.display_name)||viewedProfile.username;
- if(!groups.length)return;
+ const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile.username;
+ const picks=tasteShareCardPicks(6);
+ if(!picks.length)return;
  const url=tasteShareUrl();
  try{
-  if(document.fonts)await document.fonts.ready;
-  await fillMissingSharePosters(groups);
+  await fillMissingSharePosters(picks.map(p=>({tab:p.tab,items:[p]})));
   if(revision!==tasteShareRevision)return;
-  const assets=await Promise.all(groups.map(g=>Promise.all(g.items.map(p=>p.art?loadShareImage(p.art):Promise.resolve(null)))));
+  const {canvas,missing}=await drawTasteShareCard(name,picks);
   if(revision!==tasteShareRevision)return;
-  const W=900,P=50,COL=370,COLGAP=60,CELL=180,CGAP=10,CH=225,LINE=28;
-  const blockH=g=>{const rows=Math.ceil(g.items.length/2);return 36+rows*CH+(rows-1)*CGAP+22+g.items.length*LINE;};
-  const pairs=[];for(let k=0;k<groups.length;k+=2)pairs.push(groups.slice(k,k+2));
-  const top=260,rowGap=56;let H=top;pairs.forEach(pr=>{H+=Math.max(...pr.map(blockH))+rowGap;});H+=150;
-  const canvas=document.createElement('canvas'),scale=2;canvas.width=W*scale;canvas.height=H*scale;
-  const ctx=canvas.getContext('2d'),font=getComputedStyle(document.body).fontFamily;ctx.scale(scale,scale);
-  ctx.fillStyle='#0c0d0e';ctx.fillRect(0,0,W,H);
-  function line(text,x,y,max){let t=String(text||'');while(ctx.measureText(t).width>max&&t.length>1)t=t.slice(0,-1);ctx.fillText(t===String(text||'')?t:t.slice(0,-1)+'…',x,y);}
-  // Heading: name + "Taste List" in caps, with the blue margin note
-  ctx.fillStyle='#f5f1e9';ctx.font=`700 68px ${font}`;line(possessiveName(name).toUpperCase(),P,108,560);ctx.fillText('TASTE LIST',P,192);
-  ctx.save();ctx.translate(712,118);ctx.rotate(-12*Math.PI/180);ctx.fillStyle='#35a8ff';ctx.font=`italic 700 24px ${font}`;
-  ctx.fillText('YOU ARE',-58,-6);ctx.fillText('WHAT YOU LOVE.',-58,28);ctx.restore();
-  let missing=0,y=top;
-  pairs.forEach((pr,pi)=>{
-   pr.forEach((g,ci)=>{
-    const gi=pi*2+ci,x=P+ci*(COL+COLGAP);let yy=y;
-    ctx.fillStyle=g.color;ctx.beginPath();ctx.arc(x+6,yy+11,6,0,Math.PI*2);ctx.fill();
-    ctx.font=`700 22px ${font}`;ctx.fillText(g.label.toUpperCase(),x+24,yy+19);yy+=36;
-    g.items.forEach((p,j)=>{
-     const cx=x+(j%2)*(CELL+CGAP),cy=yy+Math.floor(j/2)*(CH+CGAP),img=assets[gi][j];
-     ctx.fillStyle='#202222';ctx.fillRect(cx,cy,CELL,CH);
-     if(img){const sc=Math.min(CELL/img.naturalWidth,CH/img.naturalHeight),iw=img.naturalWidth*sc,ih=img.naturalHeight*sc;ctx.drawImage(img,cx+(CELL-iw)/2,cy+(CH-ih)/2,iw,ih);}
-     else{missing++;ctx.fillStyle='#bab7b1';ctx.font=`400 15px ${font}`;line(p.title,cx+10,cy+CH/2,CELL-20);}
-    });
-    const rows=Math.ceil(g.items.length/2);yy+=rows*CH+(rows-1)*CGAP+22;
-    ctx.fillStyle='#d0cec9';ctx.font=`400 19px ${font}`;
-    g.items.forEach((p,j)=>line(p.title,x,yy+j*LINE+18,COL));
-   });
-   y+=Math.max(...pr.map(blockH))+rowGap;
-  });
-  // Footer: the TasteList logo and the invitation
-  const logo=await loadShareImageDirect(TL_LOGO_SRC);
-  if(logo){const lh=70,lw=logo.naturalWidth*lh/logo.naturalHeight;ctx.drawImage(logo,(W-lw)/2,H-140,lw,lh);}
-  else{ctx.fillStyle='#f5f1e9';ctx.font=`700 52px ${font}`;ctx.textAlign='center';ctx.fillText('TasteList',W/2,H-86);ctx.textAlign='left';}
-  ctx.fillStyle='#f5f1e9';ctx.font=`500 17px ${font}`;ctx.textAlign='center';ctx.fillText('MAKE YOURS AT TASTELIST.APP',W/2,H-40);ctx.textAlign='left';
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Image export unavailable');
   if(revision!==tasteShareRevision)return;
   tasteShareAsset={file:new File([blob],'my-tastelist.png',{type:'image/png'}),url};
