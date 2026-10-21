@@ -6112,6 +6112,7 @@ async function openTasteList(listId) {
   loadTasteListPeople([list.user_id,...(list.collaborators||[]).map(c=>c.user_id)].map(id=>({added_by:id}))).then(()=>{if(currentTasteListId===list.id)renderTasteListCollaborators(list);});
   loadSharedListCover(list);
   renderTasteListDiscussion(listId);
+  syncUrl();
   await reloadCurrentTasteListItems();
 }
 
@@ -6137,6 +6138,7 @@ function backToTasteListsPicker() {
   if (picker) picker.style.display = '';
   const tabHead = document.getElementById('sl-tab-head'); if (tabHead) tabHead.hidden = false;
   editMode = false;
+  syncUrl();
 }
 
 function renderTasteListCollaborators(list) {
@@ -10773,7 +10775,12 @@ function decideInitialView() {
     history.replaceState(null, '', clean.toString());
     if (shouldShowOnboarding()) { setTopView('onboarding'); return; }
   }
-  if (new URLSearchParams(window.location.search).get('u')) { setTopView('profile'); return; }
+  if (new URLSearchParams(window.location.search).get('u')) {
+    setTopView('profile');
+    const tab = params.get('tab');   // refresh keeps you on the same tab
+    if (tab && tab !== 'profile' && document.getElementById('tab-' + tab)) switchTab(tab);
+    return;
+  }
   if (currentUser) { setTopView(shouldShowOnboarding() && !onboardingState.defaultToFeed ? 'onboarding' : 'feed'); return; }
   setTopView('profile'); // signed out + no ?u= shows the marketing landing page instead anyway
 }
@@ -10813,6 +10820,7 @@ async function initAuth() {
     renderProfileTab();
   }
   await openSharedListRoute();
+  urlSyncReady = true; syncUrl(true);
   startNotificationPolling();
 
   // Tracks the signed-in user id across auth events so a refired SIGNED_IN for the SAME already-
@@ -10844,6 +10852,7 @@ async function initAuth() {
     }
 
     document.documentElement.classList.add('app-starting');
+    urlSyncReady = false; // the address bar catches up once the new account's page is chosen
     currentTopView = null; // force the new account's destination to render
     profileFavoritesLoaded = false;
     clearTasteConstellation();
@@ -10867,6 +10876,7 @@ async function initAuth() {
       activityEditMode = false;
     }
     await openSharedListRoute();
+    urlSyncReady = true; syncUrl(true);
   startNotificationPolling();
   });
 }
@@ -13035,6 +13045,7 @@ function switchTab(tab, btn) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (tab === 'profile') setTimeout(renderProfileTab, 50);
   if (tab === 'favorites') { switchFavoritesFilter(favoritesFilter); try { renderDynamicProfilePicks(); } catch (_) {} }
+  syncUrl();
 }
 
 // Music/Movies/TV/Books used to each be their own top-level tab — collapsed into one Favorites
@@ -13195,6 +13206,7 @@ function setTopView(view) {
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
   updateGlobalNavHighlight();
+  syncUrl();
 }
 
 function updateGlobalNavHighlight() {
@@ -13222,6 +13234,52 @@ function updateGlobalNavHighlight() {
 
 function goToFeedView() { setTopView('feed'); }
 
+// ── The address bar follows the page, so refresh, Back and copied links land in the same place ──
+// Feed and setup: "/". A profile: "?u=name" (plus "&tab=…" off the default tab). An open shared
+// list: "?list=id". Invite/join links are left alone until their own flow has finished with them.
+var urlSyncReady = false;   // var: read by setTopView, which can run before this line is reached
+function currentRouteUrl() {
+  const url = new URL(location.href);
+  const params = new URLSearchParams();
+  if (currentTopView === 'profile') {
+    if (!viewedProfile?.username) return null;   // signed-out landing page: leave as is
+    const tab = document.querySelector('.tab-panel.active')?.id?.replace(/^tab-/, '') || 'profile';
+    const listOpen = tab === 'playlist' && currentTasteListId && document.getElementById('trip-playlist-section')?.style.display === 'block';
+    if (listOpen) params.set('list', currentTasteListId);
+    else { params.set('u', viewedProfile.username); if (tab !== 'profile') params.set('tab', tab); }
+  } else if (currentTopView !== 'feed' && currentTopView !== 'onboarding') return null;
+  url.search = params.toString();
+  url.hash = '';
+  return url;
+}
+function syncUrl(replace = false) {
+  if (!urlSyncReady) return;
+  const now = new URLSearchParams(location.search);
+  if (['join', 'invite', 'ref'].some(k => now.has(k))) return;
+  const next = currentRouteUrl();
+  if (!next || next.href === location.href) return;
+  try { history[replace ? 'replaceState' : 'pushState']({ tastelist: true }, '', next); } catch (_) {}
+}
+async function routeFromUrl() {
+  const p = new URLSearchParams(location.search);
+  const u = p.get('u'), list = p.get('list'), tab = p.get('tab');
+  if (p.has('join') || p.has('invite')) { location.reload(); return; }
+  urlSyncReady = false;
+  try {
+    if (list) { if (!(await openSharedListById(list))) { location.reload(); return; } }
+    else if (u) {
+      if (currentUser && u === currentProfile?.username) await goToMyProfileView();
+      else if (viewedProfile?.username === u) setTopView('profile');
+      else { location.reload(); return; }   // someone else's profile: load it fresh
+      urlSyncReady = false;
+      switchTab(tab && document.getElementById('tab-' + tab) ? tab : 'profile');
+      if (tab === 'playlist') backToTasteListsPicker();
+    } else if (currentUser) setTopView(shouldShowOnboarding() && !onboardingState.defaultToFeed ? 'onboarding' : 'feed');
+    else { location.reload(); return; }
+  } finally { urlSyncReady = true; }
+}
+window.addEventListener('popstate', () => { if (urlSyncReady) routeFromUrl(); });
+
 // Takes the signed-in user to their OWN profile view, regardless of whose profile (if anyone's)
 // was last loaded — re-resolving viewedProfile client-side the same way resolveViewedProfile()
 // does for the "no ?u= param" case, so this never needs a full page reload.
@@ -13237,6 +13295,7 @@ async function goToMyProfileView() {
   }
   setTopView('profile');
   renderProfileTab();
+  syncUrl();
 }
 
 // ── ALBUMS DATA ──
