@@ -3408,6 +3408,15 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
 #taste-share-dialog { width: min(520px, calc(100% - 24px)) !important; padding: 20px !important; }
 #taste-share-dialog > div:first-child { margin-bottom: 14px !important; }
 #taste-share-dialog .taste-share-actions { margin-top: 16px !important; }
+/* Landing hero: the onboarding eyebrow rule was zeroing the tagline's top margin, so it sat on the Sign up button */
+.ob-landing .ob-caption.ob-eyebrow { margin: 56px 0 0 !important; color: #8f8c86 !important; }
+@media (max-width: 700px) {
+  .ob-landing-copy > button { width: 100%; min-width: 0; padding: 16px 24px; display: flex; justify-content: center; align-items: center; }
+  .ob-landing-copy > button span { margin-left: 12px; }
+  .ob-landing .ob-caption.ob-eyebrow { margin-top: 20px !important; text-align: center; }
+  .ob-landing-hero { gap: 32px; }
+}
+@media (max-width: 374px) { .ob-landing-copy h1 { font-size: 46px; } }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
