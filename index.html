@@ -9528,7 +9528,9 @@ async function loadViewedProfileData() {
   // since e.g. TV never even started until every movie had finished loading. Running them
   // concurrently instead brings total load time down to roughly the slowest single category
   // rather than the sum of all of them.
-  await Promise.all([
+  // allSettled: one category failing to load must not leave the profile (and onboarding's search)
+  // stuck waiting forever — the others still show, and the failed one logs its own error.
+  await Promise.allSettled([
     loadExtraLists(id),
     loadTasteListFromSupabase(id),
     loadAllTasteLists(id),
@@ -9897,6 +9899,28 @@ async function onboardingCoverFallback(img){
  };
  img.src=url;
 }
+// Onboarding saves to and reads from the new person's own profile. Someone who signed up from a
+// friend's profile or a shared-list invite arrives with that other profile still loaded, which left
+// the search box disabled ("Loading your favorites…") forever. Load their own profile instead.
+let onboardingOwnProfileLoad = null;
+function ensureOnboardingOwnProfile() {
+  if (!currentUser || viewedProfile?.id === currentUser.id) return;
+  const userId = currentUser.id;
+  viewedProfile = { id: userId, username: currentProfile?.username, display_name: currentProfile?.display_name, bio: currentProfile?.bio, taste_sentence: currentProfile?.taste_sentence, is_public: currentProfile?.is_public, section_labels: currentProfile?.section_labels };
+  isOwnProfile = true;
+  profileFavoritesLoaded = false;
+  try { updateProfileHeaderAndBanner(); } catch (_) {}
+  Promise.resolve().then(checkFollowStatus).catch(() => {});
+  // Startup goes on to load the viewed profile right after choosing the view, which now loads theirs.
+  // Anywhere else, load it here — once.
+  setTimeout(() => {
+    if (onboardingOwnProfileLoad || PROFILE_ART_JOBS || profileFavoritesLoaded || currentUser?.id !== userId || viewedProfile?.id !== userId) return;
+    onboardingOwnProfileLoad = loadViewedProfileData()
+      .catch(e => console.error('Could not load your profile for setup:', e))
+      .finally(() => { onboardingOwnProfileLoad = null; const el = document.getElementById('view-onboarding-container'); if (el) delete el.dataset.signature; renderOnboardingJourney(); });
+  }, 0);
+}
+
 function renderOnboardingJourney() {
   const el = document.getElementById('view-onboarding-container');
   if (!el || currentTopView !== 'onboarding' || !shouldShowOnboarding()) return;
@@ -9904,6 +9928,7 @@ function renderOnboardingJourney() {
   const step = Math.min(onboardingState.step, 1); // Older step-3 sessions land on the combined review.
   const picks = onboardingPicks();
   const ready = profileFavoritesLoaded && viewedProfile?.id === currentUser?.id;
+  if (!ready) ensureOnboardingOwnProfile();
   // While typing, refresh only results. Background artwork updates must not replace the input.
   const signature = JSON.stringify([currentUser.id,step,ready,state.added?.title,state.added ? onboardingArt(state.added) : '',picks.map(p=>[p.title,onboardingArt(p)])]);
   if (el.dataset.signature === signature) return;
