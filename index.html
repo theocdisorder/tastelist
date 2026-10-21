@@ -3417,6 +3417,14 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
   .ob-landing-hero { gap: 32px; }
 }
 @media (max-width: 374px) { .ob-landing-copy h1 { font-size: 46px; } }
+/* Post view: a notification opens the post itself */
+.post-view-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 12px 20px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.post-view-close { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.post-view .status-card-controls, .post-view .feed-post-owner { display: none !important; } /* edit/delete stay on the feed and profile */
+.post-view .feed-text-post { border: 0 !important; border-radius: 0 !important; margin: 0 !important; }
+.post-view .activity-card { border: 0 !important; border-radius: 0 !important; grid-template-columns: minmax(0, 1fr) !important; }
+.notif-title-link { cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color .15s; }
+.notif-title-link:hover, .notif-title-link:focus-visible { text-decoration-color: currentColor; outline: none; }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -7374,22 +7382,8 @@ async function openNotificationTarget(notifId) {
   const who = n.profiles?.username;
   try {
     if (n.target_type === 'activity_feed' && n.target_id && sb) {
-      let row = summaryFeedRows.get(String(n.target_id));
-      if (!row) {
-        const { data } = await sb.from('activity_feed').select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)').eq('id', n.target_id).maybeSingle();
-        if (data) { row = data; summaryFeedRows.set(String(data.id), data); }
-      }
-      if (row) {
-        await openFeedItemSummary(String(row.id));
-        if (n.type === 'comment_reply') {
-          for (let t = 0; t < 20; t++) {
-            const box = document.getElementById(`comment-input-activity_feed-${row.id}`);
-            if (box && box.offsetParent) { box.scrollIntoView({ block: 'center', behavior: 'smooth' }); box.focus({ preventScroll: true }); break; }
-            await new Promise(r => setTimeout(r, 100));
-          }
-        }
-        return;
-      }
+      const row = await notificationFeedRow(n);
+      if (row) { await openPostView(row, { focusComment: n.type === 'comment_reply' }); return; }
       showToast('That post is no longer available.'); return;
     }
     if (n.target_type === 'taste_list' && n.target_id) { location.assign(sharedListUrl(n.target_id)); return; }
@@ -7429,7 +7423,9 @@ function renderNotificationsDropdown(rows) {
       const who = esc(firstNameOnly(n.profiles?.display_name) || n.profiles?.username || 'Someone');
       const uname = n.profiles?.username || '';
       const copyFn = NOTIF_COPY[n.type];
-      const text = copyFn ? copyFn(who, n) : 'Something happened';
+      let text = copyFn ? copyFn(who, n) : 'Something happened';
+      if (n.target_type === 'activity_feed' && n.target_label && ['new_post','comment_reply','reaction','tag'].includes(n.type))
+        text = text.replace(`<strong>${esc(n.target_label)}</strong>`, `<strong class="notif-title-link" role="link" tabindex="0" onclick="event.stopPropagation();openNotificationTitle('${n.id}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openNotificationTitle('${n.id}')}">${esc(n.target_label)}</strong>`);
       const isRequest = n.type === 'follow_request';
       NOTIF_ROWS.set(n.id, n);
       const isComment = (n.type === 'comment' || (n.type === 'reaction' && n.target_type === 'comment')) && n.target_type && n.target_id;
@@ -16930,7 +16926,8 @@ document.addEventListener('click', (e) => {
 
 function toggleReactionPicker(targetType, targetId) {
   if (!currentUser) { openAuthModal('signin'); return; }
-  const el = document.getElementById(`reaction-picker-${targetType}-${targetId}`);
+  const pickerSel = `[id="reaction-picker-${targetType}-${targetId}"]`;
+  const el = (document.getElementById('activity-summary-modal')?.style.display === 'flex' && document.querySelector(`#activity-summary-content ${pickerSel}`)) || document.getElementById(`reaction-picker-${targetType}-${targetId}`);
   if (!el) return;
   const isOpen = el.style.display === 'flex';
   closeReactionPickers(targetType, targetId);
@@ -18730,6 +18727,71 @@ async function openActivitySummary(globalIndex) {
   const summary = await getActivitySummary(item);
   // Guard against the modal having been closed (or a different item opened) while the fetch was in flight
   if (active()) content.innerHTML = activitySummaryHtml(item, summary, false);
+}
+
+// Opens someone's post itself (their note, tags, reactions and comments) in the summary modal.
+// The title inside it still opens the title's own summary.
+async function openPostView(row, { focusComment = false } = {}) {
+  const modal = document.getElementById('activity-summary-modal');
+  const content = document.getElementById('activity-summary-content');
+  if (!modal || !content || !row) return;
+  const id = String(row.id);
+  summaryFeedRows.set(id, row);
+  const request = String(++sharedSummaryRequest);
+  modal.dataset.sharedRequest = request;
+  modal.style.display = 'flex';
+  const active = () => modal.style.display === 'flex' && modal.dataset.sharedRequest === request;
+  // The same post can also be on the page behind the modal, so the modal's comment box gets its own id.
+  const scope = html => html.split(`comment-input-activity_feed-${id}`).join(`pv-input-${id}`);
+  const render = () => {
+    if (!active()) return;
+    const draft = document.getElementById(`pv-input-${id}`)?.value || '';
+    const card = publicActivityCardHtml(row, false)
+      .split(`id="inline-comments-activity_feed-${id}"`).join(`id="pv-comments-${id}"`)
+      .split(`toggleFeedComments('${id}')`).join(`document.getElementById('pv-input-${id}')?.focus()`);
+    content.innerHTML = `<div class="post-view">
+      <div class="post-view-head"><span>Post</span><button type="button" class="post-view-close" aria-label="Close" onclick="closeActivitySummary()">×</button></div>
+      ${card}</div>`;
+    const panel = document.getElementById(`pv-comments-${id}`);
+    if (panel) { panel.style.display = 'block'; panel.innerHTML = scope(commentsSectionHtml('activity_feed', id)); }
+    const input = document.getElementById(`pv-input-${id}`);
+    if (input && draft) input.value = draft;
+  };
+  window.__refreshModalEngagement = render;
+  render();
+  if (sb) {
+    if (!LIKE_CACHE[engagementKey('activity_feed', id)]) {
+      Promise.resolve(sb.from('likes').select('user_id, reaction').eq('target_type', 'activity_feed').eq('target_id', id))
+        .then(({ data }) => {
+          LIKE_CACHE[engagementKey('activity_feed', id)] = emptyLikeState();
+          absorbLikeRows('activity_feed', (data || []).map(r => ({ target_id: id, user_id: r.user_id, reaction: r.reaction })));
+          render();
+        }).catch(() => {});
+    }
+    try { await loadComments('activity_feed', id); } catch (_) {}
+    render();
+  }
+  if (focusComment && active()) {
+    const box = document.getElementById(`pv-input-${id}`);
+    if (box) { box.scrollIntoView({ block: 'center', behavior: 'smooth' }); box.focus({ preventScroll: true }); }
+  }
+}
+
+// The bold title in a notification opens that title's summary instead of the post.
+async function openNotificationTitle(notifId) {
+  const n = NOTIF_ROWS.get(notifId); if (!n) return;
+  closeNotificationsDropdown();
+  const row = await notificationFeedRow(n);
+  if (row) await openFeedItemSummary(String(row.id)); else showToast('That post is no longer available.');
+}
+
+async function notificationFeedRow(n) {
+  if (n.target_type !== 'activity_feed' || !n.target_id || !sb) return null;
+  const cached = summaryFeedRows.get(String(n.target_id));
+  if (cached && cached.profiles) return cached;
+  const { data } = await sb.from('activity_feed').select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)').eq('id', n.target_id).maybeSingle();
+  if (data) { if (!data.profiles) data.profiles = n.profiles || {}; summaryFeedRows.set(String(data.id), data); }
+  return data || null;
 }
 
 function closeActivitySummary() {
