@@ -7118,6 +7118,25 @@ async function openFollowList(dir) {
 }
 function closeFollowList() { document.getElementById('follow-list-dialog')?.close(); }
 
+// Follow someone. Whether it's an instant follow or a request is decided from their profile's
+// current privacy (read fresh), and a rejected "accepted" falls back to a request, so a stale page
+// can't make following fail. Returns 'accepted' or 'pending'.
+async function insertFollow(targetId) {
+  let isPublic = false;
+  try { const { data } = await sb.from('profiles').select('is_public').eq('id', targetId).maybeSingle(); isPublic = data?.is_public === true; } catch (_) {}
+  let status = isPublic ? 'accepted' : 'pending';
+  let { error } = await sb.from('follows').insert({ follower_id: currentUser.id, followed_id: targetId, status });
+  if (error && status === 'accepted' && /row-level security|42501/i.test(`${error.message} ${error.code}`)) {
+    status = 'pending';
+    ({ error } = await sb.from('follows').insert({ follower_id: currentUser.id, followed_id: targetId, status }));
+  }
+  if (error && /duplicate|23505/i.test(`${error.message} ${error.code}`)) {
+    const { data } = await sb.from('follows').select('status').eq('follower_id', currentUser.id).eq('followed_id', targetId).maybeSingle();
+    if (data?.status) return data.status;
+  }
+  if (error) throw error;
+  return status;
+}
 async function toggleFollow() {
   if (!currentUser || !viewedProfile || isOwnProfile) return;
   const btn = document.getElementById('follow-btn');
@@ -7132,10 +7151,7 @@ async function toggleFollow() {
       if (error) throw error;
       followStatus = null;
     } else {
-      const newStatus = viewedProfile.is_public ? 'accepted' : 'pending';
-      const { error } = await sb.from('follows')
-        .insert({ follower_id: currentUser.id, followed_id: viewedProfile.id, status: newStatus });
-      if (error) throw error;
+      const newStatus = await insertFollow(viewedProfile.id);
       followStatus = newStatus;
       if (newStatus === 'accepted') {
         // Newly allowed to see this profile's content — load it now rather than
@@ -7145,7 +7161,8 @@ async function toggleFollow() {
     }
     updateProfileHeaderAndBanner();
   } catch (e) {
-    alert('Something went wrong: ' + (e.message || 'unknown error'));
+    showToast('Couldn’t update follow. Please try again.');
+    console.error('Follow failed:', e);
   } finally {
     loadFollowStats();
     if (btn) btn.disabled = false;
@@ -17794,10 +17811,10 @@ async function followSuggestion(id) {
   const p = pymkState.items.find(x => x.id === id);
   if (!p || p.followState || !currentUser || !sb) return;
   if (!(await requireFreshSession())) { showToast(SESSION_EXPIRED_MESSAGE); return; }
-  const status = p.is_public ? 'accepted' : 'pending';
   p.followState = 'busy'; renderPeopleSuggestions();
-  const { error } = await sb.from('follows').insert({ follower_id: currentUser.id, followed_id: id, status });
-  if (error && !/duplicate/i.test(error.message || '')) { p.followState = null; renderPeopleSuggestions(); showToast('Couldn’t follow ' + (p.display_name || p.username) + '. Please try again.'); return; }
+  let status;
+  try { status = await insertFollow(id); }
+  catch (_) { p.followState = null; renderPeopleSuggestions(); showToast('Couldn’t follow ' + (p.display_name || p.username) + '. Please try again.'); return; }
   p.followState = status; renderPeopleSuggestions();
   showToast(status === 'accepted' ? `You’re following ${p.display_name || p.username}.` : `Follow request sent to ${p.display_name || p.username}.`);
   if (status === 'accepted') { try { loadPublicFeed?.(); } catch (_) {} }   // their posts can show up now
@@ -18182,11 +18199,7 @@ async function followSuggestedPerson(id,button) {
  if(!currentUser||button.disabled)return;
  const userId=currentUser.id;button.disabled=true;
  try{
-  const {data:person,error:readError}=await sb.from('profiles').select('is_public').eq('id',id).single();
-  if(readError)throw readError;
-  const status=person.is_public?'accepted':'pending';
-  const {error}=await sb.from('follows').insert({follower_id:userId,followed_id:id,status});
-  if(error)throw error;
+  const status=await insertFollow(id);
   button.textContent=status==='accepted'?'Following ✓':'Requested';feedAudienceIds=null;
  }catch(_){button.disabled=false;showToast('Could not follow this person. Please try again.');}
 }
@@ -18262,9 +18275,9 @@ async function toggleFriendsPanelFollow(index){
  friendsPanelState.busy.add(person.id);renderFriendsPanelRows();
  const previous=friendsPanelState.relationships.get(person.id);
  try{
-  const status=person.is_public===false?'pending':'accepted';
-  const result=previous?await sb.from('follows').delete().eq('follower_id',userId).eq('followed_id',person.id):await sb.from('follows').insert({follower_id:userId,followed_id:person.id,status});
-  if(result.error)throw result.error;
+  let status=null;
+  if(previous){const result=await sb.from('follows').delete().eq('follower_id',userId).eq('followed_id',person.id);if(result.error)throw result.error;}
+  else status=await insertFollow(person.id);
   if(currentUser?.id!==userId)return;
   if(previous)friendsPanelState.relationships.delete(person.id);else friendsPanelState.relationships.set(person.id,status);
   feedAudienceIds=null;
