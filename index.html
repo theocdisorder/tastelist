@@ -3504,6 +3504,16 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
 .activity-card-art .wn-corner { top: 10px; right: 10px; }
 /* Reactions: tap to heart, press and hold for more — keep the phone's long-press menu out of the way */
 .reaction-badge-btn { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+/* Season / episode choice under a picked show in the post composer */
+.fc-season { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.fc-season-field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 160px; min-width: 0; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.fc-season-field select { width: 100%; min-width: 0; font: 500 14px var(--font-ui, inherit); text-transform: none; letter-spacing: 0; color: var(--text); background: var(--surface2); border: 1px solid var(--border2, var(--border)); border-radius: 10px; padding: 9px 10px; }
+.fc-season-note { font-size: 12.5px; color: var(--muted); }
+@media (max-width: 480px) { .fc-season-field select { font-size: 16px; } }   /* no iOS zoom */
+.fc-episode-field { flex-basis: 100%; }
+.fc-episode-field select { text-overflow: ellipsis; }
+.post-listen { display: inline-block; margin-top: 8px; font-size: 12.5px; font-weight: 600; color: var(--accent); text-decoration: none; }
+.post-listen:hover { text-decoration: underline; text-underline-offset: 3px; }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -16902,6 +16912,7 @@ async function lookupItemSummary(item) {
   musicSummaryLinks(item,info);
   if(item._summary && !/^(No summary|A summary isn’t available)/.test(item._summary))return item._summary;
   let summary=info.description;
+  if(kind==='podcast'&&info.pick?.episode?.summary){item._summary=info.pick.episode.summary;return item._summary;}
   try {
     if(['movie','tv','special'].includes(kind)) {
       const screenKind=kind==='special'?'movie':kind;
@@ -16914,7 +16925,12 @@ async function lookupItemSummary(item) {
         const hit=matches.find(r=>!year||String(r.release_date||r.first_air_date||'').startsWith(String(year)))||matches[0];
         catalogId=hit?.id;
       }
-      if(catalogId){item._tmdbId=catalogId;const detail=await (kind==='tv'?fetchTVDetail(catalogId):fetchMovieDetail(catalogId));summary=detail.overview||summary;}
+      if(catalogId){item._tmdbId=catalogId;const detail=await (kind==='tv'?fetchTVDetail(catalogId):fetchMovieDetail(catalogId));summary=detail.overview||summary;
+        // A post about one season or episode describes that part when TMDB has it.
+        const part=info.pick?.season;
+        if(kind==='tv'&&part?.number){try{const ep=info.pick.episode?.number;
+          const d=await (await tmdbFetch(`/tv/${catalogId}/season/${part.number}${ep?'/episode/'+ep:''}`)).json();
+          if(d?.overview)summary=d.overview;}catch(_){}}}
     } else if(kind==='book') {
       const metadata=await sharedBookMetadata(title,creator||(!item.type?item.sub:''));
       summary=metadata.summary||summary;item.summarySource=metadata.source;
@@ -17951,7 +17967,7 @@ function renderWelcomeBanner() {
 // entered — see setTopView().
 let feedTitleSearch={seq:0,timer:null,results:[],manual:false,filter:'all',filterManual:false,lastQuery:''};
 // Composer title search: filter chips + type words ("diplomat book", "espresso song"), like onboarding.
-const FEED_TITLE_KINDS=['book','author','movie','tv','song','album','artist','podcast'];
+const FEED_TITLE_KINDS=['book','author','movie','tv','song','album','artist','podcast','episode'];
 const FEED_FILTER_LABELS={all:'All',book:'Books',movie:'Movies',tv:'TV',song:'Songs',album:'Albums',artist:'Artists',podcast:'Podcasts',screen:'Movies & TV'};
 function parseFeedTitleQuery(raw){
  const full=String(raw||'').trim(),m=full.match(/\s+(?:songs?|tracks?|singles?)$/i);
@@ -17974,7 +17990,159 @@ const FEED_KIND_LABEL={author:'Author',book:'Book',movie:'Movie',tv:'TV',song:'S
 function feedKindLabel(p){return FEED_KIND_LABEL[p.kind]||p.label||'';}
 // Thumbnail in the shape of the thing: square for music and podcasts, a poster/cover shape otherwise.
 function feedThumbHtml(p){const sq=['song','album','artist','podcast','episode'].includes(p.kind);const art=onboardingArt(p);return `<span class="fc-thumb${sq?' is-square':''}">${art?`<img src="${esc(art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span aria-hidden="true">${esc((p.title||'?').slice(0,1))}</span></span>`;}
-function feedResultMeta(p){return [feedKindLabel(p),p.artist||p.author||p.network,p.year].filter(Boolean).join(' · ');}
+// ── Posting about a specific season (or episode) of a show, not just the show ──
+function tvPartLabel(p){
+ if(p?.kind==='podcast'&&p.episode?.name)return 'Episode: '+p.episode.name;
+ if(!p?.season)return '';
+ let t=`Season ${p.season.number}`;
+ if(p.episode){const n=String(p.episode.name||'');t+=` · Episode ${p.episode.number}${n&&!/^episode\s*\d+$/i.test(n)?': '+n:''}`;}
+ return t;
+}
+const tvSeasonCache=new Map(),tvEpisodeCache=new Map();
+function tvSeasons(id){
+ if(!tvSeasonCache.has(id))tvSeasonCache.set(id,(async()=>{const d=await (await tmdbFetch(`/tv/${id}`)).json();
+  return (d.seasons||[]).filter(x=>x.season_number>0&&(x.episode_count||0)>0).map(x=>({number:x.season_number,name:x.name||'',poster:x.poster_path||'',year:(x.air_date||'').slice(0,4),episodes:x.episode_count}));})());
+ const job=tvSeasonCache.get(id);job.catch(()=>tvSeasonCache.delete(id));return job;
+}
+function tvEpisodes(id,n){
+ const key=id+'|'+n;
+ if(!tvEpisodeCache.has(key))tvEpisodeCache.set(key,(async()=>{const d=await (await tmdbFetch(`/tv/${id}/season/${n}`)).json();
+  return (d.episodes||[]).map(e=>({number:e.episode_number,name:e.name||'',still:e.still_path||'',date:e.air_date||''}));})());
+ const job=tvEpisodeCache.get(key);job.catch(()=>tvEpisodeCache.delete(key));return job;
+}
+// "love is blind uk season 3" / "the bear s2": search the show, then pick that season.
+function splitSeasonQuery(q){
+ const m=String(q||'').match(/^(.*?)[\s,:-]+(?:season|series|s)\s*(\d{1,2})(?:\s*(?:episode|ep|e)\s*(\d{1,3}))?\s*$/i);
+ return m&&m[1].trim().length>=2?{q:m[1].trim(),season:Number(m[2]),episode:m[3]?Number(m[3]):null}:{q:String(q||''),season:null,episode:null};
+}
+const podcastEpisodeCache=new Map();
+function podcastEpisodes(id){
+ if(!podcastEpisodeCache.has(id))podcastEpisodeCache.set(id,(async()=>{
+  const d=await onboardingSearchJSON(`https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}&entity=podcastEpisode&limit=100`);
+  return (d.results||[]).filter(r=>r.wrapperType==='podcastEpisode'||r.kind==='podcast-episode').filter(r=>r.trackId&&r.trackName)
+   .map(r=>({id:r.trackId,name:r.trackName,date:(r.releaseDate||'').slice(0,10),art:r.artworkUrl600||r.artworkUrl160||'',url:r.trackViewUrl||'',summary:String(r.description||r.shortDescription||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,800)}))
+   .sort((a,b)=>b.date.localeCompare(a.date));})());
+ const job=podcastEpisodeCache.get(id);job.catch(()=>podcastEpisodeCache.delete(id));return job;
+}
+function shortEpisodeDate(d){if(!d)return '';const t=new Date(d+'T12:00:00');return isNaN(t)?'':t.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function podcastEpisodePickerHtml(p){
+ if(!p.catalogId)return '';
+ if(!p._episodesList){
+  if(!p._episodesListLoading){p._episodesListLoading=true;podcastEpisodes(p.catalogId).then(list=>{p._episodesList=list;if(feedPostDraft.attachment===p)refreshFeedMedia();})
+   .catch(()=>{p._episodesList=[];if(feedPostDraft.attachment===p)refreshFeedMedia();}).finally(()=>{p._episodesListLoading=false;});}
+  return p.episode?`<div class="fc-season"><span class="fc-season-note">${esc(tvPartLabel(p))}</span></div>`:'<div class="fc-season"><span class="fc-season-note">Loading episodes…</span></div>';
+ }
+ const list=p._episodesList.slice();
+ if(p.episode&&!list.some(e=>String(e.id)===String(p.episode.id)))list.unshift(p.episode);   // an older episode chosen earlier
+ if(!list.length)return '';
+ return `<div class="fc-season" role="group" aria-label="Which episode"><label class="fc-season-field fc-episode-field"><span>Episode</span><select onchange="setFeedPodcastEpisode(this.value)" ${feedPostDraft.saving?'disabled':''}><option value="">Whole podcast</option>${list.map(e=>`<option value="${esc(String(e.id))}" ${String(p.episode?.id)===String(e.id)?'selected':''}>${esc(e.name)}${e.date?' — '+esc(shortEpisodeDate(e.date)):''}</option>`).join('')}</select></label></div>`;
+}
+function setFeedPodcastEpisode(value){
+ const p=feedPostDraft.attachment;if(!p||feedPostDraft.saving)return;
+ if(!p._show)p._show={art:p.art,year:p.year};
+ const e=(p._episodesList||[]).find(z=>String(z.id)===String(value));
+ if(!e){delete p.episode;p.art=p._show.art;p.year=p._show.year;}
+ else{p.episode={id:e.id,name:e.name,date:e.date,url:e.url,summary:e.summary};if(e.art)p.art=e.art;p.year=e.date.slice(0,4)||p._show.year;}
+ refreshFeedMedia();
+}
+// ── Pasting a link to an episode (Apple Podcasts, Spotify, YouTube) instead of searching ──
+function podcastEpisodeFromApple(e,url){return {id:e.trackId,name:e.trackName,date:(e.releaseDate||'').slice(0,10),url:url||e.trackViewUrl||'',summary:String(e.description||e.shortDescription||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,800)};}
+function podcastWithEpisode(e,url){   // an Apple episode record → the podcast, with that episode chosen
+ return {kind:'podcast',id:'apple:'+e.collectionId,catalogId:e.collectionId,title:e.collectionName,artist:e.artistName||e.collectionName||'',art:e.artworkUrl600||e.artworkUrl160||'',label:'Podcast',url:e.collectionViewUrl||'',year:(e.releaseDate||'').slice(0,4),episode:podcastEpisodeFromApple(e,url)};
+}
+async function appleEpisodeByTitle(title){
+ const d=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&media=podcast&entity=podcastEpisode&limit=15`);
+ return (d.results||[]).find(r=>r.collectionId&&bookArtKey(r.trackName)===bookArtKey(title))||null;
+}
+async function resolveFeedLink(raw){
+ const u=new URL(raw),host=u.hostname.replace(/^www\.|^m\./,'');
+ if(host==='podcasts.apple.com'){
+  const showId=u.pathname.match(/id(\d+)/)?.[1],epId=u.searchParams.get('i');if(!showId)return null;
+  const d=await onboardingSearchJSON(`https://itunes.apple.com/lookup?id=${showId}&entity=podcastEpisode&limit=200`);
+  const rows=d.results||[],show=rows.find(r=>r.kind==='podcast'||r.wrapperType==='track')||rows[0];if(!show)return null;
+  let ep=epId?rows.find(r=>String(r.trackId)===String(epId)):null;
+  if(epId&&!ep){try{const one=await onboardingSearchJSON(`https://itunes.apple.com/lookup?id=${epId}`);ep=(one.results||[]).find(r=>String(r.trackId)===String(epId)&&r.collectionId)||null;}catch(_){}}
+  if(ep)return {...podcastWithEpisode(ep,raw),art:ep.artworkUrl600||show.artworkUrl600||''};
+  return podcastCatalogItem(show,'podcast');
+ }
+ if(host==='open.spotify.com'){
+  const kind=u.pathname.split('/').filter(Boolean).filter(x=>!x.startsWith('intl-'))[0];
+  if(!['episode','show'].includes(kind))return null;
+  const o=await sharedCatalogJSON('https://open.spotify.com/oembed?url='+encodeURIComponent(raw));if(!o?.title)return null;
+  if(kind==='episode'){
+   const e=await appleEpisodeByTitle(o.title).catch(()=>null);
+   return e?podcastWithEpisode(e,raw):{kind:'episode',id:raw,title:o.title,art:o.thumbnail_url||'',url:raw,label:'Episode'};
+  }
+  const show=(await searchExtraCatalog('podcast',o.title).catch(()=>[])).find(x=>bookArtKey(x.title)===bookArtKey(o.title));
+  return show||{kind:'podcast',id:raw,title:o.title,art:o.thumbnail_url||'',url:raw,label:'Podcast'};
+ }
+ if(host==='youtube.com'||host==='youtu.be'||host==='music.youtube.com'){
+  const r=await fetch('https://www.youtube.com/oembed?format=json&url='+encodeURIComponent(raw),{signal:AbortSignal.timeout(10000)});if(!r.ok)return null;
+  const o=await r.json();if(!o?.title)return null;
+  return {kind:'episode',id:raw,title:o.title,artist:o.author_name||'',art:o.thumbnail_url||'',url:raw,label:'Episode'};
+ }
+ return null;
+}
+async function searchFeedLink(url){
+ const seq=++feedTitleSearch.seq,userId=currentUser?.id,el=document.getElementById('feed-title-results');if(!el)return;
+ feedTitleSearch.results=[];el.innerHTML='<p class="fc-results-note">Reading link…</p>';
+ let item=null;try{item=await resolveFeedLink(url);}catch(_){}
+ if(seq!==feedTitleSearch.seq||userId!==currentUser?.id||feedPostDraft.attachment)return;
+ if(!item){el.innerHTML='<p class="fc-results-note">Couldn’t read that link. Paste an Apple Podcasts, Spotify or YouTube link, or search the episode’s name.</p>';return;}
+ feedTitleSearch.results=[item];renderFeedTitleRows();
+}
+// "Listen ↗" under a post about a podcast or episode, when we have its link.
+function listenLinkHtml(a){
+ const url=a?.episode?.url||(['podcast','episode'].includes(a?.kind)?a.url:'');
+ if(!/^https:\/\//i.test(url||''))return '';
+ let host='';try{host=new URL(url).hostname.replace(/^www\./,'');}catch(_){}
+ const name=/spotify/.test(host)?'Spotify':/apple/.test(host)?'Apple Podcasts':/youtu/.test(host)?'YouTube':'';
+ return `<a class="post-listen" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Listen${name?' on '+name:''} ↗</a>`;
+}
+function refreshFeedMedia(){const box=document.querySelector('#feed-composer-panel .fc-media');if(box)box.innerHTML=feedComposerMediaMarkup();}
+function feedSeasonPickerHtml(p){
+ if(p?.kind==='podcast')return podcastEpisodePickerHtml(p);
+ if(p?.kind!=='tv'||!p.id||feedPostDraft.saving&&!p.season)return '';
+ if(!p._seasons){
+  if(!p._seasonsLoading){p._seasonsLoading=true;tvSeasons(p.id).then(list=>{p._seasons=list;
+    if(p._wantSeason&&!p.season&&list.some(x=>x.number===p._wantSeason)){const want=p._wantSeason,ep=p._wantEpisode;p._wantSeason=null;setFeedSeason(String(want),ep);return;}
+    if(feedPostDraft.attachment===p)refreshFeedMedia();})
+   .catch(()=>{p._seasons=[];if(feedPostDraft.attachment===p)refreshFeedMedia();}).finally(()=>{p._seasonsLoading=false;});}
+  return p.season?`<div class="fc-season"><span class="fc-season-note">${esc(tvPartLabel(p))}</span></div>`:'<div class="fc-season"><span class="fc-season-note">Loading seasons…</span></div>';
+ }
+ if(!p._seasons.length&&!p.season)return '';
+ const seasons=p._seasons.length?p._seasons:[{number:p.season.number,name:'',year:p.season.year}];
+ const sel=p.season?.number;
+ let episodes='';
+ if(sel){
+  const key=p.id+'|'+sel,eps=(p._episodes||{})[sel];
+  if(!eps){
+   if(!(p._episodesLoading||{})[sel]){(p._episodesLoading=p._episodesLoading||{})[sel]=true;tvEpisodes(p.id,sel).then(list=>{(p._episodes=p._episodes||{})[sel]=list;
+     if(p._wantEpisode&&!p.episode&&list.some(e=>e.number===p._wantEpisode)){const want=p._wantEpisode;p._wantEpisode=null;setFeedEpisode(String(want));return;}
+     if(feedPostDraft.attachment===p)refreshFeedMedia();})
+    .catch(()=>{(p._episodes=p._episodes||{})[sel]=[];if(feedPostDraft.attachment===p)refreshFeedMedia();}).finally(()=>{p._episodesLoading[sel]=false;});}
+  } else if(eps.length){
+   episodes=`<label class="fc-season-field"><span>Episode</span><select onchange="setFeedEpisode(this.value)" ${feedPostDraft.saving?'disabled':''}><option value="">Whole season</option>${eps.map(e=>`<option value="${e.number}" ${p.episode?.number===e.number?'selected':''}>${e.number}. ${esc(e.name||'Episode '+e.number)}</option>`).join('')}</select></label>`;
+  }
+ }
+ return `<div class="fc-season" role="group" aria-label="Which part of the show"><label class="fc-season-field"><span>Season</span><select onchange="setFeedSeason(this.value)" ${feedPostDraft.saving?'disabled':''}><option value="">Whole show</option>${seasons.map(x=>`<option value="${x.number}" ${sel===x.number?'selected':''}>Season ${x.number}${x.year?' ('+x.year+')':''}</option>`).join('')}</select></label>${episodes}</div>`;
+}
+function setFeedSeason(value,wantEpisode=null){
+ const p=feedPostDraft.attachment;if(!p||feedPostDraft.saving)return;
+ if(!p._show)p._show={art:p.art,poster:p.poster};
+ delete p.episode;
+ const x=(p._seasons||[]).find(z=>String(z.number)===String(value));
+ if(!x){delete p.season;p.art=p._show.art;p.poster=p._show.poster;if(p.art===undefined)delete p.art;}
+ else{p.season={number:x.number,name:x.name,year:x.year,episodes:x.episodes};if(x.poster)p.art=TMDB_IMG+x.poster;else{p.art=p._show.art;if(p.art===undefined)delete p.art;}p._wantEpisode=wantEpisode;}
+ refreshFeedMedia();
+}
+function setFeedEpisode(value){
+ const p=feedPostDraft.attachment;if(!p?.season||feedPostDraft.saving)return;
+ const e=((p._episodes||{})[p.season.number]||[]).find(z=>String(z.number)===String(value));
+ if(e)p.episode={number:e.number,name:e.name,date:e.date};else delete p.episode;
+ refreshFeedMedia();
+}
+function feedResultMeta(p){return [feedKindLabel(p),tvPartLabel(p),p.artist||p.author||p.network,p.season?.year||p.year].filter(Boolean).join(' · ');}
 function renderFeedTitleRows(){
  const box=document.getElementById('feed-title-results');if(!box)return;
  const rows=feedTitleSearch.results,f=feedTitleSearch.filter;
@@ -18000,6 +18168,8 @@ function suggestedFeedTitle(text){
 function inferFeedTitle(text){if(feedPostDraft.attachment||feedTitleSearch.manual||feedPostDraft.saving)return;const q=suggestedFeedTitle(text);const input=document.getElementById('feed-title-query');if(input)input.value=q;searchFeedTitles(q,false);}
 function searchFeedTitles(q,manual=false){
  if(feedPostDraft.saving)return;feedTitleSearch.manual=feedTitleSearch.manual||manual;feedTitleSearch.lastQuery=q;
+ if(/^https?:\/\/\S+$/i.test(q.trim())){clearTimeout(feedTitleSearch.timer);searchFeedLink(q.trim());return;}
+ const seasonAsk=splitSeasonQuery(q);feedTitleSearch.seasonHint=seasonAsk.season?{season:seasonAsk.season,episode:seasonAsk.episode}:null;if(seasonAsk.season)q=seasonAsk.q;
  clearTimeout(feedTitleSearch.timer);const seq=++feedTitleSearch.seq,userId=currentUser?.id;feedTitleSearch.results=[];
  const el=document.getElementById('feed-title-results');if(!el)return;
  const parsed=parseFeedTitleQuery(q);
@@ -18008,7 +18178,7 @@ function searchFeedTitles(q,manual=false){
  renderFeedTitleFilters(q);feedTitleSearch.error=false;el.innerHTML='<p class="fc-results-note">Searching…</p>';
  feedTitleSearch.timer=setTimeout(async()=>{
  const f=feedTitleSearch.filter;
- const kinds=f==='all'?FEED_TITLE_KINDS:f==='screen'?['movie','tv']:f==='book'?['book','author']:[f];
+ const kinds=f==='all'?FEED_TITLE_KINDS:f==='screen'?['movie','tv']:f==='book'?['book','author']:f==='podcast'?['podcast','episode']:[f];
  const useParsed=!!parsed.kind&&parsed.kind===f;
  const queries=useParsed?[parsed.q,parsed.full]:[parsed.full];
  const rankQ=useParsed?parsed.q:q;
@@ -18018,14 +18188,14 @@ function searchFeedTitles(q,manual=false){
  const seen=new Set();
  const rows=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).filter(p=>{const k=[p.kind,String(p.id||''),String(p.title||'').toLowerCase()].join('|');if(seen.has(k))return false;seen.add(k);return true;})
    .filter(p=>f==='all'||p.kind===f||(f==='screen'&&['movie','tv'].includes(p.kind))||(f==='podcast'&&p.kind==='episode')||(f==='book'&&p.kind==='author'))
-   .sort(catalogCompare(rankQ)).slice(0,12);feedTitleSearch.results=rows;
+   .sort(catalogCompare(rankQ)).filter((p,i,a)=>f==='podcast'||p.kind!=='episode'||a.slice(0,i).filter(x=>x.kind==='episode').length<3).slice(0,12);feedTitleSearch.results=rows;
  feedTitleSearch.error=!rows.length&&results.length>0&&results.every(r=>r.status==='rejected');
  renderFeedTitleRows();return;
  const box=document.getElementById('feed-title-results');if(!box)return;
  box.innerHTML=rows.length?`<p>Choose the correct title to attach its artwork.</p><div class="feed-title-matches">${rows.map((p,i)=>`<button type="button" onclick="selectFeedTitle(${i})">${feedTitleArt(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span></button>`).join('')}</div>`:`<p>No matches${f!=='all'?` in ${esc(FEED_FILTER_LABELS[f].toLowerCase())}`:''}. Try the title and creator’s name${f!=='all'?', or search everything':''}.</p>`;
  },350);
 }
-function selectFeedTitle(i){if(feedPostDraft.saving)return;const p=feedTitleSearch.results[i];if(!p)return;feedPostDraft.attachment={...p};feedTitleSearch.seq++;feedTitleSearch.pickedFrom={q:feedTitleSearch.lastQuery,results:feedTitleSearch.results.slice(),filter:feedTitleSearch.filter,filterManual:feedTitleSearch.filterManual};renderFeedComposer();setTimeout(()=>document.getElementById('feed-post-text')?.focus(),0);}
+function selectFeedTitle(i){if(feedPostDraft.saving)return;const p=feedTitleSearch.results[i];if(!p)return;feedPostDraft.attachment={...p};if(p.episode)feedPostDraft.attachment.episode={...p.episode};if(p.kind==='tv'&&feedTitleSearch.seasonHint){feedPostDraft.attachment._wantSeason=feedTitleSearch.seasonHint.season;feedPostDraft.attachment._wantEpisode=feedTitleSearch.seasonHint.episode;}feedTitleSearch.seq++;feedTitleSearch.pickedFrom={q:feedTitleSearch.lastQuery,results:feedTitleSearch.results.slice(),filter:feedTitleSearch.filter,filterManual:feedTitleSearch.filterManual};renderFeedComposer();setTimeout(()=>document.getElementById('feed-post-text')?.focus(),0);}
 function clearFeedTitle(){
  if(feedPostDraft.saving)return;feedPostDraft.attachment=null;feedTitleSearch.seq++;
  const prev=feedTitleSearch.pickedFrom;feedTitleSearch.pickedFrom=null;
@@ -18036,7 +18206,7 @@ function clearFeedTitle(){
  if(prev&&input){input.value=prev.q;renderFeedTitleFilters(prev.q);renderFeedTitleRows();}
  input?.focus();
 }
-function feedPostAttachmentHtml(row){const p=row.catalog_item?.attachment;if(!p)return '';return `<div class="feed-post-attachment">${feedTitleArt(p)}<div><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></div></div>`;}
+function feedPostAttachmentHtml(row){const p=row.catalog_item?.attachment;if(!p)return '';return `<div class="feed-post-attachment">${feedTitleArt(p)}<div><strong>${esc(p.title)}</strong><small>${esc([p.label,tvPartLabel(p),p.artist||p.author,p.season?.year||p.year].filter(Boolean).join(' · '))}</small></div></div>`;}
 
 const FEED_POST_PROMPTS=['What have you watched, read, or listened to lately?','What’s something you loved that more people should discover?','What should your friends put on their What’s Next list?'];
 let feedPostDraft={userId:null,text:'',id:null,saving:false,requestId:null};
@@ -18289,11 +18459,11 @@ function feedComposerMediaMarkup() {
   const p = feedPostDraft.attachment;
   if (p) {
     const meta = feedResultMeta(p);
-    return `<div class="fc-media-picked">${feedThumbHtml(p)}<div class="fc-media-text"><strong>${esc(p.title)}</strong>${meta ? `<small>${esc(meta)}</small>` : ''}</div><button type="button" class="fc-change" onclick="clearFeedTitle()" ${feedPostDraft.saving ? 'disabled' : ''}>Change</button></div>`;
+    return `<div class="fc-media-picked">${feedThumbHtml(p)}<div class="fc-media-text"><strong>${esc(p.title)}</strong>${meta ? `<small>${esc(meta)}</small>` : ''}</div><button type="button" class="fc-change" onclick="clearFeedTitle()" ${feedPostDraft.saving ? 'disabled' : ''}>Change</button></div>${feedSeasonPickerHtml(p)}`;
   }
   return `<label class="update-sr" for="feed-title-query">Search for a title</label>
     <div class="fc-search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-    <input id="feed-title-query" placeholder="Search books, movies, shows, music, podcasts…" autocomplete="off" oninput="searchFeedTitles(this.value,true)" onkeydown="if(event.key==='ArrowDown'){const r=document.querySelector('#feed-title-results .fc-result');if(r){event.preventDefault();r.focus();}}" ${feedPostDraft.saving ? 'disabled' : ''}><div id="feed-title-filters"></div></div>
+    <input id="feed-title-query" placeholder="Search books, movies, shows, music, podcasts… or paste a link" autocomplete="off" oninput="searchFeedTitles(this.value,true)" onkeydown="if(event.key==='ArrowDown'){const r=document.querySelector('#feed-title-results .fc-result');if(r){event.preventDefault();r.focus();}}" ${feedPostDraft.saving ? 'disabled' : ''}><div id="feed-title-filters"></div></div>
     <div id="feed-title-results" aria-live="polite"></div>`;
 }
 function renderFeedComposer(){
@@ -18364,7 +18534,8 @@ async function publishFeedPost(){
  try{
   if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again to post.');
   const attachment=feedPostDraft.attachment;
-  const row={label:attachment.title,type:'other',sub:attachment.label||'',note:text,art_url:onboardingArt(attachment)||null,catalog_item:{kind:'text_post',attachment},tags:await tagFieldValue('feed'),activity_date:feedPostDateValue()};
+  const saved=Object.fromEntries(Object.entries(attachment).filter(([k])=>!k.startsWith('_')));
+  const row={label:attachment.title,type:'other',sub:[attachment.label,tvPartLabel(attachment)].filter(Boolean).join(' · '),note:text,art_url:onboardingArt(attachment)||null,catalog_item:{kind:'text_post',attachment:saved},tags:await tagFieldValue('feed'),activity_date:feedPostDateValue()};
   let result;
   if(feedPostDraft.id)result=await sb.from('activity_feed').update(row).eq('id',feedPostDraft.id).eq('user_id',userId).select('id').single();
   else{
@@ -18396,7 +18567,7 @@ function feedTextPostHtml(row,profile=false){
  const attachment=row.catalog_item?.attachment;
  if(attachment){
   const type=['artist','album'].includes(attachment.kind)?'song':attachment.kind==='author'?'book':attachment.kind;
-  return publicActivityCardHtml({...row,type,label:attachment.title,sub:[attachment.label,attachment.artist||attachment.author,attachment.year].filter(Boolean).join(' · '),art_url:onboardingArt(attachment)||row.art_url||'',catalog_item:{...row.catalog_item,kind:'attached_status_display'},_editableStatus:true},profile);
+  return publicActivityCardHtml({...row,type,label:attachment.title,sub:[attachment.label,tvPartLabel(attachment),attachment.artist||attachment.author,attachment.season?.year||attachment.year].filter(Boolean).join(' · '),art_url:onboardingArt(attachment)||row.art_url||'',catalog_item:{...row.catalog_item,kind:'attached_status_display'},_editableStatus:true},profile);
  }
 
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
@@ -18887,7 +19058,7 @@ function publicActivityCardHtml(row,profile=false) {
         <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(row.sub)}</span>
       </div>
       `}
-      ${taggedLineHtml(row.tags, row.user_id && row.user_id === currentUser?.id ? row.id : null)}${note}
+      ${taggedLineHtml(row.tags, row.user_id && row.user_id === currentUser?.id ? row.id : null)}${note}${listenLinkHtml(row.catalog_item?.attachment)}
       <div style="display:flex;align-items:center;gap:12px;margin-top:${profile ? 14 : 8}px;" onclick="event.stopPropagation()">
         ${reactionBadgeHtml('activity_feed', row.id)}
         <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;" role="button" tabindex="0" aria-label="Comments" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${row.id}')">
