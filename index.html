@@ -3525,6 +3525,62 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
 .fc-episode-field select { text-overflow: ellipsis; }
 .post-listen { display: inline-block; margin-top: 8px; font-size: 12.5px; font-weight: 600; color: var(--accent); text-decoration: none; }
 .post-listen:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* ── Episode picker ── */
+.ep-mode-wrap { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.ep-mode { display: inline-flex; align-self: flex-start; padding: 3px; gap: 2px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid var(--border); }
+.ep-mode button { font: 600 13px var(--font-ui, inherit); color: var(--muted); background: none; border: 0; border-radius: 7px; padding: 7px 12px; cursor: pointer; min-height: 0 !important; min-width: 0 !important; }
+.ep-mode button.is-on { background: rgba(185,154,255,.16); color: #e4d9ff; }
+.ep-mode button:disabled { opacity: .45; cursor: default; }
+.ep-chosen { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(185,154,255,.35); background: rgba(185,154,255,.07); }
+.ep-radio { flex: 0 0 auto; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.35); position: relative; }
+.ep-radio.is-on, .ep-row.is-on .ep-radio { border-color: #b99aff; }
+.ep-radio.is-on::after, .ep-row.is-on .ep-radio::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: #b99aff; }
+.ep-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.ep-row-text strong { font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--text); overflow-wrap: anywhere; }
+.ep-row-text small { font-size: 12px; color: var(--muted); }
+.ep-about { font-size: 12px; line-height: 1.45; color: var(--faint, #77746e); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ep-pick-link { display: block; margin: -2px 0 6px 64px; padding: 4px 0; background: none; border: 0; font: 600 12.5px var(--font-ui, inherit); color: #b99aff; cursor: pointer; text-align: left; min-height: 0 !important; }
+.ep-pick-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+dialog.ep-sheet { padding: 0; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); color: var(--text); width: min(560px, calc(100% - 32px)); max-height: min(640px, calc(100dvh - 48px)); overflow: hidden; margin: auto; }
+dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
+.ep-sheet-inner { display: flex; flex-direction: column; max-height: inherit; }
+.ep-sheet-head { display: flex; align-items: center; gap: 12px; padding: 16px 16px 12px; }
+.ep-sheet-art { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 8px; overflow: hidden; background: var(--surface2); }
+.ep-sheet-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ep-sheet-heading { flex: 1; min-width: 0; }
+.ep-sheet-heading h2 { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.25; }
+.ep-sheet-show { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.ep-sheet-close { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; }
+.ep-sheet-search { margin: 0 16px 8px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border2, var(--border)); background: var(--surface2); color: var(--muted); }
+.ep-sheet-search:focus-within { border-color: rgba(185,154,255,.7); }
+.ep-sheet-search input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--text); font: 15px var(--font-ui, inherit); padding: 10px 0; min-height: 0 !important; }
+.ep-sheet-list { flex: 1 1 auto; max-height: 360px; overflow-y: auto; overscroll-behavior: contain; border-top: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+.ep-row { display: flex; align-items: flex-start; gap: 12px; padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,.06); cursor: pointer; outline: none; }
+.ep-row .ep-radio { margin-top: 2px; }
+.ep-row:hover { background: rgba(255,255,255,.03); }
+.ep-row:focus-visible { box-shadow: inset 0 0 0 2px rgba(185,154,255,.7); }
+.ep-row.is-on { background: rgba(185,154,255,.08); box-shadow: inset 3px 0 0 #b99aff; }
+.ep-skeleton { cursor: default; }
+.ep-skeleton i { display: block; height: 11px; border-radius: 6px; background: rgba(255,255,255,.07); animation: epPulse 1.2s ease-in-out infinite; }
+.ep-skeleton i:first-child { width: 70%; height: 13px; } .ep-skeleton i:last-child { width: 40%; margin-top: 6px; }
+@keyframes epPulse { 50% { opacity: .45; } }
+.ep-state { padding: 28px 20px; text-align: center; color: var(--muted); font-size: 13.5px; }
+.ep-state p { margin: 0 0 10px; } .ep-state-hint { font-size: 12.5px; color: var(--faint, #77746e); }
+.ep-more { padding: 12px; text-align: center; font-size: 12.5px; color: var(--muted); }
+.ep-sheet-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.ep-sheet-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface); }
+.ep-btn-quiet { font: 600 13.5px var(--font-ui, inherit); color: var(--text); background: none; border: 1px solid var(--border); border-radius: 10px; padding: 9px 16px; cursor: pointer; }
+.ep-btn-primary { font: 600 13.5px var(--font-ui, inherit); color: #fff; background: var(--accent); border: 0; border-radius: 10px; padding: 9px 18px; cursor: pointer; }
+.ep-btn-primary:disabled { opacity: .45; cursor: default; }
+@media (max-width: 640px) {
+  dialog.ep-sheet { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 18px 18px 0 0; border-bottom: 0; max-height: 88dvh; height: 88dvh; }
+  .ep-sheet-inner { height: 100%; }
+  .ep-sheet-list { max-height: none; }
+  .ep-sheet-search input { font-size: 16px; }   /* no iOS zoom */
+  .ep-sheet-foot { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .ep-sheet-foot button { flex: 1; padding: 12px; }
+  .ep-pick-link { margin-left: 56px; }
+}
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -4589,7 +4645,7 @@ function renderRecSearch(){
  const q=recSearch.q;if(q.length<2){el.innerHTML='';return;}
  const res=recSearch.results,kinds=REC_KIND_ORDER.filter(k=>res.some(r=>r.type===k)),f=recSearch.kind;
  const chips=kinds.length>1?`<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setRecSearchKind(null)">All</button>${kinds.map(k=>`<button type="button" class="fav-chip" aria-pressed="${f===k}" onclick="setRecSearchKind('${k}')">${REC_KIND_LABEL[k]}</button>`).join('')}</div>`:'';
- const rows=res.map((r,i)=>({r,i})).filter(x=>!f||x.r.type===f).map(({r,i})=>{const added=recSearch.added.has(i);return `<button type="button" class="extra-result${added?' is-added':''}" data-index="${i}" aria-pressed="${added}" aria-label="${added?'Remove':'Add'} ${esc(r.title)} ${added?'from':'to'} What’s Next" onclick="addRecFromSearch(${i},this)"><span class="rec-art">${r.art?`<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span>${esc((r.title||'?').slice(0,1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([pasteRecTypes[r.type],r.sub,r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${added?'✓':'+'}</span></button>`;}).join('');
+ const rows=res.map((r,i)=>({r,i})).filter(x=>!f||x.r.type===f).map(({r,i})=>{const added=recSearch.added.has(i);return `<button type="button" class="extra-result${added?' is-added':''}" data-index="${i}" aria-pressed="${added}" aria-label="${added?'Remove':'Add'} ${esc(r.title)} ${added?'from':'to'} What’s Next" onclick="addRecFromSearch(${i},this)"><span class="rec-art">${r.art?`<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span>${esc((r.title||'?').slice(0,1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([pasteRecTypes[r.type],r.sub,r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${added?'✓':'+'}</span></button>${r.type==='podcast'&&r.catalogId&&r.kind!=='episode'?`<button type="button" class="ep-pick-link" onclick="recEpisodeFor(${i})">Choose an episode…</button>`:''}`;}).join('');
  const manual=`<button type="button" class="rec-manual" onclick="addRecManually()">Can’t find it? Add “${esc(q.slice(0,80))}” as written</button>`;
  el.innerHTML=chips+(rows||'<p class="rec-search-note">No matches yet.</p>')+(recSearch.partial?'<p class="rec-search-note">Some catalogs could not load.</p>':'')+manual;
 }
@@ -4609,6 +4665,18 @@ async function insertRec(row,label){
   return saved?.id||true;
  }catch(e){status.className='rec-search-status is-error';status.textContent=e.message||'Could not save. Please try again.';return false;}
  finally{recSearch.saving=false;}
+}
+function recEpisodeFor(i){
+ const r=recSearch.results[i];if(!r?.catalogId)return;epPicker.preset=null;
+ openEpisodeSheet({podcast:{catalogId:r.catalogId,title:r.title,art:r.art,artist:r.sub},confirmLabel:'Add to What’s Next',onConfirm:async e=>{
+  const item={...episodeCatalogItem({title:r.title,art:r.art},e),type:'podcast',sub:r.title,meta:shortEpisodeDate(e.date)};
+  let idx=recSearch.results.findIndex(x=>x.kind==='episode'&&String(x.catalogId)===String(e.id));
+  if(idx<0){recSearch.results.push(item);idx=recSearch.results.length-1;}
+  if(recSearch.kind&&recSearch.kind!=='podcast')recSearch.kind=null;
+  renderRecSearch();
+  if(!recSearch.added.has(idx))await addRecFromSearch(idx,document.querySelector(`#rec-search-results .extra-result[data-index="${idx}"]`));
+  document.querySelector(`#rec-search-results .extra-result[data-index="${idx}"]`)?.scrollIntoView({block:'nearest'});
+ }});
 }
 async function addRecFromSearch(i,btn){
  const r=recSearch.results[i];if(!r||recSearch.saving)return;
@@ -5288,7 +5356,7 @@ async function searchTasteCatalog(type, q) {
   }
   if (type === 'music') return itunes('music', 'song', r => ({ title: r.trackName, sub: r.artistName, meta: r.collectionName || '', art: big(r.artworkUrl100) }));
   if (type === 'albums') return itunes('music', 'album', r => ({ title: r.collectionName, sub: r.artistName, meta: (r.releaseDate || '').slice(0, 4), art: big(r.artworkUrl100) }));
-  if (type === 'podcasts') return itunes('podcast', 'podcast', r => ({ title: r.collectionName || r.trackName, sub: r.artistName || '', meta: r.primaryGenreName || '', art: r.artworkUrl600 || big(r.artworkUrl100) }));
+  if (type === 'podcasts') return itunes('podcast', 'podcast', r => ({ title: r.collectionName || r.trackName, sub: r.artistName || '', meta: r.primaryGenreName || '', art: r.artworkUrl600 || big(r.artworkUrl100), catalogId: r.collectionId || null }));
   return [];
 }
 // ── Official capitalization for typed (not picked) items ──
@@ -5540,7 +5608,7 @@ function renderTiSearch() {
   const rows = res.map((r, i) => ({ r, i })).filter(x => !f || x.r.cat === f).map(({ r, i }) => {
     const m = tiKindMeta(r.cat);
     const on = tiSearch.added?.has(i);
-    return `<button type="button" class="extra-result${on ? ' is-added' : ''}" aria-pressed="${on}" aria-label="${on ? 'Remove' : 'Add'} ${esc(r.title)}${r.sub ? ' by ' + esc(r.sub) : ''}" onclick="toggleTiResult(${i}, this)"><span class="rec-art">${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span>${esc((r.title || '?').slice(0, 1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([m.chip, r.cat === 'authors' ? '' : r.sub, r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${on ? '✓' : '+'}</span></button>`;
+    return `<button type="button" class="extra-result${on ? ' is-added' : ''}" aria-pressed="${on}" aria-label="${on ? 'Remove' : 'Add'} ${esc(r.title)}${r.sub ? ' by ' + esc(r.sub) : ''}" onclick="toggleTiResult(${i}, this)"><span class="rec-art">${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span>${esc((r.title || '?').slice(0, 1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([m.chip, r.cat === 'authors' ? '' : r.sub, r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${on ? '✓' : '+'}</span></button>${r.cat === 'podcasts' && r.catalogId && !r.episodeId ? `<button type="button" class="ep-pick-link" onclick="tiEpisodeFor(${i})">Choose an episode…</button>` : ''}`;
   }).join('');
   const empty = tiSearch.loading ? '<p class="rec-search-note">Searching…</p>' : `<p class="rec-search-note">No ${f ? esc(tiKindMeta(f).label.toLowerCase()) : 'matches'} for this search.${f ? ` <button type="button" class="rec-manual" style="padding:0" onclick="setTiSearchKind(null)">Show all results</button>` : ''}</p>`;
   const isLink = /^https?:\/\/\S+$/i.test(tiSearch.q);
@@ -5562,6 +5630,18 @@ async function tiInsert(row) {
   return data?.id;
 }
 function tiStatus(text, error) { const el = document.getElementById('ti-search-status'); if (el) { el.textContent = text; el.classList.toggle('is-error', !!error); } }
+function tiEpisodeFor(i) {
+  const r = tiSearch.results[i]; if (!r?.catalogId) return; epPicker.preset = null;
+  openEpisodeSheet({ podcast: { catalogId: r.catalogId, title: r.title, art: r.art, artist: r.sub }, confirmLabel: 'Add to list', onConfirm: async e => {
+    // Saved like any list item: the episode's title, with the podcast underneath and its link.
+    const item = { cat: 'podcasts', title: e.name, sub: r.title, meta: shortEpisodeDate(e.date), art: e.art || r.art, url: e.url || '', episodeId: e.id };
+    let idx = tiSearch.results.findIndex(x => String(x.episodeId) === String(e.id));
+    if (idx < 0) { tiSearch.results.push(item); idx = tiSearch.results.length - 1; }
+    if (tiSearch.kind && tiSearch.kind !== 'podcasts') tiSearch.kind = null;
+    renderTiSearch();
+    if (!tiSearch.added?.has(idx)) await toggleTiResult(idx, null);
+  } });
+}
 async function toggleTiResult(i, btn) {
   const r = tiSearch.results[i]; if (!r || tiSearch.busy) return;
   tiSearch.added = tiSearch.added || new Map();
@@ -5580,7 +5660,7 @@ async function toggleTiResult(i, btn) {
       if (dupe) { tiStatus(`${r.title} is already in this list.`); return; }
       if (mark) mark.textContent = '…';
       const art = author ? await authorPhotoQuick(r.title) : r.art || null;
-      const id = await tiInsert({ category: cat, title: r.title, sub: author ? 'Author' : r.sub || null, art_url: art || null, tmdb_id: r.tmdbId || null });
+      const id = await tiInsert({ category: cat, title: r.title, sub: author ? 'Author' : r.sub || null, art_url: art || null, tmdb_id: r.tmdbId || null, link_url: /^https?:\/\//.test(r.url || '') ? r.url : null });
       tiSearch.added.set(i, id);
       tiStatus(`✓ Added ${r.title}. Tap it again to undo.`);
     }
@@ -8734,7 +8814,7 @@ function renderPickerResults(){
  const f=flexibleMusic.kindFilter;
  const chipKinds=f&&!kinds.includes(f)?[...kinds,f]:kinds;
  const chips=chipKinds.length>1?`<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setPickerKind(null)">All</button>${chipKinds.map(k=>`<button type="button" class="fav-chip" aria-pressed="${f===k}" onclick="setPickerKind('${k}')">${PICKER_KIND_LABEL[k]||k}</button>`).join('')}</div>`:'';
- const rows=res.map((p,i)=>({p,i})).filter(x=>!f||x.p.kind===f).map(({p,i})=>`<button type="button" class="pk-result fc-result" data-index="${i}" onclick="togglePickerResult(${i},this)" onkeydown="pickerResultKey(event)" aria-pressed="${flexibleMusic.added?.has(i)?'true':'false'}">${feedThumbHtml(p)}<span class="fc-result-text"><strong>${esc(p.title)}</strong><small>${esc(feedResultMeta(p))}</small></span><span class="pk-toggle${flexibleMusic.added?.has(i)?' is-on':''}" aria-hidden="true">${flexibleMusic.added?.has(i)?'✓':'+'}</span></button>`).join('');
+ const rows=res.map((p,i)=>({p,i})).filter(x=>!f||x.p.kind===f).map(({p,i})=>`<button type="button" class="pk-result fc-result" data-index="${i}" onclick="togglePickerResult(${i},this)" onkeydown="pickerResultKey(event)" aria-pressed="${flexibleMusic.added?.has(i)?'true':'false'}">${feedThumbHtml(p)}<span class="fc-result-text"><strong>${esc(p.title)}</strong><small>${esc(feedResultMeta(p))}</small></span><span class="pk-toggle${flexibleMusic.added?.has(i)?' is-on':''}" aria-hidden="true">${flexibleMusic.added?.has(i)?'✓':'+'}</span></button>${p.kind==='podcast'&&p.catalogId?`<button type="button" class="ep-pick-link" onclick="pickerEpisodeFor(${i})">Choose an episode…</button>`:''}`).join('');
  el.innerHTML=chips+(rows||`<p>No ${esc((PICKER_KIND_LABEL[f]||'matches').toLowerCase())} for this search. <button type="button" class="picker-dest-change" onclick="setPickerKind(null)">Show all results</button></p>`)+(flexibleMusic.error?'<p>Some results could not load. Search again to retry.</p>':'');
 }
 function openFlexibleMusicPicker(category=null){openUnifiedPicker('music',category,{context:category?'existing_list':'favorite'});}
@@ -8763,6 +8843,20 @@ function pickerDestinationLabel(p){
  return document.getElementById('music-picker-name').value.trim()||'your new list';
 }
 // Tap a result to add it; tap it again to take it back out. No extra screens.
+// Adding one episode of a podcast to Favorites: it's saved as that episode, in the podcasts list.
+function pickerEpisodeFor(i){
+ const p=flexibleMusic.results[i];if(!p?.catalogId)return;epPicker.preset=null;
+ openEpisodeSheet({podcast:p,confirmLabel:'Add episode',onConfirm:async e=>{
+  const item=episodeCatalogItem(p,e);
+  let idx=flexibleMusic.results.findIndex(x=>x.kind==='episode'&&String(x.catalogId)===String(e.id));
+  if(idx<0){flexibleMusic.results.push(item);idx=flexibleMusic.results.length-1;}
+  if(flexibleMusic.kindFilter&&flexibleMusic.kindFilter!=='episode')flexibleMusic.kindFilter=null;
+  renderPickerResults();
+  const row=document.querySelector(`#music-picker-results .pk-result[data-index="${idx}"]`);
+  if(!flexibleMusic.added?.has(idx))await togglePickerResult(idx,row);
+  document.querySelector(`#music-picker-results .pk-result[data-index="${idx}"]`)?.scrollIntoView({block:'nearest'});
+ }});
+}
 async function togglePickerResult(i,row){
  const p=flexibleMusic.results[i];if(!p||flexibleMusic.saving)return;
  flexibleMusic.added=flexibleMusic.added||new Set();flexibleMusic.addedRefs=flexibleMusic.addedRefs||{};
@@ -18027,26 +18121,168 @@ function splitSeasonQuery(q){
  return m&&m[1].trim().length>=2?{q:m[1].trim(),season:Number(m[2]),episode:m[3]?Number(m[3]):null}:{q:String(q||''),season:null,episode:null};
 }
 const podcastEpisodeCache=new Map();
+function episodeFromAppleRecord(r){return {id:r.trackId,name:r.trackName,date:(r.releaseDate||'').slice(0,10),art:r.artworkUrl600||r.artworkUrl160||'',url:r.trackViewUrl||'',duration:r.trackTimeMillis||0,collectionId:r.collectionId,
+ summary:String(r.description||r.shortDescription||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,800)};}
 function podcastEpisodes(id){
  if(!podcastEpisodeCache.has(id))podcastEpisodeCache.set(id,(async()=>{
-  const d=await onboardingSearchJSON(`https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}&entity=podcastEpisode&limit=100`);
+  const d=await onboardingSearchJSON(`https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}&entity=podcastEpisode&limit=200`);
   return (d.results||[]).filter(r=>r.wrapperType==='podcastEpisode'||r.kind==='podcast-episode').filter(r=>r.trackId&&r.trackName)
-   .map(r=>({id:r.trackId,name:r.trackName,date:(r.releaseDate||'').slice(0,10),art:r.artworkUrl600||r.artworkUrl160||'',url:r.trackViewUrl||'',summary:String(r.description||r.shortDescription||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,800)}))
-   .sort((a,b)=>b.date.localeCompare(a.date));})());
+   .map(episodeFromAppleRecord).sort((a,b)=>b.date.localeCompare(a.date));})());
  const job=podcastEpisodeCache.get(id);job.catch(()=>podcastEpisodeCache.delete(id));return job;
+}
+// ── Episode picker: searchable, newest first, one choice. A centred panel on desktop, a bottom sheet on phones. ──
+const epPicker={podcast:null,all:[],shown:40,q:'',selectedId:null,status:'idle',remote:[],remoteQ:'',remoteBusy:false,request:0,timer:null,onConfirm:null,onCancel:null,confirmLabel:'Choose episode'};
+const EP_PAGE=40;
+function epDuration(ms){const m=Math.round((ms||0)/60000);if(!m)return '';return m>=60?`${Math.floor(m/60)} hr${m%60?' '+(m%60)+' min':''}`:`${m} min`;}
+function epNorm(v){return String(v||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+function ensureEpisodeSheet(){
+ let d=document.getElementById('episode-sheet');if(d)return d;
+ d=document.createElement('dialog');d.id='episode-sheet';d.className='ep-sheet';d.setAttribute('aria-labelledby','ep-sheet-title');
+ d.innerHTML=`<div class="ep-sheet-inner">
+  <header class="ep-sheet-head"><span class="ep-sheet-art" aria-hidden="true"></span><div class="ep-sheet-heading"><h2 id="ep-sheet-title">Choose an episode</h2><p class="ep-sheet-show"></p></div><button type="button" class="ep-sheet-close" aria-label="Close" onclick="closeEpisodeSheet()">×</button></header>
+  <div class="ep-sheet-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="ep-sheet-q" placeholder="Search episodes" autocomplete="off" aria-label="Search episodes" oninput="epSearch(this.value)" onkeydown="if(event.key==='ArrowDown'){event.preventDefault();epFocusRow(0)}"></div>
+  <div class="ep-sheet-list" id="ep-sheet-list" role="radiogroup" aria-label="Episodes" onscroll="epMaybeMore()"></div>
+  <p class="ep-sheet-live" id="ep-sheet-live" role="status" aria-live="polite"></p>
+  <footer class="ep-sheet-foot"><button type="button" class="ep-btn-quiet" onclick="closeEpisodeSheet()">Cancel</button><button type="button" class="ep-btn-primary" id="ep-sheet-confirm" onclick="confirmEpisodeSheet()" disabled>Choose episode</button></footer>
+ </div>`;
+ d.addEventListener('cancel',e=>{e.preventDefault();closeEpisodeSheet();});
+ d.addEventListener('mousedown',e=>{if(e.target===d)closeEpisodeSheet();});
+ document.body.appendChild(d);return d;
+}
+function openEpisodeSheet({podcast,selectedId=null,confirmLabel='Choose episode',onConfirm,onCancel}){
+ if(!podcast?.catalogId)return;
+ const d=ensureEpisodeSheet();
+ Object.assign(epPicker,{podcast,all:[],shown:EP_PAGE,q:'',selectedId:selectedId!=null?String(selectedId):null,status:'loading',remote:[],remoteQ:'',remoteBusy:false,request:epPicker.request+1,onConfirm,onCancel,confirmLabel});
+ d.querySelector('.ep-sheet-art').innerHTML=podcast.art?`<img src="${esc(podcast.art)}" alt="" onerror="this.remove()">`:'';
+ d.querySelector('.ep-sheet-show').textContent=podcast.title||'';
+ document.getElementById('ep-sheet-q').value='';
+ document.getElementById('ep-sheet-confirm').textContent=confirmLabel;
+ renderEpisodeSheet();
+ if(!d.open)d.showModal();
+ setTimeout(()=>document.getElementById('ep-sheet-q')?.focus({preventScroll:true}),30);
+ epLoad();
+}
+async function epLoad(retry=false){
+ const req=epPicker.request,id=epPicker.podcast?.catalogId;if(!id)return;
+ if(retry)podcastEpisodeCache.delete(id);
+ epPicker.status='loading';renderEpisodeSheet();
+ try{const list=await podcastEpisodes(id);if(req!==epPicker.request)return;epPicker.all=list;epPicker.status='ready';}
+ catch(_){if(req!==epPicker.request)return;epPicker.status='error';}
+ renderEpisodeSheet();
+}
+function epVisible(){
+ const q=epNorm(epPicker.q);let list=epPicker.all;
+ // An episode chosen earlier that's older than the latest list stays visible at the top.
+ const pre=epPicker.preset;if(pre&&!list.some(e=>String(e.id)===String(pre.id)))list=[pre,...list];
+ if(q){const words=q.split(' ');list=list.filter(e=>{const hay=epNorm(e.name+' '+e.summary);return words.every(w=>hay.includes(w));});
+  if(epPicker.remoteQ===epPicker.q)for(const r of epPicker.remote)if(!list.some(e=>String(e.id)===String(r.id)))list=[...list,r];}
+ return list;
+}
+function epRowHtml(e,first){
+ const on=String(e.id)===epPicker.selectedId;
+ const meta=[e.date?shortEpisodeDate(e.date):'',epDuration(e.duration)].filter(Boolean).join(' · ');
+ const about=e.summary?e.summary.slice(0,160)+(e.summary.length>160?'…':''):'';
+ return `<div class="ep-row${on?' is-on':''}" role="radio" aria-checked="${on}" tabindex="${on||(first&&!epPicker.selectedId)?0:-1}" data-id="${esc(String(e.id))}" onclick="epSelect(this.dataset.id)" onkeydown="epRowKey(event)">
+  <span class="ep-radio" aria-hidden="true"></span><span class="ep-row-text"><strong>${esc(e.name)}</strong>${meta?`<small>${esc(meta)}</small>`:''}${about?`<span class="ep-about">${esc(about)}</span>`:''}</span></div>`;
+}
+function renderEpisodeSheet(){
+ const el=document.getElementById('ep-sheet-list');if(!el)return;
+ const live=document.getElementById('ep-sheet-live'),confirm=document.getElementById('ep-sheet-confirm');
+ confirm.disabled=!epPicker.selectedId||!epFind(epPicker.selectedId);
+ if(epPicker.status==='loading'){el.setAttribute('aria-busy','true');el.innerHTML=Array.from({length:6},()=>'<div class="ep-row ep-skeleton" aria-hidden="true"><span class="ep-radio"></span><span class="ep-row-text"><i></i><i></i></span></div>').join('');live.textContent='Loading episodes…';return;}
+ el.removeAttribute('aria-busy');
+ if(epPicker.status==='error'){el.innerHTML='<div class="ep-state"><p>Couldn’t load episodes right now.</p><button type="button" class="ep-btn-quiet" onclick="epLoad(true)">Try again</button></div>';live.textContent='Couldn’t load episodes.';return;}
+ const list=epVisible(),q=epPicker.q.trim();
+ if(!list.length){
+  el.innerHTML=q?`<div class="ep-state"><p>${epPicker.remoteBusy?'Searching older episodes…':`No episodes match “${esc(q)}”.`}</p>${epPicker.remoteBusy?'':'<p class="ep-state-hint">Try a guest’s name or a word from the title.</p>'}</div>`
+   :'<div class="ep-state"><p>This podcast doesn’t list any episodes yet.</p></div>';
+  live.textContent=el.innerText;return;
+ }
+ const shown=list.slice(0,epPicker.shown);
+ el.innerHTML=shown.map((e,i)=>epRowHtml(e,i===0)).join('')+(list.length>shown.length?'<div class="ep-more" aria-hidden="true">Loading more…</div>':'')+(q&&epPicker.remoteBusy?'<div class="ep-more">Searching older episodes…</div>':'');
+ live.textContent=q?`${list.length} episode${list.length===1?'':'s'} found`:'';
+}
+function epFind(id){return epPicker.all.find(e=>String(e.id)===String(id))||epPicker.remote.find(e=>String(e.id)===String(id))||(epPicker.preset&&String(epPicker.preset.id)===String(id)?epPicker.preset:null);}
+function epMaybeMore(){
+ const el=document.getElementById('ep-sheet-list');if(!el)return;
+ if(el.scrollTop+el.clientHeight<el.scrollHeight-120)return;
+ const total=epVisible().length;if(epPicker.shown>=total)return;
+ epPicker.shown+=EP_PAGE;const top=el.scrollTop;renderEpisodeSheet();el.scrollTop=top;
+}
+function epSearch(v){
+ epPicker.q=v;epPicker.shown=EP_PAGE;renderEpisodeSheet();
+ document.getElementById('ep-sheet-list').scrollTop=0;
+ clearTimeout(epPicker.timer);
+ const q=v.trim();if(q.length<3||epPicker.status!=='ready')return;
+ // Few matches among the latest episodes: also look further back in Apple's catalog.
+ if(epVisible().length>=5)return;
+ epPicker.timer=setTimeout(async()=>{
+  const req=epPicker.request,podcast=epPicker.podcast;epPicker.remoteBusy=true;renderEpisodeSheet();
+  const terms=[q,`${podcast.title} ${q}`];
+  const found=[];
+  await Promise.allSettled(terms.map(async t=>{const d=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(t)}&media=podcast&entity=podcastEpisode&limit=50`);
+   for(const r of d.results||[])if(String(r.collectionId)===String(podcast.catalogId)&&r.trackId&&!found.some(x=>x.id===r.trackId))found.push(episodeFromAppleRecord(r));}));
+  if(req!==epPicker.request||epPicker.q!==v)return;
+  epPicker.remote=found.sort((a,b)=>b.date.localeCompare(a.date));epPicker.remoteQ=v;epPicker.remoteBusy=false;renderEpisodeSheet();
+ },400);
+}
+function epSelect(id){
+ epPicker.selectedId=String(id);
+ document.querySelectorAll('#ep-sheet-list .ep-row[role=radio]').forEach(r=>{const on=r.dataset.id===epPicker.selectedId;r.classList.toggle('is-on',on);r.setAttribute('aria-checked',String(on));r.tabIndex=on?0:-1;});
+ document.getElementById('ep-sheet-confirm').disabled=false;
+}
+function epFocusRow(i){const rows=[...document.querySelectorAll('#ep-sheet-list .ep-row[role=radio]')];const r=rows[Math.max(0,Math.min(i,rows.length-1))];if(r){r.focus();r.scrollIntoView({block:'nearest'});}}
+function epRowKey(e){
+ const rows=[...document.querySelectorAll('#ep-sheet-list .ep-row[role=radio]')],i=rows.indexOf(e.currentTarget);
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const n=rows[i+(e.key==='ArrowDown'?1:-1)];if(n){epSelect(n.dataset.id);n.focus();n.scrollIntoView({block:'nearest'});if(e.key==='ArrowDown')epMaybeMore();}else if(e.key==='ArrowUp')document.getElementById('ep-sheet-q').focus();}
+ else if(e.key===' '){e.preventDefault();epSelect(e.currentTarget.dataset.id);}
+ else if(e.key==='Enter'){e.preventDefault();epSelect(e.currentTarget.dataset.id);confirmEpisodeSheet();}
+}
+function closeEpisodeSheet(confirmed=false){
+ const d=document.getElementById('episode-sheet');if(d?.open)d.close();
+ clearTimeout(epPicker.timer);epPicker.request++;
+ if(!confirmed&&typeof epPicker.onCancel==='function')epPicker.onCancel();
+ epPicker.onConfirm=epPicker.onCancel=null;
+}
+async function confirmEpisodeSheet(){
+ const ep=epFind(epPicker.selectedId);if(!ep)return;
+ const fn=epPicker.onConfirm,podcast=epPicker.podcast;
+ epPicker.onCancel=null;closeEpisodeSheet(true);
+ if(typeof fn==='function')await fn({...ep},podcast);
+}
+// An episode as each list stores episodes (same shape as an episode found by search).
+function episodeCatalogItem(podcast,ep){
+ return {kind:'episode',id:'apple:'+ep.id,catalogId:ep.id,title:ep.name,artist:podcast.title||podcast.artist||'',art:ep.art||podcast.art||'',url:ep.url||'',label:'Episode',genres:podcast.genres||[],year:(ep.date||'').slice(0,4),date:ep.date||''};
 }
 function shortEpisodeDate(d){if(!d)return '';const t=new Date(d+'T12:00:00');return isNaN(t)?'':t.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
 function podcastEpisodePickerHtml(p){
- if(!p.catalogId)return '';
- if(!p._episodesList){
-  if(!p._episodesListLoading){p._episodesListLoading=true;podcastEpisodes(p.catalogId).then(list=>{p._episodesList=list;if(feedPostDraft.attachment===p)refreshFeedMedia();})
-   .catch(()=>{p._episodesList=[];if(feedPostDraft.attachment===p)refreshFeedMedia();}).finally(()=>{p._episodesListLoading=false;});}
-  return p.episode?`<div class="fc-season"><span class="fc-season-note">${esc(tvPartLabel(p))}</span></div>`:'<div class="fc-season"><span class="fc-season-note">Loading episodes…</span></div>';
- }
- const list=p._episodesList.slice();
- if(p.episode&&!list.some(e=>String(e.id)===String(p.episode.id)))list.unshift(p.episode);   // an older episode chosen earlier
- if(!list.length)return '';
- return `<div class="fc-season" role="group" aria-label="Which episode"><label class="fc-season-field fc-episode-field"><span>Episode</span><select onchange="setFeedPodcastEpisode(this.value)" ${feedPostDraft.saving?'disabled':''}><option value="">Whole podcast</option>${list.map(e=>`<option value="${esc(String(e.id))}" ${String(p.episode?.id)===String(e.id)?'selected':''}>${esc(e.name)}${e.date?' — '+esc(shortEpisodeDate(e.date)):''}</option>`).join('')}</select></label></div>`;
+ if(!p.catalogId&&!p.episode)return '';
+ const mode=p._epMode||(p.episode?'episode':'whole');
+ const seg=`<div class="ep-mode" role="radiogroup" aria-label="What is this post about?">
+   <button type="button" role="radio" aria-checked="${mode==='whole'}" class="${mode==='whole'?'is-on':''}" onclick="setFeedPodcastMode('whole')" ${feedPostDraft.saving?'disabled':''}>Whole podcast</button>
+   <button type="button" role="radio" aria-checked="${mode==='episode'}" class="${mode==='episode'?'is-on':''}" onclick="setFeedPodcastMode('episode')" ${feedPostDraft.saving||!p.catalogId&&!p.episode?'disabled':''}>Specific episode</button></div>`;
+ const e=mode==='episode'?p.episode:null;
+ const chosen=e?`<div class="ep-chosen"><span class="ep-radio is-on" aria-hidden="true"></span><span class="ep-row-text"><strong>${esc(e.name)}</strong>${e.date?`<small>${esc(shortEpisodeDate(e.date))}</small>`:''}</span>${p.catalogId?`<button type="button" class="fc-change" onclick="openFeedEpisodePicker()" ${feedPostDraft.saving?'disabled':''}>Change</button>`:''}</div>`:'';
+ return `<div class="ep-mode-wrap">${seg}${chosen}</div>`;
+}
+function applyFeedEpisode(p,e){
+ if(!p._show)p._show={art:p.art,year:p.year};
+ if(e){p.episode={id:e.id,name:e.name,date:e.date,url:e.url,summary:e.summary};if(e.art)p.art=e.art;p.year=(e.date||'').slice(0,4)||p._show.year;}
+ else{delete p.episode;p.art=p._show.art;p.year=p._show.year;if(p.art===undefined)delete p.art;}
+}
+// Switching modes keeps the chosen episode on hand; only the active choice is saved.
+function setFeedPodcastMode(mode){
+ const p=feedPostDraft.attachment;if(!p||feedPostDraft.saving)return;
+ if(mode==='whole'){if(p.episode)p._chosenEpisode=p.episode;p._epMode='whole';applyFeedEpisode(p,null);refreshFeedMedia();return;}
+ if(p._chosenEpisode||p.episode){p._epMode='episode';applyFeedEpisode(p,p.episode||p._chosenEpisode);refreshFeedMedia();return;}
+ p._epMode='episode';refreshFeedMedia();openFeedEpisodePicker();
+}
+function openFeedEpisodePicker(){
+ const p=feedPostDraft.attachment;if(!p?.catalogId)return;
+ epPicker.preset=p.episode||p._chosenEpisode||null;
+ openEpisodeSheet({podcast:{catalogId:p.catalogId,title:p.title,art:(p._show?.art)||p.art,artist:p.artist},selectedId:(p.episode||p._chosenEpisode)?.id??null,confirmLabel:'Use this episode',
+  onConfirm:e=>{if(feedPostDraft.attachment!==p)return;p._chosenEpisode={...e};p._epMode='episode';applyFeedEpisode(p,e);refreshFeedMedia();},
+  onCancel:()=>{if(feedPostDraft.attachment===p&&!p.episode){p._epMode='whole';refreshFeedMedia();}}});
 }
 function setFeedPodcastEpisode(value){
  const p=feedPostDraft.attachment;if(!p||feedPostDraft.saving)return;
