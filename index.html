@@ -3502,6 +3502,8 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
 .recs-thumb-wrap .wn-corner { top: 6px; right: 6px; }
 .recs-thumb-wrap .wn-corner .wn-add-btn { width: 28px; height: 28px; padding: 6px; }
 .activity-card-art .wn-corner { top: 10px; right: 10px; }
+/* Reactions: tap to heart, press and hold for more — keep the phone's long-press menu out of the way */
+.reaction-badge-btn { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -17185,6 +17187,36 @@ function toggleReactionPicker(targetType, targetId) {
   el.style.display = isOpen ? 'none' : 'flex';
 }
 
+// One tap hearts; holding opens the full set of reactions.
+let reactionPress = null;
+function reactionPressStart(e, targetType, targetId) {
+  if (e.button > 0) return;
+  clearTimeout(reactionPress?.timer);
+  reactionPress = { targetType, targetId, fired: false, timer: setTimeout(() => {
+    if (!reactionPress) return;
+    reactionPress.fired = true;
+    try { navigator.vibrate?.(8); } catch (_) {}
+    reactionOpenPicker(targetType, targetId);
+  }, 420) };
+}
+function reactionPressEnd() { if (reactionPress) clearTimeout(reactionPress.timer); }
+function reactionOpenPicker(targetType, targetId) {
+  if (!currentUser) { openAuthModal('signin'); return; }
+  const sel = `[id="reaction-picker-${targetType}-${targetId}"]`;
+  const el = (document.getElementById('activity-summary-modal')?.style.display === 'flex' && document.querySelector(`#activity-summary-content ${sel}`)) || document.getElementById(`reaction-picker-${targetType}-${targetId}`);
+  if (!el) return;
+  closeReactionPickers(targetType, targetId);
+  el.style.display = 'flex';
+  el.querySelector('button')?.focus({ preventScroll: true });
+}
+async function reactionTap(targetType, targetId) {
+  // The click that ends a long press only opens the picker.
+  if (reactionPress?.fired && reactionPress.targetType === targetType && String(reactionPress.targetId) === String(targetId)) { reactionPress = null; return; }
+  reactionPress = null;
+  closeReactionPickers();
+  const mine = (LIKE_CACHE[engagementKey(targetType, targetId)] || {}).mine;
+  await toggleReaction(targetType, targetId, mine || '❤️', () => refreshEngagementUI(targetType, targetId));
+}
 async function pickReaction(targetType, targetId, reaction) {
   closeReactionPickers();
   await toggleReaction(targetType, targetId, reaction, () => refreshEngagementUI(targetType, targetId));
@@ -17204,7 +17236,8 @@ function reactionBadgeHtml(targetType, targetId) {
   // (if any) and a gray ♡ to react.
   const ordered = Object.entries(state.byReaction).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]).map(([e]) => e);
   const mineFirst = state.mine ? [state.mine, ...ordered.filter(e => e !== state.mine)].slice(0, 3).join('') : '';
-  const pickerBtn = (content, mine) => `<button type="button" class="reaction-badge-btn${mine ? ' is-mine' : ''}" aria-label="${mine ? 'Change your reaction' : 'Add a reaction'}" title="${mine ? 'Change your reaction' : 'Add a reaction'}" onclick="event.stopPropagation(); toggleReactionPicker('${targetType}','${targetId}')" style="display:flex;align-items:center;gap:5px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;font-size:12.5px;color:${mine ? '#F97360' : 'var(--muted)'};"><span>${content}</span></button>`;
+  // Tap = ❤️ (or take your reaction back off). Press and hold, right-click, or ↑ = choose another emoji.
+  const pickerBtn = (content, mine) => `<button type="button" class="reaction-badge-btn${mine ? ' is-mine' : ''}" aria-label="${mine ? 'Remove your reaction. Press and hold, or press the up arrow, for other reactions' : 'Heart this. Press and hold, or press the up arrow, for other reactions'}" title="${mine ? 'Remove your reaction · hold for more' : 'Heart · hold for more reactions'}" onclick="event.stopPropagation(); reactionTap('${targetType}','${targetId}')" onpointerdown="reactionPressStart(event,'${targetType}','${targetId}')" onpointerup="reactionPressEnd()" onpointerleave="reactionPressEnd()" onpointercancel="reactionPressEnd()" oncontextmenu="event.preventDefault();event.stopPropagation();reactionOpenPicker('${targetType}','${targetId}')" onkeydown="if(event.key==='ArrowUp'||event.key==='ContextMenu'){event.preventDefault();reactionOpenPicker('${targetType}','${targetId}')}" style="display:flex;align-items:center;gap:5px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;font-size:12.5px;color:${mine ? '#F97360' : 'var(--muted)'};"><span>${content}</span></button>`;
   const countBtn = `<button type="button" class="reaction-summary-btn${state.mine ? ' is-mine' : ''}" aria-label="See who reacted: ${state.total} reaction${state.total === 1 ? '' : 's'}" onclick="event.stopPropagation();openReactionPeople('${targetType}','${targetId}')">`;
   return `<span style="position:relative;display:inline-flex;align-items:center;gap:5px;">
     ${state.mine
