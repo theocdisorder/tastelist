@@ -3581,6 +3581,34 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
   .ep-sheet-foot button { flex: 1; padding: 12px; }
   .ep-pick-link { margin-left: 56px; }
 }
+/* ── Post composer: type chips, roomier writing, TV season/episode choice ── */
+.fc-chips { display: flex; gap: 6px; margin: 10px 0 2px; overflow-x: auto; scrollbar-width: none; padding: 1px; }
+.fc-chips::-webkit-scrollbar { display: none; }
+.fc-chip { flex: 0 0 auto; font: 600 12.5px var(--font-ui, inherit); color: var(--muted); background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; cursor: pointer; min-height: 0 !important; min-width: 0 !important; }
+.fc-chip:hover { color: var(--text); }
+.fc-chip[aria-pressed="true"] { color: #e4d9ff; background: rgba(185,154,255,.16); border-color: rgba(185,154,255,.5); }
+.fc-chip:focus-visible { outline: 2px solid rgba(185,154,255,.8); outline-offset: 1px; }
+.fc-results { max-height: 340px; }
+.fc-result.is-prev { background: rgba(185,154,255,.08); border-color: rgba(185,154,255,.35); }
+.fc-results-hint { color: #cdbcff; }
+#feed-composer-panel.has-media #feed-post-text.fc-text { min-height: 170px; font-size: 18px; }
+.fc-season-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 1px; }
+.fc-season-chips::-webkit-scrollbar { display: none; }
+.fc-season-chip { flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 6px; font: 600 13px var(--font-ui, inherit); color: var(--text); background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 10px; padding: 7px 12px; cursor: pointer; min-height: 0 !important; min-width: 0 !important; }
+.fc-season-chip small { font-weight: 500; font-size: 11.5px; color: var(--muted); }
+.fc-season-chip.is-on { background: rgba(185,154,255,.14); border-color: #b99aff; color: #efe8ff; }
+.fc-season-chip.is-on small { color: #cdbcff; }
+.ep-choose-btn { align-self: flex-start; font: 600 13px var(--font-ui, inherit); color: #b99aff; background: none; border: 1px dashed rgba(185,154,255,.5); border-radius: 10px; padding: 9px 12px; cursor: pointer; min-height: 0 !important; }
+.ep-mode-wrap .fc-season-note { margin: 0; }
+@media (max-width: 600px) {
+  .fc-panel { height: 100dvh; max-height: 100dvh; min-height: 0; }
+  .fc-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .fc-results { max-height: none; overflow: visible; }   /* one scroll area on phones: the body */
+  .fc-foot { position: static; flex: 0 0 auto; }
+  .ep-mode { align-self: stretch; } .ep-mode button { flex: 1; padding: 8px 4px; white-space: nowrap; font-size: 12.5px; }
+  .fc-season-chips { flex-wrap: wrap; overflow: visible; }
+}
+@media (pointer: coarse) { .fc-chip, .fc-season-chip { padding: 9px 14px; } }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -8802,7 +8830,9 @@ const PICKER_IDEAS={music:['Music I Love','On Repeat','Albums That Shaped Me'],a
 let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null,tab:'music',kindFilter:null,error:false};
 // Search results can mix types; chips let people narrow to one after searching.
 const PICKER_KIND_ORDER=['movie','tv','book','author','song','album','artist','podcast','episode','comedian','special'];
-const PICKER_KIND_LABEL={author:'Authors',song:'Songs',album:'Albums',artist:'Artists',movie:'Movies',tv:'TV',book:'Books',podcast:'Podcasts',episode:'Episodes',comedian:'Comedians',special:'Specials'};
+// One set of type names for every media search (posts, Favorites, lists).
+const MEDIA_KIND_LABELS={all:'All',movie:'Movies',tv:'TV',book:'Books',author:'Authors',song:'Songs',album:'Albums',artist:'Artists',podcast:'Podcasts',episode:'Episodes',comedian:'Comedians',special:'Specials',screen:'Movies & TV'};
+const PICKER_KIND_LABEL=MEDIA_KIND_LABELS;
 function pickerTabForKind(k){return ['song','album','artist'].includes(k)?'music':k==='movie'?'movies':k==='tv'?'tv':['book','author'].includes(k)?'books':['podcast','episode'].includes(k)?'podcasts':['comedian','special'].includes(k)?'comedy':'music';}
 const PICKER_TAB_KIND={movies:'movie',tv:'tv',books:'book',podcasts:'podcast'};
 function setPickerKind(k){flexibleMusic.kindFilter=k||null;renderPickerResults();}
@@ -18073,7 +18103,9 @@ function renderWelcomeBanner() {
 let feedTitleSearch={seq:0,timer:null,results:[],manual:false,filter:'all',filterManual:false,lastQuery:''};
 // Composer title search: filter chips + type words ("diplomat book", "espresso song"), like onboarding.
 const FEED_TITLE_KINDS=['book','author','movie','tv','song','album','artist','podcast','episode'];
-const FEED_FILTER_LABELS={all:'All',book:'Books',movie:'Movies',tv:'TV',song:'Songs',album:'Albums',artist:'Artists',podcast:'Podcasts',screen:'Movies & TV'};
+const FEED_FILTER_LABELS=MEDIA_KIND_LABELS;
+// Filter chips in the post search: authors live under Books, episodes under Podcasts.
+const FEED_CHIP_KINDS=['all','movie','tv','book','song','album','artist','podcast'];
 function parseFeedTitleQuery(raw){
  const full=String(raw||'').trim(),m=full.match(/\s+(?:songs?|tracks?|singles?)$/i);
  if(m){const q=full.slice(0,m.index).trim();if(q.length>=2)return{q,kind:'song',full};}
@@ -18087,9 +18119,9 @@ function setFeedTitleFilter(filter){
 }
 function renderFeedTitleFilters(q){
  const el=document.getElementById('feed-title-filters');if(!el)return;
- // One small "All types ▾" control in the search box; a trailing type word ("dune book") still sets it.
- const f=FEED_FILTER_LABELS[feedTitleSearch.filter]?feedTitleSearch.filter:'all';
- el.innerHTML=`<label class="update-sr" for="feed-title-kind">Type</label><select id="feed-title-kind" class="fc-kind" onchange="feedTitleSearch.filterManual=false;setFeedTitleFilter(this.value)" ${feedPostDraft.saving?'disabled':''}>${['all',...FEED_TITLE_KINDS].map(k=>`<option value="${k}" ${k===f?'selected':''}>${k==='all'?'All types':FEED_FILTER_LABELS[k]}</option>`).join('')}${f==='screen'?`<option value="screen" selected>${FEED_FILTER_LABELS.screen}</option>`:''}</select>`;
+ const f=feedTitleSearch.filter||'all';
+ const on=k=>k===f||(f==='screen'&&(k==='movie'||k==='tv'));
+ el.innerHTML=`<div class="fc-chips" role="group" aria-label="Filter results by type">${FEED_CHIP_KINDS.map(k=>`<button type="button" class="fc-chip" aria-pressed="${on(k)}" onclick="setFeedTitleFilter('${k}')" ${feedPostDraft.saving?'disabled':''}>${esc(MEDIA_KIND_LABELS[k])}</button>`).join('')}</div>`;
 }
 const FEED_KIND_LABEL={author:'Author',book:'Book',movie:'Movie',tv:'TV',song:'Song',album:'Album',artist:'Artist',podcast:'Podcast',episode:'Episode'};
 function feedKindLabel(p){return FEED_KIND_LABEL[p.kind]||p.label||'';}
@@ -18112,7 +18144,7 @@ function tvSeasons(id){
 function tvEpisodes(id,n){
  const key=id+'|'+n;
  if(!tvEpisodeCache.has(key))tvEpisodeCache.set(key,(async()=>{const d=await (await tmdbFetch(`/tv/${id}/season/${n}`)).json();
-  return (d.episodes||[]).map(e=>({number:e.episode_number,name:e.name||'',still:e.still_path||'',date:e.air_date||''}));})());
+  return (d.episodes||[]).map(e=>({number:e.episode_number,name:e.name||'',still:e.still_path||'',date:e.air_date||'',runtime:e.runtime||0,overview:e.overview||''}));})());
  const job=tvEpisodeCache.get(key);job.catch(()=>tvEpisodeCache.delete(key));return job;
 }
 // "love is blind uk season 3" / "the bear s2": search the show, then pick that season.
@@ -18149,10 +18181,11 @@ function ensureEpisodeSheet(){
  d.addEventListener('mousedown',e=>{if(e.target===d)closeEpisodeSheet();});
  document.body.appendChild(d);return d;
 }
-function openEpisodeSheet({podcast,selectedId=null,confirmLabel='Choose episode',onConfirm,onCancel}){
+function openEpisodeSheet({podcast,selectedId=null,confirmLabel='Choose episode',onConfirm,onCancel,load=null,reload=null,noRemote=false,heading='Choose an episode'}){
  if(!podcast?.catalogId)return;
  const d=ensureEpisodeSheet();
- Object.assign(epPicker,{podcast,all:[],shown:EP_PAGE,q:'',selectedId:selectedId!=null?String(selectedId):null,status:'loading',remote:[],remoteQ:'',remoteBusy:false,request:epPicker.request+1,onConfirm,onCancel,confirmLabel});
+ Object.assign(epPicker,{podcast,all:[],shown:EP_PAGE,q:'',selectedId:selectedId!=null?String(selectedId):null,status:'loading',remote:[],remoteQ:'',remoteBusy:false,request:epPicker.request+1,onConfirm,onCancel,confirmLabel,load,reload,noRemote});
+ d.querySelector('#ep-sheet-title').textContent=heading;
  d.querySelector('.ep-sheet-art').innerHTML=podcast.art?`<img src="${esc(podcast.art)}" alt="" onerror="this.remove()">`:'';
  d.querySelector('.ep-sheet-show').textContent=podcast.title||'';
  document.getElementById('ep-sheet-q').value='';
@@ -18164,9 +18197,9 @@ function openEpisodeSheet({podcast,selectedId=null,confirmLabel='Choose episode'
 }
 async function epLoad(retry=false){
  const req=epPicker.request,id=epPicker.podcast?.catalogId;if(!id)return;
- if(retry)podcastEpisodeCache.delete(id);
+ if(retry){if(epPicker.reload)epPicker.reload();else podcastEpisodeCache.delete(id);}
  epPicker.status='loading';renderEpisodeSheet();
- try{const list=await podcastEpisodes(id);if(req!==epPicker.request)return;epPicker.all=list;epPicker.status='ready';}
+ try{const list=epPicker.load?await epPicker.load():await podcastEpisodes(id);if(req!==epPicker.request)return;epPicker.all=list;epPicker.status='ready';}
  catch(_){if(req!==epPicker.request)return;epPicker.status='error';}
  renderEpisodeSheet();
 }
@@ -18213,7 +18246,7 @@ function epSearch(v){
  epPicker.q=v;epPicker.shown=EP_PAGE;renderEpisodeSheet();
  document.getElementById('ep-sheet-list').scrollTop=0;
  clearTimeout(epPicker.timer);
- const q=v.trim();if(q.length<3||epPicker.status!=='ready')return;
+ const q=v.trim();if(q.length<3||epPicker.status!=='ready'||epPicker.noRemote)return;
  // Few matches among the latest episodes: also look further back in Apple's catalog.
  if(epVisible().length>=5)return;
  epPicker.timer=setTimeout(async()=>{
@@ -18346,55 +18379,96 @@ function listenLinkHtml(a){
  const name=/spotify/.test(host)?'Spotify':/apple/.test(host)?'Apple Podcasts':/youtu/.test(host)?'YouTube':'';
  return `<a class="post-listen" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Listen${name?' on '+name:''} ↗</a>`;
 }
-function refreshFeedMedia(){const box=document.querySelector('#feed-composer-panel .fc-media');if(box)box.innerHTML=feedComposerMediaMarkup();}
+function refreshFeedMedia(){const box=document.querySelector('#feed-composer-panel .fc-media');if(box)box.innerHTML=feedComposerMediaMarkup();document.getElementById('feed-composer-panel')?.classList.toggle('has-media',!!feedPostDraft.attachment);updateFeedComposerHint();}
 function feedSeasonPickerHtml(p){
  if(p?.kind==='podcast')return podcastEpisodePickerHtml(p);
- if(p?.kind!=='tv'||!p.id||feedPostDraft.saving&&!p.season)return '';
+ if(p?.kind!=='tv'||!p.id)return '';
  if(!p._seasons){
-  if(!p._seasonsLoading){p._seasonsLoading=true;tvSeasons(p.id).then(list=>{p._seasons=list;
-    if(p._wantSeason&&!p.season&&list.some(x=>x.number===p._wantSeason)){const want=p._wantSeason,ep=p._wantEpisode;p._wantSeason=null;setFeedSeason(String(want),ep);return;}
-    if(feedPostDraft.attachment===p)refreshFeedMedia();})
-   .catch(()=>{p._seasons=[];if(feedPostDraft.attachment===p)refreshFeedMedia();}).finally(()=>{p._seasonsLoading=false;});}
-  return p.season?`<div class="fc-season"><span class="fc-season-note">${esc(tvPartLabel(p))}</span></div>`:'<div class="fc-season"><span class="fc-season-note">Loading seasons…</span></div>';
+  if(!p._seasonsLoading){p._seasonsLoading=true;tvSeasons(p.id).then(list=>{p._seasons=list;applyTvHint(p);})
+   .catch(()=>{p._seasons=[];p._seasonsFailed=true;}).finally(()=>{p._seasonsLoading=false;if(feedPostDraft.attachment===p)refreshFeedMedia();});}
+  return `<div class="ep-mode-wrap"><span class="fc-season-note">${p.season?esc(tvPartLabel(p)):'Loading seasons…'}</span></div>`;
  }
- if(!p._seasons.length&&!p.season)return '';
- const seasons=p._seasons.length?p._seasons:[{number:p.season.number,name:'',year:p.season.year}];
- const sel=p.season?.number;
- let episodes='';
- if(sel){
-  const key=p.id+'|'+sel,eps=(p._episodes||{})[sel];
-  if(!eps){
-   if(!(p._episodesLoading||{})[sel]){(p._episodesLoading=p._episodesLoading||{})[sel]=true;tvEpisodes(p.id,sel).then(list=>{(p._episodes=p._episodes||{})[sel]=list;
-     if(p._wantEpisode&&!p.episode&&list.some(e=>e.number===p._wantEpisode)){const want=p._wantEpisode;p._wantEpisode=null;setFeedEpisode(String(want));return;}
-     if(feedPostDraft.attachment===p)refreshFeedMedia();})
-    .catch(()=>{(p._episodes=p._episodes||{})[sel]=[];if(feedPostDraft.attachment===p)refreshFeedMedia();}).finally(()=>{p._episodesLoading[sel]=false;});}
-  } else if(eps.length){
-   episodes=`<label class="fc-season-field"><span>Episode</span><select onchange="setFeedEpisode(this.value)" ${feedPostDraft.saving?'disabled':''}><option value="">Whole season</option>${eps.map(e=>`<option value="${e.number}" ${p.episode?.number===e.number?'selected':''}>${e.number}. ${esc(e.name||'Episode '+e.number)}</option>`).join('')}</select></label>`;
+ const mode=p._tvMode||(p.episode?'episode':p.season?'season':'series');
+ const has=p._seasons.length>0||!!p.season;
+ const dis=feedPostDraft.saving?'disabled':'';
+ const btn=(m,label)=>`<button type="button" role="radio" aria-checked="${mode===m}" class="${mode===m?'is-on':''}" onclick="setTvMode('${m}')" ${dis} ${m!=='series'&&!has?'disabled':''}>${label}</button>`;
+ let out=`<div class="ep-mode" role="radiogroup" aria-label="What is this post about?">${btn('series','Entire series')}${btn('season','Specific season')}${btn('episode','Specific episode')}</div>`;
+ if(p._seasonsFailed&&!has)out+=`<p class="fc-season-note">Couldn’t load seasons for this show. <button type="button" class="fc-link" onclick="retryTvSeasons()">Try again</button></p>`;
+ if(mode!=='series'&&has){
+  const seasons=p._seasons.length?p._seasons:[{number:p.season.number,year:p.season.year}];
+  out+=`<div class="fc-season-chips" role="radiogroup" aria-label="Season">${seasons.map(x=>{const on=p.season?.number===x.number;return `<button type="button" role="radio" aria-checked="${on}" class="fc-season-chip${on?' is-on':''}" onclick="pickTvSeason(${x.number})" ${dis}>Season ${x.number}${x.year?`<small>${esc(x.year)}</small>`:''}</button>`;}).join('')}</div>`;
+  if(mode==='season'&&!p.season)out+='<p class="fc-season-note">Pick a season.</p>';
+  if(mode==='episode'){
+   if(!p.season)out+='<p class="fc-season-note">Pick a season, then the episode.</p>';
+   else if(p.episode)out+=`<div class="ep-chosen"><span class="ep-radio is-on" aria-hidden="true"></span><span class="ep-row-text"><strong>Episode ${p.episode.number}${p.episode.name&&!/^episode\s*\d+$/i.test(p.episode.name)?' · '+esc(p.episode.name):''}</strong>${p.episode.date?`<small>${esc(shortEpisodeDate(p.episode.date))}</small>`:''}</span><button type="button" class="fc-change" onclick="openTvEpisodePicker()" ${dis}>Change</button></div>`;
+   else out+=`<button type="button" class="ep-choose-btn" onclick="openTvEpisodePicker()" ${dis}>Choose an episode from Season ${p.season.number}…</button>`;
   }
  }
- return `<div class="fc-season" role="group" aria-label="Which part of the show"><label class="fc-season-field"><span>Season</span><select onchange="setFeedSeason(this.value)" ${feedPostDraft.saving?'disabled':''}><option value="">Whole show</option>${seasons.map(x=>`<option value="${x.number}" ${sel===x.number?'selected':''}>Season ${x.number}${x.year?' ('+x.year+')':''}</option>`).join('')}</select></label>${episodes}</div>`;
+ return `<div class="ep-mode-wrap">${out}</div>`;
 }
-function setFeedSeason(value,wantEpisode=null){
- const p=feedPostDraft.attachment;if(!p||feedPostDraft.saving)return;
+function retryTvSeasons(){const p=feedPostDraft.attachment;if(!p)return;tvSeasonCache.delete(p.id);delete p._seasons;delete p._seasonsFailed;refreshFeedMedia();}
+// "… season 3 episode 2" in the search: select them, but only if the show really has them.
+async function applyTvHint(p){
+ const want=p._wantSeason,wantEp=p._wantEpisode;p._wantSeason=p._wantEpisode=null;
+ if(!want||p.season)return;
+ const x=(p._seasons||[]).find(z=>z.number===want);if(!x)return;
+ setTvSeasonData(p,x);p._tvMode=wantEp?'episode':'season';
+ if(wantEp){try{const eps=await tvEpisodes(p.id,want);const e=eps.find(z=>z.number===wantEp);if(e&&p.season?.number===want){p.episode={number:e.number,name:e.name,date:e.date};p._chosenEpisode={...p.episode,season:want};}}catch(_){}}
+ if(feedPostDraft.attachment===p)refreshFeedMedia();
+}
+function setTvSeasonData(p,x){
  if(!p._show)p._show={art:p.art,poster:p.poster};
- delete p.episode;
- const x=(p._seasons||[]).find(z=>String(z.number)===String(value));
- if(!x){delete p.season;p.art=p._show.art;p.poster=p._show.poster;if(p.art===undefined)delete p.art;}
- else{p.season={number:x.number,name:x.name,year:x.year,episodes:x.episodes};if(x.poster)p.art=TMDB_IMG+x.poster;else{p.art=p._show.art;if(p.art===undefined)delete p.art;}p._wantEpisode=wantEpisode;}
- refreshFeedMedia();
+ p.season={number:x.number,name:x.name||'',year:x.year||'',episodes:x.episodes||null};
+ if(x.poster)p.art=TMDB_IMG+x.poster;else{p.art=p._show.art;if(p.art===undefined)delete p.art;}
+ p._chosenSeason={...p.season,poster:x.poster||''};
 }
-function setFeedEpisode(value){
- const p=feedPostDraft.attachment;if(!p?.season||feedPostDraft.saving)return;
- const e=((p._episodes||{})[p.season.number]||[]).find(z=>String(z.number)===String(value));
- if(e)p.episode={number:e.number,name:e.name,date:e.date};else delete p.episode;
+function clearTvSeasonData(p){
+ delete p.season;delete p.episode;
+ if(p._show){p.art=p._show.art;p.poster=p._show.poster;if(p.art===undefined)delete p.art;}
+}
+// Switching keeps the earlier season/episode on hand; only the active choice is saved.
+function setTvMode(mode){
+ const p=feedPostDraft.attachment;if(!p||feedPostDraft.saving)return;
+ if(p.season&&!p._chosenSeason)p._chosenSeason={...p.season};            // e.g. editing an older post
+ if(p.episode)p._chosenEpisode={...p.episode,season:p.season?.number};
+ p._tvMode=mode;
+ if(mode==='series'){clearTvSeasonData(p);refreshFeedMedia();return;}
+ const s=p.season||p._chosenSeason;
+ if(s){const x=(p._seasons||[]).find(z=>z.number===s.number)||{...s};setTvSeasonData(p,x);}
+ if(mode==='season'){delete p.episode;refreshFeedMedia();return;}
+ const ep=p._chosenEpisode;
+ if(p.season&&ep&&ep.season===p.season.number)p.episode={number:ep.number,name:ep.name,date:ep.date};
  refreshFeedMedia();
+ if(p.season&&!p.episode)openTvEpisodePicker();
+}
+function pickTvSeason(n){
+ const p=feedPostDraft.attachment;if(!p||feedPostDraft.saving)return;
+ const x=(p._seasons||[]).find(z=>z.number===n);if(!x)return;
+ const changed=p.season?.number!==n;
+ setTvSeasonData(p,x);
+ if(changed)delete p.episode;
+ refreshFeedMedia();
+ if((p._tvMode||'season')==='episode'&&!p.episode)openTvEpisodePicker();
+}
+function openTvEpisodePicker(){
+ const p=feedPostDraft.attachment;if(!p?.season)return;
+ const n=p.season.number,showId=p.id,poster=p._chosenSeason?.poster;
+ epPicker.preset=null;
+ openEpisodeSheet({podcast:{catalogId:'tv:'+showId+':'+n,title:`${p.title} · Season ${n}`,art:poster?TMDB_IMG+poster:(p._show?.art||p.art||(p.poster?TMDB_IMG+p.poster:''))},
+  heading:'Choose an episode',noRemote:true,selectedId:p.episode?.number??null,confirmLabel:'Use this episode',
+  load:async()=>(await tvEpisodes(showId,n)).map(e=>({id:e.number,name:`Episode ${e.number}${e.name&&!/^episode\s*\d+$/i.test(e.name)?' · '+e.name:''}`,rawName:e.name,date:e.date,duration:(e.runtime||0)*60000,summary:e.overview||''})),
+  reload:()=>tvEpisodeCache.delete(showId+'|'+n),
+  onConfirm:e=>{if(feedPostDraft.attachment!==p||p.season?.number!==n)return;p.episode={number:e.id,name:e.rawName||'',date:e.date||''};p._chosenEpisode={...p.episode,season:n};p._tvMode='episode';refreshFeedMedia();}});
 }
 function feedResultMeta(p){return [feedKindLabel(p),tvPartLabel(p),p.artist||p.author||p.network,p.season?.year||p.year].filter(Boolean).join(' · ');}
+function feedPickKey(p){return [p.kind,String(p.catalogId||p.id||''),String(p.title||'').toLowerCase()].join('|');}
 function renderFeedTitleRows(){
  const box=document.getElementById('feed-title-results');if(!box)return;
  const rows=feedTitleSearch.results,f=feedTitleSearch.filter;
- if(feedTitleSearch.error){box.innerHTML=`<p class="fc-results-note">Search isn’t responding right now. Try again in a moment.</p>`;return;}
- box.innerHTML=rows.length?`<div class="fc-results" role="listbox" aria-label="Matching titles">${rows.map((p,i)=>`<button type="button" role="option" class="fc-result" onclick="selectFeedTitle(${i})" onkeydown="feedResultKey(event,${i})">${feedThumbHtml(p)}<span class="fc-result-text"><strong>${esc(p.title)}</strong><small>${esc(feedResultMeta(p))}</small></span></button>`).join('')}</div>`
+ if(feedTitleSearch.error){box.innerHTML=`<p class="fc-results-note">Search isn’t responding right now. <button type="button" class="fc-link" onclick="searchFeedTitles(document.getElementById('feed-title-query')?.value||feedTitleSearch.lastQuery,true)">Try again</button></p>`;return;}
+ const hint=feedTitleSearch.seasonHint&&rows.some(p=>p.kind==='tv')?`<p class="fc-results-note fc-results-hint">Pick the series — ${esc(feedTitleSearch.seasonHint.episode?`Season ${feedTitleSearch.seasonHint.season}, Episode ${feedTitleSearch.seasonHint.episode}`:`Season ${feedTitleSearch.seasonHint.season}`)} will be selected if it exists.</p>`:'';
+ const prevKey=feedTitleSearch.prevPick?feedPickKey(feedTitleSearch.prevPick):null;
+ box.innerHTML=rows.length?hint+`<div class="fc-results" role="listbox" aria-label="Matching titles">${rows.map((p,i)=>`<button type="button" role="option" class="fc-result${prevKey&&feedPickKey(p)===prevKey?' is-prev':''}" aria-selected="${!!(prevKey&&feedPickKey(p)===prevKey)}" onclick="selectFeedTitle(${i})" onkeydown="feedResultKey(event,${i})">${feedThumbHtml(p)}<span class="fc-result-text"><strong>${esc(p.title)}</strong><small>${esc(feedResultMeta(p))}</small></span></button>`).join('')}</div>`
   :`<p class="fc-results-note">No matches${f!=='all'?` in ${esc((FEED_FILTER_LABELS[f]||'').toLowerCase())} · <button type="button" class="fc-link" onclick="setFeedTitleFilter('all')">Search all types</button>`:'. Try another spelling or a creator’s name.'}</p>`;
 }
 // Arrow keys move between results (and back up to the search field).
@@ -18421,6 +18495,7 @@ function searchFeedTitles(q,manual=false){
  const el=document.getElementById('feed-title-results');if(!el)return;
  const parsed=parseFeedTitleQuery(q);
  if(!feedTitleSearch.filterManual)feedTitleSearch.filter=parsed.kind||'all';   // a trailing type word sets the filter
+ if(feedTitleSearch.seasonHint&&!feedTitleSearch.filterManual)feedTitleSearch.filter='tv';   // "… season 3" / "S3E2" means a TV series
  if(q.trim().length<2){el.innerHTML='';if(!q.trim()){feedTitleSearch.filter='all';feedTitleSearch.filterManual=false;}renderFeedTitleFilters('');return;}
  renderFeedTitleFilters(q);feedTitleSearch.error=false;el.innerHTML='<p class="fc-results-note">Searching…</p>';
  feedTitleSearch.timer=setTimeout(async()=>{
@@ -18435,16 +18510,21 @@ function searchFeedTitles(q,manual=false){
  const seen=new Set();
  const rows=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).filter(p=>{const k=[p.kind,String(p.id||''),String(p.title||'').toLowerCase()].join('|');if(seen.has(k))return false;seen.add(k);return true;})
    .filter(p=>f==='all'||p.kind===f||(f==='screen'&&['movie','tv'].includes(p.kind))||(f==='podcast'&&p.kind==='episode')||(f==='book'&&p.kind==='author'))
-   .sort(catalogCompare(rankQ)).filter((p,i,a)=>f==='podcast'||p.kind!=='episode'||a.slice(0,i).filter(x=>x.kind==='episode').length<3).slice(0,12);feedTitleSearch.results=rows;
- feedTitleSearch.error=!rows.length&&results.length>0&&results.every(r=>r.status==='rejected');
+   .sort(catalogCompare(rankQ)).filter((p,i,a)=>f==='podcast'||p.kind!=='episode'||a.slice(0,i).filter(x=>x.kind==='episode').length<3);
+ // The closest matches only: once a few titles match well, drop the loosely related ones.
+ const close=rows.filter(p=>onboardingMatchRank(p,rankQ)<=2);
+ feedTitleSearch.results=(close.length>=3?close:rows).slice(0,8);
+ feedTitleSearch.error=!feedTitleSearch.results.length&&results.length>0&&results.every(r=>r.status==='rejected');
  renderFeedTitleRows();return;
  const box=document.getElementById('feed-title-results');if(!box)return;
  box.innerHTML=rows.length?`<p>Choose the correct title to attach its artwork.</p><div class="feed-title-matches">${rows.map((p,i)=>`<button type="button" onclick="selectFeedTitle(${i})">${feedTitleArt(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.label,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span></button>`).join('')}</div>`:`<p>No matches${f!=='all'?` in ${esc(FEED_FILTER_LABELS[f].toLowerCase())}`:''}. Try the title and creator’s name${f!=='all'?', or search everything':''}.</p>`;
  },350);
 }
-function selectFeedTitle(i){if(feedPostDraft.saving)return;const p=feedTitleSearch.results[i];if(!p)return;feedPostDraft.attachment={...p};if(p.episode)feedPostDraft.attachment.episode={...p.episode};if(p.kind==='tv'&&feedTitleSearch.seasonHint){feedPostDraft.attachment._wantSeason=feedTitleSearch.seasonHint.season;feedPostDraft.attachment._wantEpisode=feedTitleSearch.seasonHint.episode;}feedTitleSearch.seq++;feedTitleSearch.pickedFrom={q:feedTitleSearch.lastQuery,results:feedTitleSearch.results.slice(),filter:feedTitleSearch.filter,filterManual:feedTitleSearch.filterManual};renderFeedComposer();setTimeout(()=>document.getElementById('feed-post-text')?.focus(),0);}
+function selectFeedTitle(i){if(feedPostDraft.saving)return;const p=feedTitleSearch.results[i];if(!p)return;
+ const prev=feedTitleSearch.prevPick;feedTitleSearch.prevPick=null;
+ feedPostDraft.attachment=prev&&feedPickKey(prev)===feedPickKey(p)?prev:{...p};if(p.episode&&feedPostDraft.attachment!==prev)feedPostDraft.attachment.episode={...p.episode};if(p.kind==='tv'&&feedTitleSearch.seasonHint&&feedPostDraft.attachment!==prev){feedPostDraft.attachment._wantSeason=feedTitleSearch.seasonHint.season;feedPostDraft.attachment._wantEpisode=feedTitleSearch.seasonHint.episode;}feedTitleSearch.seq++;feedTitleSearch.pickedFrom={q:feedTitleSearch.lastQuery,results:feedTitleSearch.results.slice(),filter:feedTitleSearch.filter,filterManual:feedTitleSearch.filterManual};renderFeedComposer();setTimeout(()=>document.getElementById('feed-post-text')?.focus(),0);}
 function clearFeedTitle(){
- if(feedPostDraft.saving)return;feedPostDraft.attachment=null;feedTitleSearch.seq++;
+ if(feedPostDraft.saving)return;feedTitleSearch.prevPick=feedPostDraft.attachment;feedPostDraft.attachment=null;feedTitleSearch.seq++;
  const prev=feedTitleSearch.pickedFrom;feedTitleSearch.pickedFrom=null;
  if(prev){Object.assign(feedTitleSearch,{lastQuery:prev.q,results:prev.results,filter:prev.filter,filterManual:prev.filterManual,manual:true});}
  else{feedTitleSearch.manual=false;feedTitleSearch.filter='all';feedTitleSearch.filterManual=false;feedTitleSearch.results=[];}
@@ -18685,6 +18765,10 @@ function feedDraftHasContent() { return !!(feedPostDraft.text?.trim() || feedPos
 function feedComposerHint() {
   if (feedPostDraft.saving) return '';
   if (!feedPostDraft.attachment) return 'Pick a title to post';
+  { const a = feedPostDraft.attachment;
+    if (a.kind === 'tv' && a._tvMode === 'season' && !a.season) return 'Pick a season';
+    if (a.kind === 'tv' && a._tvMode === 'episode' && !a.episode) return 'Pick an episode';
+    if (a.kind === 'podcast' && a._epMode === 'episode' && !a.episode) return 'Pick an episode'; }
   if (!feedPostDraft.text?.trim()) return 'Add your take to post';
   if (feedPostDraft.text.length > 3000) return 'Keep it under 3,000 characters';
   return '';
@@ -18710,7 +18794,8 @@ function feedComposerMediaMarkup() {
   }
   return `<label class="update-sr" for="feed-title-query">Search for a title</label>
     <div class="fc-search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-    <input id="feed-title-query" placeholder="Search books, movies, shows, music, podcasts… or paste a link" autocomplete="off" oninput="searchFeedTitles(this.value,true)" onkeydown="if(event.key==='ArrowDown'){const r=document.querySelector('#feed-title-results .fc-result');if(r){event.preventDefault();r.focus();}}" ${feedPostDraft.saving ? 'disabled' : ''}><div id="feed-title-filters"></div></div>
+    <input id="feed-title-query" placeholder="Search books, movies, shows, music, podcasts… or paste a link" autocomplete="off" oninput="searchFeedTitles(this.value,true)" onkeydown="if(event.key==='ArrowDown'){const r=document.querySelector('#feed-title-results .fc-result');if(r){event.preventDefault();r.focus();}}" ${feedPostDraft.saving ? 'disabled' : ''}></div>
+    <div id="feed-title-filters"></div>
     <div id="feed-title-results" aria-live="polite"></div>`;
 }
 function renderFeedComposer(){
@@ -18730,6 +18815,7 @@ function renderFeedComposer(){
  if(!feedComposerOpen){overlay.hidden=true;document.body.classList.remove('fc-open');return;}
  overlay.hidden=false;document.body.classList.add('fc-open');
  const hint=feedComposerHint();
+ panel.classList.toggle('has-media',!!feedPostDraft.attachment);
  panel.innerHTML=`<header class="fc-head"><div class="fc-head-text"><h2 id="fc-title">${feedPostDraft.id?'Edit update':'Post an update'}</h2></div><button type="button" class="fc-close" aria-label="Close (your draft is kept)" title="Close — your draft is kept" onclick="closeFeedComposer()">×</button></header>
   <div class="fc-body">
    <div class="fc-media">${feedComposerMediaMarkup()}</div>
@@ -18777,6 +18863,10 @@ async function publishFeedPost(){
  if(!currentUser||feedPostDraft.saving||feedPostDraft.userId!==currentUser.id)return;
  const text=feedPostDraft.text.trim(),userId=currentUser.id;if(!text||text.length>3000)return;
  if(!feedPostDraft.attachment){document.getElementById('feed-post-status').textContent='Choose a title before posting.';return;}
+ {const a=feedPostDraft.attachment;
+  if(a.kind==='tv'&&a._tvMode==='season'&&!a.season){document.getElementById('feed-post-status').textContent='Pick a season, or choose Entire series.';return;}
+  if(a.kind==='tv'&&a._tvMode==='episode'&&!a.episode){document.getElementById('feed-post-status').textContent='Pick an episode, or choose Specific season or Entire series.';return;}
+  if(a.kind==='podcast'&&a._epMode==='episode'&&!a.episode){document.getElementById('feed-post-status').textContent='Pick an episode, or choose Whole podcast.';return;}}
  feedPostDraft.saving=true;renderFeedComposer();
  try{
   if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again to post.');
