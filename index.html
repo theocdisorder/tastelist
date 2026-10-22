@@ -3487,21 +3487,32 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
   .ob-feature-card .ob-card-title { font-size: 24px; }
   .ob-hero-collage { height: 270px; }
 }
-/* Save to What's Next from any tile or card: a bookmark in the top-right corner */
-.wn-corner { position: absolute; top: 8px; right: 8px; z-index: 4; opacity: 0; transition: opacity .15s ease; pointer-events: none; }
+/* Save to What's Next on artwork: a small rounded-square bookmark tucked into the artwork's top-right
+   corner (positioned inside the artwork box itself: .tile-img-wrap, .sl-art, .activity-card-art, …). */
+.wn-corner { position: absolute; top: 7px; right: 7px; z-index: 4; opacity: 0; transition: opacity .15s ease; pointer-events: none; line-height: 0; }
 .wn-corner .wn-add { padding: 0; }
 .wn-corner .wn-add-note { display: none !important; }
-.wn-corner .wn-add-btn { width: 34px; height: 34px; padding: 8px; border-radius: 50%; background: rgba(12,12,14,.72); border: 1px solid rgba(255,255,255,.28); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.4); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); pointer-events: auto; }
-.wn-corner .wn-add-btn svg { width: 16px; height: 16px; }
-.wn-corner .wn-add-btn:hover { background: rgba(12,12,14,.9); filter: none; }
-.wn-corner .wn-add-btn.is-done { background: var(--accent); border-color: var(--accent); }
+.wn-corner .wn-add-btn, .wn-cover > .wn-add .wn-add-btn {
+  position: relative; width: 34px; height: 34px; padding: 9px; border-radius: 8px; border: 0; box-shadow: none;
+  background: rgba(22,22,26,.52); color: #fff; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  transition: background-color .15s ease; pointer-events: auto; }
+.wn-corner .wn-add-btn svg, .wn-cover > .wn-add .wn-add-btn svg { width: 16px; height: 16px; stroke-width: 1.5; fill: none; stroke: currentColor; }
+.wn-corner .wn-add-btn:hover, .wn-cover > .wn-add .wn-add-btn:hover { background: rgba(58,58,66,.66); filter: none; }
+/* Saved: same quiet tile, filled lavender bookmark */
+.wn-corner .wn-add-btn.is-done, .wn-cover > .wn-add .wn-add-btn.is-done { background: rgba(22,22,26,.52); border: 0; color: #c9b2ff; }
+.wn-corner .wn-add-btn.is-done:hover, .wn-cover > .wn-add .wn-add-btn.is-done:hover { background: rgba(58,58,66,.66); }
+.wn-corner .wn-add-btn.is-done svg, .wn-cover > .wn-add .wn-add-btn.is-done svg { fill: currentColor; stroke: currentColor; }
+.wn-corner .wn-add-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 :is(.artist-tile, .sl-tile, .recs-thumb-wrap, .activity-card):hover .wn-corner,
 .wn-corner:focus-within, .wn-corner:has(.is-done), .wn-corner:has([aria-busy="true"]) { opacity: 1; pointer-events: auto; }
-@media (hover: none) { .wn-corner { opacity: 1; pointer-events: auto; } .wn-corner .wn-add-btn { width: 30px; height: 30px; padding: 7px; } }
+/* Touch screens: always visible, with a 44×44 tap area around the 34×34 button */
+@media (hover: none), (pointer: coarse) {
+  .wn-corner { opacity: 1; pointer-events: auto; }
+  .wn-corner .wn-add-btn, .wn-cover > .wn-add .wn-add-btn { min-width: 0 !important; min-height: 0 !important; width: 34px !important; height: 34px !important; }
+  .wn-corner .wn-add-btn::before, .wn-cover > .wn-add .wn-add-btn::before { content: ''; position: absolute; inset: -5px; }
+}
 .recs-thumb-wrap { position: relative; flex: 0 0 auto; display: flex; }
-.recs-thumb-wrap .wn-corner { top: 6px; right: 6px; }
-.recs-thumb-wrap .wn-corner .wn-add-btn { width: 28px; height: 28px; padding: 6px; }
-.activity-card-art .wn-corner { top: 10px; right: 10px; }
+.rec-detail-art-wrap.wn-cover > .wn-add { top: 7px; right: 7px; }   /* large cover: inside the artwork too */
 /* Reactions: tap to heart, press and hold for more — keep the phone's long-press menu out of the way */
 .reaction-badge-btn { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
 /* Season / episode choice under a picked show in the post composer */
