@@ -3487,6 +3487,21 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
   .ob-feature-card .ob-card-title { font-size: 24px; }
   .ob-hero-collage { height: 270px; }
 }
+/* Save to What's Next from any tile or card: a bookmark in the top-right corner */
+.wn-corner { position: absolute; top: 8px; right: 8px; z-index: 4; opacity: 0; transition: opacity .15s ease; pointer-events: none; }
+.wn-corner .wn-add { padding: 0; }
+.wn-corner .wn-add-note { display: none !important; }
+.wn-corner .wn-add-btn { width: 34px; height: 34px; padding: 8px; border-radius: 50%; background: rgba(12,12,14,.72); border: 1px solid rgba(255,255,255,.28); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.4); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); pointer-events: auto; }
+.wn-corner .wn-add-btn svg { width: 16px; height: 16px; }
+.wn-corner .wn-add-btn:hover { background: rgba(12,12,14,.9); filter: none; }
+.wn-corner .wn-add-btn.is-done { background: var(--accent); border-color: var(--accent); }
+:is(.artist-tile, .sl-tile, .recs-thumb-wrap, .activity-card):hover .wn-corner,
+.wn-corner:focus-within, .wn-corner:has(.is-done), .wn-corner:has([aria-busy="true"]) { opacity: 1; pointer-events: auto; }
+@media (hover: none) { .wn-corner { opacity: 1; pointer-events: auto; } .wn-corner .wn-add-btn { width: 30px; height: 30px; padding: 7px; } }
+.recs-thumb-wrap { position: relative; flex: 0 0 auto; display: flex; }
+.recs-thumb-wrap .wn-corner { top: 6px; right: 6px; }
+.recs-thumb-wrap .wn-corner .wn-add-btn { width: 28px; height: 28px; padding: 6px; }
+.activity-card-art .wn-corner { top: 10px; right: 10px; }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -4439,7 +4454,7 @@ function renderRecsExpanded() {
       return `<div class="sl-tile sl-${g.shape}" role="listitem"><div role="button" tabindex="0" class="recs-tile-hit" aria-label="${esc(r.title)}: details" onclick="openRecDetail(${idx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRecDetail(${idx})}">
         <div class="sl-art">
           ${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()" onload="if(this.naturalWidth<10)this.remove()">` : `<div class="sl-art-empty" style="background:${g.color}1f;color:${g.color};">${esc(r.title)}</div>`}
-          ${controls}
+          ${controls}${isOwnProfile || !viewedProfile || isAuthorEntry(r) ? '' : wnCorner(whatsNextButtonHtml({ title: r.title, kind: r.type === 'film' ? 'movie' : r.type, art: r.art || '', tmdbId: r.tmdbId || null, fromId: viewedProfile.id, fromName: viewedProfile.display_name || viewedProfile.username }))}
         </div>
         <div class="sl-info"><div class="sl-info-text">
           <div class="sl-name">${esc(r.title)}</div>
@@ -4509,8 +4524,8 @@ function openPasteRecommendations(){
 }
 // ── Add a recommendation: Search (default) or Paste a message ──
 let recSearch={request:0,timer:null,results:[],kind:null,q:'',added:new Set(),saving:false};
-const REC_KIND_ORDER=['film','tv','book','song','album','artist','podcast'];
-const REC_KIND_LABEL={film:'Movies',tv:'TV',book:'Books',song:'Songs',album:'Albums',artist:'Artists',podcast:'Podcasts'};
+const REC_KIND_ORDER=['film','tv','book','author','song','album','artist','podcast'];
+const REC_KIND_LABEL={film:'Movies',tv:'TV',book:'Books',author:'Authors',song:'Songs',album:'Albums',artist:'Artists',podcast:'Podcasts'};
 function setRecAddMode(mode){
  const search=mode==='search';
  document.getElementById('rec-tab-search').setAttribute('aria-selected',search);
@@ -4531,7 +4546,7 @@ function queueRecSearch(q){
  recSearch.timer=setTimeout(()=>runRecSearch(recSearch.q,request),250);
 }
 async function runRecSearch(q,request){
- const catalog={film:'movies',tv:'tv',book:'books',song:'music',album:'albums',podcast:'podcasts'};
+ const catalog={film:'movies',tv:'tv',book:'books',author:'authors',song:'music',album:'albums',podcast:'podcasts'};
  const settled=await Promise.allSettled(REC_KIND_ORDER.map(async type=>{
   const found=type==='artist'?(await searchOnboardingArtists(q)).map(a=>({title:a.title,art:a.art,sub:a.genre||'',id:a.id})):await searchTasteCatalog(catalog[type],q);
   return found.slice(0,5).map(r=>({...r,type}));
@@ -4559,7 +4574,7 @@ async function insertRec(row,label){
  const status=document.getElementById('rec-search-status');
  if(!isOwnProfile||!currentUser)return false;
  const userId=currentUser.id;
- if(FRIEND_RECOMMENDATIONS.some(r=>r.type===row.type&&tasteNorm(r.title)===tasteNorm(row.title))){status.className='rec-search-status';status.textContent=row.title+' is already in What’s Next.';return false;}
+ if(FRIEND_RECOMMENDATIONS.some(r=>r.type===row.type&&isAuthorEntry(r)===isAuthorEntry(row)&&tasteNorm(r.title)===tasteNorm(row.title))){status.className='rec-search-status';status.textContent=row.title+' is already in What’s Next.';return false;}
  recSearch.saving=true;status.className='rec-search-status';status.textContent='Adding '+row.title+'…';
  try{
   if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again before saving.');
@@ -4587,7 +4602,8 @@ async function addRecFromSearch(i,btn){
   return;
  }
  if(mark)mark.textContent='…';btn?.classList.add('is-saving');
- const ok=await insertRec({title:r.title,type:r.type,art_url:r.art||null,catalog_item:r});
+ // An author is saved as a book-type recommendation that remembers it's a person.
+ const ok=await insertRec(r.type==='author'?{title:r.title,type:'book',art_url:null,catalog_item:{...r,kind:'author'}}:{title:r.title,type:r.type,art_url:r.art||null,catalog_item:r});
  btn?.classList.remove('is-saving');
  if(ok){recSearch.added.add(i);if(typeof ok==='string')recSearch.addedIds[i]=ok;btn?.classList.add('is-added');if(mark)mark.textContent='✓';btn?.setAttribute('aria-pressed','true');}else if(mark)mark.textContent='+';
 }
@@ -5229,6 +5245,7 @@ async function searchTasteCatalog(type, q) {
     return (d.results || []).map(map);
   };
   const big = u => (u || '').replace(/\d+x\d+bb/, '600x600bb');
+  if (type === 'authors') return (await searchPickerAuthors(q)).map(a => ({ title: a.title, sub: 'Author', meta: a.author || '', art: a.art, kind: 'author' }));
   if (type === 'books') {
     try {
       const d = await sharedCatalogJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=6&fields=title,author_name,first_publish_year,cover_i`);
@@ -5451,7 +5468,9 @@ function readTasteItemType() {
 
 // ── Adding to a shared list: search first (every type at once, then narrow by type), the way
 // Favorites and What's Next work. Picking a result fills in the details; nothing is required beyond it.
-const TI_SEARCH_TYPES = ['books', 'movies', 'tv', 'music', 'albums', 'podcasts'];
+const TI_SEARCH_TYPES = ['books', 'authors', 'movies', 'tv', 'music', 'albums', 'podcasts'];
+// "authors" is a search type only: an author is saved among the list's books (marked "Author").
+const tiKindMeta = k => k === 'authors' ? { ...tasteTypeMeta('books'), label: 'Authors', singular: 'author', chip: 'Author' } : tasteTypeMeta(k);
 const tiSearch = { q: '', results: [], kind: null, request: 0, timer: null, partial: false, loading: false };
 function tiSetStep(step) {
   const searching = step === 'search';
@@ -5494,17 +5513,17 @@ function renderTiSearch() {
   if (tiSearch.q.length < 2) { el.innerHTML = ''; return; }
   const res = tiSearch.results, f = tiSearch.kind;
   const kinds = TI_SEARCH_TYPES.filter(k => res.some(r => r.cat === k) || k === f);
-  const chips = kinds.length > 1 || f ? `<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setTiSearchKind(null)">All</button>${kinds.map(k => `<button type="button" class="fav-chip" aria-pressed="${f === k}" onclick="setTiSearchKind('${k}')">${esc(tasteTypeMeta(k).label)}</button>`).join('')}</div>` : '';
+  const chips = kinds.length > 1 || f ? `<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setTiSearchKind(null)">All</button>${kinds.map(k => `<button type="button" class="fav-chip" aria-pressed="${f === k}" onclick="setTiSearchKind('${k}')">${esc(tiKindMeta(k).label)}</button>`).join('')}</div>` : '';
   const rows = res.map((r, i) => ({ r, i })).filter(x => !f || x.r.cat === f).map(({ r, i }) => {
-    const m = tasteTypeMeta(r.cat);
+    const m = tiKindMeta(r.cat);
     const on = tiSearch.added?.has(i);
-    return `<button type="button" class="extra-result${on ? ' is-added' : ''}" aria-pressed="${on}" aria-label="${on ? 'Remove' : 'Add'} ${esc(r.title)}${r.sub ? ' by ' + esc(r.sub) : ''}" onclick="toggleTiResult(${i}, this)"><span class="rec-art">${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span>${esc((r.title || '?').slice(0, 1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([m.chip, r.sub, r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${on ? '✓' : '+'}</span></button>`;
+    return `<button type="button" class="extra-result${on ? ' is-added' : ''}" aria-pressed="${on}" aria-label="${on ? 'Remove' : 'Add'} ${esc(r.title)}${r.sub ? ' by ' + esc(r.sub) : ''}" onclick="toggleTiResult(${i}, this)"><span class="rec-art">${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span>${esc((r.title || '?').slice(0, 1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([m.chip, r.cat === 'authors' ? '' : r.sub, r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${on ? '✓' : '+'}</span></button>`;
   }).join('');
-  const empty = tiSearch.loading ? '<p class="rec-search-note">Searching…</p>' : `<p class="rec-search-note">No ${f ? esc(tasteTypeMeta(f).label.toLowerCase()) : 'matches'} for this search.${f ? ` <button type="button" class="rec-manual" style="padding:0" onclick="setTiSearchKind(null)">Show all results</button>` : ''}</p>`;
+  const empty = tiSearch.loading ? '<p class="rec-search-note">Searching…</p>' : `<p class="rec-search-note">No ${f ? esc(tiKindMeta(f).label.toLowerCase()) : 'matches'} for this search.${f ? ` <button type="button" class="rec-manual" style="padding:0" onclick="setTiSearchKind(null)">Show all results</button>` : ''}</p>`;
   const isLink = /^https?:\/\/\S+$/i.test(tiSearch.q);
   const manual = tiSearch.loading ? '' : isLink
     ? `<button type="button" class="rec-manual" onclick="tiQuickAdd(true)">Add this link</button>`
-    : `<button type="button" class="rec-manual" onclick="tiQuickAdd(false)">Can’t find it? Add “${esc(tiSearch.q.slice(0, 80))}”${tiSearch.kind ? ` as ${esc(tasteTypeMeta(tiSearch.kind).singular)}` : ''}</button>`;
+    : `<button type="button" class="rec-manual" onclick="tiQuickAdd(false)">Can’t find it? Add “${esc(tiSearch.q.slice(0, 80))}”${tiSearch.kind ? ` as ${esc(tiKindMeta(tiSearch.kind).singular)}` : ''}</button>`;
   el.innerHTML = chips + (rows || empty) + (tiSearch.partial ? '<p class="rec-search-note">Some catalogs could not load.</p>' : '') + manual;
 }
 // Adds go straight into the list (dates and who recommended it can be edited on the item later).
@@ -5533,10 +5552,12 @@ async function toggleTiResult(i, btn) {
       tiSearch.added.delete(i); reloadCurrentTasteListItems().catch(() => {});
       tiStatus(`Removed ${r.title}.`);
     } else {
-      const dupe = (TRIP_PLAYLIST_ITEMS[r.cat] || []).some(x => tasteNorm(x.title) === tasteNorm(r.title));
+      const author = r.cat === 'authors', cat = author ? 'books' : r.cat;
+      const dupe = (TRIP_PLAYLIST_ITEMS[cat] || []).some(x => tasteNorm(x.title) === tasteNorm(r.title) && isAuthorEntry({ ...x, cat }) === author);
       if (dupe) { tiStatus(`${r.title} is already in this list.`); return; }
       if (mark) mark.textContent = '…';
-      const id = await tiInsert({ category: r.cat, title: r.title, sub: r.sub || null, art_url: r.art || null, tmdb_id: r.tmdbId || null });
+      const art = author ? await authorPhotoQuick(r.title) : r.art || null;
+      const id = await tiInsert({ category: cat, title: r.title, sub: author ? 'Author' : r.sub || null, art_url: art || null, tmdb_id: r.tmdbId || null });
       tiSearch.added.set(i, id);
       tiStatus(`✓ Added ${r.title}. Tap it again to undo.`);
     }
@@ -5544,6 +5565,11 @@ async function toggleTiResult(i, btn) {
   finally { tiSearch.busy = false; renderTiSearch(); }
 }
 async function tiQuickAdd(isLink) {
+  if (!isLink && tiSearch.kind === 'authors') {   // a typed author name: saved like a picked author
+    const title = tiSearch.q.trim(); if (!title) return;
+    try { await tiInsert({ category: 'books', title, sub: 'Author', art_url: (await authorPhotoQuick(title)) || null }); tiStatus(`✓ Added ${title}.`); } catch (e) { tiStatus(e.message || 'Could not save. Please try again.', true); }
+    return;
+  }
   const q = tiSearch.q.trim(); if (!q || tiSearch.busy) return;
   tiSearch.busy = true;
   try {
@@ -7505,7 +7531,7 @@ function renderNotificationsDropdown(rows) {
       const copyFn = NOTIF_COPY[n.type];
       let text = copyFn ? copyFn(who, n) : 'Something happened';
       if (n.target_type === 'activity_feed' && n.target_label && ['new_post','comment_reply','reaction','tag'].includes(n.type))
-        text = text.replace(`<strong>${esc(n.target_label)}</strong>`, `<strong class="notif-title-link" role="link" tabindex="0" onclick="event.stopPropagation();openNotificationTitle('${n.id}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openNotificationTitle('${n.id}')}">${esc(n.target_label)}</strong>`);
+        text = text.replace(`<strong>${esc(n.target_label)}</strong>`, () => `<strong class="notif-title-link" role="link" tabindex="0" onclick="event.stopPropagation();openNotificationTitle('${n.id}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openNotificationTitle('${n.id}')}">${esc(n.target_label)}</strong>`);
       const isRequest = n.type === 'follow_request';
       NOTIF_ROWS.set(n.id, n);
       const isComment = (n.type === 'comment' || (n.type === 'reaction' && n.target_type === 'comment')) && n.target_type && n.target_id;
@@ -8570,7 +8596,7 @@ function customListGridInnerHtml(tab, cat, items) {
     return `<div ${inlineOrderAttrs(tab+'|'+cat,i,editing)} class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="${customListSlug(cat)}-tile-${i}" style="cursor:pointer;position:relative;" onclick="${esc(`toggleCustomListExpand('${jsStr(tab)}','${jsStr(cat)}', ${i})`)}">
       ${removeBtn}
       <div class="tile-img-wrap" style="aspect-ratio:2/3;position:relative;">
-        ${art}
+        ${art}${favTileWn(tab, item)}
         <span class="tile-rank">${i + 1}</span>
       </div>
       <div class="tile-label">
@@ -8672,9 +8698,9 @@ async function removeFriendTag(key,i){
 const PICKER_IDEAS={music:['Music I Love','On Repeat','Albums That Shaped Me'],albums:['Favorite Albums','No-Skip Albums'],movies:['Favorite Movies','Comfort Movies','Favorite Thrillers'],tv:['Favorite Shows','Favorite Dramas','Favorite Comedies'],books:['Books That Shaped Me','Favorite Books','Recent Reads'],podcasts:['Favorite Podcasts','Current Rotation','Episodes Worth Sharing'],comedy:['Favorite Comedy','Stand-up Favorites']};
 let flexibleMusic={request:0,timer:null,results:[],saving:false,category:null,tab:'music',kindFilter:null,error:false};
 // Search results can mix types; chips let people narrow to one after searching.
-const PICKER_KIND_ORDER=['movie','tv','book','song','album','artist','podcast','episode','comedian','special'];
-const PICKER_KIND_LABEL={song:'Songs',album:'Albums',artist:'Artists',movie:'Movies',tv:'TV',book:'Books',podcast:'Podcasts',episode:'Episodes',comedian:'Comedians',special:'Specials'};
-function pickerTabForKind(k){return ['song','album','artist'].includes(k)?'music':k==='movie'?'movies':k==='tv'?'tv':k==='book'?'books':['podcast','episode'].includes(k)?'podcasts':['comedian','special'].includes(k)?'comedy':'music';}
+const PICKER_KIND_ORDER=['movie','tv','book','author','song','album','artist','podcast','episode','comedian','special'];
+const PICKER_KIND_LABEL={author:'Authors',song:'Songs',album:'Albums',artist:'Artists',movie:'Movies',tv:'TV',book:'Books',podcast:'Podcasts',episode:'Episodes',comedian:'Comedians',special:'Specials'};
+function pickerTabForKind(k){return ['song','album','artist'].includes(k)?'music':k==='movie'?'movies':k==='tv'?'tv':['book','author'].includes(k)?'books':['podcast','episode'].includes(k)?'podcasts':['comedian','special'].includes(k)?'comedy':'music';}
 const PICKER_TAB_KIND={movies:'movie',tv:'tv',books:'book',podcasts:'podcast'};
 function setPickerKind(k){flexibleMusic.kindFilter=k||null;renderPickerResults();}
 function renderPickerResults(){
@@ -8739,6 +8765,10 @@ async function togglePickerResult(i,row){
 async function removeAddedFavorite(ref){
  if(!(await requireFreshSession()))throw Error(SESSION_EXPIRED_MESSAGE);
  const {kind,target,title,id}=ref, norm=v=>String(v||'').toLowerCase();
+ if(kind==='author'){
+  const {error}=await sb.from('favorite_authors').delete().eq('id',id).eq('user_id',currentUser.id);if(error)throw error;
+  favoriteAuthors=favoriteAuthors.filter(a=>a.id!==id);renderFavoriteAuthors();try{renderProfileTab();}catch(_){}scheduleTasteConstellation();return;
+ }
  if(['song','podcast','episode','comedian','special'].includes(kind)){
   const list=extraLists.find(l=>l.category===extraCategory(kind)&&l.title===target);if(!list)return;
   await updateExtraList(list,{items:list.items.filter(x=>String(x.id)!==String(id))});renderExtraLists();return;
@@ -8811,7 +8841,7 @@ function openUnifiedPicker(tab,category=null,opts={}){
  select.value=category&&names.includes(category)?category:'';
  document.getElementById('music-picker-name').value=category&&!names.includes(category)?category:'';
  document.getElementById('music-picker-title').textContent=listCtaLabel(tab);
- document.getElementById('music-picker-hint').textContent=tab==='books'?'Search a book title or author to find books.':tab==='podcasts'?'Search shows and episodes together.':tab==='music'?'Search songs, albums and artists together.':'Search and select the right title.';
+ document.getElementById('music-picker-hint').textContent=tab==='books'?'Search a book or an author.':tab==='podcasts'?'Search shows and episodes together.':tab==='music'?'Search songs, albums and artists together.':'Search and select the right title.';
  document.getElementById('music-picker-ideas').innerHTML=(PICKER_IDEAS[tab]||[]).map(name=>`<button type="button" class="profile-control" data-name="${esc(name)}" onclick="document.getElementById('music-picker-name').value=this.dataset.name">${esc(name)}</button>`).join('');
  pickerDestinationChanged();document.getElementById('music-picker-query').value='';document.getElementById('music-picker-results').innerHTML='';document.getElementById('music-picker-status').textContent='';
  document.getElementById('music-picker-dest').hidden=true;document.getElementById('music-picker-dest-line').hidden=false;updatePickerDestLine();
@@ -8872,7 +8902,7 @@ async function previewArtistPhoto(name){
 }
 async function searchFlexibleMusic(q,request){
  const userId=currentUser?.id,el=document.getElementById('music-picker-results');el.innerHTML='<p>Searching…</p>';
- const kinds=({all:['movie','tv','book','song','album','artist','podcast'],music:['song','album','artist'],albums:['album'],movies:['movie','tv'],tv:['tv','movie'],books:['book'],podcasts:['podcast','episode'],comedy:['comedian','special']})[flexibleMusic.tab]||[];
+ const kinds=({all:['movie','tv','book','author','song','album','artist','podcast'],music:['song','album','artist'],albums:['album'],movies:['movie','tv'],tv:['tv','movie'],books:['book','author'],podcasts:['podcast','episode'],comedy:['comedian','special']})[flexibleMusic.tab]||[];
  const results=await Promise.allSettled(kinds.map(kind=>onboardingAutocompleteProvider(kind,q)));
  if(request!==flexibleMusic.request||userId!==currentUser?.id)return;
  flexibleMusic.results=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort(catalogCompare(q)).slice(0,flexibleMusic.tab==='all'?42:30);
@@ -8890,8 +8920,50 @@ async function searchFlexibleMusic(q,request){
  }}
  await Promise.allSettled([worker(),worker(),worker()]);
 }
+// An author saved somewhere that only stores titles (What's Next, shared lists, posts) is marked
+// by its catalog kind, or in shared lists by the line under the name reading "Author".
+function isAuthorEntry(x){
+ if(!x)return false;
+ const c=x.catalogItem||x.catalog_item||{};
+ return c.kind==='author'||c.attachment?.kind==='author'||x.kind==='author'||(/^books?$/.test(x.cat||x.category||'')&&/^author$/i.test(String(x.sub||'').trim()));
+}
+// The best author photo we can find, without waiting long; '' if none.
+async function authorPhotoQuick(name){
+ try{return (await Promise.race([lookupAuthorPhoto(name),new Promise(r=>setTimeout(()=>r(''),5000))]))||'';}catch(_){return '';}
+}
+async function insertFavoriteAuthor(name,userId){
+ const existing=favoriteAuthors.find(a=>bookArtKey(a.name)===bookArtKey(name));if(existing)return {row:existing,existed:true};
+ const sort_order=favoriteAuthors.reduce((m,a)=>Math.max(m,a.sort_order||0),-1)+1;
+ const {data,error}=await sb.from('favorite_authors').insert({user_id:userId,name,books:[],sort_order}).select().single();
+ if(error)throw error;if(!data)throw Error('Could not save. Please try again.');
+ if(currentUser?.id===userId&&viewedProfile?.id===userId){favoriteAuthors.push(data);renderFavoriteAuthors();fillAuthorPhotos();}
+ return {row:data,existed:false};
+}
+// Authors from Open Library: only close name matches, so a title search isn't cluttered with people.
+async function searchPickerAuthors(q){
+ const d=await sharedCatalogJSON(`https://openlibrary.org/search/authors.json?q=${encodeURIComponent(q)}&limit=6`);
+ return (d.docs||[]).filter(a=>a.key&&a.name&&(a.work_count||0)>0)
+  .map(a=>({kind:'author',id:'ol-author:'+a.key,title:a.name,label:'Author',author:a.top_work||'',art:`https://covers.openlibrary.org/a/olid/${a.key}-M.jpg?default=false`}))
+  .filter(a=>onboardingMatchRank(a,q)<=2).slice(0,2);
+}
+async function saveAuthorFromPicker(p){
+ const status=document.getElementById('music-picker-status'),userId=currentUser?.id;
+ if(favoriteAuthors.some(a=>bookArtKey(a.name)===bookArtKey(p.title))){status.className='';status.textContent=p.title+' is already in your favorite authors.';return true;}
+ flexibleMusic.saving=true;status.className='';status.textContent='Adding '+p.title+'…';
+ try{
+  if(!await requireFreshSession()||currentUser?.id!==userId||viewedProfile?.id!==userId)throw Error('Please sign in to your own profile.');
+  const {row:data}=await insertFavoriteAuthor(p.title,userId);
+  status.textContent='✓ '+p.title+' added to your favorite authors.';
+  const link=document.createElement('button');link.type='button';link.className='cp-next-link';link.textContent='Pick favorite books →';
+  link.onclick=()=>{document.getElementById('music-picker')?.close?.();openCreatorPicks('author',data.id);};status.append(' ',link);
+  try{renderProfileTab();}catch(_){}scheduleTasteConstellation();
+  return {kind:'author',title:p.title,id:data.id};
+ }catch(e){status.className='is-error';status.textContent=e.message||'Could not save. Please try again.';return false;}
+ finally{flexibleMusic.saving=false;}
+}
 async function saveFlexibleMusic(index,row){
  const p=flexibleMusic.results[index];if(!p||flexibleMusic.saving||!isOwnProfile||row?.classList.contains('is-added'))return;
+ if(p.kind==='author')return saveAuthorFromPicker(p);
  const status=document.getElementById('music-picker-status');
  const setRow=(state,mark)=>{if(!row)return;row.classList.remove('is-saving','is-added');if(state)row.classList.add(state);const m=row.querySelector('.picker-add');if(m)m.textContent=mark;};
  const allMode=flexibleMusic.tab==='all', itemTab=allMode?pickerTabForKind(p.kind):flexibleMusic.tab;
@@ -9299,7 +9371,7 @@ function musicGridInnerHtml(cat, items) {
     return `<div ${inlineOrderAttrs('music|'+cat,i,editing)} class="artist-tile ${expandedIdx === i ? 'tile-active' : ''}" id="music-${customListSlug(cat)}-tile-${i}" style="cursor:pointer;position:relative;" onclick="${editing ? '' : esc(`toggleCustomListExpand('music','${jsStr(cat)}', ${i})`)}">
       ${editControls}
       <div class="tile-img-wrap">
-        ${a.videoId
+        ${favTileWn('music', a)}${a.videoId
           ? `<img class="tile-img" src="${esc(youtubeThumbUrl(a.videoId))}" alt="${esc(a.name)}" onload="ytThumbCheck(this,'${a.videoId}')" onerror="ytThumbFallback(this,'${a.videoId}')"><span class="yt-badge" aria-hidden="true">▶</span>`
           : a.tilePhoto
           ? `<img class="tile-img" id="tile-img-${a.id}" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="loadTileImgFallback('${a.id}')">`
@@ -9401,7 +9473,7 @@ function albumGridInnerHtml(cat, items) {
     return `<div ${inlineOrderAttrs('albums|'+cat,i,editing)} class="artist-tile album-cover-tile ${expandedIdx === i ? 'tile-active' : ''}" id="album-${customListSlug(cat)}-tile-${i}" style="cursor:pointer;position:relative;" onclick="${esc(`toggleCustomListExpand('albums','${jsStr(cat)}', ${i})`)}">
       ${editControls}
       <div class="tile-img-wrap">
-        ${a.tilePhoto
+        ${favTileWn('albums', a)}${a.tilePhoto
           ? `<img class="tile-img" src="${esc(a.tilePhoto)}" alt="${esc(a.name)}" onerror="this.style.display='none'">`
           : `<div class="tile-placeholder" style="position:absolute;inset:0;"><svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M16 8l-4 4-2-2-4 4"/></svg></div>`}
         <span class="tile-rank">${i + 1}</span>
@@ -9970,7 +10042,7 @@ function renderOnboardingJourney() {
 }
 
 // Type words at the end of a search act as a filter: "diplomat book", "dune movie", "the bear show".
-const OB_SEARCH_KINDS = ['artist', 'album', 'movie', 'tv', 'book', 'podcast'];   // comedy specials come up as movies / TV
+const OB_SEARCH_KINDS = ['artist', 'album', 'movie', 'tv', 'book', 'author', 'podcast'];   // comedy specials come up as movies / TV
 const OB_FILTER_LABELS = { all: 'All', artist: 'Artists', album: 'Albums', movie: 'Movies', tv: 'TV shows', book: 'Books', podcast: 'Podcasts', screen: 'Movies & TV' };
 const OB_TYPE_WORDS = [
   [/\s+(?:tv\s+shows?|tv\s+series)$/i, 'tv'], [/\s+(?:books?|novels?|memoirs?)$/i, 'book'], [/\s+(?:movies?|films?)$/i, 'movie'],
@@ -9982,6 +10054,7 @@ function obKindMatches(kind, filter) {
   if (!filter || filter === 'all' || kind === filter) return true;
   if (filter === 'screen') return kind === 'movie' || kind === 'tv';
   if (filter === 'podcast') return kind === 'episode';
+  if (filter === 'book') return kind === 'author';   // the Books chip includes authors
   return false;
 }
 function parseOnboardingQuery(raw) {
@@ -10085,6 +10158,7 @@ async function onboardingAutocompleteProvider(kind,q){
  const lookup=async()=>{
     let data;
     if(['comedian','special','podcast','episode'].includes(kind))return searchExtraCatalog(kind,q);
+    if(kind==='author')return searchPickerAuthors(q);
     if(kind==='artist')return searchOnboardingArtists(q);
     if(kind==='song') {
       const d=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=12`);
@@ -10115,7 +10189,7 @@ async function runOnboardingSearch() {
  if(q.length<2)return;
  const parsed=parseOnboardingQuery(state.query);
  const filter=state.filter&&state.filter!=='all'?state.filter:'all';
- const kinds=filter==='all'?OB_SEARCH_KINDS:filter==='screen'?['movie','tv']:[filter];
+ const kinds=filter==='all'?OB_SEARCH_KINDS:filter==='screen'?['movie','tv']:filter==='book'?['book','author']:[filter];
  const useParsed=!!parsed.kind&&parsed.kind===filter;
  const queries=useParsed?[parsed.q,parsed.full]:[parsed.full];
  const rankQ=useParsed?parsed.q:q;
@@ -10626,6 +10700,7 @@ new MutationObserver(() => { cancelAnimationFrame(enhanceStreamLinks._raf); enha
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('listen-chooser')?.style.display === 'flex') closeListenChooser(); });
 
 function onboardingAlreadySaved(item,category){
+ if(item.kind==='author')return favoriteAuthors.some(a=>bookArtKey(a.name)===bookArtKey(item.title));
  const tab=item.listTab||{artist:'music',album:'albums',movie:'movies',tv:'tv',book:'books'}[item.kind];
  const group=['song','artist','album'].includes(item.kind)?'music':['comedian','special'].includes(item.kind)?'comedy':'podcasts';
  const candidates=tab==='movies'&&category==='movies'?movies:tab?(CUSTOM_LISTS[tab]?.[category]||[]):extraLists.filter(l=>l.category===group&&l.title===category).flatMap(l=>l.items||[]);
@@ -10641,6 +10716,7 @@ function onboardingAlreadySaved(item,category){
 }
 async function saveOnboardingItem(item,userId) {
     if(item.destination==='next'){await saveImportToWhatsNext(item);return;}
+    if(item.kind==='author'){await insertFavoriteAuthor(item.title,userId);if(currentUser?.id===userId)scheduleTasteConstellation();return;}
     const state=onboardingVisualState();
     // Picks land in that type's Favorites (no list to name); an explicit destination still wins.
     const favTab=item.kind==='artist'?'music':item.kind==='album'?'albums':item.kind==='book'?'books':item.kind==='tv'?'tv':['song'].includes(item.kind)?'music':['podcast','episode'].includes(item.kind)?'podcasts':['comedian','special'].includes(item.kind)?'comedy':'movies';
@@ -13255,7 +13331,12 @@ function currentRouteUrl() {
 function syncUrl(replace = false) {
   if (!urlSyncReady) return;
   const now = new URLSearchParams(location.search);
-  if (['join', 'invite', 'ref'].some(k => now.has(k))) return;
+  // Leave invite links and sign-in returns (?code=…, #access_token=…, errors) for their own handlers.
+  if (['join', 'invite', 'ref', 'code', 'error', 'error_description'].some(k => now.has(k))) return;
+  if (/access_token|refresh_token|error/.test(location.hash)) return;
+  // A shared-list link that couldn't open yet (signed out, no access) keeps its ?list= so signing in
+  // can still open it.
+  if (replace && now.has('list') && !(currentTasteListId && document.getElementById('trip-playlist-section')?.style.display === 'block')) return;
   const next = currentRouteUrl();
   if (!next || next.href === location.href) return;
   try { history[replace ? 'replaceState' : 'pushState']({ tastelist: true }, '', next); } catch (_) {}
@@ -14189,7 +14270,7 @@ function renderMovieGrid() {
   }
   grid.innerHTML = movies.map((m, i) =>
     `<div ${inlineOrderAttrs('movies|main',i,isOwnProfile&&movieEditMode)} class="artist-tile" id="movie-tile-${m.id}" onclick="toggleMovieExpand(${m.id})">
-      <div class="tile-img-wrap">
+      <div class="tile-img-wrap">${favTileWn('movies', m)}
         ${m.poster
           ? `<img class="tile-img" src="${TMDB_IMG}${m.poster}" alt="${esc(m.title)}" style="object-fit:contain;object-position:center;background:var(--card);" onerror="this.style.display='none'">`
           : `<div class="tile-placeholder" style="position:absolute;inset:0;font-size:12px;color:var(--faint);">No poster</div>`}
@@ -15302,10 +15383,10 @@ function buildTasteConstellation(sourceItems) {
   const themes=[['Coming of age',/\b(coming.of.age|adolescen\w*|growing up)\b/i],['Family & belonging',/\b(family relationships|family conflict|belonging|estranged family)\b/i],['Identity & reinvention',/\b(identity|self.discovery|reinvent\w*)\b/i],['Power & corruption',/\b(corruption|abuse of power|political power)\b/i],['Memory & nostalgia',/\b(memories|nostalgia|reminisc\w*)\b/i],['Love & relationships',/\b(romance|romantic|love affair|romantic relationships)\b/i],['Rebellion',/\b(rebellion|rebellious|counterculture)\b/i],['Grief & loss',/\b(grief|bereavement|mourning)\b/i]];
   for(const item of items) {
     item.genres.forEach(v=>add('genre',v,item,'Genre: '+v));
-    [...item.creators,...names(item.artist),...names(item.author),...names(item.director),...names(item.creator),...(['artist','director','comedian'].includes(item.kind)?[item.title]:[])].forEach(v=>add('creator',v,item,'Creator: '+v));
+    [...item.creators,...names(item.artist),...names(item.author),...names(item.director),...names(item.creator),...(['artist','director','comedian','author'].includes(item.kind)?[item.title]:[])].forEach(v=>add('creator',v,item,'Creator: '+v));
     item.cast.slice(0,8).forEach(v=>add('cast',v,item,'Cast: '+v));
     [...item.subjects,...item.keywords].filter(v=>!['fiction','general','literature','accessible book','protected daisy','in library','bestseller'].includes(v.toLowerCase())).forEach(v=>add('subject',v,item,'Subject / keyword: '+v));
-    const year=Number(String(item.year||'').slice(0,4));if(!['artist','director','comedian'].includes(item.kind)&&year>=1000&&year<=new Date().getFullYear()+2)add('era',Math.floor(year/10)*10+'s',item,'Released / published: '+year);
+    const year=Number(String(item.year||'').slice(0,4));if(!['artist','director','comedian','author'].includes(item.kind)&&year>=1000&&year<=new Date().getFullYear()+2)add('era',Math.floor(year/10)*10+'s',item,'Released / published: '+year);
     const signals=[...item.subjects,...item.keywords,...item.genres,item.overview||'',item.description||''];
     for(const [label,re] of themes){const signal=signals.find(v=>re.test(v));if(signal)add('theme',label,item,'Possible theme from metadata: '+signal.slice(0,180));}
   }
@@ -15387,6 +15468,7 @@ function collectConstellationFavorites(includeAllLists = false) {
   // These dedicated legacy sections are explicitly labeled Favorite Movies / Directors.
   selected.push(...(movies||[]).map(item=>({...item,kind:item.type==='tv'?'tv':'movie',medium:item.type==='tv'?'TV':'Movies'})));
   selected.push(...(directors||[]).map(item=>({...item,kind:'director',medium:'Movies'})));
+  selected.push(...(favoriteAuthors||[]).filter(a=>a&&a.name).map(a=>({...a,title:a.name,kind:'author',medium:'Books',art:a.photo_url||''})));
   for(const list of extraLists||[]) {
     if(!includeAllLists && !constellationListEligible(list.category,list.title||''))continue;
     selected.push(...(list.items||[]).map(item=>({...item,medium:list.category==='music'?'Music':list.category==='comedy'?'Comedy':'Podcasts'})));
@@ -16288,7 +16370,7 @@ function renderTripPlaylist() {
           <div class="sl-art${containArt ? ' sl-art-contain' : ''}"${containArt ? ` style="--art:url('${esc(art.replace(/'/g, '%27'))}')"` : ''}>
             ${sortable ? `<button class="sl-drag-handle" title="Drag to reorder (or use arrow keys)" aria-label="Reorder ${esc(item.title)}: drag, or press arrow keys" onkeydown="slKeyMove(event, '${esc(c.key)}', ${pos})">⠿</button>` : ''}
             ${art ? `<img src="${esc(art)}" alt="" loading="lazy" onerror="slArtFailed(this, ${idx})">` : `<div class="sl-art-empty" style="background:${cat.color}1f;color:${cat.color};">${esc(item.title)}</div>`}
-            ${editControls}
+            ${editControls}${editMode ? '' : wnCorner(tripItemWhatsNextHtml({ ...item, cat: c.key }))}
             ${item.inProgress ? `<span class="sl-now-badge"><span aria-hidden="true"></span>${esc(inProgressLabel(c.key))}</span>` : ''}
           </div>
           <div class="sl-info">
@@ -16565,6 +16647,7 @@ async function persistTasteItemArt(itemId, artUrl) {
 // the page's description fits the kind of thing (a novel, a film, a TV series…) so a same-named
 // person or place doesn't slip in.
 const WIKI_KIND = {
+  author: { re: /writer|novelist|author|poet|essayist|journalist|playwright|memoirist|historian|screenwriter/i, suffixes: ['(writer)', '(author)', '(novelist)'] },
   game: { re: /video game|computer game|board game|role-playing game/i, suffixes: ['(video game)', '(board game)'] },
   special: { re: /stand.up|comedy special|comedy film/i, suffixes: ['(comedy special)', '(film)'] },
   comedian: { re: /comedian|comic|humorist/i, suffixes: ['(comedian)'] },
@@ -16733,6 +16816,12 @@ function initTripPlaylistArt() {
 
   TRIP_PLAYLIST_ITEMS.books.forEach(item => {
     (async () => {
+      if (isAuthorEntry({ ...item, cat: 'books' })) {   // a person, not a book: use their photo
+        if (item.art) return;
+        const art = await lookupAuthorPhoto(item.title);
+        if (art) { item.art = art; persistTasteItemFields(item.id, { art_url: art }); renderTripPlaylist(); }
+        return;
+      }
       const preferred=preferredBookCover(item.title,sharedBookAuthor(item.sub));
       if (!preferred && item.art && !item.art.includes('covers.openlibrary.org') && await sharedImageWorks(item.art)) return;
       if (preferred && item.art===preferred) return;
@@ -16795,7 +16884,7 @@ function summaryIdentity(item) {
   const catalog=item.catalog_item||item.catalogItem||{};
   const pick=catalog.attachment||catalog;
   const raw=pick.kind && !['text_post','attached_status_display'].includes(pick.kind)?pick.kind:(item.cat||item.type);
-  const kind=({movies:'movie',books:'book',albums:'album',music:'song',podcasts:'podcast',artists:'artist',comedy:'special',articles:'article',games:'game'})[raw]||raw;
+  const kind=isAuthorEntry(item)?'author':({movies:'movie',books:'book',albums:'album',music:'song',podcasts:'podcast',artists:'artist',comedy:'special',articles:'article',games:'game'})[raw]||raw;
   return {kind,title:pick.title||item.title||item.label||'',creator:pick.artist||pick.author||item.bookAuthor||(!item.type&&['song','album','book'].includes(kind)?String(item.sub||'').split('·')[0].trim():''),
     id:pick.id||item.tmdb_id||item.tmdbId||item.tmdbTvId,year:pick.year||item.year,
     description:pick.description||pick.overview||item.description||'',pick};
@@ -17638,7 +17727,7 @@ function activityCardHtml(item, globalIndex) {
     </div>` : '';
   return `<div class="activity-card" style="position:relative;background:var(--surface2);border:1px solid var(--border);">
     ${editControls}
-    ${activityArtWrap(ART_SRC, art)}
+    ${activityArtWrap(ART_SRC, art + (isOwnProfile ? '' : wnCorner(activityWhatsNextHtml(item))))}
     <div class="activity-card-body">
             <h3 class="activity-title"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openActivitySummary(${globalIndex})">${esc(item.label)}</button></h3>
       <div class="activity-meta">${item.sub ? `<span style="color:${iconColor}">${esc(item.sub)}</span>` : ''}${item.sub && item.timestamp ? '<span aria-hidden="true">·</span>' : ''}${item.timestamp ? `<span>${item.timestamp}</span>` : ''}</div>
@@ -17829,7 +17918,7 @@ function renderWelcomeBanner() {
 // entered — see setTopView().
 let feedTitleSearch={seq:0,timer:null,results:[],manual:false,filter:'all',filterManual:false,lastQuery:''};
 // Composer title search: filter chips + type words ("diplomat book", "espresso song"), like onboarding.
-const FEED_TITLE_KINDS=['book','movie','tv','song','album','artist','podcast'];
+const FEED_TITLE_KINDS=['book','author','movie','tv','song','album','artist','podcast'];
 const FEED_FILTER_LABELS={all:'All',book:'Books',movie:'Movies',tv:'TV',song:'Songs',album:'Albums',artist:'Artists',podcast:'Podcasts',screen:'Movies & TV'};
 function parseFeedTitleQuery(raw){
  const full=String(raw||'').trim(),m=full.match(/\s+(?:songs?|tracks?|singles?)$/i);
@@ -17848,7 +17937,7 @@ function renderFeedTitleFilters(q){
  const f=FEED_FILTER_LABELS[feedTitleSearch.filter]?feedTitleSearch.filter:'all';
  el.innerHTML=`<label class="update-sr" for="feed-title-kind">Type</label><select id="feed-title-kind" class="fc-kind" onchange="feedTitleSearch.filterManual=false;setFeedTitleFilter(this.value)" ${feedPostDraft.saving?'disabled':''}>${['all',...FEED_TITLE_KINDS].map(k=>`<option value="${k}" ${k===f?'selected':''}>${k==='all'?'All types':FEED_FILTER_LABELS[k]}</option>`).join('')}${f==='screen'?`<option value="screen" selected>${FEED_FILTER_LABELS.screen}</option>`:''}</select>`;
 }
-const FEED_KIND_LABEL={book:'Book',movie:'Movie',tv:'TV',song:'Song',album:'Album',artist:'Artist',podcast:'Podcast',episode:'Episode'};
+const FEED_KIND_LABEL={author:'Author',book:'Book',movie:'Movie',tv:'TV',song:'Song',album:'Album',artist:'Artist',podcast:'Podcast',episode:'Episode'};
 function feedKindLabel(p){return FEED_KIND_LABEL[p.kind]||p.label||'';}
 // Thumbnail in the shape of the thing: square for music and podcasts, a poster/cover shape otherwise.
 function feedThumbHtml(p){const sq=['song','album','artist','podcast','episode'].includes(p.kind);const art=onboardingArt(p);return `<span class="fc-thumb${sq?' is-square':''}">${art?`<img src="${esc(art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span aria-hidden="true">${esc((p.title||'?').slice(0,1))}</span></span>`;}
@@ -17886,7 +17975,7 @@ function searchFeedTitles(q,manual=false){
  renderFeedTitleFilters(q);feedTitleSearch.error=false;el.innerHTML='<p class="fc-results-note">Searching…</p>';
  feedTitleSearch.timer=setTimeout(async()=>{
  const f=feedTitleSearch.filter;
- const kinds=f==='all'?FEED_TITLE_KINDS:f==='screen'?['movie','tv']:[f];
+ const kinds=f==='all'?FEED_TITLE_KINDS:f==='screen'?['movie','tv']:f==='book'?['book','author']:[f];
  const useParsed=!!parsed.kind&&parsed.kind===f;
  const queries=useParsed?[parsed.q,parsed.full]:[parsed.full];
  const rankQ=useParsed?parsed.q:q;
@@ -17895,7 +17984,7 @@ function searchFeedTitles(q,manual=false){
  if(seq!==feedTitleSearch.seq||userId!==currentUser?.id||feedPostDraft.attachment)return;
  const seen=new Set();
  const rows=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).filter(p=>{const k=[p.kind,String(p.id||''),String(p.title||'').toLowerCase()].join('|');if(seen.has(k))return false;seen.add(k);return true;})
-   .filter(p=>f==='all'||p.kind===f||(f==='screen'&&['movie','tv'].includes(p.kind))||(f==='podcast'&&p.kind==='episode'))
+   .filter(p=>f==='all'||p.kind===f||(f==='screen'&&['movie','tv'].includes(p.kind))||(f==='podcast'&&p.kind==='episode')||(f==='book'&&p.kind==='author'))
    .sort(catalogCompare(rankQ)).slice(0,12);feedTitleSearch.results=rows;
  feedTitleSearch.error=!rows.length&&results.length>0&&results.every(r=>r.status==='rejected');
  renderFeedTitleRows();return;
@@ -18273,7 +18362,7 @@ async function deleteFeedTextPost(id){
 function feedTextPostHtml(row,profile=false){
  const attachment=row.catalog_item?.attachment;
  if(attachment){
-  const type=['artist','album'].includes(attachment.kind)?'song':attachment.kind;
+  const type=['artist','album'].includes(attachment.kind)?'song':attachment.kind==='author'?'book':attachment.kind;
   return publicActivityCardHtml({...row,type,label:attachment.title,sub:[attachment.label,attachment.artist||attachment.author,attachment.year].filter(Boolean).join(' · '),art_url:onboardingArt(attachment)||row.art_url||'',catalog_item:{...row.catalog_item,kind:'attached_status_display'},_editableStatus:true},profile);
  }
 
@@ -18598,8 +18687,29 @@ function wnBookmarkState(btn,saved){if(!btn)return;btn.innerHTML=wnBookmarkIcon(
 function wnRecType(kind) {
   return ({ movie: 'film', film: 'film', tv: 'tv', book: 'book', song: 'song', album: 'album', artist: 'artist', podcast: 'podcast', episode: 'podcast', article: 'article' })[kind] || 'other';
 }
+// Keep every bookmark for the same title in step (a tile and its open panel, say).
+function syncWnButtons() {
+  document.querySelectorAll('.wn-add-btn[data-wn-key]').forEach(btn => {
+    if (btn.getAttribute('aria-busy') === 'true') return;
+    const p = WN_PAYLOADS.get(btn.dataset.wnKey); if (p) wnBookmarkState(btn, wnSaved.has(wnSavedKey(p)));
+  });
+}
+// What's already on the signed-in person's What's Next, so bookmarks show as saved after a reload.
+let wnSavedLoadedFor = null;
+function loadWnSaved() {
+  const userId = currentUser?.id; if (!userId || !sb || wnSavedLoadedFor === userId) return;
+  wnSavedLoadedFor = userId;
+  Promise.resolve(sb.from('friend_recs').select('title, type').eq('user_id', userId)).then(({ data }) => {
+    if (currentUser?.id !== userId) return;
+    (data || []).forEach(r => { if (r.title) wnSaved.add(wnSavedKey({ type: r.type, title: r.title })); });
+    syncWnButtons();
+  }).catch(() => { wnSavedLoadedFor = null; });
+}
+// Bookmark in the top-right corner of a tile or card: shows on hover (always on touch screens).
+function wnCorner(html) { return html ? `<span class="wn-corner">${html}</span>` : ''; }
 function whatsNextButtonHtml(p) {
-  if (!p || !String(p.title || '').trim() || ['list', 'text_post'].includes(p.kind)) return '';
+  if (!p || !String(p.title || '').trim() || ['list', 'text_post', 'author', 'director'].includes(p.kind)) return '';
+  loadWnSaved();
   if (!p.fromId || p.fromId === currentUser?.id) return '';           // nothing to credit, or it's your own pick
   const key = 'wn' + (++wnSeq);
   WN_PAYLOADS.set(key, { title: String(p.title).trim(), type: wnRecType(p.kind), art: p.art || '', tmdbId: p.tmdbId || null, fromId: p.fromId, fromName: p.fromName || '' });
@@ -18626,13 +18736,17 @@ function tripItemWhatsNextHtml(item) {
   return whatsNextButtonHtml({ title: item.title, kind: id.kind, art: item.art || '', tmdbId: item.tmdbId || null, fromId: owner?.id, fromName: owner?.name });
 }
 // Favorites detail panel on someone else's profile
+function favTileWn(tab, item) { return item?.videoId ? '' : wnCorner(favoritesWhatsNextButton(tab, item)); }
 function favoritesWhatsNextHtml(tab, item) {
+  const html = favoritesWhatsNextButton(tab, item);
+  return html ? `<div class="wn-panel-strip">${html}</div>` : '';
+}
+function favoritesWhatsNextButton(tab, item) {
   if (isOwnProfile || !item || !viewedProfile) return '';
   const kind = ({ music: 'artist', albums: 'album', movies: item.type === 'tv' ? 'tv' : 'movie', tv: 'tv', books: 'book' })[tab] || 'other';
   const poster = item.poster ? (String(item.poster).startsWith('http') ? item.poster : TMDB_IMG + item.poster) : '';
   const art = tab === 'books' ? (item.cover || '') : tab === 'music' ? (item.tilePhoto || item.bandPhoto || '') : tab === 'albums' ? (item.art || item.cover || item.artwork || '') : poster;
-  const html = whatsNextButtonHtml({ title: item.title || item.name, kind, art, tmdbId: item.tmdbId || null, fromId: viewedProfile.id, fromName: viewedProfile.display_name || viewedProfile.username });
-  return html ? `<div class="wn-panel-strip">${html}</div>` : '';
+  return whatsNextButtonHtml({ title: item.title || item.name, kind, art, tmdbId: item.tmdbId || null, fromId: viewedProfile.id, fromName: viewedProfile.display_name || viewedProfile.username });
 }
 async function addToWhatsNext(key, btn) {
   const p = WN_PAYLOADS.get(key); if (!p) return;
@@ -18662,6 +18776,7 @@ async function addToWhatsNext(key, btn) {
       }
       wnSaved.delete(stateKey);
       if(btn){btn.removeAttribute('aria-busy');wnBookmarkState(btn,false);const note=btn.parentElement?.querySelector('.wn-add-note');if(note)note.textContent='Save for later · Discovered through '+first;}
+      syncWnButtons();
       if(isOwnProfile&&currentUser?.id===userId){await loadFriendRecsFromSupabase(userId);renderFriendRecs();}
       showToast('Removed from your What’s Next.');
       return;
@@ -18684,6 +18799,7 @@ async function addToWhatsNext(key, btn) {
     }
     wnSaved.add(wnSavedKey(p));
     if(btn){btn.removeAttribute('aria-busy');wnBookmarkState(btn,true);const note=btn.parentElement?.querySelector('.wn-add-note');if(note)note.textContent='Saved to What’s Next · Discovered through '+first;}
+    syncWnButtons();
     if (isOwnProfile) { try { await loadFriendRecsFromSupabase(currentUser.id); renderFriendRecs(); } catch (_) {} }
     showToast(message);
   } catch (e) {
@@ -18723,7 +18839,7 @@ function publicActivityCardHtml(row,profile=false) {
   const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
   const ownerControls=row._editableStatus&&row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="status-card-controls" onclick="event.stopPropagation()"><button type="button" class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button type="button" class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:'';
   return `<div class="activity-card" style="position:relative;background:var(--surface2);border:1px solid var(--border);">
-    ${activityArtWrap(ART_SRC, art)}
+    ${activityArtWrap(ART_SRC, art + wnCorner(activityWhatsNextHtml(row)))}
     <div class="activity-card-body">
       ${ownerControls}
       ${profile ? `<h3 class="activity-title"${ownerControls?' style="padding-right:84px;"':''}><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openFeedItemSummary('${jsStr(String(row.id))}')">${esc(row.label)}</button></h3>
@@ -19038,12 +19154,13 @@ function renderFriendRecs() {
   const MAX = 12, shownItems = mixed.slice(0, MAX), extra = mixed.length - shownItems.length;
   const thumbs = shownItems.map(({ r, g }, k) => {
     const more = k === shownItems.length - 1 && extra > 0;
-    return `<button type="button" class="recs-thumb recs-${g.shape}" style="--c:${g.color}" onclick="${more ? 'openRecsExpanded()' : `openRecDetail(${FRIEND_RECOMMENDATIONS.indexOf(r)})`}"
+    const corner = more || isOwnProfile || !viewedProfile || isAuthorEntry(r) ? '' : wnCorner(whatsNextButtonHtml({ title: r.title, kind: r.type === 'film' ? 'movie' : r.type, art: r.art || '', tmdbId: r.tmdbId || null, fromId: viewedProfile.id, fromName: viewedProfile.display_name || viewedProfile.username }));
+    return `<span class="recs-thumb-wrap recs-${g.shape}">${corner}<button type="button" class="recs-thumb recs-${g.shape}" style="--c:${g.color}" onclick="${more ? 'openRecsExpanded()' : `openRecDetail(${FRIEND_RECOMMENDATIONS.indexOf(r)})`}"
         aria-label="${esc(r.title)}${r.from ? ', recommended by ' + esc(r.fromDisplayName || r.from) : ''}${more ? ` and ${extra} more` : ''}" title="${esc(r.title)}">
         ${r.art ? `<img src="${esc(r.art)}" alt="" loading="lazy" onerror="recArtMissing(${FRIEND_RECOMMENDATIONS.indexOf(r)}, this)" onload="if(this.naturalWidth<10)recArtMissing(${FRIEND_RECOMMENDATIONS.indexOf(r)}, this)">` : ''}
         <span class="recs-thumb-title">${esc(r.title)}</span>
         ${more ? `<span class="recs-thumb-more">+${extra}</span>` : ''}
-      </button>`;
+      </button></span>`;
   }).join('');
   const strip = `<div class="recs-row">${thumbs}</div>`;
   el.innerHTML = `
@@ -19098,6 +19215,9 @@ async function loadFriendRecArt() {
           const w = await wikiSummary(r.title, r.type === 'tv' ? 'tv' : 'film');
           if (w?.art) { r.art = w.art; renderFriendRecs(); }
         }
+      } else if (r.type === 'book' && isAuthorEntry(r)) {
+        const art = await lookupAuthorPhoto(r.title);
+        if (art) { r.art = art; renderFriendRecs(); if (r.id && isOwnProfile) sb.from('friend_recs').update({ art_url: art }).eq('id', r.id).then(() => {}); }
       } else if (r.type === 'book') {
         let art = await recommendationBookCover(r.title, r.author);
         if (!art) art = (await wikiSummary(r.title, 'book'))?.art || '';
@@ -19218,6 +19338,8 @@ function profileTasteFavorites(){
  }
  // The legacy movie section is explicitly Favorite Movies.
  add('movies','movie',movies||[]);
+ // Favorite authors are book favorites too (their photo stands in for a cover).
+ add('books','author',(typeof favoriteAuthors!=='undefined'?favoriteAuthors:[]).filter(a=>a&&a.name).map(a=>({...a,title:a.name,art:a.photo_url||''})));
  for(const list of extraLists||[])if(list.category==='music'&&eligible('music',list.title||'')){
   for(const item of list.items||[])if(['song','album','artist'].includes(item.kind))add('music',item.kind,[item]);
  }
@@ -19282,12 +19404,12 @@ function initialTasteProfileHtml() {
 // Under five favorites: one centred gallery of everything (any type), like the end of onboarding,
 // instead of category boxes with empty space beside them.
 function tasteRevealHtml(groups,owner,ready=false){
- const kindLabel={artist:'Artist',album:'Album',song:'Song',movie:'Movie',tv:'TV show',book:'Book',podcast:'Podcast',episode:'Podcast episode',special:'Comedy',comedian:'Comedy'};
+ const kindLabel={author:'Author',artist:'Artist',album:'Album',song:'Song',movie:'Movie',tv:'TV show',book:'Book',podcast:'Podcast',episode:'Podcast episode',special:'Comedy',comedian:'Comedy'};
  const picks=groups.flatMap(g=>g.items.map(p=>({p,g}))).slice(0,ready?6:8);
  const n=groups.reduce((t,g)=>t+g.items.length,0);
  const cards=picks.map(({p,g})=>{
   const art=tastePickArt(g.tab,p)||p.art||'';
-  const square=['artist','album','song','podcast','episode'].includes(p._tasteKind);
+  const square=['artist','album','song','podcast','episode','author'].includes(p._tasteKind);
   return `<button type="button" class="ob-pick-card taste-reveal-card" onclick="goToFavorites('${g.tab}')" aria-label="${esc(p.title)}: open ${esc(g.label)}"><div class="ob-art${square?' ob-podcast-art':''}">${art?`<img src="${esc(art)}" alt="" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false">`:''}<span ${art?'hidden':''}>${esc(p.title.slice(0,1))}</span></div><strong>${esc(p.title)}</strong><small>${esc(kindLabel[p._tasteKind]||g.label)}</small></button>`;
  }).join('');
  return `<section class="taste-reveal${ready?' is-ready':''}" aria-label="${ready?'Favorites':'Favorites so far'}">${owner&&!ready?'<p class="taste-reveal-lede">Your taste profile is taking shape.</p>':''}<p class="ob-done-count">${n} ${n===1?'favorite':'favorites'}${owner&&!ready?' added':''}</p><div class="ob-done-gallery" data-count="${Math.min(picks.length,4)}">${cards}</div>${owner&&!ready?'<button type="button" class="ob-done-add" onclick="openProfileMediaPicker()"><span aria-hidden="true">+</span> Add another favorite</button>':''}</section>`;
@@ -19317,7 +19439,7 @@ function renderDynamicProfilePicks(){
    return `<button type="button" class="dynamic-taste-card" style="--taste-color:${g.color}" onclick="goToFavorites('${g.tab}')" aria-label="Explore ${g.label}: ${g.items.length} favorites"><div class="dynamic-taste-card-heading"><span>${badgeIcon(g.icon,14)}</span>${esc(g.label)}</div><div class="dynamic-taste-art" data-count="${picks.length}" data-tab="${g.tab}">${picks.map(p=>{
     const art=tastePickArt(g.tab,p)||p.art||'';
     return `<div class="dynamic-taste-cell">${art?`<img src="${esc(art)}" alt="${esc(p.title)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false">`:''}<span ${art?'hidden':''}>${esc(p.title)}</span></div>`;
-   }).join('')}</div><div class="dynamic-taste-caption"><strong>${esc(first.title)}</strong><span>${esc(first.artist||first.author||({artist:'Favorite artist',album:'Favorite album',song:'Favorite song',movie:'Top favorite film',tv:'Top TV pick',book:'Top book pick'}[first._tasteKind]))}</span></div></button>`;
+   }).join('')}</div><div class="dynamic-taste-caption"><strong>${esc(first.title)}</strong><span>${esc(first.artist||first.author||({artist:'Favorite artist',album:'Favorite album',song:'Favorite song',movie:'Top favorite film',tv:'Top TV pick',book:'Top book pick',author:'Favorite author'}[first._tasteKind]))}</span></div></button>`;
   }).join('')}</div>`:`<div class="dynamic-taste-empty">${owner?'<h3>Start with five things you love</h3><p>A few favorite songs, albums, artists, movies, shows or books make this profile yours.</p><button type="button" class="ed-primary" onclick="resumeOnboarding()">Add your first favorite</button>':'<p>No favorites shared yet.</p>'}</div>`)+
   (populated.length?progress:'')+
   (owner&&readiness.ready&&populated.length&&empty.length?`<section class="dynamic-taste-explore" aria-label="Explore more of your taste"><h3>Explore more of your taste</h3><div>${empty.map(g=>`<button type="button" onclick="addProfileTasteFavorite('${g.tab}')">+ Add ${g.label}</button>`).join('')}</div></section>`:'');
@@ -19329,6 +19451,7 @@ function renderDynamicProfilePicks(){
   if(g.tab==='music'&&p._tasteKind==='artist')task=summaryArtistPhoto(p.title).then(art=>{p.art=art;});
   else if(g.tab==='music'&&p._tasteKind==='album')task=lookupAlbumCover(p.title,p.artist).then(art=>{p.art=art;});
   else if((g.tab==='movies'||g.tab==='tv')&&p.tmdbId)task=(g.tab==='tv'?fetchTVDetail(p.tmdbId):fetchMovieDetail(p.tmdbId)).then(d=>{p.poster=d?.poster||'';});
+  else if(g.tab==='books'&&p._tasteKind==='author')task=lookupAuthorPhoto(p.title).then(art=>{p.art=art;});
   else if(g.tab==='books')task=fetchBookCover(p.title,p.author).then(art=>{p.cover=art;});
   if(task)task.then(()=>{if(current())render();}).catch(()=>{});
  }
