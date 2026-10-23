@@ -3698,7 +3698,13 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
   .dynamic-taste-grid[data-count="1"], .dynamic-taste-grid[data-count="2"] { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
 }
 </style>
-</head>
+<style id="screen-rating-styles">
+.rt-slot{flex-wrap:wrap;row-gap:8px}
+.rt-score{color:var(--text);font-weight:650;font-variant-numeric:tabular-nums}
+.imdb-dot{display:inline-block;width:9px;height:9px;border-radius:2px;background:#f5c518;flex-shrink:0}
+.rating-unavailable,.rating-loading{font-size:12px;color:var(--muted)}
+.rating-retry{background:none;border:0;font:inherit;cursor:pointer;padding:0;text-decoration:underline}
+</style></head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
 <div id="app-startup-status" role="status" aria-live="polite">Loading…</div>
@@ -16683,36 +16689,67 @@ function sharedBookFallback(title, author) {
   const hit = SHARED_BOOK_FALLBACKS[sharedBookKey(title)] || SHARED_BOOK_FALLBACKS[sharedBookKey(String(title||'').split(':')[0].replace(/^the\s+/i,''))];
   return hit && (!author || sharedBookKey(author) === sharedBookKey(hit.author)) ? hit : null;
 }
-// ── Rotten Tomatoes links ──
-// Rotten Tomatoes has no open API, but Wikidata records each film's / show's RT page (P1258)
-// alongside its TMDB id (P4947 movies, P4983 TV). Look it up by TMDB id; no page → no link.
+// Exact TMDB identity resolves to IMDb; scores come from the private OMDb proxy.
 const RT_LINKS = new Map();
-// Rotten Tomatoes page (and, when Wikidata records it, the Tomatometer %) for a TMDB id.
-// Resolves to { url, score } — score like "93%" or ''.
-function rtInfo(kind, tmdbId) {
-  if (!tmdbId) return Promise.resolve({ url: '', score: '' });
-  const key = `${kind}:${tmdbId}`;
-  if (RT_LINKS.has(key)) return RT_LINKS.get(key);
-  const prop = kind === 'tv' ? 'P4983' : 'P4947';
-  const id = String(tmdbId).replace(/[^0-9]/g, '');
-  // Tomatometer: a review score by Rotten Tomatoes (Q105584), measured as the Tomatometer (Q108403393) or a plain "NN%".
-  const query = `SELECT ?rt ?score ?date WHERE { ?item wdt:${prop} "${id}"; wdt:P1258 ?rt.
-    OPTIONAL { ?item p:P444 ?st. ?st ps:P444 ?score; pq:P447 wd:Q105584.
-      OPTIONAL { ?st pq:P459 ?method } OPTIONAL { ?st pq:P585 ?date }
-      FILTER((!BOUND(?method) || ?method = wd:Q108403393) && REGEX(?score, "^[0-9]{1,3} ?%$")) } } ORDER BY DESC(?date) LIMIT 1`;
-  const p = sharedCatalogJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query))
-    .then(d => {
-      const b = d?.results?.bindings?.[0] || {}, rt = b.rt?.value || '';
-      const url = /^(m|tv)\/[\w\-]+(\/[\w\-]+)?$/.test(rt) ? 'https://www.rottentomatoes.com/' + rt : '';
-      const score = url && /^\d{1,3} ?%$/.test(b.score?.value || '') ? b.score.value.replace(/\s/g, '') : '';
-      return { url, score };
-    })
-    .catch(() => { RT_LINKS.delete(key); return { url: '', score: '' }; });
-  RT_LINKS.set(key, p);
-  return p;
+function screenRatingId(kind,value){
+ const text=String(value||'');
+ if(/^\d+$/.test(text))return text;
+ const match=text.match(/^tmdb:(movie|tv):(\d+)$/);
+ return match&&match[1]===kind?match[2]:'';
 }
+function emptyScreenRatings(){return {url:'',score:'',date:'',imdbUrl:'',imdbScore:'',imdbDate:''};}
+async function screenRatingIdentity(kind,id){
+ const response=await tmdbFetchNow('/'+kind+'/'+id+'/external_ids',{signal:AbortSignal.timeout(10000)});
+ if(!response.ok)throw Error('Title lookup failed');
+ const data=await response.json();
+ return /^tt\d{7,10}$/.test(data.imdb_id||'')?data.imdb_id:'';
+}
+async function screenRatingRtUrl(kind,id){
+ const prop=kind==='tv'?'P4983':'P4947';
+ const query=`SELECT ?rt WHERE { ?item wdt:${prop} "${id}"; wdt:P1258 ?rt. } LIMIT 1`;
+ try{
+  const data=await sharedCatalogJSON('https://query.wikidata.org/sparql?format=json&query='+encodeURIComponent(query));
+  const path=data?.results?.bindings?.[0]?.rt?.value||'';
+  return /^(m|tv)\/[\w-]+(?:\/[\w-]+)?$/.test(path)?'https://www.rottentomatoes.com/'+path:'';
+ }catch(_){return '';}
+}
+function rtInfo(kind,tmdbId){
+ kind=kind==='tv'?'tv':'movie';const id=screenRatingId(kind,tmdbId);
+ if(!id)return Promise.resolve(emptyScreenRatings());
+ const key=kind+':'+id,storageKey='tastelist:omdb:v1:'+key,cached=RT_LINKS.get(key);
+ if(cached&&cached.expires>Date.now())return cached.promise;
+ try{const saved=JSON.parse(localStorage.getItem(storageKey)||'null');if(saved&&saved.expires>Date.now())return Promise.resolve(saved.value);}catch(_){}
+ const record={expires:Date.now()+86400000,promise:null};
+ record.promise=(async()=>{
+  const out=emptyScreenRatings();
+  const rtUrlJob=screenRatingRtUrl(kind,id);
+  try{
+   const imdbId=await screenRatingIdentity(kind,id);
+   if(imdbId){
+    out.imdbUrl='https://www.imdb.com/title/'+imdbId+'/';
+    if(!sb)throw Error('Ratings service unavailable');
+    const {data,error}=await sb.functions.invoke('screen-ratings',{body:{imdbId,kind}});
+    if(error||!data||data.error)throw Error('Ratings request failed');
+    if(/^\d{1,3}%$/.test(data.score||'')&&Number(data.score.slice(0,-1))<=100)out.score=data.score;
+    if(/^\d{1,2}\.\d\/10$/.test(data.imdbScore||'')&&Number(data.imdbScore.split('/')[0])<=10)out.imdbScore=data.imdbScore;
+    out.date=out.imdbDate=data.fetchedAt||'';
+   }
+   out.url=await rtUrlJob;
+   record.expires=Date.now()+((out.score||out.imdbScore)?86400000:3600000);
+   try{localStorage.setItem(storageKey,JSON.stringify({expires:record.expires,value:out}));}catch(_){}
+   return out;
+  }catch(_){
+   out.url=await rtUrlJob;
+   if(RT_LINKS.get(key)===record)RT_LINKS.delete(key);
+   return {...out,failed:true};
+  }
+ })();
+ RT_LINKS.set(key,record);if(RT_LINKS.size>200)RT_LINKS.delete(RT_LINKS.keys().next().value);
+ return record.promise;
+}
+
 function rtLink(kind, tmdbId) { return rtInfo(kind, tmdbId).then(r => r.url); }
-// Drop <span class="rt-slot" …> anywhere a movie/show is shown; it fills in (or disappears) by itself.
+// Rating slots are shared by movie and TV detail views.
 // Every movie/show gets a Rotten Tomatoes link: its exact page when Wikidata knows it, otherwise a
 // Rotten Tomatoes search for the title (newer releases often aren't mapped yet).
 // The slot also carries a TMDB link (exact page by id, or a TMDB search by title), unless the spot
@@ -16726,22 +16763,34 @@ function tmdbPageUrl(kind, tmdbId, title) {
   return title ? 'https://www.themoviedb.org/search?query=' + encodeURIComponent(title) : '';
 }
 function rtSearchUrl(title) { return title ? 'https://www.rottentomatoes.com/search?search=' + encodeURIComponent(title) : ''; }
-function fillRtSlots() {
-  document.querySelectorAll('.rt-slot:not([data-rt-state])').forEach(el => {
-    el.dataset.rtState = 'loading';
-    const tmdb = el.dataset.noTmdb ? '' : tmdbPageUrl(el.dataset.rtKind, el.dataset.rtId, el.dataset.rtTitle);
-    const tmdbHtml = tmdb ? `<a class="rt-link tmdb-link" href="${esc(tmdb)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="tmdb-dot" aria-hidden="true"></span>TMDB ↗</a>` : '';
-    el.innerHTML = tmdbHtml;                      // TMDB shows right away; Rotten Tomatoes joins once it's looked up
-    rtInfo(el.dataset.rtKind, el.dataset.rtId).then(found => {
-      if (!el.isConnected) return;
-      const url = found.url || rtSearchUrl(el.dataset.rtTitle);
-      el.dataset.rtState = 'done';
-      if (!url) { if (!tmdbHtml) el.remove(); return; }
-      const score = found.url && found.score ? `<strong class="rt-score" title="Tomatometer">${esc(found.score)}</strong>` : '';
-      el.innerHTML = `<a class="rt-link" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="rt-dot" aria-hidden="true"></span>${score}Rotten Tomatoes ↗</a>${tmdbHtml}`;
-    });
-  });
+function ratingRecordedTitle(label,score,date){
+ return score?label+' score supplied by OMDb'+(date?' (retrieved '+date.slice(0,10)+')':'')+'. Open the source for its current rating.':'Open '+label+' to see its score. TasteList has not retrieved a score for this title.';
 }
+function screenRatingLinksHtml(found,title,tmdbHtml){
+ const rtUrl=found.url||rtSearchUrl(title),imdbUrl=found.imdbUrl||(title?'https://www.imdb.com/find/?q='+encodeURIComponent(title)+'&s=tt':'');
+ const link=(url,cls,label,score,date)=>url?`<a class="rt-link ${cls}" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(ratingRecordedTitle(label,score,date))}" aria-label="${esc(label+(score?' '+score:': view score on source website'))}"><span class="${cls==='imdb-link'?'imdb-dot':'rt-dot'}" aria-hidden="true"></span>${esc(label)}${score?` <strong class="rt-score">${esc(score)}</strong>`:''} ↗</a>`:'';
+ return link(rtUrl,'rt-rating-link','RT',found.score,found.date)+link(imdbUrl,'imdb-link','IMDb',found.imdbScore,found.imdbDate)+tmdbHtml;
+}
+function retryScreenRatings(button){
+ const el=button.closest('.rt-slot');if(!el)return;
+ RT_LINKS.delete((el.dataset.rtKind==='tv'?'tv':'movie')+':'+screenRatingId(el.dataset.rtKind,el.dataset.rtId));
+ delete el.dataset.rtState;fillRtSlots();
+}
+function fillRtSlots(){
+ document.querySelectorAll('.rt-slot:not([data-rt-state])').forEach(el=>{
+  el.dataset.rtState='loading';
+  const identity=[el.dataset.rtKind,el.dataset.rtId,el.dataset.rtTitle].join('|');
+  const tmdb=el.dataset.noTmdb?'':tmdbPageUrl(el.dataset.rtKind,el.dataset.rtId,el.dataset.rtTitle);
+  const tmdbHtml=tmdb?`<a class="rt-link tmdb-link" href="${esc(tmdb)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="tmdb-dot" aria-hidden="true"></span>TMDB ↗</a>`:'';
+  el.innerHTML='<span class="rating-loading" role="status">Loading ratings…</span>'+tmdbHtml;
+  rtInfo(el.dataset.rtKind,el.dataset.rtId).then(found=>{
+   if(!el.isConnected||identity!==[el.dataset.rtKind,el.dataset.rtId,el.dataset.rtTitle].join('|'))return;
+   el.dataset.rtState=found.failed?'error':'done';
+   el.innerHTML=screenRatingLinksHtml(found,el.dataset.rtTitle,tmdbHtml)+(found.failed?'<button type="button" class="rt-link rating-retry" onclick="event.stopPropagation();retryScreenRatings(this)">Retry ratings</button>':'');
+  });
+ });
+}
+
 async function sharedCatalogJSON(url) {
   if(new URL(url).origin==='https://itunes.apple.com')return onboardingSearchJSON(url);
   const r = await fetch(url,{signal:AbortSignal.timeout(10000)});
