@@ -2862,6 +2862,8 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 #taste-list-title{font-size:clamp(32px,4.8vw,60.8px);}
 .sl-member-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px;}
 .sl-member-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:24px;padding:4px 10px;font-size:13px;}
+.sl-member-chip.is-link{color:var(--text);text-decoration:none;cursor:pointer;transition:background .15s,border-color .15s;}
+.sl-member-chip.is-link:hover,.sl-member-chip.is-link:focus-visible{background:var(--surface2);border-color:var(--accent);}
 .sl-member-chip small,.sl-collaboration-note,.sl-contributor{color:var(--muted);font-size:12px;}
 .sl-contributor{margin-top:9px;}.sl-contributor a{color:var(--text);text-decoration:none;}
 .sl-visibility{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;}
@@ -3024,8 +3026,10 @@ html body #reaction-people-title{font-family:var(--ob-serif)!important;font-size
 .lc-meta { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin-top:8px; font-size:12px; color:var(--muted); }
 .lc-privacy { font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); }
 .lc-avatars { display:inline-flex; align-items:center; margin-left:auto; }
-.lc-avatars > span { margin-left:-4px; box-shadow:0 0 0 2px var(--surface2); }
-.lc-avatars > span:first-child { margin-left:0; }
+.lc-avatars > span, .lc-avatars > a { margin-left:-4px; box-shadow:0 0 0 2px var(--surface2); }
+.lc-avatars > :first-child { margin-left:0; }
+.lc-avatars > a { display:inline-flex; border-radius:50%; position:relative; transition:transform .15s; }
+.lc-avatars > a:hover, .lc-avatars > a:focus-visible { transform:translateY(-2px); z-index:1; }
 .lc-more { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 5px; border-radius:999px; background:var(--surface3, #2a2a2e); font-size:10.5px; font-weight:700; color:var(--muted); }
 .lc-menu { position:relative; flex:0 0 auto; margin:-4px -6px 0 0; }
 .lc-menu > summary { list-style:none; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:50%; color:var(--muted); cursor:pointer; }
@@ -3609,6 +3613,18 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
   .fc-season-chips { flex-wrap: wrap; overflow: visible; }
 }
 @media (pointer: coarse) { .fc-chip, .fc-season-chip { padding: 9px 14px; } }
+/* Spoilers: covered words and a covered post */
+.spoiler { border-radius: 4px; padding: 0 3px; margin: 0 -1px; transition: background .2s, color .2s; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.spoiler:not(.is-revealed) { background: #3a3940; color: transparent; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.spoiler:not(.is-revealed) * { color: transparent; }
+.spoiler:not(.is-revealed):hover { background: #4a4852; }
+.spoiler:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.spoiler.is-revealed { background: rgba(255,255,255,.07); }
+.spoiler-cover { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; margin-top: 10px; padding: 13px 16px; border: 1px dashed var(--border); border-radius: 12px; background: repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 10px, transparent 10px 20px), var(--surface); color: var(--muted); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer; transition: color .15s, border-color .15s; }
+.spoiler-cover:hover, .spoiler-cover:focus-visible { color: var(--text); border-color: var(--accent); }
+.spoiler-cover-tag { flex-shrink: 0; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #f5b84b; background: rgba(245,184,75,.12); border-radius: 999px; padding: 3px 9px; }
+.spoiler-cover-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spoiler-post-content > .activity-note, .spoiler-post-content > .feed-post-body { margin-top: 10px; }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -3657,6 +3673,15 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 .dynamic-taste-grid { align-items: stretch; gap: var(--tl-gap-3); }
 .dynamic-taste-grid[data-count="1"] { grid-template-columns: minmax(0, 300px); justify-content: center; }
 .dynamic-taste-grid[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 300px)); justify-content: center; }
+/* Every category box sits in one row, sharing the width evenly: 3, 4 or 5 across */
+.dynamic-taste-grid[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dynamic-taste-grid[data-count="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dynamic-taste-grid[data-count="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 900px) {
+  /* Too narrow for one row: two across, and an odd last box is centred rather than left hanging */
+  .dynamic-taste-grid[data-count="3"], .dynamic-taste-grid[data-count="4"], .dynamic-taste-grid[data-count="5"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dynamic-taste-grid[data-count="3"] > :last-child, .dynamic-taste-grid[data-count="5"] > :last-child { grid-column: 1 / -1; justify-self: center; width: calc(50% - var(--tl-gap-3, 16px) / 2); }
+}
 .dynamic-taste-card { border-radius: var(--tl-radius); background: var(--tl-card-bg); display: flex; flex-direction: column; }
 .dynamic-taste-card-heading { background: none; border-bottom: 1px solid var(--border); color: var(--taste-color); }
 .dynamic-taste-art { aspect-ratio: 2 / 3; grid-template-rows: repeat(2, minmax(0, 1fr)); background: #141417; overflow: hidden; }
@@ -5155,9 +5180,57 @@ function parseActivityPeople(note) {
   const suffix=raw.match(/\n\nWith ((?:@\[[a-zA-Z0-9_.-]+\] ?)+)$/);
   return suffix?{text:raw.slice(0,suffix.index),people:[...suffix[1].matchAll(/@\[([a-zA-Z0-9_.-]+)\]/g)].map(m=>m[1])}:{text:raw,people:[]};
 }
-function renderActivityNote(note) {
+// ── Spoilers ──
+// Inline: words wrapped in ||double bars|| show as a covered bar until tapped.
+// Whole post: catalog_item.spoiler hides the post text behind a "Spoilers · Tap to show" cover.
+// What you reveal stays revealed while you're on the page (keyed by post/comment and position).
+const revealedSpoilers=new Set();
+const SPOILER_RE=/\|\|([\s\S]+?)\|\|/g;
+function spoilerHtml(text,key,{br=true}={}){
+ const s=String(text||''),fmt=t=>br?esc(t).replace(/\n/g,'<br>'):esc(t);
+ let out='',last=0,i=0;
+ for(const m of s.matchAll(SPOILER_RE)){
+  out+=fmt(s.slice(last,m.index));last=m.index+m[0].length;
+  const k=`${key}#${i++}`,open=revealedSpoilers.has(k);
+  out+=open?`<span class="spoiler is-revealed">${fmt(m[1])}</span>`
+   :`<span class="spoiler" data-spoiler="${esc(k)}" role="button" tabindex="0" aria-label="Spoiler, tap to reveal" title="Spoiler — tap to reveal" onclick="revealSpoiler(event,this)" onkeydown="if(event.key==='Enter'||event.key===' ')revealSpoiler(event,this)"><span aria-hidden="true">${fmt(m[1])}</span></span>`;
+ }
+ return out+fmt(s.slice(last));
+}
+function revealSpoiler(event,el){
+ if(!el||el.classList.contains('is-revealed'))return;
+ event.preventDefault();event.stopPropagation();
+ revealedSpoilers.add(el.dataset.spoiler);el.classList.add('is-revealed');
+ ['role','tabindex','aria-label','title'].forEach(a=>el.removeAttribute(a));el.firstElementChild?.removeAttribute('aria-hidden');
+}
+function isSpoilerPost(row){return !!(row?.catalog_item?.spoiler||row?.catalogItem?.spoiler);}
+function spoilerPostWrap(id,label,html){
+ if(!html)return html;
+ const open=revealedSpoilers.has('post:'+id);
+ return `<div class="spoiler-post${open?'':' is-hidden'}" data-spoiler-post="${esc(String(id))}">${open?'':`<button type="button" class="spoiler-cover" onclick="event.stopPropagation();revealSpoilerPost(this.closest('[data-spoiler-post]').dataset.spoilerPost)"><span class="spoiler-cover-tag">Spoilers</span><span class="spoiler-cover-text">${label?`${esc(label)} · `:''}Tap to show</span></button>`}<div class="spoiler-post-content"${open?'':' hidden'}>${html}</div></div>`;
+}
+function revealSpoilerPost(id){
+ id=String(id);revealedSpoilers.add('post:'+id);
+ document.querySelectorAll('[data-spoiler-post]').forEach(w=>{
+  if(w.dataset.spoilerPost!==id)return;
+  w.classList.remove('is-hidden');w.querySelector(':scope > .spoiler-cover')?.remove();
+  const c=w.querySelector(':scope > .spoiler-post-content');if(c)c.hidden=false;
+ });
+}
+// Composer: wrap the selected words in ||…|| (or insert a placeholder to type over).
+function wrapFeedSpoiler(){
+ const t=document.getElementById('feed-post-text');if(!t||t.disabled)return;
+ const a=t.selectionStart??t.value.length,b=t.selectionEnd??a,v=t.value,sel=v.slice(a,b)||'hidden text';
+ t.value=v.slice(0,a)+'||'+sel+'||'+v.slice(b);t.focus();t.setSelectionRange(a+2,a+2+sel.length);
+ updateFeedPostDraft(t.value);
+}
+function toggleFeedSpoilerPost(btn){
+ feedPostDraft.spoiler=!feedPostDraft.spoiler;
+ btn.classList.toggle('is-on',feedPostDraft.spoiler);btn.setAttribute('aria-pressed',String(feedPostDraft.spoiler));
+}
+function renderActivityNote(note,key) {
   const {text,people}=parseActivityPeople(note);
-  return esc(text).replace(/\n/g,'<br>')+(people.length?`<div class="activity-people">With ${people.map(username=>`<button type="button" data-username="${esc(username)}" onclick="event.stopPropagation();goToProfile(this.dataset.username)">@${esc(username)}</button>`).join('')}</div>`:'');
+  return spoilerHtml(text,key||'n:'+text.slice(0,60))+(people.length?`<div class="activity-people">With ${people.map(username=>`<button type="button" data-username="${esc(username)}" onclick="event.stopPropagation();goToProfile(this.dataset.username)">@${esc(username)}</button>`).join('')}</div>`:'');
 }
 function renderActivityTypes() {
   const value=document.getElementById('activity-item-type').value;
@@ -6218,7 +6291,7 @@ function renderTasteListsPicker() {
     const members = [list.user_id, ...(list.collaborators || []).map(c => c.user_id)].filter((v, i, a) => v && a.indexOf(v) === i);
     const shared = (list.collaborators || []).length > 0;
     const person = id => tasteListPeople.get(id) || (list.collaborators || []).find(c => c.user_id === id) || (viewedProfile?.id === id ? viewedProfile : null) || (currentUser?.id === id ? currentProfile : null) || {};
-    const avatars = shared ? `<span class="lc-avatars" title="${esc(members.map(id => firstNameOnly(person(id).display_name) || person(id).username || '').filter(Boolean).join(', '))}">${members.slice(0, 3).map(id => profileAvatarHtml({ ...person(id), id }, 22)).join('')}${members.length > 3 ? `<span class="lc-more">+${members.length - 3}</span>` : ''}</span>` : '';
+    const avatars = shared ? `<span class="lc-avatars" title="${esc(members.map(id => firstNameOnly(person(id).display_name) || person(id).username || '').filter(Boolean).join(', '))}">${members.slice(0, 3).map(id => { const pp = person(id), av = profileAvatarHtml({ ...pp, id }, 22), nm = firstNameOnly(pp.display_name) || pp.username || ''; return pp.username ? `<a class="lc-avatar-link" href="?u=${encodeURIComponent(pp.username)}" onclick="event.preventDefault();event.stopPropagation();goToProfile('${esc(jsStr(pp.username))}')" title="View ${esc(id === currentUser?.id ? 'your' : possessiveName(nm))} profile" aria-label="View ${esc(id === currentUser?.id ? 'your' : possessiveName(nm))} profile">${av}</a>` : av; }).join('')}${members.length > 3 ? `<span class="lc-more">+${members.length - 3}</span>` : ''}</span>` : '';
     const canEditThisList = list.isOwner || (list.collaborators || []).some(c => c.user_id === currentUser?.id);
     const isMember = canEditThisList;
     const pub = list.is_public === true;
@@ -6310,7 +6383,9 @@ function renderTasteListCollaborators(list) {
  const chips=ids.map(id=>{
   const p=tasteListPeople.get(id)||(list.collaborators||[]).find(c=>c.user_id===id)||(viewedProfile?.id===id?viewedProfile:null);
   const name=p?(firstNameOnly(p.display_name)||p.username||'Member'):'Member';
-  return `<span class="sl-member-chip">${profileAvatarHtml(p||{display_name:name},24)}${esc(name)}${id===list.user_id?'<small>Owner</small>':''}</span>`;
+  const inner=`${profileAvatarHtml(p||{display_name:name},24)}${esc(name)}${id===list.user_id?'<small>Owner</small>':''}`;
+  // Each member opens their profile, where you can follow them.
+  return p?.username?`<a class="sl-member-chip is-link" href="?u=${encodeURIComponent(p.username)}" onclick="event.preventDefault();event.stopPropagation();goToProfile('${esc(jsStr(p.username))}')" title="View ${esc(id===currentUser?.id?'your':possessiveName(name))} profile">${inner}</a>`:`<span class="sl-member-chip">${inner}</span>`;
  }).join('');
  el.innerHTML=`<div class="sl-member-row"><span>${ids.length} ${ids.length===1?'member':'members'}</span>${chips}${tasteListPrivacyControl(list)}</div>`;
 }
@@ -17739,7 +17814,7 @@ function discussionCommentsHtml(type, listId) {
         ${profileAvatarHtml(p, 32)}
         <div class="sl-comment-main">
           <div class="sl-comment-meta">${name}<span class="sl-comment-time">${esc(discussionCommentTime(c.created_at))}</span>${del}</div>
-          <div class="sl-comment-body">${esc(c.body)}</div>
+          <div class="sl-comment-body">${spoilerHtml(c.body,'c:'+c.id,{br:false})}</div>
           <div class="sl-comment-actions">${commentReactionHtml(c)}</div>
         </div>
       </li>`;
@@ -17931,6 +18006,7 @@ function refreshEngagementUI(targetType, targetId) {
 // elements sharing the same id for the same item.
 const openProfileCommentPanels = new Set();
 function toggleProfileCardComments(itemId) {
+  if (!revealedSpoilers.has('post:' + itemId) && document.querySelector('[data-spoiler-post].is-hidden')) revealSpoilerPost(itemId);
   const el = document.getElementById(`inline-comments-profile-${itemId}`);
   if (!el) return;
   if (openProfileCommentPanels.has(itemId)) {
@@ -17953,7 +18029,7 @@ function activityCardHtml(item, globalIndex) {
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
   const iconColor = (MEDIA_ICONS[iconType] || MEDIA_ICONS.music).color;
   const typeIcon = badgeIcon(iconType, 13);
-  const note = item.note ? `<div class="activity-note">${renderActivityNote(item.note)}</div>` : '';
+  const note = item.note ? (isSpoilerPost(item) ? spoilerPostWrap(item.id, item.label || '', `<div class="activity-note">${renderActivityNote(item.note,'p:'+item.id)}</div>`) : `<div class="activity-note">${renderActivityNote(item.note,'p:'+item.id)}</div>`) : '';
   const isPlaylistAnnouncement = item.type === 'list' && item.tab === 'playlist';
   const art = isPlaylistAnnouncement
     ? tripPlaylistMosaicHtml(item.label)
@@ -18884,6 +18960,8 @@ function renderFeedComposer(){
   <footer class="fc-foot"><div class="composer-chips">
     <span class="composer-chip composer-date-chip" title="Change the date to post about something from earlier"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><span id="feed-date-label">${esc(friendlyPostDate(feedPostDateValue()))}</span><input type="date" id="feed-post-date" aria-label="Post date" value="${esc(feedPostDateValue())}" max="${localDateISO()}" onchange="feedPostDraft.date=this.value;document.getElementById('feed-date-label').textContent=friendlyPostDate(feedPostDateValue())" ${feedPostDraft.saving?'disabled':''}></span>
     <button type="button" class="composer-chip${feedComposerTagsOpen()?' is-on':''}" id="feed-tag-chip" aria-expanded="${feedComposerTagsOpen()}" onclick="toggleFeedTags()" ${feedPostDraft.saving?'disabled':''}>${feedTagChipLabel()}</button>
+    <button type="button" class="composer-chip" onmousedown="event.preventDefault()" onclick="wrapFeedSpoiler()" title="Hide the selected words until someone taps them. They're saved as ||like this||." ${feedPostDraft.saving?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.4 5.2A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.1 6.1C3.4 7.9 2 12 2 12s4 7 10 7a9.8 9.8 0 0 0 4.4-1"/></svg>Hide text</button>
+    <button type="button" class="composer-chip${feedPostDraft.spoiler?' is-on':''}" aria-pressed="${!!feedPostDraft.spoiler}" onclick="toggleFeedSpoilerPost(this)" title="Cover the whole post with a spoiler warning" ${feedPostDraft.saving?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Spoilers</button>
     <span id="feed-post-count" class="composer-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span>
    </div>
    <div class="fc-actions"><span id="fc-hint" class="fc-hint" aria-live="polite">${esc(hint)}</span>${feedPostDraft.id?'<button type="button" class="fc-cancel" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="fc-submit" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||!feedPostDraft.attachment||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post update'} <span aria-hidden="true">→</span></button></div>
@@ -18929,7 +19007,7 @@ async function publishFeedPost(){
   if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again to post.');
   const attachment=feedPostDraft.attachment;
   const saved=Object.fromEntries(Object.entries(attachment).filter(([k])=>!k.startsWith('_')));
-  const row={label:attachment.title,type:'other',sub:[attachment.label,tvPartLabel(attachment)].filter(Boolean).join(' · '),note:text,art_url:onboardingArt(attachment)||null,catalog_item:{kind:'text_post',attachment:saved},tags:await tagFieldValue('feed'),activity_date:feedPostDateValue()};
+  const row={label:attachment.title,type:'other',sub:[attachment.label,tvPartLabel(attachment)].filter(Boolean).join(' · '),note:text,art_url:onboardingArt(attachment)||null,catalog_item:{kind:'text_post',attachment:saved,...(feedPostDraft.spoiler?{spoiler:true}:{})},tags:await tagFieldValue('feed'),activity_date:feedPostDateValue()};
   let result;
   if(feedPostDraft.id)result=await sb.from('activity_feed').update(row).eq('id',feedPostDraft.id).eq('user_id',userId).select('id').single();
   else{
@@ -18950,7 +19028,7 @@ function editFeedTextPost(id){
  const r=feedRows.find(r=>r.id===id)||ACTIVITY_FEED_ITEMS.find(r=>r.id===id);
  if(!r||feedPostDraft.saving)return;
  if(feedPostDraft.text.trim()&&!confirm('Replace your current draft with this post?'))return;
- feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.pickedFrom=null;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null,date:String(r.activity_date||r.activityDate||'').slice(0,10)||null};tagFieldInit('feed',r.tags||[]);goToFeedView();feedComposerOpen=true;renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
+ feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.pickedFrom=null;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null,spoiler:isSpoilerPost(r),date:String(r.activity_date||r.activityDate||'').slice(0,10)||null};tagFieldInit('feed',r.tags||[]);goToFeedView();feedComposerOpen=true;renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
 }
 async function deleteFeedTextPost(id){
  if(!currentUser||!confirm('Delete this update?'))return;
@@ -18967,7 +19045,7 @@ function feedTextPostHtml(row,profile=false){
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
  const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
  const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
- return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(row.activity_date)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header><div class="feed-post-body">${esc(row.note||'')}</div>${taggedLineHtml(row.tags,row.user_id&&row.user_id===currentUser?.id?row.id:null)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
+ return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(row.activity_date)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header>${(()=>{const body=`<div class="feed-post-body">${spoilerHtml(row.note,'p:'+row.id)}</div>`;return isSpoilerPost(row)?spoilerPostWrap(row.id,'',body):body;})()}${taggedLineHtml(row.tags,row.user_id&&row.user_id===currentUser?.id?row.id:null)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
 }
 
 async function loadPublicFeed() {
@@ -19418,7 +19496,8 @@ function publicActivityCardHtml(row,profile=false) {
   summaryFeedRows.set(String(row.id),row);
   const meta = ACTIVITY_TYPE_META[row.type] || ACTIVITY_TYPE_META.movie;
   const typeIcon = badgeIcon(meta.icon, 13);
-  const note = row.note ? (profile ? `<div class="activity-note">${renderActivityNote(row.note)}</div>` : `<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:8px;">${renderActivityNote(row.note)}</div>`) : '';
+  const noteBody = row.note ? (profile ? `<div class="activity-note">${renderActivityNote(row.note,'p:'+row.id)}</div>` : `<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:8px;">${renderActivityNote(row.note,'p:'+row.id)}</div>`) : '';
+  const note = isSpoilerPost(row) ? spoilerPostWrap(row.id, [row.label, tvPartLabel(row.catalog_item?.attachment)].filter(Boolean).join(' · '), noteBody) : noteBody;
   const mosaicCells = row._mosaicArt
     ? row._mosaicArt.map(u => `<div style="background-image:url('${esc(u)}');background-size:cover;background-position:center;"></div>`).join('') +
       Array(Math.max(0, 4 - row._mosaicArt.length)).fill(`<div style="background:${meta.color}18;"></div>`).join('')
@@ -19469,6 +19548,7 @@ function publicActivityCardHtml(row,profile=false) {
 // open thread shut. Viewing comments needs no sign-in; only posting one does (see submitComment).
 const openFeedCommentPanels = new Set();
 function toggleFeedComments(targetId) {
+  if (!revealedSpoilers.has('post:' + targetId) && document.querySelector('[data-spoiler-post].is-hidden')) revealSpoilerPost(targetId);
   const el = document.getElementById(`inline-comments-activity_feed-${targetId}`);
   if (!el) return;
   if (openFeedCommentPanels.has(targetId)) {
@@ -20507,7 +20587,7 @@ let tasteShareAsset=null,tasteShareRevision=0;
 function tasteShareUrl(){return 'https://tastelist.app/';}
 function openTasteShare() {
  if(isLockedProfile()||!viewedProfile?.username)return;
- const groups=tastePosterGroups(),name=firstNameOnly(viewedProfile?.display_name)||viewedProfile.username;
+ const groups=tasteShareGroups(),name=firstNameOnly(viewedProfile?.display_name)||viewedProfile.username;
  document.getElementById('taste-share-preview').innerHTML=groups.length?'<div class="taste-card-loading" role="status">Creating your card…</div>':tasteSharePreviewHtml(groups,name);
  const url=tasteShareUrl();
  const hasNativeShare=!!navigator.share;
@@ -20523,8 +20603,8 @@ function closeTasteShare(){++tasteShareRevision;tasteShareAsset=null;document.ge
 // Movie/TV posters are normally fetched only when their tab is opened, so fill any gaps here.
 async function fillMissingSharePosters(groups) {
  const jobs=[];
- for(const p of groups.find(g=>g.tab==='music')?.items||[])if(!p.art)jobs.push((p.musicKind==='album'?lookupAlbumCover(p.title,p.artist):summaryArtistPhoto(p.title)).then(art=>{p.art=art||'';}));
- for(const p of groups.find(g=>g.tab==='books')?.items||[])if(!p.art)jobs.push(fetchBookCover(p.title,p.author).then(art=>{p.art=art||'';}).catch(()=>{}));
+ for(const p of groups.find(g=>g.tab==='music')?.items||[])if(!p.art)jobs.push((p.musicKind==='album'||p.musicKind==='song'?lookupAlbumCover(p.musicKind==='song'?(p.album||p.title):p.title,p.artist):summaryArtistPhoto(p.title)).then(art=>{p.art=art||'';}).catch(()=>{}));
+ for(const p of groups.find(g=>g.tab==='books')?.items||[])if(!p.art)jobs.push((p.musicKind==='author'?lookupAuthorPhoto(p.title):fetchBookCover(p.title,p.author)).then(art=>{p.art=art||'';}).catch(()=>{}));
  for(const g of groups)for(const p of g.items){
   if(p.art||!p.tmdbType)continue;
   jobs.push((async()=>{
@@ -20560,97 +20640,150 @@ function tasteSharePreviewHtml(groups,name){
  if(!groups.length)return '<p>Add a favorite to create your share card.</p>';
  return `<article class="taste-poster"><header class="taste-poster-heading"><h2>${esc(possessiveName(name))}<br>Taste List</h2><p class="taste-poster-motto">You are<br>what you love.</p></header><div class="taste-poster-grid">${groups.map(g=>`<div class="taste-poster-category"><h3 style="color:${g.color}"><span style="background:${g.color}"></span>${esc(g.label)}</h3><div class="taste-poster-art">${g.items.map(p=>`<div>${p.art?`<img src="${esc(p.art)}" alt="${esc(p.title)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${esc(p.title)}</span>`:`<span>${esc(p.title)}</span>`}</div>`).join('')}</div><ul>${g.items.map(p=>`<li>${esc(p.title)}</li>`).join('')}</ul></div>`).join('')}</div><footer class="taste-poster-footer"><img class="tl-logo" src="${TL_LOGO_SRC}" alt="TasteList" style="--logo-h:34px"><span class="taste-poster-create">Make yours at tastelist.app</span></footer></article>`;
 }
-// Up to six defining picks, taken in turn from each category so a mixed profile shows its range.
-function tasteShareCardPicks(max=6){
- const groups=profileTasteFavorites().filter(g=>g.items.length).map(g=>({g,items:g.items.slice()}));
- const picks=[];
- while(picks.length<max&&groups.some(x=>x.items.length)){
-  for(const x of groups){if(!x.items.length||picks.length>=max)continue;const p=x.items.shift();
-   picks.push({title:p.title,art:tastePickArt(x.g.tab,p)||p.art||'',tab:x.g.tab,label:x.g.label,color:x.g.color,musicKind:p._tasteKind,kind:p._tasteKind,artist:p.artist,author:p.author,tmdbId:p.tmdbId,tmdbType:x.g.tab==='tv'?'tv':x.g.tab==='movies'?'movie':null});}
- }
- return picks;
+// The top four favorites from each category, in the order the profile shows them.
+function tasteShareGroups(){
+ return profileTasteFavorites().filter(g=>g.items.length).map(g=>({
+  label:g.label,tab:g.tab,color:g.color,items:g.items.slice(0,4).map(p=>({
+   title:p.title,art:tastePickArt(g.tab,p)||p.art||'',tab:g.tab,label:g.label,color:g.color,musicKind:p._tasteKind,kind:p._tasteKind,
+   artist:p.artist,author:p.author,tmdbId:p.tmdbId,tmdbType:g.tab==='tv'&&p._tasteKind==='tv'?'tv':g.tab==='movies'?'movie':null
+  }))
+ }));
 }
-// The share card: 1080×1350 (4:5). Name's taste → the artwork → a quiet TasteList footer.
-async function drawTasteShareCard(name,picks){
- const W=1080,H=1350,PAD=72,INNER=W-PAD*2;
+// One category's collage. Tiles keep the category's artwork shape (square for music and podcasts,
+// 2:3 for posters and covers): 1 large, 2 side by side, 3 as a lead plus two stacked, 4 as 2 × 2,
+// and more as even rows, each row widened to the full collage width so nothing is dropped.
+function tasteShareTileAspect(tab){return tab==='music'||tab==='podcasts'?1:2/3;}
+// The shape of one collage: n ≤ 4 has a fixed form; more picks get a few column counts to try.
+function tasteShareShapes(n,t){
+ if(n===3)return [{hero:true}];
+ if(n===1)return [{rows:[1]}];
+ // Two picks sit side by side; stacked only when that's what keeps the row in proportion (scored below).
+ if(n===2)return [{rows:[2]},{rows:[1,1],stacked:true}];
+ if(n===4)return [{rows:[2,2]}];
+ const mid=Math.max(3,Math.round(Math.sqrt(n/t)));
+ return [...new Set([mid-1,mid,mid+1])].filter(c=>c>=2&&c<=Math.min(n,9)).map(c=>{const R=Math.ceil(n/c),base=Math.floor(n/R),extra=n%R;return {rows:Array.from({length:R},(_,i)=>base+(i<extra?1:0))};});
+}
+function tasteShareCollage(shape,t,W,x=0,y=0,g=6){
+ if(shape.hero){
+  // Lead tile on the left, two stacked on the right; every tile keeps the artwork shape.
+  const H=(W-g+t*g/2)/(1.5*t),hw=t*H,sh=(H-g)/2,sw=t*sh;
+  return {h:H,tiles:[{x,y,w:hw,h:H},{x:x+hw+g,y,w:sw,h:sh},{x:x+hw+g,y:y+sh+g,w:sw,h:sh}]};
+ }
+ const tiles=[];let cy=y;
+ for(const k of shape.rows){const tw=(W-(k-1)*g)/k,th=tw/t;for(let i=0;i<k;i++)tiles.push({x:x+i*(tw+g),y:cy,w:tw,h:th});cy+=th+g;}
+ return {h:cy-g-y,tiles};
+}
+// Collage height is a straight-line function of its width: h = A·W + B.
+function tasteShareCollageLine(shape,t){const a=tasteShareCollage(shape,t,400).h,b=tasteShareCollage(shape,t,800).h,A=(b-a)/400;return {A,B:a-A*400};}
+// Arrange the category collages in rows (category order kept). Collages in a row share one height and
+// fill the width. Every split into rows and collage shape is scored for fitting a 4:5 card, keeping
+// picks a similar size across categories and never letting artwork get too small; if everything
+// can't fit comfortably the card grows taller instead of dropping or shrinking picks.
+function tasteShareLayout(groups,inner,avail,{L=34,GX=28,GY=40,minTile=96}={}){
+ const opts=groups.map(g=>{const t=tasteShareTileAspect(g.tab),n=g.items.length;return tasteShareShapes(n,t).map(shape=>({g,t,n,shape,...tasteShareCollageLine(shape,t)}));});
+ const k=opts.length;let best=null;
+ const combos=[[]];for(const o of opts){const next=[];for(const c of combos)for(const b of o)next.push([...c,b]);combos.splice(0,combos.length,...next);}
+ for(const blocks of combos)for(let mask=0;mask<(1<<(k-1));mask++){
+  const rows=[[blocks[0]]];for(let i=1;i<k;i++){if(mask&(1<<(i-1)))rows.push([blocks[i]]);else rows[rows.length-1].push(blocks[i]);}
+  const out=rows.map(row=>{
+   const m=row.length;let h=(inner-GX*(m-1)+row.reduce((s,b)=>s+b.B/b.A,0))/row.reduce((s,b)=>s+1/b.A,0);
+   // No single row may take over the card: each gets a fair share of the height, with some give.
+   // …unless its picks need the room to stay a readable size.
+   const readable=Math.max(...row.map(b=>{const m=W=>Math.min(...tasteShareCollage(b.shape,b.t,W).tiles.map(r=>r.w)),a=(m(800)-m(400))/400,W=(minTile-(m(400)-a*400))/a;return b.A*W+b.B;}));
+   h=Math.min(h,Math.max(Math.min(640,rows.length>1?((avail-GY*(rows.length-1))/rows.length-L)*1.25:avail-L),readable));
+   const sizes=row.map(b=>tasteShareCollage(b.shape,b.t,(h-b.B)/b.A).tiles.map(r=>Math.sqrt(r.w*r.h)));
+   return {row,h,sizes};
+  });
+  let penalty=0,total=0;
+  for(const r of out){
+   r.widths=r.row.map(b=>(r.h-b.B)/b.A);
+   const rowW=r.widths.reduce((s,w)=>s+w,0)+GX*(r.row.length-1);penalty+=Math.max(0,inner-rowW)*.35;
+   r.row.forEach((b,i)=>{if(b.shape.stacked)penalty+=60;for(const t of tasteShareCollage(b.shape,b.t,r.widths[i]).tiles)if(t.w<minTile)penalty+=(minTile-t.w)*45;});
+   total+=L+r.h;
+  }
+  total+=GY*(out.length-1);
+  const sz=out.flatMap(r=>r.row.flatMap((b,i)=>tasteShareCollage(b.shape,b.t,r.widths[i]).tiles.map(t=>Math.sqrt(t.w*t.h))));
+  penalty+=(Math.max(...sz)/Math.min(...sz)-1)*160;
+  const score=Math.abs(total-avail)+(total>avail?(total-avail)*.5:0)+penalty;
+  if(!best||score<best.score)best={score,rows:out,total};
+ }
+ return best;
+}
+function tasteShareDrawArt(ctx,img,x,y,w,h,title,serif){
+ ctx.save();posterRoundRect(ctx,x,y,w,h,7);ctx.clip();
+ if(img&&img.naturalWidth){
+  const ia=img.naturalWidth/img.naturalHeight,ta=w/h;
+  if(Math.abs(ia/ta-1)<=.06){const sc=Math.max(w/img.naturalWidth,h/img.naturalHeight);ctx.drawImage(img,x+(w-img.naturalWidth*sc)/2,y+(h-img.naturalHeight*sc)/2,img.naturalWidth*sc,img.naturalHeight*sc);}
+  else{
+   // A different shape (an artist photo, a square cover in a poster slot): shown whole on a quiet tint of its own colours.
+   const [r,g,b]=posterAverageColor(img);ctx.fillStyle=`rgb(${Math.round(r*.32+12)},${Math.round(g*.32+12)},${Math.round(b*.32+14)})`;ctx.fillRect(x,y,w,h);
+   const sc=Math.min(w/img.naturalWidth,h/img.naturalHeight);ctx.drawImage(img,x+(w-img.naturalWidth*sc)/2,y+(h-img.naturalHeight*sc)/2,img.naturalWidth*sc,img.naturalHeight*sc);
+  }
+ }else{
+  const gr=ctx.createLinearGradient(x,y,x,y+h);gr.addColorStop(0,'#202026');gr.addColorStop(1,'#151518');ctx.fillStyle=gr;ctx.fillRect(x,y,w,h);
+  const fs=Math.round(Math.max(13,Math.min(30,w*.12)));ctx.fillStyle='#f4efe6';ctx.font=`500 ${fs}px ${serif}`;
+  const lines=posterWrap(ctx,title,w-Math.max(16,w*.16),Math.max(2,Math.floor((h-20)/(fs*1.2))));lines.forEach((l,i)=>ctx.fillText(l,x+Math.max(8,w*.08),y+h-Math.max(10,w*.08)-(lines.length-1-i)*fs*1.2));
+ }
+ ctx.restore();
+ ctx.save();posterRoundRect(ctx,x+.5,y+.5,w-1,h-1,7);ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=1;ctx.stroke();ctx.restore();
+}
+// The share card: 1080 wide, 4:5 when the favorites fit; taller when there are more of them.
+// Compact header → every starred favorite, as one collage per category → a quiet TasteList footer.
+async function drawTasteShareCard(name,groups){
+ const W=1080,PAD=64,INNER=W-PAD*2,HEAD=PAD+122+40,FOOT=PAD+44+36,BASE_H=1350,MIN_H=1080,L=34;
  const ui=getComputedStyle(document.body).fontFamily||'Arial, sans-serif', serif=`'Newsreader', ui-serif, Georgia, serif`;
  try{await Promise.all([document.fonts?.load?.('500 64px Newsreader'),document.fonts?.load?.('600 20px Inter'),document.fonts?.ready]);}catch(_){}
- const [assets,logo]=await Promise.all([Promise.all(picks.map(p=>p.art?loadShareImage(p.art):null)),loadShareImageDirect(TL_LOGO_SRC)]);
- const c=document.createElement('canvas'),SC=2;c.width=W*SC;c.height=H*SC;const ctx=c.getContext('2d');ctx.scale(SC,SC);
+ const all=groups.flatMap(g=>g.items);
+ const [assets,logo]=await Promise.all([Promise.all(all.map(p=>p.art?loadShareImage(p.art):null)),loadShareImageDirect(TL_LOGO_SRC)]);
+ const art=new Map(all.map((p,i)=>[p,assets[i]]));
+ const lay=tasteShareLayout(groups,INNER,BASE_H-HEAD-FOOT,{L});
+ const H=Math.round(Math.max(MIN_H,HEAD+lay.total+FOOT));
+ // Keep the bitmap within mobile canvas limits on very long cards.
+ const SC=Math.min(2,Math.sqrt(16e6/(W*H)));
+ const c=document.createElement('canvas');c.width=Math.round(W*SC);c.height=Math.round(H*SC);const ctx=c.getContext('2d');ctx.scale(SC,SC);
  const fit=(t,max)=>{t=String(t||'');if(ctx.measureText(t).width<=max)return t;while(t.length>1&&ctx.measureText(t+'…').width>max)t=t.slice(0,-1);return t.trimEnd()+'…';};
  const spaced=(on)=>{if('letterSpacing' in ctx)ctx.letterSpacing=on;};
  // background
  ctx.fillStyle='#0b0b0d';ctx.fillRect(0,0,W,H);
- const glow=ctx.createRadialGradient(W*.82,H*.02,0,W*.82,H*.02,W*.95);glow.addColorStop(0,'rgba(124,77,255,.20)');glow.addColorStop(1,'rgba(124,77,255,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
- // header: "Name's taste." (serif), tagline, category dots
- let y=PAD+8;
- ctx.fillStyle='#b99aff';ctx.font=`600 17px ${ui}`;spaced('3px');ctx.fillText('MY TASTELIST',PAD,y+14);spaced('0px');
- const headline=`${possessiveName(name)} taste.`;let hs=68;
+ const glow=ctx.createRadialGradient(W*.85,0,0,W*.85,0,W*.9);glow.addColorStop(0,'rgba(124,77,255,.18)');glow.addColorStop(1,'rgba(124,77,255,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,W,Math.min(H,W));
+ // header
+ ctx.fillStyle='#b99aff';ctx.font=`600 16px ${ui}`;spaced('3px');ctx.fillText(fit(`A TASTELIST BY ${String(name).toUpperCase()}`,INNER),PAD,PAD+16);spaced('0px');
+ const headline=`${possessiveName(name)} taste.`;let hs=64;
  for(;hs>40;hs-=4){ctx.font=`500 ${hs}px ${serif}`;if(ctx.measureText(headline).width<=INNER)break;}
- ctx.font=`500 ${hs}px ${serif}`;ctx.fillStyle='#f4efe6';y+=34+hs*.86;ctx.fillText(fit(headline,INNER),PAD-2,y);
- y+=40;ctx.font=`400 22px ${ui}`;ctx.fillStyle='#a9a49b';ctx.fillText('You are what you love.',PAD,y);
- const cats=[...new Map(picks.map(p=>[p.label,p.color])).entries()];
- let cx=PAD;y+=40;ctx.font=`600 15px ${ui}`;spaced('2px');
- for(const [label,color] of cats){ctx.fillStyle=color;ctx.beginPath();ctx.arc(cx+5,y-5,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#cfc9bf';const t=label.toUpperCase();ctx.fillText(t,cx+16,y);cx+=16+ctx.measureText(t).width+26;}
- spaced('0px');
- // footer geometry
- const footTop=H-118;
- // artwork area
- const top=y+40,bottom=footTop-36,areaH=bottom-top,n=picks.length;
- const cols=n<=3?n:n===4?2:3, rows=Math.ceil(n/cols), GAP=n<=3?28:22, CAP=n<=3?64:58;
- const tileW=Math.floor(Math.min((INNER-GAP*(cols-1))/cols,((areaH-rows*CAP-GAP*(rows-1))/rows)/1.5, n===1?460:999)), tileH=Math.round(tileW*1.5);
- const gridH=rows*(tileH+CAP)+(rows-1)*GAP, gy=top+Math.max(0,(areaH-gridH)/2);
- // Where each cover goes. Three picks get an editorial layout: a large lead cover beside two stacked ones.
- const rects=picks.map((p,k)=>{
-  const r=Math.floor(k/cols),inRow=Math.min(cols,n-r*cols),rowW=inRow*tileW+(inRow-1)*GAP;
-  return {x:(W-rowW)/2+(k%cols)*(tileW+GAP),y:gy+r*(tileH+CAP+GAP),w:tileW,h:tileH,cap:n<=2?24:n===3?21:19};
- });
- if(n===3){
-  const G=26,capL=64,capS=56,heroH=Math.min(areaH-capL,Math.round((INNER*.56)*1.5)),heroW=Math.round(heroH/1.5);
-  const smallH=Math.round((heroH+capL-2*capS-G)/2),smallW=Math.round(smallH/1.5),totalW=heroW+G+smallW,x0=(W-totalW)/2,y0=top+Math.max(0,(areaH-heroH-capL)/2);
-  rects[0]={x:x0,y:y0,w:heroW,h:heroH,cap:24};
-  rects[1]={x:x0+heroW+G,y:y0,w:smallW,h:smallH,cap:19};
-  rects[2]={x:x0+heroW+G,y:y0+smallH+capS+G,w:smallW,h:smallH,cap:19};
+ ctx.font=`500 ${hs}px ${serif}`;ctx.fillStyle='#f4efe6';ctx.fillText(fit(headline,INNER),PAD-2,PAD+16+30+hs*.82);
+ // collages
+ let y=HEAD+Math.max(0,(H-HEAD-FOOT-lay.total)/2);
+ for(const {row,h,widths} of lay.rows){
+  const rowW=widths.reduce((s,w)=>s+w,0)+28*(row.length-1);let x=PAD+(INNER-rowW)/2;
+  row.forEach((b,i)=>{
+   const w=widths[i],g=b.g;
+   // label: accent dot, category name, count
+   ctx.fillStyle=g.color;ctx.beginPath();ctx.arc(x+5,y+12,5,0,Math.PI*2);ctx.fill();
+   ctx.font=`700 14px ${ui}`;spaced('2.4px');const lab=g.label.toUpperCase();ctx.fillText(lab,x+18,y+17);
+   spaced('0px');
+   const col=tasteShareCollage(b.shape,b.t,w,x,y+L);
+   col.tiles.forEach((r,k)=>tasteShareDrawArt(ctx,art.get(g.items[k]),r.x,r.y,r.w,r.h,g.items[k].title,serif));
+   x+=w+28;
+  });
+  y+=L+h+40;
  }
- picks.forEach((p,k)=>{
-  const {x,y:ty,w:tileW,h:tileH,cap}=rects[k],img=assets[k];
-  // shadow + tile
-  ctx.save();ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=30;ctx.shadowOffsetY=14;posterRoundRect(ctx,x,ty,tileW,tileH,14);ctx.fillStyle='#17171a';ctx.fill();ctx.restore();
-  ctx.save();posterRoundRect(ctx,x,ty,tileW,tileH,14);ctx.clip();
-  if(img&&img.naturalWidth){
-   const ia=img.naturalWidth/img.naturalHeight,ta=tileW/tileH;
-   if(Math.abs(ia/ta-1)<=.12){const sc=Math.max(tileW/img.naturalWidth,tileH/img.naturalHeight);ctx.drawImage(img,x+(tileW-img.naturalWidth*sc)/2,ty+(tileH-img.naturalHeight*sc)/2,img.naturalWidth*sc,img.naturalHeight*sc);}
-   else{const [rr,gg,bb]=posterAverageColor(img);ctx.fillStyle=`rgb(${Math.round(rr*.35+10)},${Math.round(gg*.35+10)},${Math.round(bb*.35+12)})`;ctx.fillRect(x,ty,tileW,tileH);
-    const sc=Math.min(tileW/img.naturalWidth,tileH/img.naturalHeight);ctx.drawImage(img,x+(tileW-img.naturalWidth*sc)/2,ty+(tileH-img.naturalHeight*sc)/2,img.naturalWidth*sc,img.naturalHeight*sc);}
-  }else{
-   const g=ctx.createLinearGradient(x,ty,x,ty+tileH);g.addColorStop(0,'#1d1d22');g.addColorStop(1,'#141417');ctx.fillStyle=g;ctx.fillRect(x,ty,tileW,tileH);
-   const fs=Math.round(Math.max(18,Math.min(34,tileW*.11)));ctx.fillStyle='#f4efe6';ctx.font=`500 ${fs}px ${serif}`;
-   const lines=posterWrap(ctx,p.title,tileW-40,4);lines.forEach((l,i)=>ctx.fillText(l,x+20,ty+tileH-24-(lines.length-1-i)*fs*1.2));
-  }
-  ctx.restore();
-  ctx.save();posterRoundRect(ctx,x+.5,ty+.5,tileW-1,tileH-1,14);ctx.strokeStyle='rgba(255,255,255,.08)';ctx.stroke();ctx.restore();
-  // caption: title, then a small coloured category label
-  ctx.textAlign='center';
-  const ts=cap;ctx.font=`600 ${ts}px ${ui}`;ctx.fillStyle='#f1ece3';ctx.fillText(fit(p.title,tileW),x+tileW/2,ty+tileH+ts+12);
-  ctx.font=`600 12.5px ${ui}`;spaced('2px');ctx.fillStyle=p.color;ctx.fillText(p.label.toUpperCase(),x+tileW/2,ty+tileH+ts+36);spaced('0px');
-  ctx.textAlign='left';
- });
- // footer: hairline, small wordmark, CTA
- ctx.strokeStyle='rgba(244,239,230,.12)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD,footTop);ctx.lineTo(W-PAD,footTop);ctx.stroke();
- const LH=34;if(logo){const lw=logo.naturalWidth*LH/logo.naturalHeight;ctx.drawImage(logo,PAD,footTop+30,lw,LH);}
- else{ctx.fillStyle='#f4efe6';ctx.font=`700 30px ${serif}`;ctx.fillText('TasteList',PAD,footTop+58);}
- ctx.textAlign='right';ctx.fillStyle='#d9d3c8';ctx.font=`600 16px ${ui}`;spaced('2.5px');ctx.fillText('MAKE YOURS AT TASTELIST.APP',W-PAD,footTop+54);spaced('0px');ctx.textAlign='left';
- return {canvas:c,missing:picks.filter((p,k)=>!assets[k]).length};
+ // footer: hairline, small wordmark, address
+ const footTop=H-PAD-44;
+ ctx.strokeStyle='rgba(244,239,230,.10)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD,footTop-22);ctx.lineTo(W-PAD,footTop-22);ctx.stroke();
+ const LH=26;if(logo){const lw=logo.naturalWidth*LH/logo.naturalHeight;ctx.globalAlpha=.9;ctx.drawImage(logo,PAD,footTop+6,lw,LH);ctx.globalAlpha=1;}
+ else{ctx.fillStyle='#f4efe6';ctx.font=`700 24px ${serif}`;ctx.fillText('TasteList',PAD,footTop+28);}
+ ctx.textAlign='right';ctx.fillStyle='#8f8a82';ctx.font=`600 14px ${ui}`;spaced('2px');ctx.fillText('TASTELIST.APP',W-PAD,footTop+25);spaced('0px');ctx.textAlign='left';
+ return {canvas:c,missing:assets.filter((a,i)=>all[i].art&&!a).length+all.filter(p=>!p.art).length,count:all.length};
 }
 async function prepareTasteShareImage(revision) {
  const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile.username;
- const picks=tasteShareCardPicks(6);
- if(!picks.length)return;
+ const groups=tasteShareGroups();
+ if(!groups.length)return;
  const url=tasteShareUrl();
  try{
-  await fillMissingSharePosters(picks.map(p=>({tab:p.tab,items:[p]})));
+  await fillMissingSharePosters(groups);
   if(revision!==tasteShareRevision)return;
-  const {canvas,missing}=await drawTasteShareCard(name,picks);
+  const {canvas,missing}=await drawTasteShareCard(name,groups);
   if(revision!==tasteShareRevision)return;
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Image export unavailable');
   if(revision!==tasteShareRevision)return;
@@ -20659,7 +20792,7 @@ async function prepareTasteShareImage(revision) {
   img.alt=name+'’s TasteList share card';img.style.cssText='display:block;width:100%;height:auto;border-radius:16px';
   img.onload=img.onerror=()=>URL.revokeObjectURL(objectUrl);img.src=objectUrl;preview.replaceChildren(img);
   document.getElementById('taste-share-download').disabled=false;
-  document.getElementById('taste-share-status').textContent=missing?'Some artwork couldn’t load. The titles are still included.':'';
+  document.getElementById('taste-share-status').textContent=missing?'Some artwork couldn’t load. Those favorites appear by title.':'';
  }catch(error){
   if(revision!==tasteShareRevision)return;
   document.getElementById('taste-share-download').hidden=true;
