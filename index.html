@@ -3941,7 +3941,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 
 <nav class="tab-nav" id="tab-nav">
   <button class="tab-btn active" id="tab-btn-profile" onclick="switchTab('profile', this)">What’s Happening</button>
-  <button class="tab-btn" id="tab-btn-favorites" style="--tab-color:#7C4DFF;" onclick="switchTab('favorites', this)">Favorites</button>
+  <button class="tab-btn" id="tab-btn-favorites" style="--tab-color:#7C4DFF;" onclick="switchTab('favorites', this)">Your Taste</button>
   <button class="tab-btn" id="tab-btn-playlist" style="--tab-color:#22C55E;" onclick="switchTab('playlist', this)">Lists</button>
 </nav>
 </div>
@@ -7798,7 +7798,15 @@ async function uploadProfileAvatar(input) {
     avatarBusy = false; btn?.classList.remove('is-busy'); btn?.removeAttribute('aria-busy');
   }
 }
+// The taste tab: "Your Taste" on your own profile, "Sreya's Taste" on someone else's.
+function updateTasteTabLabel() {
+  const btn = document.getElementById('tab-btn-favorites'); if (!btn) return;
+  const own = !viewedProfile || (isOwnProfile && viewedProfile.id === currentUser?.id);
+  const name = firstNameOnly(viewedProfile?.display_name) || viewedProfile?.username || '';
+  btn.textContent = own || !name ? 'Your Taste' : `${possessiveName(name)} Taste`;
+}
 function updateProfileHeaderAndBanner() {
+  updateTasteTabLabel();
   renderProfileOnboardingResume();
   loadFollowStats();
   clearTasteConstellation();
