@@ -6927,34 +6927,65 @@ function updateAuthModalMode() {
   document.getElementById('auth-toggle-link').textContent = isSignIn ? 'Sign up' : 'Sign in';
 }
 
+let passwordAuthBusy = false;
+function authWithDeadline(promise, message, milliseconds = 20000) {
+  let timer;
+  return Promise.race([promise, new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), milliseconds);
+  })]).finally(() => clearTimeout(timer));
+}
 async function submitAuthForm() {
+  if (passwordAuthBusy) return;
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
   const errEl = document.getElementById('auth-modal-error');
+  const button = document.getElementById('auth-submit-btn');
+  const mode = authMode;
   errEl.style.display = 'none';
   if (!email || !password) {
     errEl.textContent = 'Enter an email and password.';
     errEl.style.display = 'block';
     return;
   }
+  passwordAuthBusy = true;
+  button.disabled = true;
+  button.textContent = mode === 'signin' ? 'Signing in…' : 'Creating account…';
+  button.setAttribute('aria-busy', 'true');
   try {
-    const { error } = authMode === 'signin'
-      ? await sb.auth.signInWithPassword({ email, password })
-      : await sb.auth.signUp({ email, password, options: { emailRedirectTo: friendInviteToken() ? location.origin+'/?invite='+encodeURIComponent(friendInviteToken()) : listInviteToken() ? location.origin+'/?join='+encodeURIComponent(listInviteToken()) : inviteSignupPending ? inviteReturnUrl() : location.origin + '/' } });
+    if (!sb) throw new Error('Sign-in could not load. Please refresh this page.');
+    const { data, error } = await authWithDeadline(mode === 'signin'
+      ? sb.auth.signInWithPassword({ email, password })
+      : sb.auth.signUp({ email, password, options: { emailRedirectTo: friendInviteToken() ? location.origin+'/?invite='+encodeURIComponent(friendInviteToken()) : listInviteToken() ? location.origin+'/?join='+encodeURIComponent(listInviteToken()) : inviteSignupPending ? inviteReturnUrl() : location.origin + '/' } }),
+      'Sign-in is taking too long. Please reload this page and try again.');
     if (error) throw error;
-    if (authMode === 'signup') {
+    if (!data?.session) {
+      if (mode === 'signin') throw new Error('No sign-in session was returned. Please try again.');
       errEl.style.color = '#22C55E';
       errEl.style.background = 'rgba(34,197,94,0.1)';
       errEl.textContent = 'Check your email to confirm your account, then sign in.';
       errEl.style.display = 'block';
-    } else {
-      closeAuthModal();
+      return;
     }
+    button.textContent = 'Opening TasteList…';
+    const saved = await authWithDeadline(sb.auth.getSession(),
+      'Your sign-in could not be confirmed. Please reload this page and try again.');
+    if (saved.error) throw saved.error;
+    if (!saved.data?.session || saved.data.session.user.id !== data.session.user.id)
+      throw new Error('Your browser did not keep the sign-in session. Open TasteList in a regular Safari tab and try again.');
+    // The returned session is authoritative. Do not depend on a late auth listener
+    // to dismiss the landing page. Keep the URL and shared-link inbox across reload.
+    currentUser = saved.data.session.user;
+    window.location.reload();
   } catch (e) {
     errEl.style.color = '#F97360';
     errEl.style.background = 'rgba(249,115,96,0.1)';
     errEl.textContent = e.message || 'Something went wrong.';
     errEl.style.display = 'block';
+  } finally {
+    passwordAuthBusy = false;
+    button.disabled = false;
+    button.removeAttribute('aria-busy');
+    button.textContent = authMode === 'signin' ? 'Sign in' : 'Sign up';
   }
 }
 
@@ -11201,6 +11232,7 @@ async function initAuth() {
   // or start database work in that callback; defer and serialize UI updates instead.
   let authUiQueue = Promise.resolve();
   sb.auth.onAuthStateChange((event, session) => {
+    if (passwordAuthBusy && event === 'SIGNED_IN') return;
     setTimeout(() => {
       authUiQueue = authUiQueue.then(() => applyAuthChange(event, session)).catch(error => {
         console.error('Could not finish sign-in:', error);
