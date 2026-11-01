@@ -22209,8 +22209,7 @@ renderTasteInfluences();
 <p id="shared-inbox-status" role="status" aria-live="polite"></p>
 <div id="shared-inbox-auth" hidden><button class="sl-btn primary" onclick="document.getElementById('shared-inbox').close();openAuthModal('signin')">Sign in to continue</button></div>
 <div id="shared-inbox-tools" hidden><fieldset id="shared-inbox-fields" style="border:0;padding:0;min-width:0">
-<form onsubmit="event.preventDefault();sharedInboxSearch()"><label for="shared-inbox-query">Find the right item</label><input id="shared-inbox-query" class="tl-input" type="search" placeholder="Search a title or artist" maxlength="200">
-<label for="shared-inbox-kind">Type</label><select id="shared-inbox-kind" class="tl-input"><option value="">All types</option value="movie">Movies</option><option value="tv">TV</option><option value="book">Books</option><option value="song">Songs</option><option value="album">Albums</option><option value="artist">Artists</option><option value="podcast">Podcasts</option></select><button class="sl-btn" type="submit">Search</button></form>
+
 <div id="shared-inbox-results" style="margin:16px 0"></div>
 <label for="shared-inbox-destination">Save to</label><select id="shared-inbox-destination" class="tl-input"><option value="next">What’s Next</option><option value="favorite">Favorites</option></select>
 <button id="shared-inbox-save" type="button" class="sl-btn primary" style="margin-top:16px" disabled onclick="sharedInboxSave()">Save selected item</button>
@@ -22218,7 +22217,7 @@ renderTasteInfluences();
 
 <script>
 // Shared-link inbox: no writes until the person confirms an item and destination.
-const sharedInbox={revision:0,busy:false,results:[],selected:null,opened:null,lists:[]};
+const sharedInbox={revision:0,busy:false,results:[],selected:null,opened:null};
 function sharedInboxPending(){try{const p=JSON.parse(localStorage.getItem('tl-shared-link'));return p&&Date.now()-p.time<86400000?p:null;}catch(_){return null;}}
 function sharedInboxClear(){try{localStorage.removeItem('tl-shared-link');}catch(_){}const u=new URL(location.href);u.searchParams.delete('save');history.replaceState(history.state,'',u);}
 function sharedInboxClose(){if(sharedInbox.busy)return;sharedInbox.revision++;document.getElementById('shared-inbox').close();sharedInboxClear();}
@@ -22237,16 +22236,13 @@ async function openSharedInbox(){
  try{
   await goToMyProfileView();
   if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
-  const [owned,member]=await Promise.all([sb.from('taste_lists').select('id,title').eq('user_id',uid),sb.from('taste_list_collaborators').select('taste_lists(id,title)').eq('user_id',uid)]);
-  if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
-  sharedInbox.lists=[...new Map([...(owned.data||[]),...(member.data||[]).map(x=>x.taste_lists).filter(Boolean)].map(x=>[x.id,x])).values()];
-  document.getElementById('shared-inbox-destination').innerHTML='<option value="next">What’s Next</option><option value="favorite">Favorites</option>'+sharedInbox.lists.map(x=>`<option value="list:${esc(x.id)}">Collection: ${esc(x.title)}</option>`).join('');
-  const matches=await resolveSharedInboxLink(pending.url);
+ document.getElementById('shared-inbox-destination').value='next';
+ const matches=await resolveSharedInboxLink(pending.url);
   if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
   sharedInbox.results=matches;sharedInboxRender();
-  sharedInboxStatus(matches.length?'Choose the matching item below.':'Couldn’t identify this link. Search its title below.');
-  if(owned.error||member.error)sharedInboxStatus('Some collections couldn’t load. Reopen this link to retry, or use Favorites or What’s Next.');
- }catch(_){if(rev===sharedInbox.revision)sharedInboxStatus('Couldn’t read the link. Search by title below, or reopen the link to retry.');}
+  sharedInboxStatus(matches.length?'Choose the matching item below.':'Couldn’t identify this link. Close this dialog and add the item directly in TasteList.');
+
+ }catch(_){if(rev===sharedInbox.revision)sharedInboxStatus('Couldn’t read this link. Close this dialog and share the link again to retry.');}
 }
 async function resolveSharedInboxLink(raw){
  const u=new URL(raw),host=u.hostname.replace(/^www\./,'');let results=[];
@@ -22265,18 +22261,8 @@ async function resolveSharedInboxLink(raw){
  if(['podcasts.apple.com','open.spotify.com','youtube.com','youtu.be','music.youtube.com'].includes(host)){
   const item=await resolveFeedLink(raw);if(item)return [item];
  }
- // Unknown sites are never fetched: the person searches and confirms a catalog match.
+ // Unknown sites are never fetched; unsupported links show a clear empty state.
  return results;
-}
-async function sharedInboxSearch(){
- if(sharedInbox.busy||!currentUser)return;
- const q=document.getElementById('shared-inbox-query').value.trim();if(q.length<2){sharedInboxStatus('Enter at least two characters.');return;}
- const rev=++sharedInbox.revision,uid=currentUser.id;sharedInbox.selected=null;sharedInbox.results=[];sharedInboxRender();sharedInboxStatus('Searching…');
- const kind=document.getElementById('shared-inbox-kind').value;
- const results=await Promise.allSettled((kind?[kind]:['movie','tv','book','song','album','artist','podcast']).map(k=>onboardingAutocompleteProvider(k,q)));
- if(rev!==sharedInbox.revision||uid!==currentUser?.id)return;
- sharedInbox.results=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).sort(catalogCompare(q)).slice(0,30);sharedInboxRender();
- sharedInboxStatus(results.some(r=>r.status==='rejected')?'Some catalogs couldn’t load. Search again to retry.':sharedInbox.results.length?'Choose the matching item.':'No matches. Try another title or category.');
 }
 function sharedInboxRender(){
  document.getElementById('shared-inbox-results').innerHTML=sharedInbox.results.map((p,i)=>`<button type="button" class="extra-result" aria-pressed="${sharedInbox.selected===i}" onclick="sharedInbox.selected=${i};sharedInboxRender()">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.kind,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span><span>${sharedInbox.selected===i?'✓':'Select'}</span></button>`).join('');
@@ -22299,18 +22285,7 @@ async function sharedInboxSave(){
     if(currentUser?.id!==uid)throw Error('Account changed. Please retry.');
     const r=await sb.from('friend_recs').insert({user_id:uid,title:p.title,type,art_url:onboardingArt(p)||null,recommenders:[],sort_order:check.data.length});if(r.error)throw r.error;
    }
-  }else{
-   const id=dest.slice(5);if(!sharedInbox.lists.some(l=>l.id===id))throw Error('Choose a collection you can edit.');
-   const owner=await sb.from('taste_lists').select('user_id').eq('id',id).single();if(owner.error)throw owner.error;
-   if(owner.data.user_id!==uid){const member=await sb.from('taste_list_collaborators').select('user_id').eq('list_id',id).eq('user_id',uid);if(member.error||!member.data.length)throw Error('You no longer have permission to add to this collection.');}
-   const category=({movie:'movies',tv:'tv',book:'books',artist:'music',song:'music',album:'albums',podcast:'podcasts',episode:'podcasts'})[p.kind];if(!category)throw Error('Unsupported item type.');
-   const existing=await sb.from('taste_list_items').select('title,sub,sort_order').eq('list_id',id);if(existing.error)throw existing.error;
-   const sub=p.artist||p.author||'';
-   if(!existing.data.some(x=>x.title.toLowerCase()===p.title.toLowerCase()&&(x.sub||'').toLowerCase()===sub.toLowerCase())){
-    if(currentUser?.id!==uid)throw Error('Account changed. Please retry.');
-    const r=await sb.from('taste_list_items').insert({list_id:id,added_by:uid,category,title:p.title,sub:sub||null,art_url:onboardingArt(p)||null,link_url:sharedInbox.url,tmdb_id:['movie','tv'].includes(p.kind)?p.id:null,sort_order:Math.max(-1,...existing.data.map(x=>x.sort_order||0))+1});if(r.error)throw r.error;
-   }
-  }
+  }else{throw Error('Choose What’s Next or Favorites.');}
   sharedInboxClear();sharedInbox.selected=null;sharedInboxRender();sharedInboxStatus('✓ Saved to '+document.getElementById('shared-inbox-destination').selectedOptions[0].textContent+'.');
   // Refresh in the background; a refresh failure must not turn a successful save into a retry.
   if(currentUser?.id===uid)loadViewedProfileData().catch(()=>{});
