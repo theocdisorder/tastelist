@@ -11147,7 +11147,7 @@ async function initAuth() {
   // redirecting back to Feed even if you were mid-browse on another tab.
   let lastAuthUserId = currentUser?.id || null;
 
-  sb.auth.onAuthStateChange(async (event, session) => {
+  const applyAuthChange = async (event, session) => {
     const newUserId = session?.user?.id || null;
     const isRealUserChange = newUserId !== lastAuthUserId;
     lastAuthUserId = newUserId;
@@ -11196,6 +11196,21 @@ async function initAuth() {
   await openSharedInbox();
     urlSyncReady = true; syncUrl(true);
   startNotificationPolling();
+  };
+  // Auth listeners run while Supabase holds its session lock. Never return a promise
+  // or start database work in that callback; defer and serialize UI updates instead.
+  let authUiQueue = Promise.resolve();
+  sb.auth.onAuthStateChange((event, session) => {
+    setTimeout(() => {
+      authUiQueue = authUiQueue.then(() => applyAuthChange(event, session)).catch(error => {
+        console.error('Could not finish sign-in:', error);
+        lastAuthUserId = null; // allow the next auth event to retry loading the profile
+        finishAppStartup();
+        renderAuthWidget();
+        updateAuthGate();
+        showToast('Your sign-in could not finish loading. Please refresh to retry.');
+      });
+    }, 0);
   });
 }
 
