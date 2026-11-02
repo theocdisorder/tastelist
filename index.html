@@ -3876,6 +3876,16 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
  .activity-card .wn-corner { z-index:2; }
 }
 </style>
+<style>
+/* Comment composer: long-form, inline spoiler marking and natural line wrapping */
+.sl-composer textarea, textarea[id^="comment-input-"] { flex:1;min-width:0;min-height:54px;max-height:240px;resize:vertical;overflow-y:auto;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:10px 12px;font:inherit;font-size:16px;color:var(--text);line-height:1.5;outline:none; }
+.sl-composer textarea:focus, textarea[id^="comment-input-"]:focus { border-color:var(--accent); }
+.sl-composer { flex-wrap:wrap; }
+.tl-comment-spoiler-btn { border:1px solid var(--border2);border-radius:8px;padding:7px 10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;cursor:pointer;align-self:center; }
+.tl-comment-spoiler-btn:hover { color:var(--text);border-color:var(--accent); }
+.tl-comment-body { font-size:13px;color:var(--text);margin-top:4px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere; }
+@media(max-width:600px){.sl-composer textarea {flex-basis:calc(100% - 55px)} }
+</style>
 </head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
@@ -7823,6 +7833,14 @@ async function openCommentTarget(notifId) {
     if (!data) { showToast('Couldn’t find that comment — it may have been removed.'); return; }
     type = data.target_type; id = data.target_id;
   }
+  if (type === 'activity_feed' && id && sb) {
+    try {
+      const row = await notificationFeedRow({ target_type: 'activity_feed', target_id: id, profiles: n.profiles });
+      if (!row) { showToast('That post is no longer available.'); return; }
+      await openPostView(row, { focusComment: true, fromNotification: true });
+    } catch (e) { console.error('Could not open post comments:', e); showToast('Couldn’t open those comments.'); }
+    return;
+  }
   const focusReply = async () => {
     for (let t = 0; t < 20; t++) {   // the thread loads asynchronously; wait briefly for its reply box
       const box = document.getElementById(`comment-input-${type}-${id}`);
@@ -7911,7 +7929,7 @@ const NOTIF_COPY = {
   list_item: (who, n) => `${who} added ${n.comment_preview ? `<strong>${esc(n.comment_preview)}</strong>` : 'something'} to ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'a shared list'}`,
   list_joined: (who, n) => `${who} joined ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'your shared list'}`,
   list_added: (who, n) => `${who} added you to ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'a shared list'}<span class="notif-reply">Open the list →</span>`,
-  comment: (who, n) => `${who} commented on ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'your ' + (NOTIF_TARGET_NOUN[n.target_type] || 'post')}:<span class="notif-comment">“${esc(n.comment_preview || '')}”</span><span class="notif-reply">Reply →</span>`,
+  comment: (who, n) => `${who} commented on ${n.target_type === 'activity_feed' ? 'your post about ' : ''}${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : (n.target_type === 'activity_feed' ? 'this item' : 'your ' + (NOTIF_TARGET_NOUN[n.target_type] || 'post'))}:<span class="notif-comment">“${esc(n.comment_preview || '')}”</span><span class="notif-reply">Reply →</span>`,
   follow_request: (who) => `${who} wants to follow you`,
   follow_accepted: (who) => `${who} accepted your follow request`,
   new_follower: (who) => `${who} started following you`,
@@ -7936,7 +7954,7 @@ function renderNotificationsDropdown(rows) {
       const isRequest = n.type === 'follow_request';
       NOTIF_ROWS.set(n.id, n);
       const isComment = (n.type === 'comment' || (n.type === 'reaction' && n.target_type === 'comment')) && n.target_type && n.target_id;
-      const goesToTarget = (n.target_type === 'activity_feed' && ['new_post','comment_reply','reaction','tag'].includes(n.type)) || ['list_item','list_joined','list_added'].includes(n.type) || (n.type === 'comment_reply' && /^taste_list/.test(n.target_type || ''));
+      const goesToTarget = (n.target_type === 'activity_feed' && ['new_post','comment','comment_reply','reaction','tag'].includes(n.type)) || ['list_item','list_joined','list_added'].includes(n.type) || (n.type === 'comment_reply' && /^taste_list/.test(n.target_type || ''));
       const action = isComment ? `onclick="openCommentTarget('${n.id}')"` : goesToTarget ? `onclick="openNotificationTarget('${n.id}')"` : (isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`);
       return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);${n.read ? '' : 'background:rgba(124,77,255,0.08);'}display:flex;flex-direction:column;gap:6px;${isRequest ? '' : 'cursor:pointer;'}" ${action}>
         <div style="font-size:13px;color:var(--text);line-height:1.4;">${text}</div>
@@ -17488,7 +17506,7 @@ async function openTripPlaylistSummary(idx) {
   modal.dataset.sharedRequest=String(request);
   modal.style.display='flex';
   const active=()=>modal.style.display==='flex' && modal.dataset.sharedRequest===String(request);
-  const refresh=()=>{if(!active())return; const input=content.querySelector('input[id^="comment-input-"]');const draft=input?.value;const thread=content.querySelector('[id^="inline-comments-"]');const expanded=thread?.style.display==='block';content.innerHTML=tripPlaylistSummaryHtml(item,summary,loading);if(expanded){const next=content.querySelector('[id^="inline-comments-"]');if(next){next.style.display='block';next.innerHTML=commentsSectionHtml('taste_list_item',item.id);if(draft){const field=next.querySelector('input');if(field)field.value=draft;}}}};
+  const refresh=()=>{if(!active())return; const input=content.querySelector('[id^="comment-input-"]');const draft=input?.value;const thread=content.querySelector('[id^="inline-comments-"]');const expanded=thread?.style.display==='block';content.innerHTML=tripPlaylistSummaryHtml(item,summary,loading);if(expanded){const next=content.querySelector('[id^="inline-comments-"]');if(next){next.style.display='block';next.innerHTML=commentsSectionHtml('taste_list_item',item.id);if(draft){const field=next.querySelector('textarea');if(field)field.value=draft;}}}};
   window.__refreshModalEngagement=refresh;
   refresh();
   if(item.id) loadInlineEngagement('taste_list_item',item.id);
@@ -17824,6 +17842,25 @@ async function loadComments(targetType, targetId) {
   }
 }
 
+function resizeCommentInput(el) {
+ if (!el) return;
+ el.style.height = 'auto';
+ el.style.height = Math.min(el.scrollHeight, 240) + 'px';
+}
+function markCommentSpoiler(el) {
+ if (!el) return;
+ const start = el.selectionStart ?? el.value.length, end = el.selectionEnd ?? start;
+ const selected = el.value.slice(start,end);
+ const replacement = '||' + (selected || 'spoiler text') + '||';
+ el.setRangeText(replacement,start,end,'select');
+ if (!selected) el.setSelectionRange(start+2,start+replacement.length-2);
+ el.focus(); resizeCommentInput(el);
+}
+function commentKeydown(event, el, type, id) {
+ if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.isComposing) {
+  event.preventDefault(); submitComment(type,id,el,()=>refreshEngagementUI(type,id));
+ }
+}
 async function submitComment(targetType, targetId, inputEl, onDone) {
   if (!sb) return;
   if (!currentUser) { openAuthModal('signin'); return; }
@@ -17872,15 +17909,16 @@ function commentsSectionHtml(targetType, targetId) {
               ? `<button onclick="deleteComment('${c.id}','${targetType}','${targetId}', () => refreshEngagementUI('${targetType}','${targetId}'))" style="background:none;border:none;color:var(--faint);font-size:11px;cursor:pointer;font-family:inherit;">Delete</button>`
               : ''}
           </div>
-          <div style="font-size:13px;color:var(--text);margin-top:2px;line-height:1.4;">${esc(c.body)}</div>
+          <div class="tl-comment-body">${spoilerHtml(c.body,'c:'+c.id)}</div>
           <div class="sl-comment-actions">${commentReactionHtml(c)}</div>
         </div>`).join('')
       : `<div style="font-size:12.5px;color:var(--faint);padding:8px 0;">No comments yet.</div>`);
   const composer = currentUser ? `
     <div style="display:flex;gap:8px;margin-top:10px;">
-      <input id="comment-input-${targetType}-${targetId}" placeholder="Add a comment…" maxlength="1000"
+      <textarea rows="2" id="comment-input-${targetType}-${targetId}" placeholder="Add a comment…" aria-label="Add a comment" oninput="resizeCommentInput(this)"
         style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;"
-        onkeydown="if(event.key==='Enter'){submitComment('${targetType}','${targetId}', this, () => refreshEngagementUI('${targetType}','${targetId}'))}">
+        onkeydown="commentKeydown(event,this,'${targetType}','${targetId}')"></textarea>
+      <button type="button" class="tl-comment-spoiler-btn" onclick="markCommentSpoiler(document.getElementById('comment-input-${targetType}-${targetId}'))" title="Select text to conceal, or mark your next words as a spoiler">Spoiler</button>
       <button onclick="submitComment('${targetType}','${targetId}', document.getElementById('comment-input-${targetType}-${targetId}'), () => refreshEngagementUI('${targetType}','${targetId}'))"
         style="background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:600;font-family:inherit;padding:8px 14px;border-radius:8px;cursor:pointer;">Post</button>
     </div>` : `<div style="font-size:12px;color:var(--faint);margin-top:10px;"><a href="javascript:void(0)" onclick="openAuthModal('signin')" style="color:var(--accent);text-decoration:none;font-weight:600;">Sign in</a> to join the conversation.</div>`;
@@ -18031,8 +18069,9 @@ function discussionCommentsHtml(type, listId) {
   const composer = currentUser
     ? `<div class="sl-composer">
         ${profileAvatarHtml(currentProfile || { display_name: '?' }, 32)}
-        <input id="${inputId}" placeholder="Add a comment…" maxlength="1000" aria-label="Add a comment"
-          onkeydown="if(event.key==='Enter'&&!event.isComposing){submitComment('${type}','${id}', this, ${refresh})}">
+        <textarea rows="2" id="${inputId}" placeholder="Add a comment…" aria-label="Add a comment" oninput="resizeCommentInput(this)"
+          onkeydown="commentKeydown(event,this,'${type}','${id}')"></textarea>
+        <button type="button" class="tl-comment-spoiler-btn" onclick="markCommentSpoiler(document.getElementById('${inputId}'))" title="Select text to conceal, or mark your next words as a spoiler">Spoiler</button>
         <button type="button" onclick="submitComment('${type}','${id}', document.getElementById('${inputId}'), ${refresh})">Post</button>
       </div>`
     : `<div class="sl-composer-signin"><a href="javascript:void(0)" onclick="openAuthModal('signin')">Sign in</a> to join the conversation.</div>`;
@@ -18059,7 +18098,7 @@ function rerenderDiscussionComments(type, listId) {
   el.style.display = visible ? 'block' : 'none';
   el.innerHTML = visible ? discussionCommentsHtml(type, listId) : '';
   const fresh = document.getElementById(inputId);
-  if (fresh && (draft || hadFocus)) { fresh.value = draft; if (hadFocus) { fresh.focus({ preventScroll: true }); try { fresh.setSelectionRange(caret ?? draft.length, caret ?? draft.length); } catch (_) {} } }
+  if (fresh && (draft || hadFocus)) { fresh.value = draft; resizeCommentInput(fresh); if (hadFocus) { fresh.focus({ preventScroll: true }); try { fresh.setSelectionRange(caret ?? draft.length, caret ?? draft.length); } catch (_) {} } }
 }
 
 const discussionLoads = new Map();   // engagementKey() -> in-flight load, so callers can wait for it
@@ -19892,7 +19931,7 @@ async function openActivitySummary(globalIndex) {
 
 // Opens someone's post itself (their note, tags, reactions and comments) in the summary modal.
 // The title inside it still opens the title's own summary.
-async function openPostView(row, { focusComment = false } = {}) {
+async function openPostView(row, { focusComment = false, fromNotification = false } = {}) {
   const modal = document.getElementById('activity-summary-modal');
   const content = document.getElementById('activity-summary-content');
   if (!modal || !content || !row) return;
@@ -19911,7 +19950,7 @@ async function openPostView(row, { focusComment = false } = {}) {
       .split(`id="inline-comments-activity_feed-${id}"`).join(`id="pv-comments-${id}"`)
       .split(`toggleFeedComments('${id}')`).join(`document.getElementById('pv-input-${id}')?.focus()`);
     content.innerHTML = `<div class="post-view">
-      <div class="post-view-head"><span>Post</span><button type="button" class="post-view-close" aria-label="Close" onclick="closeActivitySummary()">×</button></div>
+      <div class="post-view-head"><span>${fromNotification ? "Comments on this post" : "Post"}</span><button type="button" class="post-view-close" aria-label="Close" onclick="closeActivitySummary()">×</button></div>
       ${card}</div>`;
     const panel = document.getElementById(`pv-comments-${id}`);
     if (panel) { panel.style.display = 'block'; panel.innerHTML = scope(commentsSectionHtml('activity_feed', id)); }
@@ -19933,8 +19972,11 @@ async function openPostView(row, { focusComment = false } = {}) {
     render();
   }
   if (focusComment && active()) {
+    const panel = document.getElementById(`pv-comments-${id}`);
     const box = document.getElementById(`pv-input-${id}`);
-    if (box) { box.scrollIntoView({ block: 'center', behavior: 'smooth' }); box.focus({ preventScroll: true }); }
+    const target = fromNotification ? panel : box;
+    if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    if (!fromNotification && box) box.focus({ preventScroll: true });
   }
 }
 
