@@ -1537,6 +1537,24 @@ if (new URLSearchParams(location.search).has('list')) {
 #music-picker h2{margin:0;font-size:26px;}#music-picker label{display:block;margin:16px 0 8px;color:var(--muted);font-size:14px;}
 #music-picker select,#music-picker input{width:100%;box-sizing:border-box;}#music-picker [hidden]{display:none!important;}
 .favorite-friend-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;color:var(--accent);font-size:12px;}
+
+/* Mobile-first section action hierarchy: one primary CTA beside each heading,
+   with the secondary utility on its own line under the description. */
+#happening-next .ed-head, #happening-new .ed-head { align-items:flex-start!important; flex-wrap:nowrap!important; gap:10px; }
+#happening-next .ed-head .ed-title, #happening-new .ed-head .ed-title { min-width:0; flex:1 1 auto!important; }
+#happening-next .ed-head .ed-primary, #happening-new .ed-head .ed-primary { white-space:nowrap; }
+.happening-utility { margin: -3px 0 15px; min-height:20px; }
+.happening-utility:empty { display:none; }
+.happening-utility button { padding:3px 0; border:0; background:none; color:#b49af7; font:500 12px Inter,sans-serif; cursor:pointer; text-align:left; }
+.happening-utility button:hover { color:var(--text); }
+@media(max-width:600px) {
+  #happening-next .ed-head, #happening-new .ed-head { display:grid!important; grid-template-columns:minmax(0,1fr) auto; align-items:start!important; padding-bottom:0; border-bottom:0; margin-bottom:6px; }
+  #happening-next .ed-head .ed-title, #happening-new .ed-head .ed-title { grid-column:1; grid-row:1; font-size:clamp(25px,7vw,32px); line-height:1.15; }
+  #happening-next .ed-head .ed-sub, #happening-new .ed-head .ed-sub { margin-top:9px; font-size:13px; line-height:1.45; }
+  #recs-head-controls, #activity-feed-controls { grid-column:2; grid-row:1; display:flex; align-items:flex-start; }
+  #recs-head-controls .ed-primary, #activity-feed-controls .ed-primary { min-height:40px!important; padding:9px 12px!important; font-size:12px!important; border-radius:11px; }
+  .happening-utility { margin:4px 0 12px; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,.16); }
+}
 </style>
   <style>
   .app-starting #app-content, .app-starting #landing-page { display:none !important; }
@@ -3771,6 +3789,40 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 #shared-inbox-save.saved { background:#16834a !important;color:white !important;border-color:#16834a !important;opacity:1 !important; }
 #shared-inbox-fields:disabled #shared-inbox-save.saved { opacity:1 !important; }
 </style>
+
+<style id="profile-mobile-post-redesign">
+@media (max-width: 600px) {
+  #profile-feed .activity-card {
+    display:grid !important; grid-template-columns: 94px minmax(0,1fr) !important;
+    column-gap:14px !important; row-gap:0 !important; padding:16px !important;
+    align-items:start !important; overflow:hidden !important; border-radius:14px !important;
+  }
+  #profile-feed .activity-card > .activity-card-art {
+    grid-column:1; grid-row:1 / span 3; width:94px !important; height:auto !important;
+    aspect-ratio:2 / 3; align-self:start !important; border-radius:6px !important;
+    overflow:hidden !important; display:block !important;
+  }
+  #profile-feed .activity-card-art > img.activity-card-art-img {
+    width:100% !important; height:100% !important; max-height:100% !important;
+    object-fit:contain !important; position:absolute; inset:0;
+  }
+  #profile-feed .activity-card-body { display:contents !important; }
+  #profile-feed .activity-title { grid-column:2; grid-row:1; font-size:18px !important; line-height:1.25; }
+  #profile-feed .activity-meta { grid-column:2; grid-row:2; margin-top:5px; }
+  #profile-feed .tagged-line { grid-column:2; grid-row:3; font-size:12px; line-height:1.5; margin-top:7px;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
+  #profile-feed .activity-note, #profile-feed .activity-card-body > .spoiler-post-wrap {
+    grid-column:1 / -1; grid-row:auto; margin:14px 0 0 !important; padding:0 !important;
+    border-left:0 !important; font-size:14px !important; line-height:1.65 !important;
+    overflow-wrap:anywhere;
+  }
+  #profile-feed .activity-note:not(.expanded) { display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; }
+  #profile-feed .activity-card-body > div[style*="display:flex"] { grid-column:1 / -1; margin-top:14px !important; }
+  #profile-feed .activity-card-body > div[id^="inline-comments-profile-"] { grid-column:1 / -1; margin:10px -16px -16px !important; }
+  #profile-feed .untag-btn { display:none !important; }
+  #profile-feed .card-edit-controls { grid-column:2; justify-self:end; }
+}
+</style>
 </head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
@@ -4051,7 +4103,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <!-- What's Happening: a compact What's Next strip, then the What's New feed at a readable width. -->
     <div class="whatsnew-rec-grid happening">
       <div class="ed-panel happening-next" id="happening-next">
-        <div class="ed-head recs-section-heading"><h2 class="ed-title"><span class="recs-title-text">What’s Next</span> <span class="ed-sub" id="happening-next-sub">Things I want to check out</span></h2><div id="recs-head-controls"></div></div>
+        <div class="ed-head recs-section-heading"><h2 class="ed-title"><span class="recs-title-text">What’s Next</span> <span class="ed-sub" id="happening-next-sub">Things I want to check out</span></h2><div id="recs-head-controls"></div></div><div id="recs-utility" class="happening-utility"></div>
         <div id="friend-recs"></div>
       </div>
 
@@ -4060,6 +4112,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
           <h2 class="ed-title">What’s New <span class="ed-sub" id="happening-new-sub">What I’ve been watching, reading &amp; listening to lately</span></h2>
           <div id="activity-feed-controls"></div>
         </div>
+        <div id="activity-feed-utility" class="happening-utility"></div>
         <div id="profile-feed"></div>
       </div>
       <p id="happening-empty" class="profile-compact-empty happening-empty" hidden></p>
@@ -18149,7 +18202,7 @@ function activityCardHtml(item, globalIndex) {
     <div class="activity-card-body">
             <h3 class="activity-title"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openActivitySummary(${globalIndex})">${esc(item.label)}</button></h3>
       <div class="activity-meta">${item.sub ? `<span style="color:${iconColor}">${esc(item.sub)}</span>` : ''}${item.sub && item.timestamp ? '<span aria-hidden="true">·</span>' : ''}${item.timestamp ? `<span>${item.timestamp}</span>` : ''}</div>
-      ${taggedLineHtml(item.tags, isOwnProfile && currentUser && viewedProfile?.id === currentUser.id ? item.id : null)}${note}
+      ${taggedLineHtml(item.tags, activityEditMode && isOwnProfile && currentUser && viewedProfile?.id === currentUser.id ? item.id : null)}${note}
       ${item.id ? `<div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
         ${reactionBadgeHtml('activity_feed', item.id)}
         <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;" onclick="toggleProfileCardComments('${item.id}')">
@@ -18205,11 +18258,9 @@ function renderActivityFeed(containerId, filterFn) {
     const controlsEl = document.getElementById('activity-feed-controls');
     if (controlsEl) {
       controlsEl.innerHTML = (isOwnProfile && items.length) ? `
-        <div style="display:flex;align-items:center;gap:8px;">
-          <button type="button" class="ed-link" onclick="toggleActivityEditMode()">${activityEditMode ? 'Done' : 'Edit'}</button>
-          <button type="button" class="ed-primary" onclick="openFeedComposer()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Post update</button>
-        </div>` : '';
+        <button type="button" class="ed-primary" onclick="openFeedComposer()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Post update</button>` : '';
     }
+    syncActivityUtility();
   }
 }
 
@@ -19909,7 +19960,15 @@ function openShortcutInfo() {
   document.getElementById('shortcut-info')?.showModal();
 }
 function whatsNextHeaderActions() {
-  return `<button type="button" class="shortcut-trigger" onclick="openShortcutInfo()">Save from other apps <span aria-hidden="true">↗</span></button><button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add a recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add item</button>`;
+  return `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add a recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add item</button>`;
+}
+function syncNextUtility() {
+  const el = document.getElementById('recs-utility');
+  if (el) el.innerHTML = isOwnProfile ? `<button type="button" class="shortcut-trigger" onclick="openShortcutInfo()">Save from other apps <span aria-hidden="true">↗</span></button>` : '';
+}
+function syncActivityUtility() {
+  const el = document.getElementById('activity-feed-utility');
+  if (el) el.innerHTML = isOwnProfile && ACTIVITY_FEED_ITEMS.length ? `<button type="button" class="ed-link" onclick="toggleActivityEditMode()">${activityEditMode ? 'Done editing' : 'Edit updates'}</button>` : '';
 }
 function renderFriendRecs() {
   if(syncInitialTasteProfile())renderDynamicProfilePicks();
@@ -19922,11 +19981,13 @@ function renderFriendRecs() {
     <button class="list-create-cta" onclick="openPasteRecommendations()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
   if (!FRIEND_RECOMMENDATIONS.length) {
     const hc = document.getElementById('recs-head-controls');if(hc)hc.innerHTML=isOwnProfile ? whatsNextHeaderActions() : '';
+    syncNextUtility();
     el.innerHTML=compactProfileEmpty('next');
     return;
   }
   const headCtl = document.getElementById('recs-head-controls');
   if (headCtl) headCtl.innerHTML = isOwnProfile ? whatsNextHeaderActions() : '';
+  syncNextUtility();
   // Collapsed view: one continuous row of covers, types taking turns (a movie, a show, a book, …) so
   // the row reads as a mix. Categories only appear in "See all".
   const groups = friendRecGroups();
