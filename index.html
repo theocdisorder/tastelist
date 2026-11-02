@@ -3733,7 +3733,45 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 .imdb-dot{display:inline-block;width:9px;height:9px;border-radius:2px;background:#f5c518;flex-shrink:0}
 .rating-unavailable,.rating-loading{font-size:12px;color:var(--muted)}
 .rating-retry{background:none;border:0;font:inherit;cursor:pointer;padding:0;text-decoration:underline}
-</style></head>
+</style><style>
+/* Discreet shortcut entry point beside What's Next's primary Add action */
+.shortcut-trigger { font:inherit;font-size:12px;color:var(--muted);background:none;border:0;padding:9px 4px;cursor:pointer;white-space:nowrap; }
+.shortcut-trigger:hover,.shortcut-trigger:focus-visible { color:var(--text); }
+.shortcut-trigger span { font-size:11px; }
+.shortcut-profile-link { margin-top:8px; }
+#shortcut-info { width:min(390px,calc(100% - 32px));margin:auto;padding:0;border:1px solid var(--border2);border-radius:16px;background:var(--surface);color:var(--text); }
+#shortcut-info::backdrop { background:#000a;backdrop-filter:blur(4px); }
+.shortcut-info-inner { padding:28px 26px;position:relative; }
+.shortcut-info-inner h2 { font-size:21px;font-weight:600;margin:0 30px 12px 0; }
+.shortcut-info-inner > p { color:var(--muted);font-size:13.5px;line-height:1.6;margin:0 0 22px; }
+.shortcut-close { position:absolute;right:16px;top:12px;border:0;background:none;color:var(--muted);font-size:24px;cursor:pointer; }
+.shortcut-install { display:block;text-align:center;text-decoration:none;padding:12px 16px; }
+.shortcut-info-inner .shortcut-note { font-size:11.5px;margin:12px 0 0;text-align:center; }
+@media(max-width:560px) {
+ #recs-head-controls { flex-wrap:wrap;justify-content:flex-end;gap:6px; }
+ .shortcut-trigger { font-size:11.5px; }
+}
+</style>
+<style>
+#shared-inbox { width:min(420px,calc(100% - 28px)) !important; padding:24px !important; }
+#shared-inbox h2 { font-size:21px;letter-spacing:-.02em; }
+#shared-inbox-status { font-size:12px;line-height:1.5;color:var(--muted);margin:8px 0; }
+#shared-inbox-status:empty { display:none; }
+#shared-inbox-results { margin:22px 0 !important; }
+.shared-inbox-item { display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:none;color:var(--text);border:0;padding:4px 0;font:inherit;cursor:pointer; }
+.shared-inbox-item+.shared-inbox-item { border-top:1px solid var(--border);padding-top:14px;margin-top:14px; }
+.shared-inbox-item .ob-art { width:64px;min-width:64px;flex-shrink:0; }
+.shared-inbox-item-copy { display:flex;flex:1;min-width:0;flex-direction:column;gap:5px; }
+.shared-inbox-item-copy strong { font-size:15px;line-height:1.35; }
+.shared-inbox-item-copy small { font-size:12px;color:var(--muted);line-height:1.4; }
+.shared-inbox-mark { color:#b99bf7;font-size:13px; }
+#shared-inbox label[for="shared-inbox-destination"] { display:block;margin:0 0 8px;font-size:12px;color:var(--muted); }
+#shared-inbox-destination { margin:0;border-radius:10px; }
+#shared-inbox-save { width:100%;border-radius:12px;padding:13px;font-size:14px;font-weight:600; }
+#shared-inbox-save.saved { background:#16834a !important;color:white !important;border-color:#16834a !important;opacity:1 !important; }
+#shared-inbox-fields:disabled #shared-inbox-save.saved { opacity:1 !important; }
+</style>
+</head>
 <body>
 <div id="list-route-loader" role="status" aria-live="polite"><span class="list-route-spinner" aria-hidden="true"></span><span>Opening list…</span></div>
 <div id="app-startup-status" role="status" aria-live="polite">Loading…</div>
@@ -3869,6 +3907,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <label>Display name<input id="profile-editor-name" required maxlength="100" autocomplete="name"></label>
     <label>Location or short bio<input id="profile-editor-bio" maxlength="240"></label>
     <p id="profile-editor-error" role="alert"></p>
+    <div class="shortcut-profile-link"><button type="button" class="pe-setup-link" onclick="openShortcutInfo()">Install iPhone Shortcut ↗</button></div>
     <div class="pe-footer">
       <button type="button" class="pe-setup-link" onclick="document.getElementById('profile-editor').close();resumeOnboarding()">Revisit guided setup →</button>
       <button type="button" class="profile-control" onclick="document.getElementById('profile-editor').close()">Cancel</button>
@@ -3877,6 +3916,15 @@ async function landingArtistArtFallback(imgEl, artistName) {
   </form>
 </dialog>
 
+<dialog id="shortcut-info" aria-labelledby="shortcut-info-title">
+  <div class="shortcut-info-inner">
+    <button type="button" class="shortcut-close" aria-label="Close" onclick="document.getElementById('shortcut-info').close()">×</button>
+    <h2 id="shortcut-info-title">Save from other apps</h2>
+    <p>Save links from Safari, Chrome, or Messages directly to TasteList.</p>
+    <a class="ob-button ob-primary shortcut-install" href="https://www.icloud.com/shortcuts/788b1ef2fe494e918d27c752827e9114" target="_blank" rel="noopener noreferrer">Install iPhone Shortcut ↗</a>
+    <p class="shortcut-note">On your iPhone, add the shortcut to use it from the Share menu.</p>
+  </div>
+</dialog>
 <dialog id="extra-picker" aria-labelledby="extra-picker-title"><div class="extra-heading"><h2 id="extra-picker-title">Add picks</h2><button class="profile-control" onclick="extraPicker.request++;clearTimeout(extraPicker.timer);document.getElementById('extra-picker').close()">Close</button></div><label>Look for<select id="extra-picker-kind" onchange="queueExtraSearch()"></select></label><label class="update-sr" for="extra-picker-query">Search</label><input id="extra-picker-query" type="search" placeholder="Search by name or title…" oninput="queueExtraSearch()"><p class="extra-muted">Choose the matching person, show, episode, or special.</p><div id="extra-picker-results" aria-live="polite"></div></dialog>
 <dialog id="new-list-dialog" aria-labelledby="new-list-title"><form onsubmit="submitNewList(event)"><div class="extra-heading"><h2 id="new-list-title">Start a new list</h2><button type="button" class="update-close" aria-label="Close" onclick="document.getElementById('new-list-dialog').close()">×</button></div><p id="new-list-lede" class="extra-muted"></p><label id="new-list-kind-wrap">What goes in this list?<select id="new-list-kind" onchange="renderNewListIdeas()"><option value="music">Artists</option><option value="albums">Albums</option></select></label><label for="new-list-name">List name</label><input id="new-list-name" required maxlength="120" placeholder="e.g. All-time favorites" autofocus><p class="extra-muted">Need an idea? Pick a name below and make it yours.</p><div id="new-list-ideas"></div><div class="new-list-footer"><button type="button" class="profile-control" onclick="document.getElementById('new-list-dialog').close()">Cancel</button><button class="ob-button ob-primary" type="submit">Continue →</button></div></form></dialog>
 <div id="app-content">
@@ -19857,6 +19905,12 @@ function refreshActivityFeeds() {
   renderFriendRecs();
 }
 
+function openShortcutInfo() {
+  document.getElementById('shortcut-info')?.showModal();
+}
+function whatsNextHeaderActions() {
+  return `<button type="button" class="shortcut-trigger" onclick="openShortcutInfo()">Save from other apps <span aria-hidden="true">↗</span></button><button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add a recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add item</button>`;
+}
 function renderFriendRecs() {
   if(syncInitialTasteProfile())renderDynamicProfilePicks();
   const el = document.getElementById('friend-recs');
@@ -19867,12 +19921,12 @@ function renderFriendRecs() {
   const addBtnHtml = isOwnProfile ? `
     <button class="list-create-cta" onclick="openPasteRecommendations()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
   if (!FRIEND_RECOMMENDATIONS.length) {
-    const hc = document.getElementById('recs-head-controls');if(hc)hc.innerHTML='';
+    const hc = document.getElementById('recs-head-controls');if(hc)hc.innerHTML=isOwnProfile ? whatsNextHeaderActions() : '';
     el.innerHTML=compactProfileEmpty('next');
     return;
   }
   const headCtl = document.getElementById('recs-head-controls');
-  if (headCtl) headCtl.innerHTML = isOwnProfile ? `<button type="button" class="ed-primary" onclick="openPasteRecommendations()" aria-label="Add a recommendation"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add item</button>` : '';
+  if (headCtl) headCtl.innerHTML = isOwnProfile ? whatsNextHeaderActions() : '';
   // Collapsed view: one continuous row of covers, types taking turns (a movie, a show, a book, …) so
   // the row reads as a mix. Categories only appear in "See all".
   const groups = friendRecGroups();
@@ -22205,19 +22259,19 @@ renderTasteInfluences();
 
 <dialog id="shared-inbox" aria-labelledby="shared-inbox-title" oncancel="event.preventDefault();sharedInboxClose()" style="width:min(600px,calc(100% - 24px));max-height:90dvh;overflow:auto;margin:auto;padding:24px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:16px"><h2 id="shared-inbox-title">Save to TasteList</h2><button type="button" class="sl-btn" aria-label="Close" onclick="sharedInboxClose()">✕</button></div>
-<p id="shared-inbox-source" style="overflow-wrap:anywhere;color:var(--muted);font-size:12px"></p>
+
 <p id="shared-inbox-status" role="status" aria-live="polite"></p>
 <div id="shared-inbox-auth" hidden><button class="sl-btn primary" onclick="document.getElementById('shared-inbox').close();openAuthModal('signin')">Sign in to continue</button></div>
 <div id="shared-inbox-tools" hidden><fieldset id="shared-inbox-fields" style="border:0;padding:0;min-width:0">
 
 <div id="shared-inbox-results" style="margin:16px 0"></div>
 <label for="shared-inbox-destination">Save to</label><select id="shared-inbox-destination" class="tl-input"><option value="next">What’s Next</option><option value="favorite">Favorites</option></select>
-<button id="shared-inbox-save" type="button" class="sl-btn primary" style="margin-top:16px" disabled onclick="sharedInboxSave()">Save selected item</button>
+<button id="shared-inbox-save" type="button" class="sl-btn primary" style="margin-top:20px" disabled onclick="sharedInboxSave()">Save to TasteList</button>
 </fieldset></div></dialog>
 
 <script>
 // Shared-link inbox: no writes until the person confirms an item and destination.
-const sharedInbox={revision:0,busy:false,results:[],selected:null,opened:null};
+const sharedInbox={revision:0,busy:false,saved:false,results:[],selected:null,opened:null};
 function sharedInboxPending(){try{const p=JSON.parse(localStorage.getItem('tl-shared-link'));return p&&Date.now()-p.time<86400000?p:null;}catch(_){return null;}}
 function sharedInboxClear(){try{localStorage.removeItem('tl-shared-link');}catch(_){}const u=new URL(location.href);u.searchParams.delete('save');history.replaceState(history.state,'',u);}
 function sharedInboxClose(){if(sharedInbox.busy)return;sharedInbox.revision++;document.getElementById('shared-inbox').close();sharedInboxClear();}
@@ -22227,20 +22281,20 @@ async function openSharedInbox(){
  if(sharedInbox.opened===pending.time&&document.getElementById('shared-inbox').open&&currentUser)return;
  sharedInbox.opened=pending.time;sharedInbox.url=pending.url;
  const dialog=document.getElementById('shared-inbox');if(!dialog.open)dialog.showModal();
- document.getElementById('shared-inbox-source').textContent=pending.url;
+
  document.getElementById('shared-inbox-auth').hidden=!!currentUser;
  document.getElementById('shared-inbox-tools').hidden=!currentUser;
  if(!currentUser){sharedInboxStatus('Sign in to choose where to save this link.');return;}
  const uid=currentUser.id,rev=++sharedInbox.revision;
- sharedInbox.selected=null;sharedInbox.results=[];sharedInboxRender();sharedInboxStatus('Reading your link…');
+ sharedInbox.saved=false;sharedInbox.selected=null;sharedInbox.results=[];sharedInboxRender();sharedInboxStatus('Finding item…');
  try{
   await goToMyProfileView();
   if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
  document.getElementById('shared-inbox-destination').value='next';
  const matches=await resolveSharedInboxLink(pending.url);
   if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
-  sharedInbox.results=matches;sharedInboxRender();
-  sharedInboxStatus(matches.length?'Choose the matching item below.':'Couldn’t identify this link. Close this dialog and add the item directly in TasteList.');
+  sharedInbox.results=matches;sharedInbox.selected=matches.length===1?0:null;sharedInboxRender();
+  sharedInboxStatus(matches.length===1?'':matches.length>1?'Select the correct item.':'Couldn’t identify this link. Try adding the item directly in TasteList.');
 
  }catch(_){if(rev===sharedInbox.revision)sharedInboxStatus('Couldn’t read this link. Close this dialog and share the link again to retry.');}
 }
@@ -22265,8 +22319,13 @@ async function resolveSharedInboxLink(raw){
  return results;
 }
 function sharedInboxRender(){
- document.getElementById('shared-inbox-results').innerHTML=sharedInbox.results.map((p,i)=>`<button type="button" class="extra-result" aria-pressed="${sharedInbox.selected===i}" onclick="sharedInbox.selected=${i};sharedInboxRender()">${onboardingArtwork(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.kind,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span><span>${sharedInbox.selected===i?'✓':'Select'}</span></button>`).join('');
- document.getElementById('shared-inbox-save').disabled=sharedInbox.selected===null||sharedInbox.busy;
+ const el=document.getElementById('shared-inbox-results'),save=document.getElementById('shared-inbox-save');
+ const many=sharedInbox.results.length>1;
+ el.innerHTML=sharedInbox.results.map((p,i)=>`<button type="button" class="shared-inbox-item${sharedInbox.selected===i?' selected':''}" aria-pressed="${sharedInbox.selected===i}" onclick="if(!sharedInbox.saved){sharedInbox.selected=${i};sharedInboxRender()}">${onboardingArtwork(p)}<span class="shared-inbox-item-copy"><strong>${esc(p.title)}</strong><small>${esc([p.kind,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span>${many?`<span class="shared-inbox-mark">${sharedInbox.selected===i?'✓':'Select'}</span>`:''}</button>`).join('');
+ save.disabled=sharedInbox.selected===null||sharedInbox.busy||sharedInbox.saved;
+ save.textContent=sharedInbox.saved?'✓ Saved':sharedInbox.busy?'Saving…':'Save to TasteList';
+ save.classList.toggle('saved',sharedInbox.saved);
+ document.getElementById('shared-inbox-destination').disabled=sharedInbox.busy||sharedInbox.saved;
 }
 async function sharedInboxSave(){
  if(sharedInbox.busy||!currentUser||sharedInbox.selected===null)return;
@@ -22286,11 +22345,11 @@ async function sharedInboxSave(){
     const r=await sb.from('friend_recs').insert({user_id:uid,title:p.title,type,art_url:onboardingArt(p)||null,recommenders:[],sort_order:check.data.length});if(r.error)throw r.error;
    }
   }else{throw Error('Choose What’s Next or Favorites.');}
-  sharedInboxClear();sharedInbox.selected=null;sharedInboxRender();sharedInboxStatus('✓ Saved to '+document.getElementById('shared-inbox-destination').selectedOptions[0].textContent+'.');
+  sharedInboxClear();sharedInbox.saved=true;sharedInboxStatus('Saved to '+document.getElementById('shared-inbox-destination').selectedOptions[0].textContent+'.');
   // Refresh in the background; a refresh failure must not turn a successful save into a retry.
   if(currentUser?.id===uid)loadViewedProfileData().catch(()=>{});
  }catch(e){sharedInboxStatus(e.message||'Couldn’t save. Please try again.');}
- finally{sharedInbox.busy=false;document.getElementById('shared-inbox-fields').disabled=false;sharedInboxRender();}
+ finally{sharedInbox.busy=false;document.getElementById('shared-inbox-fields').disabled=sharedInbox.saved;sharedInboxRender();}
 }
 
 </script>
