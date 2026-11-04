@@ -3698,6 +3698,45 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 .title-conv .tc-post-meta strong { color: var(--text); font-size: 13.5px; }
 .title-conv .tc-post-body { font-size: 14px; line-height: 1.5; color: #d6d1c8; overflow-wrap: anywhere; }
 .title-conv .tc-empty { color: var(--muted); font-style: italic; }
+/* ── Mobile header, What's New heading and composer (≤768px). Desktop is unchanged. ── */
+.hdr-icon-btn { display: none; }
+.hdr-profile { position: relative; display: none; }
+@media (max-width: 768px) { .hdr-profile { display: block; } }
+.hdr-profile[hidden] { display: none !important; }
+@media (max-width: 768px) {
+  .global-header { grid-template-columns: minmax(0, 1fr) auto !important; grid-template-areas: "brand account" "tabs tabs" "search search" !important; gap: 6px 12px !important; padding-top: 12px !important; }
+  .global-header .global-navigation > div:nth-child(2) { margin-left: -12px; }
+  .global-header #people-search-wrap { justify-self: stretch !important; width: auto !important; }
+  .global-header .global-account { gap: 4px !important; }
+  .hdr-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
+  .hdr-icon-btn:hover, .hdr-icon-btn:focus-visible { color: var(--text); background: rgba(255,255,255,.06); outline: none; }
+  .hdr-avatar-btn[aria-expanded="true"] { box-shadow: 0 0 0 2px var(--accent); }
+  #notif-bell-btn { width: 40px; height: 40px; align-items: center; justify-content: center; padding: 0 !important; border-radius: 50%; }
+  /* Signed in: name, Invite friends and Sign out move into the profile menu. Signed out keeps "Sign in". */
+  #auth-widget.is-signed-in { display: none !important; }
+  .hdr-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 70; width: min(260px, calc(100vw - 24px)); padding: 6px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.55); }
+  .hdr-menu[hidden] { display: none; }
+  .hdr-menu button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 10px; background: none; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+  .hdr-menu button:hover, .hdr-menu button:focus-visible { background: rgba(255,255,255,.06); outline: none; }
+  .hdr-menu button svg { flex-shrink: 0; color: var(--muted); margin: 0 9px 0 9px; }
+  .hdr-menu .hdr-menu-who { padding: 10px; margin-bottom: 4px; border-bottom: 1px solid var(--border); border-radius: 10px 10px 0 0; }
+  .hdr-menu .hdr-menu-who > span:last-child { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+  .hdr-menu .hdr-menu-who strong { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hdr-menu .hdr-menu-who small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hdr-menu .hdr-menu-signout { color: #f3a0a0; }
+  #notif-dropdown { position: fixed !important; top: calc(var(--vvt, 0px) + 64px) !important; left: 12px !important; right: 12px !important; width: auto !important; max-height: min(70dvh, 520px) !important; }
+  /* What's New: heading over a smaller subtitle, left-aligned */
+  .feed-heading-row { flex-direction: column !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 2px; margin-bottom: 14px !important; }
+  .feed-heading-row #feed-heading { font-size: 22px !important; line-height: 1.2; }
+  .feed-heading-row #feed-context { font-size: 13px !important; line-height: 1.4; color: var(--muted); }
+  /* Composer entry: compact, avatar left, Post right, text never under the button */
+  .fc-entry-wrap { margin-bottom: 16px; }
+  .fc-entry { min-height: 52px; padding: 7px 8px 7px 8px; gap: 10px; border-radius: 14px; }
+  .fc-entry > span:first-child { width: 34px !important; height: 34px !important; font-size: 13px !important; }
+  .fc-entry-text { font-size: 15px; }
+  .fc-entry-cta { padding: 0 14px; min-height: 36px; display: inline-flex; align-items: center; }
+}
+@media (max-width: 400px) { .fc-entry { gap: 8px; } .fc-entry-text { font-size: 14px; } .fc-entry-cta { padding: 0 12px; } }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -4108,6 +4147,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 <div class="page-shell">
   <header class="site-header global-header" style="position:relative;padding-bottom:1.25rem;">
     <div class="global-account" style="position:absolute;top:0;right:0;display:flex;align-items:center;gap:12px;font-size:13px;">
+      <button type="button" id="hdr-search-btn" class="hdr-icon-btn" aria-label="Search" title="Search" onclick="focusHeaderSearch()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
       <div style="position:relative;">
         <button id="notif-bell-btn" onclick="toggleNotificationsDropdown()" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;display:flex;position:relative;">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -4116,6 +4156,10 @@ async function landingArtistArtFallback(imgEl, artistName) {
         <div id="notif-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;width:340px;max-height:420px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border2);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:60;"></div>
       </div>
       <div id="auth-widget"></div>
+      <div class="hdr-profile" id="hdr-profile" hidden>
+        <button type="button" id="hdr-profile-btn" class="hdr-icon-btn hdr-avatar-btn" aria-label="Account menu" aria-haspopup="menu" aria-expanded="false" aria-controls="hdr-profile-menu" onclick="toggleHeaderProfileMenu()"></button>
+        <div id="hdr-profile-menu" class="hdr-menu" role="menu" hidden></div>
+      </div>
     </div>
     <div class="global-navigation" style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding-top:0.5rem;">
       <div onclick="goToFeedView()" style="cursor:pointer;display:flex;align-items:center;gap:9px;">
@@ -4144,7 +4188,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
 <div id="view-onboarding-container" style="display:none;"></div>
 <div id="view-feed-container" style="display:none;">
   <div style="max-width:1100px;margin:0 auto;padding:0.5rem 2rem 4rem;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div class="feed-heading-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <div id="feed-heading" style="font-size:22px;font-weight:700;color:var(--text);">What's New</div>
       <div id="feed-context" style="font-size:12px;color:var(--muted);">From people you follow</div>
     </div>
@@ -7058,7 +7102,40 @@ async function deleteTasteItem(flatIdx) {
   }
 }
 
+// Phones: the account links live in a menu behind the profile icon (see .hdr-* styles).
+function renderHeaderAccountMenu() {
+  const wrap = document.getElementById('hdr-profile'), btn = document.getElementById('hdr-profile-btn'), menu = document.getElementById('hdr-profile-menu');
+  if (!wrap || !btn || !menu) return;
+  wrap.hidden = !currentUser;
+  if (!currentUser) { closeHeaderProfileMenu(); return; }
+  const p = { ...(currentProfile || {}), id: currentUser.id };
+  const name = p.display_name || p.username || currentUser.email || 'You';
+  btn.innerHTML = profileAvatarHtml(p, 30);
+  menu.innerHTML = `<button type="button" role="menuitem" class="hdr-menu-who" onclick="closeHeaderProfileMenu();goToMyProfileView()">${profileAvatarHtml(p, 36)}<span><strong>${esc(name)}</strong>${p.username ? `<small>@${esc(p.username)} · View profile</small>` : '<small>View profile</small>'}</span></button>
+    <button type="button" role="menuitem" onclick="closeHeaderProfileMenu();inviteFriendToTasteList()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Invite friends</button>
+    <button type="button" role="menuitem" class="hdr-menu-signout" onclick="closeHeaderProfileMenu();signOut()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>`;
+}
+function toggleHeaderProfileMenu(force) {
+  const btn = document.getElementById('hdr-profile-btn'), menu = document.getElementById('hdr-profile-menu');
+  if (!btn || !menu) return;
+  const open = typeof force === 'boolean' ? force : menu.hidden;
+  menu.hidden = !open; btn.setAttribute('aria-expanded', String(open));
+  if (open) {
+    const nd = document.getElementById('notif-dropdown'); if (nd && nd.style.display !== 'none' && typeof toggleNotificationsDropdown === 'function') toggleNotificationsDropdown();
+    menu.querySelector('button')?.focus();
+  }
+}
+function closeHeaderProfileMenu() { toggleHeaderProfileMenu(false); }
+document.addEventListener('click', e => { const w = document.getElementById('hdr-profile'); if (w && !w.contains(e.target)) closeHeaderProfileMenu(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('hdr-profile-menu')?.hidden) { closeHeaderProfileMenu(); document.getElementById('hdr-profile-btn')?.focus(); } });
+// The header search icon just brings you to the existing search field.
+function focusHeaderSearch() {
+  const input = document.getElementById('people-search-input'); if (!input) return;
+  input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  input.focus({ preventScroll: true });
+}
 function renderAuthWidget() {
+  try { renderHeaderAccountMenu(); } catch (_) {}
   const el = document.getElementById('auth-widget');
   const profileNavBtn = document.getElementById('global-nav-profile');
   if (profileNavBtn) profileNavBtn.style.display = currentUser ? '' : 'none';
@@ -7067,6 +7144,7 @@ function renderAuthWidget() {
     el.innerHTML = `<span style="color:var(--faint);">Auth not configured</span>`;
     return;
   }
+  el.classList.toggle('is-signed-in', !!currentUser);
   if (currentUser) {
     const name = firstNameOnly(currentProfile?.display_name) || currentUser.email;
     el.innerHTML = `
@@ -8018,6 +8096,7 @@ function closeNotificationsDropdown() {
 }
 
 function toggleNotificationsDropdown() {
+  try { closeHeaderProfileMenu(); } catch (_) {}
   if (!currentUser) { openAuthModal('signin'); return; }
   const el = document.getElementById('notif-dropdown');
   if (!el) return;
@@ -8330,6 +8409,7 @@ function updateTasteTabLabel() {
 }
 function updateProfileHeaderAndBanner() {
   updateTasteTabLabel();
+  try { renderHeaderAccountMenu(); } catch (_) {}
   renderProfileOnboardingResume();
   loadFollowStats();
   clearTasteConstellation();
@@ -19461,7 +19541,7 @@ function renderFeedComposer(){
  if(feedPostDraft.userId!==currentUser.id){feedPostDraft={userId:currentUser.id,text:'',id:null,saving:false,requestId:null};tagFieldInit('feed');}
  // Collapsed entry on the Feed
  const draft=feedDraftHasContent(), p=feedPostDraft.attachment;
- const entryText=feedPostDraft.id?'Continue editing your update…':draft?`Continue your draft${p?` about ${esc(p.title)}`:''}…`:'What’s on your mind?';
+ const entryText=feedPostDraft.id?'Continue editing your update…':draft?`Continue your draft${p?` about ${esc(p.title)}`:''}…`:'What have you been into lately?';
  host.innerHTML=`<section class="fc-entry-wrap" aria-label="Write a TasteList update">
    <button type="button" class="fc-entry${draft?' has-draft':''}" onclick="openFeedComposer()" aria-haspopup="dialog">${profileAvatarHtml(currentProfile,40)}<span class="fc-entry-text">${entryText}</span><span class="fc-entry-cta" aria-hidden="true">${draft?'Continue':'Post'}</span></button>
    ${draft&&!feedPostDraft.id?(feedDiscardConfirm?`<div class="fc-discard" role="group" aria-label="Discard draft"><span>Discard your draft?</span><button type="button" onclick="discardFeedDraft(true)">Discard</button><button type="button" onclick="feedDiscardConfirm=false;renderFeedComposer()">Keep it</button></div>`:`<button type="button" class="fc-discard-link" onclick="feedDiscardConfirm=true;renderFeedComposer()">Discard draft</button>`):''}
@@ -19600,7 +19680,7 @@ async function fetchFeedPage(isFirstPage) {
     if (feedAudienceIds === null) feedAudienceIds = await resolveFeedAudience();
     const followedIds=[...new Set([...feedAudienceIds,currentUser?.id].filter(Boolean))];
     document.getElementById('feed-heading').textContent="What's New";
-    document.getElementById('feed-context').textContent='Your updates and people you follow';
+    document.getElementById('feed-context').textContent='Updates from you and people you follow';
     let query = sb.from('activity_feed')
       .select('id, label, sub, type, note, activity_date, created_at, is_private, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)')
       .order('created_at', { ascending: false }).order('activity_date', { ascending: false })
