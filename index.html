@@ -1261,6 +1261,10 @@ if (new URLSearchParams(location.search).has('list')) {
   .sl-comment:hover .sl-comment-delete, .sl-comment-delete:focus-visible { opacity:1; }
   .sl-comment-delete:hover { color:var(--text); }
   @media (hover: none) { .sl-comment-delete { opacity:1; } }
+  /* Comment delete: a small trash icon */
+  .sl-comment-delete, .tl-comment-trash { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; padding:0; border-radius:6px; background:none; border:0; color:var(--faint); cursor:pointer; flex-shrink:0; }
+  .tl-comment-trash, .sl-comment-delete { margin:-6px -5px -6px 0; } /* bigger tap area without making the name row taller */
+  .sl-comment-delete:hover, .tl-comment-trash:hover, .tl-comment-trash:focus-visible { color:#e5484d; background:rgba(229,72,77,.1); }
   .sl-comment-actions { margin-top:6px; font-size:12.5px; color:var(--muted); }
   .sl-comment-actions .reaction-badge-btn { font-size:13px !important; }
   .sl-comment-body { margin-top:3px; font-size:14px; line-height:1.55; color:#d6d1c8; white-space:pre-wrap; overflow-wrap:anywhere; }
@@ -17920,7 +17924,7 @@ function commentsSectionHtml(targetType, targetId) {
           <div style="display:flex;justify-content:space-between;gap:8px;">
             <span style="font-size:12.5px;font-weight:600;color:var(--text);">${esc(c.author)}</span>
             ${currentUser && c.user_id === currentUser.id
-              ? `<button onclick="deleteComment('${c.id}','${targetType}','${targetId}', () => refreshEngagementUI('${targetType}','${targetId}'))" style="background:none;border:none;color:var(--faint);font-size:11px;cursor:pointer;font-family:inherit;">Delete</button>`
+              ? `<button onclick="deleteComment('${c.id}','${targetType}','${targetId}', () => refreshEngagementUI('${targetType}','${targetId}'))" class="tl-comment-trash" aria-label="Delete comment" title="Delete comment"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button>`
               : ''}
           </div>
           <div class="tl-comment-body">${spoilerHtml(c.body,'c:'+c.id)}</div>
@@ -18068,7 +18072,7 @@ function discussionCommentsHtml(type, listId) {
         ? `<a class="sl-comment-author" href="?u=${encodeURIComponent(c.profile.username)}">${esc(c.author)}</a>`
         : `<span class="sl-comment-author">${esc(c.author)}</span>`;
       const del = currentUser && c.user_id === currentUser.id
-        ? `<button type="button" class="sl-comment-delete" onclick="deleteComment('${jsStr(c.id)}','${type}','${id}', ${refresh})">Delete</button>` : '';
+        ? `<button type="button" class="sl-comment-delete" aria-label="Delete comment" title="Delete comment" onclick="deleteComment('${jsStr(c.id)}','${type}','${id}', ${refresh})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button>` : '';
       return `<li class="sl-comment">
         ${profileAvatarHtml(p, 32)}
         <div class="sl-comment-main">
