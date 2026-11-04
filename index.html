@@ -3659,6 +3659,45 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 .update-private { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; }
 .update-private input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
 .update-private:has(input:checked) { color: var(--text); }
+/* Header search: titles and people */
+#people-search-input { text-overflow: ellipsis; } /* long placeholder on narrow screens */
+#people-search-results .hs-head { padding: 10px 14px 4px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+#people-search-results .hs-note { padding: 12px 14px; font-size: 12.5px; color: var(--faint); }
+#people-search-results .hs-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 14px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+#people-search-results .hs-row:last-child { border-bottom: 0; }
+#people-search-results .hs-row:hover, #people-search-results .hs-row:focus-visible { background: var(--surface3); outline: none; }
+.hs-art { position: relative; flex-shrink: 0; width: 30px; height: 42px; border-radius: 6px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; }
+.hs-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hs-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hs-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hs-sub { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.title-conv .tc-hero { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.title-conv .tc-hero img, .title-conv .tc-hero-icon { width: 54px; height: 78px; border-radius: 8px; object-fit: cover; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+.title-conv .tc-hero h2 { margin: 0; font-size: 19px; line-height: 1.25; color: var(--text); }
+.title-conv .tc-hero p { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); }
+.title-conv .tc-list { display: flex; flex-direction: column; }
+.title-conv .tc-section h3 { margin: 0; padding: 14px 20px 6px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.title-conv .tc-section + .tc-section, .title-conv .tc-section + .hs-note { border-top: 1px solid var(--border); }
+.title-conv .tc-fans { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 20px 16px; }
+.title-conv .tc-fan { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 4px 12px 4px 4px; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,.03); color: var(--text); text-decoration: none; transition: border-color .15s, background .15s; }
+.title-conv .tc-fan:hover, .title-conv .tc-fan:focus-visible { border-color: var(--accent); background: rgba(124,77,255,.08); outline: none; }
+.title-conv .tc-fan > span { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.title-conv .tc-fan strong { font-size: 13px; }
+.title-conv .tc-fan small { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+/* A post opened from search, highlighted on the profile */
+@keyframes postFocusPulse { 0% { box-shadow: 0 0 0 0 rgba(124,77,255,0); } 20% { box-shadow: 0 0 0 3px rgba(124,77,255,.75); } 100% { box-shadow: 0 0 0 3px rgba(124,77,255,0); } }
+.post-focus { animation: postFocusPulse 2.6s ease-out; border-color: var(--accent) !important; }
+@media (prefers-reduced-motion: reduce) { .post-focus { animation: none; box-shadow: 0 0 0 3px rgba(124,77,255,.6); } }
+.post-view-back { background: none; border: 0; padding: 4px 0; font: inherit; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+.post-view-back:hover { color: var(--text); }
+.title-conv .tc-post { display: flex; gap: 12px; align-items: flex-start; width: 100%; padding: 14px 20px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.title-conv .tc-post:last-child { border-bottom: 0; }
+.title-conv .tc-post:hover, .title-conv .tc-post:focus-visible { background: rgba(255,255,255,.03); outline: none; }
+.title-conv .tc-post-main { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.title-conv .tc-post-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 12px; color: var(--muted); }
+.title-conv .tc-post-meta strong { color: var(--text); font-size: 13.5px; }
+.title-conv .tc-post-body { font-size: 14px; line-height: 1.5; color: #d6d1c8; overflow-wrap: anywhere; }
+.title-conv .tc-empty { color: var(--muted); font-style: italic; }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -4092,10 +4131,10 @@ async function landingArtistArtFallback(imgEl, artistName) {
       </div>
     </div>
     <div id="people-search-wrap" style="position:relative;max-width:320px;margin-top:14px;">
-      <input id="people-search-input" type="text" placeholder="Find people…" autocomplete="off"
+      <input id="people-search-input" type="search" placeholder="Search movies, books, people & more…" aria-label="Search movies, books, people and more on TasteList" autocomplete="off" onkeydown="if(event.key==='Escape'){this.value='';handlePeopleSearchInput('')}"
         oninput="handlePeopleSearchInput(this.value)"
         style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
-      <div id="people-search-results" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:50;max-height:320px;overflow-y:auto;"></div>
+      <div id="people-search-results" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:50;max-height:min(460px,70vh);overflow-y:auto;"></div>
     </div>
   </header>
 </div>
@@ -7052,46 +7091,204 @@ function handlePeopleSearchInput(value) {
   peopleSearchTimer = setTimeout(() => runPeopleSearch(q), 250);
 }
 
+// The header search finds titles people have posted about and people on TasteList.
+// Posts come back only where the database lets this viewer see them (public profiles, people
+// they follow, their own), so private profiles and "Only me" posts never show up here.
+let peopleSearchSeq = 0;
+const titleSearchGroups = new Map();
+function titleKindOf(row) {
+  const ci = row.catalog_item || {}, k = ci.attachment?.kind || (ci.kind && !/post|display/.test(ci.kind) ? ci.kind : '') || ci.type || row.type || 'other';
+  return ({ film: 'movie', special: 'tv', album: 'music', artist: 'music', song: 'music', author: 'book' })[k] || k;
+}
+function titleKindLabel(k) { return ({ movie: 'Film', tv: 'TV', book: 'Book', music: 'Music', podcast: 'Podcast', article: 'Article' })[k] || ''; }
+function titleKeyOf(row) { return String(row.label || '').trim().toLowerCase().replace(/\s+/g, ' ') + '|' + titleKindOf(row); }
+function titleArtOf(row) { const a = row.catalog_item?.attachment; return row.art_url || (a ? onboardingArt(a) : '') || ''; }
+function titleNorm(t) { return String(t || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+function favKey(f) { return titleNorm(f.title) + '|' + f.kind; }
+// One group per title (and kind): the posts about it and the people who have it in Your Taste.
+function groupTitleRows(rows, favs = []) {
+  const groups = new Map();
+  const get = (key, label, kind) => { if (!groups.has(key)) groups.set(key, { key, label, kind, art: '', rows: [], favs: [] }); return groups.get(key); };
+  for (const r of rows || []) {
+    if (!r?.label || !r.profiles?.username) continue;
+    const g = get(titleKeyOf(r), r.label, titleKindOf(r)); g.rows.push(r); if (!g.art) g.art = titleArtOf(r);
+  }
+  for (const f of favs || []) {
+    if (!f?.title || !f.username) continue;
+    const g = get(favKey(f), f.title, f.kind); g.favs.push(f); if (!g.art && f.art) g.art = f.art;
+  }
+  return [...groups.values()];
+}
+// People who have this title in Your Taste: one entry per person, with the list(s) it's in.
+function titleFans(g) {
+  const people = new Map();
+  for (const f of g.favs || []) {
+    if (!people.has(f.user_id)) people.set(f.user_id, { ...f, lists: [] });
+    const label = prettyTasteListLabel(f.list_label);
+    if (label && !people.get(f.user_id).lists.includes(label)) people.get(f.user_id).lists.push(label);
+  }
+  return [...people.values()];
+}
+function prettyTasteListLabel(l) {
+  const t = String(l || '').replace(/^tv_/, '').replace(/_/g, ' ').trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : '';
+}
 async function runPeopleSearch(q) {
   const resultsEl = document.getElementById('people-search-results');
   if (!resultsEl || !sb) return;
+  const seq = ++peopleSearchSeq;
   resultsEl.style.display = 'block';
-  resultsEl.innerHTML = `<div style="padding:12px 14px;font-size:12.5px;color:var(--faint);">Searching…</div>`;
+  resultsEl.innerHTML = `<div class="hs-note">Searching…</div>`;
   // Strip characters that would otherwise break PostgREST's or() filter syntax (it uses commas
-  // to separate conditions and parens to group them).
-  const safeQ = q.replace(/[,()]/g, '');
-  try {
-    const { data, error } = await sb.from('profiles')
-      .select('id, username, display_name, is_public')
-      .or(`username.ilike.%${safeQ}%,display_name.ilike.%${safeQ}%`)
-      .limit(8);
-    if (error) throw error;
-    renderPeopleSearchResults(data || [], q);
-  } catch (e) {
-    console.error('People search failed:', e);
-    resultsEl.innerHTML = `<div style="padding:12px 14px;font-size:12.5px;color:var(--faint);">Search failed. Try again.</div>`;
-  }
+  // to separate conditions and parens to group them) or act as LIKE wildcards.
+  const safeQ = q.replace(/[,()%_\\*]/g, ' ').trim();
+  if (!safeQ) { resultsEl.innerHTML = `<div class="hs-note">Keep typing to search.</div>`; return; }
+  const [peopleRes, postsRes, favsRes] = await Promise.allSettled([
+    sb.from('profiles').select('id, username, display_name, avatar_url, is_public')
+      .or(`username.ilike.%${safeQ}%,display_name.ilike.%${safeQ}%`).limit(6),
+    sb.from('activity_feed')
+      .select('id, label, type, art_url, catalog_item, user_id, created_at, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url)')
+      .ilike('label', `%${safeQ}%`).order('created_at', { ascending: false }).limit(80),
+    sb.rpc('search_taste_favorites', { q: safeQ })
+  ]);
+  if (seq !== peopleSearchSeq) return;
+  const people = peopleRes.status === 'fulfilled' && !peopleRes.value.error ? (peopleRes.value.data || []) : null;
+  const posts = postsRes.status === 'fulfilled' && !postsRes.value.error ? (postsRes.value.data || []) : null;
+  if (!people && !posts) { resultsEl.innerHTML = `<div class="hs-note">Search failed. Try again.</div>`; return; }
+  const favs = favsRes.status === 'fulfilled' && !favsRes.value.error ? (favsRes.value.data || []) : [];
+  const titles = groupTitleRows(posts || [], favs);
+  // Exact and starts-with matches first, then the most talked-about.
+  const ql = q.toLowerCase(), rank = g => { const l = g.label.toLowerCase(); return l === ql ? 0 : l.startsWith(ql) ? 1 : 2; };
+  titles.sort((a, b) => rank(a) - rank(b) || (b.rows.length + titleFans(b).length) - (a.rows.length + titleFans(a).length));
+  renderPeopleSearchResults(people || [], q, titles.slice(0, 5));
 }
 
-function renderPeopleSearchResults(people, q) {
+function renderPeopleSearchResults(people, q, titles = []) {
   const resultsEl = document.getElementById('people-search-results');
   if (!resultsEl) return;
-  if (!people.length) {
-    resultsEl.innerHTML = `<div style="padding:12px 14px;font-size:12.5px;color:var(--faint);">No one found matching "${esc(q)}".</div>`;
+  titleSearchGroups.clear();
+  if (!people.length && !titles.length) {
+    resultsEl.innerHTML = `<div class="hs-note">Nothing on TasteList matches “${esc(q)}” yet.</div>`;
     return;
   }
-  resultsEl.innerHTML = people.map(p => {
-    const name = firstNameOnly(p.display_name) || p.username;
-    const initials = (name || '?').trim().slice(0, 1).toUpperCase();
-    return `
-    <div onclick="goToProfile('${esc(p.username)}')" style="display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='transparent'">
-      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent)cc,var(--accent));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">${esc(initials)}</div>
-      <div style="min-width:0;">
-        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(name)}${p.is_public === false ? ' 🔒' : ''}</div>
-        <div style="font-size:11.5px;color:var(--muted);">@${esc(p.username)}</div>
-      </div>
-    </div>`;
+  const titleHtml = titles.map((g, i) => {
+    const id = 't' + i; titleSearchGroups.set(id, g);
+    const fans = titleFans(g);
+    const names = [...new Set([...g.rows.map(r => firstNameOnly(r.profiles.display_name) || r.profiles.username), ...fans.map(f => firstNameOnly(f.display_name) || f.username)])];
+    const who = names.slice(0, 2).join(', ') + (names.length > 2 ? ` +${names.length - 2}` : '');
+    const counts = [g.rows.length ? `${g.rows.length} ${g.rows.length === 1 ? 'post' : 'posts'}` : '', fans.length ? `in ${fans.length} ${fans.length === 1 ? 'person’s' : 'people’s'} taste` : ''].filter(Boolean).join(', ');
+    const meta = ACTIVITY_TYPE_META[g.kind === 'music' ? 'song' : g.kind] || ACTIVITY_TYPE_META.other;
+    return `<button type="button" class="hs-row" onclick="openTitleConversation('${id}')">
+      <span class="hs-art" style="background:${meta.color}22;color:${meta.color}">${g.art ? `<img src="${esc(g.art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${badgeIcon(meta.icon, 14)}</span>
+      <span class="hs-text"><span class="hs-name">${esc(g.label)}</span><span class="hs-sub">${[titleKindLabel(g.kind), counts, who].filter(Boolean).map(esc).join(' · ')}</span></span>
+    </button>`;
   }).join('');
+  const peopleHtml = people.map(p => {
+    const name = firstNameOnly(p.display_name) || p.username;
+    return `<button type="button" class="hs-row" onclick="goToProfile('${esc(jsStr(p.username))}')">
+      ${profileAvatarHtml(p, 30)}
+      <span class="hs-text"><span class="hs-name">${esc(name)}${p.is_public === false ? ' 🔒' : ''}</span><span class="hs-sub">@${esc(p.username)}</span></span>
+    </button>`;
+  }).join('');
+  resultsEl.innerHTML = (titles.length ? `<div class="hs-head">Titles</div>${titleHtml}` : '')
+    + (people.length ? `<div class="hs-head">People</div>${peopleHtml}` : '');
+}
+
+// Everything people (that this viewer can see) have posted about one title, newest first.
+async function openTitleConversation(id) {
+  const g = titleSearchGroups.get(id); if (!g || !sb) return;
+  const resultsEl = document.getElementById('people-search-results'); if (resultsEl) resultsEl.style.display = 'none';
+  const modal = document.getElementById('activity-summary-modal'), content = document.getElementById('activity-summary-content');
+  if (!modal || !content) return;
+  const request = String(++sharedSummaryRequest);
+  modal.dataset.sharedRequest = request; modal.style.display = 'flex';
+  const active = () => modal.style.display === 'flex' && modal.dataset.sharedRequest === request;
+  const meta = ACTIVITY_TYPE_META[g.kind === 'music' ? 'song' : g.kind] || ACTIVITY_TYPE_META.other;
+  const head = (n, f) => `<div class="post-view-head"><span>What people are saying</span><button type="button" class="post-view-close" aria-label="Close" onclick="closeActivitySummary()">×</button></div>
+    <div class="tc-hero">${g.art ? `<img src="${esc(g.art)}" alt="" onerror="this.remove()">` : `<span class="tc-hero-icon" style="background:${meta.color}22;color:${meta.color}">${badgeIcon(meta.icon, 22)}</span>`}
+      <div><h2>${esc(g.label)}</h2><p>${[titleKindLabel(g.kind), !n ? '' : `${n} ${n === 1 ? 'post' : 'posts'}`, f ? `in ${f} ${f === 1 ? 'person’s' : 'people’s'} taste` : ''].filter(Boolean).map(esc).join(' · ')}</p></div></div>`;
+  content.innerHTML = `<div class="post-view title-conv">${head(null)}<div class="hs-note" style="padding:20px">Loading posts…</div></div>`;
+  let rows = [], fans = titleFans(g);
+  try {
+    const exact = g.label.replace(/[\\%_]/g, m => '\\' + m);
+    // Everyone (that this viewer can see) with it in Your Taste, not just the search's first matches.
+    sb.rpc('search_taste_favorites', { q: g.label, p_exact: true }).then(({ data }) => {
+      if (!data || !active()) return;
+      g.favs = data.filter(f => favKey(f) === g.key); fans = titleFans(g); window.__titleConversationRender?.();
+    }, () => {});
+    const { data, error } = await sb.from('activity_feed')
+      .select('id, label, sub, type, note, activity_date, created_at, is_private, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)')
+      .ilike('label', exact).order('created_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    rows = (data || []).filter(r => r.profiles?.username && titleKeyOf(r) === g.key);
+  } catch (_) {
+    if (active()) content.innerHTML = `<div class="post-view title-conv">${head(null)}<div class="hs-note" style="padding:20px">Couldn’t load posts right now.</div></div>`;
+    return;
+  }
+  if (!active()) return;
+  rows.forEach(r => summaryFeedRows.set(String(r.id), r));
+  window.__titleConversationRows = rows;
+  const item = (r, i) => {
+    const name = firstNameOnly(r.profiles.display_name) || r.profiles.username;
+    const isSpoiler = isSpoilerPost(r), note = String(r.note || '').trim();
+    const body = !note ? `<span class="tc-empty">${esc(r.sub || 'No note')}</span>`
+      : isSpoiler ? `<span class="tc-empty">Spoilers · tap to read</span>`
+      : spoilerHtml(note.length > 280 ? note.slice(0, 280).replace(/\s+\S*$/, '') + '…' : note, 'p:' + r.id);
+    const part = tvPartLabel(r.catalog_item?.attachment);
+    return `<button type="button" class="tc-post" onclick="openTitleConversationPost(${i})">
+      ${profileAvatarHtml({ ...r.profiles, id: r.user_id }, 34)}
+      <span class="tc-post-main"><span class="tc-post-meta"><strong>${esc(name)}</strong><span>${esc(shortActivityDate(postedDateOf(r)))}</span>${part ? `<span>${esc(part)}</span>` : ''}${privateBadgeHtml(r)}</span>
+      <span class="tc-post-body">${body}</span></span>
+    </button>`;
+  };
+  const fanChip = f => {
+    const name = firstNameOnly(f.display_name) || f.username;
+    return `<a class="tc-fan" href="?u=${encodeURIComponent(f.username)}&tab=favorites" onclick="event.preventDefault();goToProfileTaste('${esc(jsStr(f.username))}')" title="See ${esc(possessiveName(name))} taste">
+      ${profileAvatarHtml({ username: f.username, display_name: f.display_name, avatar_url: f.avatar_url, id: f.user_id }, 28)}
+      <span><strong>${esc(name)}</strong>${f.lists.length ? `<small>${esc(f.lists.slice(0, 2).join(', '))}</small>` : ''}</span></a>`;
+  };
+  const render = () => {
+    if (!active()) return;
+    const fanHtml = fans.length ? `<section class="tc-section"><h3>In their taste</h3><div class="tc-fans">${fans.map(fanChip).join('')}</div></section>` : '';
+    const postHtml = rows.length ? `<section class="tc-section"><h3>Posts</h3><div class="tc-list">${rows.map(item).join('')}</div></section>`
+      : `<div class="hs-note" style="padding:16px 20px">No posts you can see about this yet.</div>`;
+    content.innerHTML = `<div class="post-view title-conv">${head(rows.length, fans.length)}${fanHtml}${postHtml}</div>`;
+  };
+  window.__titleConversationRender = render;
+  render();
+  window.__titleConversationBack = () => openTitleConversation(id);
+}
+// A post in the search results opens on the poster's profile, scrolled to and highlighted.
+function openTitleConversationPost(i) {
+  const row = (window.__titleConversationRows || [])[i]; if (!row?.profiles?.username) return;
+  goToProfilePost(row.profiles.username, row.id);
+}
+function goToProfileTaste(username) {
+  window.location.href = `${window.location.origin}${window.location.pathname}?u=${encodeURIComponent(username)}&tab=favorites`;
+}
+function goToProfilePost(username, postId) {
+  if ((viewedProfile?.username || (isOwnProfile ? currentProfile?.username : '')) === username && currentTopView === 'profile' && [...document.querySelectorAll('#profile-feed [data-post-id]')].some(c => c.dataset.postId === String(postId))) {
+    closeActivitySummary(); focusProfilePost(postId); return;
+  }
+  window.location.href = `${window.location.origin}${window.location.pathname}?u=${encodeURIComponent(username)}&post=${encodeURIComponent(postId)}`;
+}
+// ?u=<username>&post=<id>: once the profile is up, show that post.
+function focusPostFromUrl() {
+  const postId = new URLSearchParams(location.search).get('post');
+  if (postId && currentTopView === 'profile') focusProfilePost(postId);
+}
+async function focusProfilePost(postId) {
+  try { if (document.getElementById('tab-profile')) switchTab('profile'); } catch (_) {}
+  // The profile's posts render after its data loads; wait briefly for this one to appear.
+  let card = null;
+  for (let i = 0; i < 40 && !card; i++) {
+    card = [...document.querySelectorAll('#profile-feed [data-post-id]')].find(c => c.dataset.postId === String(postId));
+    if (!card) await new Promise(r => setTimeout(r, 150));
+  }
+  if (!card) { showToast('That post isn’t available anymore.'); return; }
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.remove('post-focus'); void card.offsetWidth; card.classList.add('post-focus');
+  setTimeout(() => card.classList.remove('post-focus'), 2600);
 }
 
 function goToProfile(username) {
@@ -11386,6 +11583,7 @@ async function initAuth() {
   // The shared-link inbox is defined in a later script; on a fast load it may not exist yet.
   if (typeof openSharedInbox === 'function') await openSharedInbox();
   else window.addEventListener('load', () => { if (typeof openSharedInbox === 'function') openSharedInbox(); }, { once: true });
+  focusPostFromUrl();
   urlSyncReady = true; syncUrl(true);
   startNotificationPolling();
 
@@ -11443,7 +11641,8 @@ async function initAuth() {
     }
     await openSharedListRoute();
   await openSharedInbox();
-    urlSyncReady = true; syncUrl(true);
+    focusPostFromUrl();
+  urlSyncReady = true; syncUrl(true);
   startNotificationPolling();
   };
   // Auth listeners run while Supabase holds its session lock. Never return a promise
@@ -18334,7 +18533,7 @@ function activityCardHtml(item, globalIndex) {
       <button onclick="event.stopPropagation(); openActivityItemForm(${globalIndex})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✎</button>
       <button onclick="event.stopPropagation(); deleteActivityItem(${globalIndex})" style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:12px;cursor:pointer;">✕</button>
     </div>` : '';
-  return `<div class="activity-card" style="position:relative;background:var(--surface2);border:1px solid var(--border);">
+  return `<div class="activity-card" data-post-id="${esc(String(item.id||''))}" style="position:relative;background:var(--surface2);border:1px solid var(--border);">
     ${editControls}
     ${activityArtWrap(ART_SRC, art + (isOwnProfile ? '' : wnCorner(activityWhatsNextHtml(item))))}
     <div class="activity-card-body">
@@ -19370,7 +19569,7 @@ function feedTextPostHtml(row,profile=false){
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
  const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
  const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
- return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(postedDateOf(row))}${consumedOnHtml(row)?` · ${consumedOnHtml(row)}`:''}${privateBadgeHtml(row)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(postedDateOf(row))}${consumedOnHtml(row)?` · ${consumedOnHtml(row)}`:''}${privateBadgeHtml(row)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header>${(()=>{const body=`<div class="feed-post-body">${spoilerHtml(row.note,'p:'+row.id)}</div>`;return isSpoilerPost(row)?spoilerPostWrap(row.id,'',body):body;})()}${taggedLineHtml(row.tags,row.user_id&&row.user_id===currentUser?.id?row.id:null)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
+ return `<article class="feed-text-post" data-post-id="${esc(String(row.id||''))}"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(postedDateOf(row))}${consumedOnHtml(row)?` · ${consumedOnHtml(row)}`:''}${privateBadgeHtml(row)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(postedDateOf(row))}${consumedOnHtml(row)?` · ${consumedOnHtml(row)}`:''}${privateBadgeHtml(row)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header>${(()=>{const body=`<div class="feed-post-body">${spoilerHtml(row.note,'p:'+row.id)}</div>`;return isSpoilerPost(row)?spoilerPostWrap(row.id,'',body):body;})()}${taggedLineHtml(row.tags,row.user_id&&row.user_id===currentUser?.id?row.id:null)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
 }
 
 async function loadPublicFeed() {
@@ -19840,7 +20039,7 @@ function publicActivityCardHtml(row,profile=false) {
   const commentsOpen = (profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
   const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
   const ownerControls=row._editableStatus&&row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="status-card-controls" onclick="event.stopPropagation()"><button type="button" class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button type="button" class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:'';
-  return `<div class="activity-card" style="position:relative;background:var(--surface2);border:1px solid var(--border);">
+  return `<div class="activity-card" data-post-id="${esc(String(row.id||''))}" style="position:relative;background:var(--surface2);border:1px solid var(--border);">
     ${activityArtWrap(ART_SRC, art + wnCorner(activityWhatsNextHtml(row)))}
     <div class="activity-card-body">
       ${ownerControls}
@@ -20012,7 +20211,8 @@ async function openActivitySummary(globalIndex) {
 
 // Opens someone's post itself (their note, tags, reactions and comments) in the summary modal.
 // The title inside it still opens the title's own summary.
-async function openPostView(row, { focusComment = false, fromNotification = false } = {}) {
+async function openPostView(row, { focusComment = false, fromNotification = false, onBack = null } = {}) {
+  window.__postViewBack = onBack;
   const modal = document.getElementById('activity-summary-modal');
   const content = document.getElementById('activity-summary-content');
   if (!modal || !content || !row) return;
@@ -20031,7 +20231,7 @@ async function openPostView(row, { focusComment = false, fromNotification = fals
       .split(`id="inline-comments-activity_feed-${id}"`).join(`id="pv-comments-${id}"`)
       .split(`toggleFeedComments('${id}')`).join(`document.getElementById('pv-input-${id}')?.focus()`);
     content.innerHTML = `<div class="post-view">
-      <div class="post-view-head"><span>${fromNotification ? "Comments on this post" : "Post"}</span><button type="button" class="post-view-close" aria-label="Close" onclick="closeActivitySummary()">×</button></div>
+      <div class="post-view-head">${onBack ? `<button type="button" class="post-view-back" onclick="window.__postViewBack&&window.__postViewBack()">‹ All posts</button>` : `<span>${fromNotification ? "Comments on this post" : "Post"}</span>`}<button type="button" class="post-view-close" aria-label="Close" onclick="closeActivitySummary()">×</button></div>
       ${card}</div>`;
     const panel = document.getElementById(`pv-comments-${id}`);
     if (panel) { panel.style.display = 'block'; panel.innerHTML = scope(commentsSectionHtml('activity_feed', id)); }
