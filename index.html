@@ -3653,6 +3653,12 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 .spoiler-post-content > .activity-note, .spoiler-post-content > .feed-post-body { margin-top: 10px; }
 /* "Watched on Oct 12": when the item was enjoyed, if earlier than the post */
 .consumed-on { color: var(--muted); font-style: italic; white-space: nowrap; }
+/* "Only me" posts */
+.post-private-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 1px 8px 1px 6px; border-radius: 999px; border: 1px solid var(--border); background: rgba(255,255,255,.05); color: var(--muted); font-size: 11px; font-weight: 600; font-style: normal; white-space: nowrap; vertical-align: middle; }
+.activity-meta .post-private-badge { margin-left: 2px; }
+.update-private { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; }
+.update-private input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+.update-private:has(input:checked) { color: var(--text); }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -5403,9 +5409,21 @@ function revealSpoilerPost(id){
 // Composer: wrap the selected words in ||…|| (or insert a placeholder to type over).
 function wrapFeedSpoiler(){
  const t=document.getElementById('feed-post-text');if(!t||t.disabled)return;
- const a=t.selectionStart??t.value.length,b=t.selectionEnd??a,v=t.value,sel=v.slice(a,b)||'hidden text';
- t.value=v.slice(0,a)+'||'+sel+'||'+v.slice(b);t.focus();t.setSelectionRange(a+2,a+2+sel.length);
- updateFeedPostDraft(t.value);
+ const a=t.selectionStart??t.value.length,b=t.selectionEnd??a,v=t.value;
+ // Already a spoiler (selection sits inside ||…||): tapping again un-hides it.
+ if(a!==b&&v.slice(a-2,a)==='||'&&v.slice(b,b+2)==='||'){t.value=v.slice(0,a-2)+v.slice(a,b)+v.slice(b+2);t.focus();t.setSelectionRange(a-2,b-2);updateFeedPostDraft(t.value);return 'unwrapped';}
+ const sel=v.slice(a,b)||'hidden text';
+ t.value=v.slice(0,a)+'||'+sel+'||'+v.slice(b);t.focus();
+ const end=a+4+sel.length;t.setSelectionRange(end,end);   // caret after the spoiler, so the next tap doesn't wrap it again
+ updateFeedPostDraft(t.value);return 'wrapped';
+}
+// One Spoiler button: with words selected it hides just those; with nothing selected it
+// covers (or uncovers) the whole post.
+function feedSpoilerChip(btn){
+ const t=document.getElementById('feed-post-text');
+ if(t&&!t.disabled&&t.selectionStart!==t.selectionEnd&&t.value.slice(t.selectionStart,t.selectionEnd).trim()){showToast(wrapFeedSpoiler()==='unwrapped'?'Those words are no longer hidden.':'Those words are hidden until someone taps them.');return;}
+ toggleFeedSpoilerPost(btn);
+ showToast(feedPostDraft.spoiler?'The whole post will be covered as a spoiler. Tip: select words first to hide just those.':'Spoiler cover removed.');
 }
 function toggleFeedSpoilerPost(btn){
  feedPostDraft.spoiler=!feedPostDraft.spoiler;
@@ -5446,6 +5464,13 @@ function searchActivityTags(value) {
 
 function completionWord(type){
  return ['movie','film','tv'].includes(type)?'watched':['book','article'].includes(type)?'read':['song','album','artist','music','podcast','episode'].includes(type)?'listened':'done';
+}
+function syncActivityPrivateLabel(){
+ const priv=!!document.getElementById('activity-item-private')?.checked,btn=document.getElementById('activity-save-button');if(!btn)return;
+ const rec=activityItemFormState.finishedRecId?FRIEND_RECOMMENDATIONS.find(r=>r.id===activityItemFormState.finishedRecId):null;
+ if(activityItemFormState.id)btn.textContent='Save changes';
+ else if(rec)btn.textContent=(priv?'Save for me & mark as ':'Post update & mark as ')+completionWord(rec.type);
+ else btn.textContent=priv?'Save for me':'Post update ↑';
 }
 async function markWithoutPosting(){
  if(!activityItemFormState.finishedRecId||activityItemFormState.saving)return;
@@ -5489,6 +5514,7 @@ function openActivityItemForm(globalIndex) {
   tagFieldInit('activity');
   resetActivityCatalog();
   activityItemFormState = { id: null };
+  { const pv = document.getElementById('activity-item-private'); if (pv) pv.checked = false; }
   document.getElementById('activity-finish-help').hidden=true;
   document.getElementById('activity-finish-skip').hidden=true;
   clearTimeout(activityTagState.timer);activityTagState.request++;activityTagState.selected=[];activityTagState.results=[];
@@ -5512,6 +5538,7 @@ function openActivityItemForm(globalIndex) {
       activityCatalog.manual=!item.catalogItem;
       activityCatalogPreview();
       document.getElementById('activity-item-modal-title').textContent = 'Edit update';
+      { const pv = document.getElementById('activity-item-private'); if (pv) pv.checked = !!item.isPrivate; }
       document.getElementById('activity-item-label').value = item.label || '';
       document.getElementById('activity-item-type').value = item.type || 'movie';
       document.getElementById('activity-item-sub').value = item.sub || '';
@@ -5568,7 +5595,7 @@ async function persistActivityItemForm() {
     return;
   }
 
-  const row = { label, type, sub: sub || null, note: note || null, activity_date: date, art_url: art || null, tmdb_id: activityItemFormState.tmdbId || null, catalog_item: activityCatalog.selected ? {...activityCatalog.selected, type} : null, tags: await tagFieldValue('activity') };
+  const row = { label, type, sub: sub || null, note: note || null, activity_date: date, art_url: art || null, tmdb_id: activityItemFormState.tmdbId || null, catalog_item: activityCatalog.selected ? {...activityCatalog.selected, type} : null, tags: await tagFieldValue('activity'), is_private: !!document.getElementById('activity-item-private')?.checked };
 
   try {
     if(activityItemFormState.finishedRecId){
@@ -5576,7 +5603,7 @@ async function persistActivityItemForm() {
       const {error}=await sb.rpc('finish_whats_next',{p_rec_id:activityItemFormState.finishedRecId,p_update:row});
       if(error)throw error;
       await loadFriendRecsFromSupabase(currentUser.id);renderFriendRecs();
-      showToast('Posted to What’s New and removed from What’s Next.');
+      showToast(row.is_private ? 'Saved for you and removed from What’s Next.' : 'Posted to What’s New and removed from What’s Next.');
     } else if (activityItemFormState.id) {
       const { error } = await sb.from('activity_feed').update(row).eq('id', activityItemFormState.id).eq('user_id', currentUser.id);
       if (error) throw error;
@@ -7495,6 +7522,7 @@ async function loadActivityFeedFromSupabase(userId) {
         timestamp: formatActivityDate(postedDateOf(row)),
         rawDate: row.activity_date,
         createdAt: row.created_at || null,
+        isPrivate: !!row.is_private,
         user_id: row.user_id || viewedProfile?.id,
         art: row.art_url || '',
         catalogItem: row.catalog_item || null,
@@ -18289,7 +18317,7 @@ function toggleProfileCardComments(itemId) {
 }
 
 function activityCardHtml(item, globalIndex) {
-  if(item.catalogItem?.kind==='text_post')return feedTextPostHtml({id:item.id,note:item.note,activity_date:item.rawDate,created_at:item.createdAt,user_id:viewedProfile?.id,profiles:viewedProfile,catalog_item:item.catalogItem,tags:item.tags},true);
+  if(item.catalogItem?.kind==='text_post')return feedTextPostHtml({id:item.id,note:item.note,activity_date:item.rawDate,created_at:item.createdAt,is_private:item.isPrivate,user_id:viewedProfile?.id,profiles:viewedProfile,catalog_item:item.catalogItem,tags:item.tags},true);
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
   const iconColor = (MEDIA_ICONS[iconType] || MEDIA_ICONS.music).color;
   const typeIcon = badgeIcon(iconType, 13);
@@ -18311,7 +18339,7 @@ function activityCardHtml(item, globalIndex) {
     ${activityArtWrap(ART_SRC, art + (isOwnProfile ? '' : wnCorner(activityWhatsNextHtml(item))))}
     <div class="activity-card-body">
             <h3 class="activity-title"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openActivitySummary(${globalIndex})">${esc(item.label)}</button></h3>
-      <div class="activity-meta">${item.sub ? `<span style="color:${iconColor}">${esc(item.sub)}</span>` : ''}${item.sub && item.timestamp ? '<span aria-hidden="true">·</span>' : ''}${item.timestamp ? `<span>${item.timestamp}</span>` : ''}${consumedOnHtml(item) ? `<span aria-hidden="true">·</span>${consumedOnHtml(item)}` : ''}</div>
+      <div class="activity-meta">${item.sub ? `<span style="color:${iconColor}">${esc(item.sub)}</span>` : ''}${item.sub && item.timestamp ? '<span aria-hidden="true">·</span>' : ''}${item.timestamp ? `<span>${item.timestamp}</span>` : ''}${consumedOnHtml(item) ? `<span aria-hidden="true">·</span>${consumedOnHtml(item)}` : ''}${privateBadgeHtml(item)}</div>
       ${taggedLineHtml(item.tags, activityEditMode && isOwnProfile && currentUser && viewedProfile?.id === currentUser.id ? item.id : null)}${note}
       ${item.id ? `<div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
         ${reactionBadgeHtml('activity_feed', item.id)}
@@ -19139,6 +19167,21 @@ function consumedOnHtml(row) {
   const kind = (row.catalog_item || row.catalogItem)?.attachment?.kind || row.type;
   return `<span class="consumed-on">${consumedVerbFor(kind)} on ${esc(shortActivityDate(when))}</span>`;
 }
+// "Only me" posts: saved for the person's own record. The database hides them from everyone else.
+function isPrivatePost(row) { return !!(row?.is_private ?? row?.isPrivate); }
+function privateBadgeHtml(row) {
+  return isPrivatePost(row) ? `<span class="post-private-badge" title="Only you can see this post"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Only you</span>` : '';
+}
+function toggleFeedPrivate() {
+  if (feedPostDraft.saving) return;
+  feedPostDraft.private = !feedPostDraft.private;
+  renderFeedComposer();
+  setTimeout(() => document.getElementById('feed-post-text')?.focus(), 0);
+}
+function feedPostReady() {
+  const t = feedPostDraft.text || '';
+  return !!feedPostDraft.attachment && !feedPostDraft.saving && t.length <= 3000 && (!!t.trim() || !!feedPostDraft.private);
+}
 function feedDateChipLabel() {
   const v = feedPostDateValue(), f = friendlyPostDate(v);
   return v === localDateISO() ? 'Today' : `${consumedVerbFor(feedPostDraft.attachment?.kind)} ${f === 'Yesterday' ? 'yesterday' : f}`;
@@ -19235,18 +19278,18 @@ function renderFeedComposer(){
   <div class="fc-body">
    <div class="fc-media">${feedComposerMediaMarkup()}</div>
    <label class="update-sr" for="feed-post-text">Your take</label>
-   <textarea id="feed-post-text" class="fc-text" rows="3" maxlength="3000" placeholder="What did you think?" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea>
+   <textarea id="feed-post-text" class="fc-text" rows="3" maxlength="3000" placeholder="${feedPostDraft.private?'A note for yourself (optional)':'What did you think?'}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea>
    <div id="feed-tag-wrap" ${feedComposerTagsOpen()?'':'hidden'}>${tagFieldMarkup('feed','Tag people','search TasteList, or type any name').replace('placeholder="Search a name or @username"','placeholder="Add a name or @username…"')}</div>
    <p id="feed-post-status" class="fc-status" role="status" aria-live="polite"></p>
   </div>
   <footer class="fc-foot"><div class="composer-chips">
     <span class="composer-chip composer-date-chip" title="When did you watch, read or listen? Your post still shows up as new — the date appears on it as “Watched on …”."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><span id="feed-date-label">${esc(feedDateChipLabel())}</span><input type="date" id="feed-post-date" aria-label="When you watched, read or listened" value="${esc(feedPostDateValue())}" max="${localDateISO()}" onchange="feedPostDraft.date=this.value;document.getElementById('feed-date-label').textContent=feedDateChipLabel()" ${feedPostDraft.saving?'disabled':''}></span>
     <button type="button" class="composer-chip${feedComposerTagsOpen()?' is-on':''}" id="feed-tag-chip" aria-expanded="${feedComposerTagsOpen()}" onclick="toggleFeedTags()" ${feedPostDraft.saving?'disabled':''}>${feedTagChipLabel()}</button>
-    <button type="button" class="composer-chip" onmousedown="event.preventDefault()" onclick="wrapFeedSpoiler()" title="Hide the selected words until someone taps them. They're saved as ||like this||." ${feedPostDraft.saving?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.4 5.2A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.1 6.1C3.4 7.9 2 12 2 12s4 7 10 7a9.8 9.8 0 0 0 4.4-1"/></svg>Hide text</button>
-    <button type="button" class="composer-chip${feedPostDraft.spoiler?' is-on':''}" aria-pressed="${!!feedPostDraft.spoiler}" onclick="toggleFeedSpoilerPost(this)" title="Cover the whole post with a spoiler warning" ${feedPostDraft.saving?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Spoilers</button>
+    <button type="button" class="composer-chip${feedPostDraft.spoiler?' is-on':''}" id="feed-spoiler-chip" aria-pressed="${!!feedPostDraft.spoiler}" onmousedown="event.preventDefault()" onclick="feedSpoilerChip(this)" title="Spoiler: select words first to hide just those, or tap with nothing selected to cover the whole post" ${feedPostDraft.saving?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Spoiler</button>
+    <button type="button" class="composer-chip${feedPostDraft.private?' is-on':''}" id="feed-private-chip" aria-pressed="${!!feedPostDraft.private}" onclick="toggleFeedPrivate()" title="Only me: keep this just for your own record. It won’t appear in anyone’s feed or on your profile for others, and nobody is notified." ${feedPostDraft.saving?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Only me</button>
     <span id="feed-post-count" class="composer-count" ${feedPostDraft.text.length<2800?'hidden':''}>${feedPostDraft.text.length.toLocaleString()} / 3,000</span>
    </div>
-   <div class="fc-actions"><span id="fc-hint" class="fc-hint" aria-live="polite">${esc(hint)}</span>${feedPostDraft.id?'<button type="button" class="fc-cancel" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="fc-submit" id="feed-post-submit" onclick="publishFeedPost()" ${!feedPostDraft.text.trim()||!feedPostDraft.attachment||feedPostDraft.saving?'disabled':''}>${feedPostDraft.saving?'Posting…':feedPostDraft.id?'Save update':'Post update'} <span aria-hidden="true">→</span></button></div>
+   <div class="fc-actions"><span id="fc-hint" class="fc-hint" aria-live="polite">${esc(hint)}</span>${feedPostDraft.id?'<button type="button" class="fc-cancel" onclick="cancelFeedPostEdit()">Cancel</button>':''}<button type="button" class="fc-submit" id="feed-post-submit" onclick="publishFeedPost()" ${feedPostReady()?'':'disabled'}>${feedPostDraft.saving?'Saving…':feedPostDraft.id?'Save update':feedPostDraft.private?'Save for me':'Post update'} <span aria-hidden="true">→</span></button></div>
   </footer>`;
  sizeFeedPostInput();
  renderTagChips('feed');
@@ -19273,12 +19316,12 @@ function discardFeedDraft() {
   feedDiscardConfirm = false; feedComposerOpen = false; renderFeedComposer();
 }
 function sizeFeedPostInput(){const input=document.getElementById('feed-post-text');if(!input)return;input.style.height='auto';input.style.height=Math.min(280,Math.max(110,input.scrollHeight))+'px';input.style.overflowY=input.scrollHeight>280?'auto':'hidden';}
-function updateFeedPostDraft(text){feedPostDraft.text=text;const count=document.getElementById('feed-post-count');if(count){count.hidden=text.length<2800;count.textContent=text.length.toLocaleString()+' / 3,000';}sizeFeedPostInput();const submit=document.getElementById('feed-post-submit');if(submit)submit.disabled=!text.trim()||text.length>3000||!feedPostDraft.attachment||feedPostDraft.saving;updateFeedComposerHint();inferFeedTitle(text);}
+function updateFeedPostDraft(text){feedPostDraft.text=text;const count=document.getElementById('feed-post-count');if(count){count.hidden=text.length<2800;count.textContent=text.length.toLocaleString()+' / 3,000';}sizeFeedPostInput();const submit=document.getElementById('feed-post-submit');if(submit)submit.disabled=!feedPostReady();updateFeedComposerHint();inferFeedTitle(text);}
 function useFeedPostPrompt(i){const input=document.getElementById('feed-post-text');input.placeholder=FEED_POST_PROMPTS[i];input.focus();}
 function cancelFeedPostEdit(){if(feedPostDraft.saving)return;feedComposerOpen=false;tagFieldInit('feed');feedPostDraft.text='';feedPostDraft.attachment=null;feedTitleSearch.manual=false;feedTitleSearch.seq++;feedPostDraft.id=null;feedPostDraft.requestId=null;renderFeedComposer();}
 async function publishFeedPost(){
  if(!currentUser||feedPostDraft.saving||feedPostDraft.userId!==currentUser.id)return;
- const text=feedPostDraft.text.trim(),userId=currentUser.id;if(!text||text.length>3000)return;
+ const text=feedPostDraft.text.trim(),userId=currentUser.id;if((!text&&!feedPostDraft.private)||text.length>3000)return;
  if(!feedPostDraft.attachment){document.getElementById('feed-post-status').textContent='Choose a title before posting.';return;}
  {const a=feedPostDraft.attachment;
   if(a.kind==='tv'&&a._tvMode==='season'&&!a.season){document.getElementById('feed-post-status').textContent='Pick a season, or choose Entire series.';return;}
@@ -19289,7 +19332,7 @@ async function publishFeedPost(){
   if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again to post.');
   const attachment=feedPostDraft.attachment;
   const saved=Object.fromEntries(Object.entries(attachment).filter(([k])=>!k.startsWith('_')));
-  const row={label:attachment.title,type:'other',sub:[attachment.label,tvPartLabel(attachment)].filter(Boolean).join(' · '),note:text,art_url:onboardingArt(attachment)||null,catalog_item:{kind:'text_post',attachment:saved,...(feedPostDraft.spoiler?{spoiler:true}:{})},tags:await tagFieldValue('feed'),activity_date:feedPostDateValue()};
+  const row={label:attachment.title,type:'other',sub:[attachment.label,tvPartLabel(attachment)].filter(Boolean).join(' · '),note:text,art_url:onboardingArt(attachment)||null,catalog_item:{kind:'text_post',attachment:saved,...(feedPostDraft.spoiler?{spoiler:true}:{})},tags:await tagFieldValue('feed'),activity_date:feedPostDateValue(),is_private:!!feedPostDraft.private};
   let result;
   if(feedPostDraft.id)result=await sb.from('activity_feed').update(row).eq('id',feedPostDraft.id).eq('user_id',userId).select('id').single();
   else{
@@ -19301,7 +19344,7 @@ async function publishFeedPost(){
   if(result.error)throw result.error;
   if(currentUser?.id!==userId)return;
   feedPostDraft={userId,text:'',id:null,saving:false,requestId:null};tagFieldInit('feed');feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.pickedFrom=null;feedComposerOpen=false;renderFeedComposer();
-  showToast('Update posted');await loadPublicFeed();
+  showToast(row.is_private?'Saved — only you can see it':'Update posted');await loadPublicFeed();
   if(viewedProfile?.id===userId)await loadActivityFeedFromSupabase(userId);
  }catch(e){if(currentUser?.id===userId){feedPostDraft.saving=false;renderFeedComposer();document.getElementById('feed-post-status').textContent=e.message||'Could not post. Your draft is still here.';}}
  finally{if(feedPostDraft.userId===userId)feedPostDraft.saving=false;}
@@ -19310,7 +19353,7 @@ function editFeedTextPost(id){
  const r=feedRows.find(r=>r.id===id)||ACTIVITY_FEED_ITEMS.find(r=>r.id===id);
  if(!r||feedPostDraft.saving)return;
  if(feedPostDraft.text.trim()&&!confirm('Replace your current draft with this post?'))return;
- feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.pickedFrom=null;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null,spoiler:isSpoilerPost(r),date:String(r.activity_date||r.activityDate||r.rawDate||'').slice(0,10)||null};tagFieldInit('feed',r.tags||[]);goToFeedView();feedComposerOpen=true;renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
+ feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.pickedFrom=null;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null,spoiler:isSpoilerPost(r),private:isPrivatePost(r),date:String(r.activity_date||r.activityDate||r.rawDate||'').slice(0,10)||null};tagFieldInit('feed',r.tags||[]);goToFeedView();feedComposerOpen=true;renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
 }
 async function deleteFeedTextPost(id){
  if(!currentUser||!confirm('Delete this update?'))return;
@@ -19327,7 +19370,7 @@ function feedTextPostHtml(row,profile=false){
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
  const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
  const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
- return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(postedDateOf(row))}${consumedOnHtml(row)?` · ${consumedOnHtml(row)}`:''}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(postedDateOf(row))}${consumedOnHtml(row)?` · ${consumedOnHtml(row)}`:''}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header>${(()=>{const body=`<div class="feed-post-body">${spoilerHtml(row.note,'p:'+row.id)}</div>`;return isSpoilerPost(row)?spoilerPostWrap(row.id,'',body):body;})()}${taggedLineHtml(row.tags,row.user_id&&row.user_id===currentUser?.id?row.id:null)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
+ return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(postedDateOf(row))}${consumedOnHtml(row)?` · ${consumedOnHtml(row)}`:''}${privateBadgeHtml(row)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(postedDateOf(row))}${consumedOnHtml(row)?` · ${consumedOnHtml(row)}`:''}${privateBadgeHtml(row)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header>${(()=>{const body=`<div class="feed-post-body">${spoilerHtml(row.note,'p:'+row.id)}</div>`;return isSpoilerPost(row)?spoilerPostWrap(row.id,'',body):body;})()}${taggedLineHtml(row.tags,row.user_id&&row.user_id===currentUser?.id?row.id:null)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
 }
 
 async function loadPublicFeed() {
@@ -19360,7 +19403,7 @@ async function fetchFeedPage(isFirstPage) {
     document.getElementById('feed-heading').textContent="What's New";
     document.getElementById('feed-context').textContent='Your updates and people you follow';
     let query = sb.from('activity_feed')
-      .select('id, label, sub, type, note, activity_date, created_at, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)')
+      .select('id, label, sub, type, note, activity_date, created_at, is_private, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)')
       .order('created_at', { ascending: false }).order('activity_date', { ascending: false })
       .range(feedOffset, feedOffset + FEED_PAGE_SIZE - 1);
     query = query.in('user_id', followedIds);
@@ -19802,10 +19845,10 @@ function publicActivityCardHtml(row,profile=false) {
     <div class="activity-card-body">
       ${ownerControls}
       ${profile ? `<h3 class="activity-title"${ownerControls?' style="padding-right:84px;"':''}><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openFeedItemSummary('${jsStr(String(row.id))}')">${esc(row.label)}</button></h3>
-      <div class="activity-meta">${row.sub ? `<span style="color:${meta.color}">${esc(row.sub)}</span>` : ''}${row.sub && row.activity_date ? '<span aria-hidden="true">·</span>' : ''}${row.activity_date ? `<span>${shortActivityDate(postedDateOf(row))}</span>` : ''}${consumedOnHtml(row) ? `<span aria-hidden="true">·</span>${consumedOnHtml(row)}` : ''}</div>` : `
+      <div class="activity-meta">${row.sub ? `<span style="color:${meta.color}">${esc(row.sub)}</span>` : ''}${row.sub && row.activity_date ? '<span aria-hidden="true">·</span>' : ''}${row.activity_date ? `<span>${shortActivityDate(postedDateOf(row))}</span>` : ''}${consumedOnHtml(row) ? `<span aria-hidden="true">·</span>${consumedOnHtml(row)}` : ''}${privateBadgeHtml(row)}</div>` : `
       <div class="activity-byline" style="display:flex;align-items:center;gap:10px;min-width:0;${ownerControls?'padding-right:88px;':''}">${profileAvatarHtml({...row.profiles,id:row.profiles?.id||row.user_id},36)}<div style="min-width:0;line-height:1.25;">
         <div style="font-size:13.5px;font-weight:600;color:var(--text);"><a href="?u=${encodeURIComponent(uname)}" onclick="event.stopPropagation();goToProfile('${jsStr(uname)}');return false" style="color:inherit;text-decoration:none;">${esc(whoDisplay)}</a></div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);">${formatActivityDate(postedDateOf(row))}${consumedOnHtml(row) ? ` · ${consumedOnHtml(row)}` : ''}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);">${formatActivityDate(postedDateOf(row))}${consumedOnHtml(row) ? ` · ${consumedOnHtml(row)}` : ''}${privateBadgeHtml(row)}</div>
       </div></div>
       <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;line-height:1.3;overflow-wrap:anywhere;"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openFeedItemSummary('${jsStr(String(row.id))}')">${esc(row.label)}</button></div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
@@ -20030,7 +20073,7 @@ async function notificationFeedRow(n) {
   if (n.target_type !== 'activity_feed' || !n.target_id || !sb) return null;
   const cached = summaryFeedRows.get(String(n.target_id));
   if (cached && cached.profiles) return cached;
-  const { data } = await sb.from('activity_feed').select('id, label, sub, type, note, activity_date, created_at, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)').eq('id', n.target_id).maybeSingle();
+  const { data } = await sb.from('activity_feed').select('id, label, sub, type, note, activity_date, created_at, is_private, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)').eq('id', n.target_id).maybeSingle();
   if (data) { if (!data.profiles) data.profiles = n.profiles || {}; summaryFeedRows.set(String(data.id), data); }
   return data || null;
 }
@@ -22011,7 +22054,7 @@ renderTasteInfluences();
     <label class="update-sr" for="activity-item-note">Your note</label><textarea id="activity-item-note" class="update-note" rows="4" placeholder="The scene that stuck with you. The song on repeat. Tell us about it."></textarea>
     <div class="update-tag-area"><div class="tag-field"><label class="tl-label" for="tag-activity-input">With / recommended by <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-activity-chips" class="tag-chips"></div><input id="tag-activity-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('activity',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('activity')}"><div id="tag-activity-results" class="tag-results" aria-live="polite"></div></div></div>
     <details id="activity-update-details"><summary>More details <span>Date, status & artwork</span></summary><div class="update-detail-grid"><label>Date<input id="activity-item-date" type="date"></label><label>Status<input id="activity-item-sub" placeholder="Watched, finished reading…"></label></div><label>Artwork link <span>(optional)</span><input id="activity-item-art" type="url" placeholder="https://…"></label></details>
-    <footer class="update-composer-footer"><span>Share a little of your taste.</span><button id="activity-finish-skip" type="button" hidden onclick="markWithoutPosting()">Mark without posting</button><button id="activity-save-button" type="button" onclick="saveActivityItemForm()">Post update <span aria-hidden="true">↑</span></button></footer>
+    <footer class="update-composer-footer"><label class="update-private" title="Only me: keep this just for your own record. Nobody else sees it or is notified."><input type="checkbox" id="activity-item-private" onchange="syncActivityPrivateLabel()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Only me</label><button id="activity-finish-skip" type="button" hidden onclick="markWithoutPosting()">Mark without posting</button><button id="activity-save-button" type="button" onclick="saveActivityItemForm()">Post update <span aria-hidden="true">↑</span></button></footer>
   </section>
 </div>
 
