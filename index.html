@@ -3885,6 +3885,15 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 .tl-comment-spoiler-btn:hover { color:var(--text);border-color:var(--accent); }
 .tl-comment-body { font-size:13px;color:var(--text);margin-top:4px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere; }
 @media(max-width:600px){.sl-composer textarea {flex-basis:calc(100% - 55px)} }
+/* Comment composers: the Spoiler and Post buttons keep one height and sit at the bottom of the box,
+   however tall the comment grows (instead of stretching with it). */
+.tl-comment-composer, .sl-composer { align-items:flex-end; }
+.sl-composer > .profile-avatar, .sl-composer > :first-child:not(textarea):not(button) { align-self:flex-start; }
+.tl-comment-composer > button, .sl-composer > button { align-self:flex-end !important; flex:0 0 auto; height:40px; box-sizing:border-box; padding-top:0 !important; padding-bottom:0 !important; display:inline-flex; align-items:center; justify-content:center; line-height:1; margin-bottom:7px; }
+/* In list discussions the Spoiler button keeps its quiet outline style, not the purple Post style. */
+.sl-composer > .tl-comment-spoiler-btn { background:transparent; border:1px solid var(--border2); border-radius:8px; color:var(--muted); font-size:12px; font-weight:500; padding-left:10px; padding-right:10px; }
+.sl-composer > .tl-comment-spoiler-btn:hover { color:var(--text); border-color:var(--accent); }
+.sl-composer > .tl-comment-spoiler-btn { margin-left:auto; } /* when the buttons wrap under the box on phones, they sit on the right */
 </style>
 </head>
 <body>
@@ -11339,7 +11348,9 @@ async function initAuth() {
     renderProfileTab();
   }
   await openSharedListRoute();
-  await openSharedInbox();
+  // The shared-link inbox is defined in a later script; on a fast load it may not exist yet.
+  if (typeof openSharedInbox === 'function') await openSharedInbox();
+  else window.addEventListener('load', () => { if (typeof openSharedInbox === 'function') openSharedInbox(); }, { once: true });
   urlSyncReady = true; syncUrl(true);
   startNotificationPolling();
 
@@ -17914,7 +17925,7 @@ function commentsSectionHtml(targetType, targetId) {
         </div>`).join('')
       : `<div style="font-size:12.5px;color:var(--faint);padding:8px 0;">No comments yet.</div>`);
   const composer = currentUser ? `
-    <div style="display:flex;gap:8px;margin-top:10px;">
+    <div class="tl-comment-composer" style="display:flex;gap:8px;margin-top:10px;">
       <textarea rows="2" id="comment-input-${targetType}-${targetId}" placeholder="Add a comment…" aria-label="Add a comment" oninput="resizeCommentInput(this)"
         style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;"
         onkeydown="commentKeydown(event,this,'${targetType}','${targetId}')"></textarea>
