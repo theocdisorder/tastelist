@@ -3647,6 +3647,8 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 .spoiler-cover-tag { flex-shrink: 0; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #f5b84b; background: rgba(245,184,75,.12); border-radius: 999px; padding: 3px 9px; }
 .spoiler-cover-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .spoiler-post-content > .activity-note, .spoiler-post-content > .feed-post-body { margin-top: 10px; }
+/* "Watched on Oct 12": when the item was enjoyed, if earlier than the post */
+.consumed-on { color: var(--muted); font-style: italic; white-space: nowrap; }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -7469,7 +7471,7 @@ async function loadActivityFeedFromSupabase(userId) {
     const { data, error } = await sb.from('activity_feed')
       .select('*')
       .eq('user_id', userId)
-      .order('activity_date', { ascending: false });
+      .order('created_at', { ascending: false }).order('activity_date', { ascending: false });
     if (error || !data) return false;
 
     ACTIVITY_FEED_ITEMS.length = 0;
@@ -7486,8 +7488,9 @@ async function loadActivityFeedFromSupabase(userId) {
         tab: meta.tab,
         type: row.type,
         note: row.note || '',
-        timestamp: formatActivityDate(row.activity_date),
+        timestamp: formatActivityDate(postedDateOf(row)),
         rawDate: row.activity_date,
+        createdAt: row.created_at || null,
         user_id: row.user_id || viewedProfile?.id,
         art: row.art_url || '',
         catalogItem: row.catalog_item || null,
@@ -18282,7 +18285,7 @@ function toggleProfileCardComments(itemId) {
 }
 
 function activityCardHtml(item, globalIndex) {
-  if(item.catalogItem?.kind==='text_post')return feedTextPostHtml({id:item.id,note:item.note,activity_date:item.rawDate,user_id:viewedProfile?.id,profiles:viewedProfile,catalog_item:item.catalogItem,tags:item.tags},true);
+  if(item.catalogItem?.kind==='text_post')return feedTextPostHtml({id:item.id,note:item.note,activity_date:item.rawDate,created_at:item.createdAt,user_id:viewedProfile?.id,profiles:viewedProfile,catalog_item:item.catalogItem,tags:item.tags},true);
   const iconType = MEDIA_ICONS[item.icon] ? item.icon : 'song';
   const iconColor = (MEDIA_ICONS[iconType] || MEDIA_ICONS.music).color;
   const typeIcon = badgeIcon(iconType, 13);
@@ -18304,7 +18307,7 @@ function activityCardHtml(item, globalIndex) {
     ${activityArtWrap(ART_SRC, art + (isOwnProfile ? '' : wnCorner(activityWhatsNextHtml(item))))}
     <div class="activity-card-body">
             <h3 class="activity-title"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openActivitySummary(${globalIndex})">${esc(item.label)}</button></h3>
-      <div class="activity-meta">${item.sub ? `<span style="color:${iconColor}">${esc(item.sub)}</span>` : ''}${item.sub && item.timestamp ? '<span aria-hidden="true">·</span>' : ''}${item.timestamp ? `<span>${item.timestamp}</span>` : ''}</div>
+      <div class="activity-meta">${item.sub ? `<span style="color:${iconColor}">${esc(item.sub)}</span>` : ''}${item.sub && item.timestamp ? '<span aria-hidden="true">·</span>' : ''}${item.timestamp ? `<span>${item.timestamp}</span>` : ''}${consumedOnHtml(item) ? `<span aria-hidden="true">·</span>${consumedOnHtml(item)}` : ''}</div>
       ${taggedLineHtml(item.tags, activityEditMode && isOwnProfile && currentUser && viewedProfile?.id === currentUser.id ? item.id : null)}${note}
       ${item.id ? `<div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
         ${reactionBadgeHtml('activity_feed', item.id)}
@@ -19116,6 +19119,26 @@ async function removePostTag(postId, i) {
 
 // Today's date where the person is (not UTC — an evening post in California shouldn't be dated tomorrow).
 function localDateISO(d = new Date()) { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; }
+// Posts are ordered and dated by when they were posted (created_at). activity_date is when the person
+// watched/read/listened; when that's earlier than the posting day it shows as "Watched on Oct 12".
+function postedDateOf(row) {
+  const c = row?.created_at || row?.createdAt;
+  const d = c ? new Date(c) : null;
+  return d && !isNaN(d) ? localDateISO(d) : String(row?.activity_date || row?.rawDate || '').slice(0, 10);
+}
+function consumedVerbFor(kind) {
+  return ({ movie: 'Watched', tv: 'Watched', special: 'Watched', book: 'Read', author: 'Read', article: 'Read', song: 'Listened', album: 'Listened', artist: 'Listened', podcast: 'Listened' })[kind] || 'Enjoyed';
+}
+function consumedOnHtml(row) {
+  const when = String(row?.activity_date || row?.rawDate || '').slice(0, 10), posted = postedDateOf(row);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(when) || !posted || when >= posted) return '';
+  const kind = (row.catalog_item || row.catalogItem)?.attachment?.kind || row.type;
+  return `<span class="consumed-on">${consumedVerbFor(kind)} on ${esc(shortActivityDate(when))}</span>`;
+}
+function feedDateChipLabel() {
+  const v = feedPostDateValue(), f = friendlyPostDate(v);
+  return v === localDateISO() ? 'Today' : `${consumedVerbFor(feedPostDraft.attachment?.kind)} ${f === 'Yesterday' ? 'yesterday' : f}`;
+}
 function feedPostDateValue() {
   const v = String(feedPostDraft.date || '').slice(0, 10), today = localDateISO();
   return /^\d{4}-\d{2}-\d{2}$/.test(v) && v <= today && v >= '1900-01-01' ? v : today;   // no future dates
@@ -19213,7 +19236,7 @@ function renderFeedComposer(){
    <p id="feed-post-status" class="fc-status" role="status" aria-live="polite"></p>
   </div>
   <footer class="fc-foot"><div class="composer-chips">
-    <span class="composer-chip composer-date-chip" title="Change the date to post about something from earlier"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><span id="feed-date-label">${esc(friendlyPostDate(feedPostDateValue()))}</span><input type="date" id="feed-post-date" aria-label="Post date" value="${esc(feedPostDateValue())}" max="${localDateISO()}" onchange="feedPostDraft.date=this.value;document.getElementById('feed-date-label').textContent=friendlyPostDate(feedPostDateValue())" ${feedPostDraft.saving?'disabled':''}></span>
+    <span class="composer-chip composer-date-chip" title="When did you watch, read or listen? Your post still shows up as new — the date appears on it as “Watched on …”."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><span id="feed-date-label">${esc(feedDateChipLabel())}</span><input type="date" id="feed-post-date" aria-label="When you watched, read or listened" value="${esc(feedPostDateValue())}" max="${localDateISO()}" onchange="feedPostDraft.date=this.value;document.getElementById('feed-date-label').textContent=feedDateChipLabel()" ${feedPostDraft.saving?'disabled':''}></span>
     <button type="button" class="composer-chip${feedComposerTagsOpen()?' is-on':''}" id="feed-tag-chip" aria-expanded="${feedComposerTagsOpen()}" onclick="toggleFeedTags()" ${feedPostDraft.saving?'disabled':''}>${feedTagChipLabel()}</button>
     <button type="button" class="composer-chip" onmousedown="event.preventDefault()" onclick="wrapFeedSpoiler()" title="Hide the selected words until someone taps them. They're saved as ||like this||." ${feedPostDraft.saving?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.4 5.2A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.1 6.1C3.4 7.9 2 12 2 12s4 7 10 7a9.8 9.8 0 0 0 4.4-1"/></svg>Hide text</button>
     <button type="button" class="composer-chip${feedPostDraft.spoiler?' is-on':''}" aria-pressed="${!!feedPostDraft.spoiler}" onclick="toggleFeedSpoilerPost(this)" title="Cover the whole post with a spoiler warning" ${feedPostDraft.saving?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Spoilers</button>
@@ -19283,7 +19306,7 @@ function editFeedTextPost(id){
  const r=feedRows.find(r=>r.id===id)||ACTIVITY_FEED_ITEMS.find(r=>r.id===id);
  if(!r||feedPostDraft.saving)return;
  if(feedPostDraft.text.trim()&&!confirm('Replace your current draft with this post?'))return;
- feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.pickedFrom=null;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null,spoiler:isSpoilerPost(r),date:String(r.activity_date||r.activityDate||'').slice(0,10)||null};tagFieldInit('feed',r.tags||[]);goToFeedView();feedComposerOpen=true;renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
+ feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.pickedFrom=null;feedPostDraft={userId:currentUser?.id,text:r.note||'',id,saving:false,requestId:null,attachment:(r.catalog_item||r.catalogItem)?.attachment||null,spoiler:isSpoilerPost(r),date:String(r.activity_date||r.activityDate||r.rawDate||'').slice(0,10)||null};tagFieldInit('feed',r.tags||[]);goToFeedView();feedComposerOpen=true;renderFeedComposer();document.getElementById('feed-post-text').focus();document.getElementById('feed-composer').scrollIntoView({behavior:'smooth'});inferFeedTitle(feedPostDraft.text);
 }
 async function deleteFeedTextPost(id){
  if(!currentUser||!confirm('Delete this update?'))return;
@@ -19300,7 +19323,7 @@ function feedTextPostHtml(row,profile=false){
  const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
  const commentsOpen=(profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
  const who=row.profiles?.display_name||row.profiles?.username||'TasteList member',username=row.profiles?.username||'';
- return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(row.activity_date)}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(row.activity_date)}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header>${(()=>{const body=`<div class="feed-post-body">${spoilerHtml(row.note,'p:'+row.id)}</div>`;return isSpoilerPost(row)?spoilerPostWrap(row.id,'',body):body;})()}${taggedLineHtml(row.tags,row.user_id&&row.user_id===currentUser?.id?row.id:null)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
+ return `<article class="feed-text-post"><header>${profile?`<div><small style="margin-top:0">${shortActivityDate(postedDateOf(row))}${consumedOnHtml(row)?` · ${consumedOnHtml(row)}`:''}</small></div>`:`${profileAvatarHtml(row.profiles,40)}<div><button class="feed-author" onclick="goToProfile('${jsStr(username)}')">${esc(who)}</button><small>${formatActivityDate(postedDateOf(row))}${consumedOnHtml(row)?` · ${consumedOnHtml(row)}`:''}</small></div>`}${row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="feed-post-owner"><button class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:''}</header>${(()=>{const body=`<div class="feed-post-body">${spoilerHtml(row.note,'p:'+row.id)}</div>`;return isSpoilerPost(row)?spoilerPostWrap(row.id,'',body):body;})()}${taggedLineHtml(row.tags,row.user_id&&row.user_id===currentUser?.id?row.id:null)}${feedPostAttachmentHtml(row)}<footer>${reactionBadgeHtml('activity_feed',row.id)}<button type="button" class="feed-comment-btn" aria-label="Comments${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count?', '+COMMENT_CACHE[engagementKey('activity_feed',row.id)].count:''}" onclick="${profile?'toggleProfileCardComments':'toggleFeedComments'}('${jsStr(row.id)}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span>${(COMMENT_CACHE[engagementKey('activity_feed',row.id)]||{}).count||''}</span></button></footer><div id="${panelId}" style="display:${commentsOpen?'block':'none'}">${commentsOpen?commentsSectionHtml('activity_feed',row.id):''}</div></article>`;
 }
 
 async function loadPublicFeed() {
@@ -19333,8 +19356,8 @@ async function fetchFeedPage(isFirstPage) {
     document.getElementById('feed-heading').textContent="What's New";
     document.getElementById('feed-context').textContent='Your updates and people you follow';
     let query = sb.from('activity_feed')
-      .select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)')
-      .order('activity_date', { ascending: false }).order('created_at', { ascending: false })
+      .select('id, label, sub, type, note, activity_date, created_at, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)')
+      .order('created_at', { ascending: false }).order('activity_date', { ascending: false })
       .range(feedOffset, feedOffset + FEED_PAGE_SIZE - 1);
     query = query.in('user_id', followedIds);
     const { data, error } = await query;
@@ -19775,10 +19798,10 @@ function publicActivityCardHtml(row,profile=false) {
     <div class="activity-card-body">
       ${ownerControls}
       ${profile ? `<h3 class="activity-title"${ownerControls?' style="padding-right:84px;"':''}><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openFeedItemSummary('${jsStr(String(row.id))}')">${esc(row.label)}</button></h3>
-      <div class="activity-meta">${row.sub ? `<span style="color:${meta.color}">${esc(row.sub)}</span>` : ''}${row.sub && row.activity_date ? '<span aria-hidden="true">·</span>' : ''}${row.activity_date ? `<span>${shortActivityDate(row.activity_date)}</span>` : ''}</div>` : `
+      <div class="activity-meta">${row.sub ? `<span style="color:${meta.color}">${esc(row.sub)}</span>` : ''}${row.sub && row.activity_date ? '<span aria-hidden="true">·</span>' : ''}${row.activity_date ? `<span>${shortActivityDate(postedDateOf(row))}</span>` : ''}${consumedOnHtml(row) ? `<span aria-hidden="true">·</span>${consumedOnHtml(row)}` : ''}</div>` : `
       <div class="activity-byline" style="display:flex;align-items:center;gap:10px;min-width:0;${ownerControls?'padding-right:88px;':''}">${profileAvatarHtml({...row.profiles,id:row.profiles?.id||row.user_id},36)}<div style="min-width:0;line-height:1.25;">
         <div style="font-size:13.5px;font-weight:600;color:var(--text);"><a href="?u=${encodeURIComponent(uname)}" onclick="event.stopPropagation();goToProfile('${jsStr(uname)}');return false" style="color:inherit;text-decoration:none;">${esc(whoDisplay)}</a></div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);">${formatActivityDate(row.activity_date)}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);">${formatActivityDate(postedDateOf(row))}${consumedOnHtml(row) ? ` · ${consumedOnHtml(row)}` : ''}</div>
       </div></div>
       <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:10px;line-height:1.3;overflow-wrap:anywhere;"><button type="button" class="activity-summary-title" onclick="event.stopPropagation();openFeedItemSummary('${jsStr(String(row.id))}')">${esc(row.label)}</button></div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
@@ -20003,7 +20026,7 @@ async function notificationFeedRow(n) {
   if (n.target_type !== 'activity_feed' || !n.target_id || !sb) return null;
   const cached = summaryFeedRows.get(String(n.target_id));
   if (cached && cached.profiles) return cached;
-  const { data } = await sb.from('activity_feed').select('id, label, sub, type, note, activity_date, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)').eq('id', n.target_id).maybeSingle();
+  const { data } = await sb.from('activity_feed').select('id, label, sub, type, note, activity_date, created_at, art_url, tmdb_id, catalog_item, tags, user_id, profiles!activity_feed_user_id_fkey(username, display_name, avatar_url, is_public)').eq('id', n.target_id).maybeSingle();
   if (data) { if (!data.profiles) data.profiles = n.profiles || {}; summaryFeedRows.set(String(data.id), data); }
   return data || null;
 }
