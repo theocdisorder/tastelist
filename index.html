@@ -3964,6 +3964,28 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
  .activity-card .activity-byline { margin:0 0 14px !important; }
  .activity-card .status-card-controls { position:relative !important;align-self:flex-end !important;grid-column:auto !important; }
  .activity-card .wn-corner { z-index:2; }
+ /* Tighter cards: edit/delete sit on the name row instead of a row of their own */
+ .activity-card .activity-card-body { padding:14px 16px 10px !important; }
+ .activity-card .activity-card-body > .status-card-controls { position:absolute !important;top:12px !important;right:10px !important;align-self:auto !important;gap:4px !important; }
+ .activity-card .activity-card-body > .status-card-controls .list-icon-control { width:36px !important;height:36px !important;min-width:36px !important;min-height:36px !important;padding:0 !important; }
+ .activity-card .activity-card-body:has(> .status-card-controls) > .activity-byline { padding-right:88px !important; }
+ .activity-card .activity-card-body:has(> .status-card-controls) > .activity-title { padding-right:88px !important; }
+ .activity-card .activity-byline { margin:0 0 10px !important;min-height:36px; }
+ .activity-card .activity-card-body > div[style*="font-weight:700"] { margin-top:4px !important; }
+ .activity-card .activity-card-body > div[id^="inline-comments-"] { margin:10px -16px -10px !important; }
+ .activity-card .activity-card-body > .activity-note, .activity-card .activity-card-body > .spoiler-post { margin-bottom:4px !important; }
+ .activity-card .activity-card-body > div[style*="line-height:1.5"] { margin:8px 0 4px !important; }
+}
+/* Feed and profile cards: the title link and the like/comment controls stay compact on touch screens
+   (the global 44px rule made each one a wide box with its content pushed to the left). */
+.activity-card .activity-summary-title { min-height:0 !important;min-width:0 !important; }
+@media (pointer: coarse), (max-width: 600px) {
+  .activity-card .activity-card-body > div[style*="gap:12px"] { gap:10px !important;margin-top:2px !important;margin-bottom:-4px !important; }
+  .activity-card .reaction-badge-btn, .activity-card .reaction-summary-btn,
+  .activity-card .activity-card-body > div[style*="gap:12px"] > [role="button"] {
+    min-width:0 !important;min-height:40px !important;padding:0 6px !important;justify-content:center !important;display:inline-flex !important;align-items:center !important; }
+  .activity-card .activity-card-body > div[style*="gap:12px"] > span:first-child { gap:0 !important;margin-left:-6px; }
+  .activity-card .reaction-summary-btn { padding-left:2px !important; }
 }
 </style>
 <style>
