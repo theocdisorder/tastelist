@@ -3553,8 +3553,12 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
 @media (max-width: 480px) { .fc-season-field select { font-size: 16px; } }   /* no iOS zoom */
 .fc-episode-field { flex-basis: 100%; }
 .fc-episode-field select { text-overflow: ellipsis; }
-.post-listen { display: inline-block; margin-top: 8px; font-size: 12.5px; font-weight: 600; color: var(--accent); text-decoration: none; }
+.post-listen-wrap { display: inline-flex; align-items: center; gap: 2px; margin-top: 8px; }
+.post-listen { display: inline-block; margin: 0; padding: 0; border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--accent); text-decoration: none; cursor: pointer; }
 .post-listen:hover { text-decoration: underline; text-underline-offset: 3px; }
+.post-listen-switch { border: 0; background: none; padding: 0 6px; font: inherit; font-size: 12px; color: var(--muted); cursor: pointer; }
+.post-listen-switch:hover { color: var(--text); }
+@media (pointer: coarse) { .post-listen, .post-listen-switch { min-width: 0 !important; min-height: 36px !important; } .post-listen-switch { padding: 0 10px; } }
 /* ── Episode picker ── */
 .ep-mode-wrap { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 .ep-mode { display: inline-flex; align-self: flex-start; padding: 3px; gap: 2px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid var(--border); }
@@ -11467,7 +11471,9 @@ function listenOpen(btn, ev) {
 }
 function openListenChooser(btn, ev) {
   ev?.stopPropagation(); ev?.preventDefault();
-  listenChooserFor = btn;
+  listenChooserFor = btn; podcastChooserFor = null;
+  document.getElementById('listen-chooser-title').textContent = 'Open in…';
+  document.querySelector('#listen-chooser .listen-lede').textContent = 'Songs and albums on TasteList will open in the service you use.';
   const cur = getMusicService();
   document.getElementById('listen-chooser-list').innerHTML = Object.entries(MUSIC_SERVICES).map(([k, v]) =>
     `<button type="button" class="listen-choice${k === cur ? ' current' : ''}" onclick="chooseListenService('${k}')"><span class="listen-dot svc-${k}"></span>${esc(v.name)}${k === cur ? '<span class="listen-current">Current</span>' : ''}</button>`).join('');
@@ -19083,7 +19089,16 @@ async function resolveFeedLink(raw){
  if(host==='youtube.com'||host==='youtu.be'||host==='music.youtube.com'){
   const r=await fetch('https://www.youtube.com/oembed?format=json&url='+encodeURIComponent(raw),{signal:AbortSignal.timeout(10000)});if(!r.ok)return null;
   const o=await r.json();if(!o?.title)return null;
-  return {kind:'episode',id:raw,title:o.title,artist:o.author_name||'',art:o.thumbnail_url||'',url:raw,label:'Episode'};
+  // Music videos (YouTube Music, VEVO / "- Topic" channels, "Official Video/Audio", lyric videos) are songs, not episodes.
+  const author=String(o.author_name||'');
+  const isMusic=host==='music.youtube.com'||/vevo$|\s-\stopic$/i.test(author)||/\((official\s+(music\s+)?(video|audio|visualizer)|lyrics?(\s+video)?|audio)\)|\[(official\s+(music\s+)?(video|audio)|lyrics?)\]/i.test(o.title);
+  if(isMusic){
+   const artist=author.replace(/vevo$/i,'').replace(/\s-\sTopic$/i,'').replace(/([a-z])([A-Z])/g,'$1 $2').trim();
+   const title=o.title.replace(/\s*[\(\[](official[^\)\]]*|lyrics?[^\)\]]*|audio|visualizer)[\)\]]\s*/ig,' ').trim();
+   const dash=title.match(/^(.+?)\s+[-–—]\s+(.+)$/);
+   return {kind:'song',id:raw,title:(dash?dash[2]:title).trim(),artist:(dash?dash[1]:artist).trim(),art:o.thumbnail_url||'',url:raw,label:'Song'};
+  }
+  return {kind:'episode',id:raw,title:o.title,artist:author,art:o.thumbnail_url||'',url:raw,label:'Episode'};
  }
  return null;
 }
@@ -19095,13 +19110,111 @@ async function searchFeedLink(url){
  if(!item){el.innerHTML='<p class="fc-results-note">Couldn’t read that link. Paste an Apple Podcasts, Spotify or YouTube link, or search the episode’s name.</p>';return;}
  feedTitleSearch.results=[item];renderFeedTitleRows();
 }
-// "Listen ↗" under a post about a podcast or episode, when we have its link.
+// "Listen on …" under a post about a podcast or episode. It opens in the viewer's own podcast app,
+// whichever app the poster's link came from: a Spotify link opens in Apple Podcasts for someone
+// who prefers Apple, and the other way round. ▾ changes the app.
+const PODCAST_SERVICES = {
+  apple:   { name: 'Apple Podcasts' },
+  spotify: { name: 'Spotify' },
+  youtube: { name: 'YouTube' },
+};
+function podcastHostService(url) {
+  let host = ''; try { host = new URL(url).hostname.replace(/^www\./, ''); } catch (_) {}
+  return /spotify/.test(host) ? 'spotify' : /apple/.test(host) ? 'apple' : /youtu/.test(host) ? 'youtube' : '';
+}
+function getPodcastService() {
+  const fromProfile = currentProfile?.podcast_service;
+  if (fromProfile && PODCAST_SERVICES[fromProfile]) return fromProfile;
+  try { const v = localStorage.getItem('tl_podcast_service'); if (PODCAST_SERVICES[v]) return v; } catch (_) {}
+  const music = typeof getMusicService === 'function' ? getMusicService() : '';
+  return PODCAST_SERVICES[music] ? music : '';   // Apple Music / Spotify / YouTube Music listeners
+}
+async function setPodcastService(svc) {
+  if (!PODCAST_SERVICES[svc]) return;
+  try { localStorage.setItem('tl_podcast_service', svc); } catch (_) {}
+  if (currentProfile) currentProfile.podcast_service = svc;
+  relabelPodcastButtons();
+  if (sb && currentUser) { try { await sb.from('profiles').update({ podcast_service: svc }).eq('id', currentUser.id); } catch (_) {} }
+}
+function podcastListenData(a) {
+  if (!a || !['podcast', 'episode'].includes(a.kind)) return null;
+  const url = a.episode?.url || a.url || '';
+  const appleShow = String(a.catalogId || (String(a.id || '').match(/^apple:(\d+)$/) || [])[1] || '');
+  return { url: /^https:\/\//i.test(url) ? url : '', show: a.kind === 'podcast' ? (a.title || '') : (a.artist || ''),
+    ep: a.kind === 'episode' ? (a.title || '') : (a.episode?.name || ''), appleShow: /^\d+$/.test(appleShow) ? appleShow : '',
+    appleEp: /^\d+$/.test(String(a.episode?.id || '')) ? String(a.episode.id) : '' };
+}
+// The button opens: the viewer's app if chosen, otherwise the app the link came from.
+function podcastTargetService(d) { return getPodcastService() || podcastHostService(d.url) || 'apple'; }
 function listenLinkHtml(a){
- const url=a?.episode?.url||(['podcast','episode'].includes(a?.kind)?a.url:'');
- if(!/^https:\/\//i.test(url||''))return '';
- let host='';try{host=new URL(url).hostname.replace(/^www\./,'');}catch(_){}
- const name=/spotify/.test(host)?'Spotify':/apple/.test(host)?'Apple Podcasts':/youtu/.test(host)?'YouTube':'';
- return `<a class="post-listen" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Listen${name?' on '+name:''} ↗</a>`;
+ // A YouTube link (a music video, or a show we can't match to Apple Podcasts) just opens on YouTube.
+ const raw = a?.episode?.url || a?.url || '';
+ const fromYouTube = podcastHostService(raw) === 'youtube';
+ if (a && fromYouTube && /^https:\/\//i.test(raw) && !(a.catalogId || /^apple:/.test(String(a.id || '')))) {
+   return `<span class="post-listen-wrap" onclick="event.stopPropagation()"><a class="post-listen" href="${esc(raw)}" target="_blank" rel="noopener">Listen on YouTube ↗</a></span>`;
+ }
+ const d = podcastListenData(a); if (!d || (!d.url && !d.show && !d.ep)) return '';
+ const svc = podcastTargetService(d);
+ const attrs = Object.entries(d).map(([k, v]) => `data-${k.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}="${esc(v)}"`).join(' ');   // dataset reads them back as appleShow, appleEp
+ return `<span class="post-listen-wrap" onclick="event.stopPropagation()"><button type="button" class="post-listen" ${attrs} onclick="openPodcastListen(this,event)">Listen on <span class="pl-name">${esc(PODCAST_SERVICES[svc].name)}</span> ↗</button><button type="button" class="post-listen-switch" aria-label="Choose podcast app" title="Choose podcast app" onclick="openPodcastChooser(this.previousElementSibling,event)">▾</button></span>`;
+}
+function relabelPodcastButtons() {
+  document.querySelectorAll('.post-listen[data-show]').forEach(b => { const n = b.querySelector('.pl-name'); if (n) n.textContent = PODCAST_SERVICES[podcastTargetService(b.dataset)].name; });
+}
+// A link for that app: the poster's own link when it's already that app; an exact Apple Podcasts
+// page when we know the Apple IDs; otherwise a search in that app for the episode (or show).
+function podcastServiceUrl(svc, d) {
+  if (d.url && podcastHostService(d.url) === svc) return d.url;
+  const q = [d.ep, d.show].filter(Boolean).join(' ').trim();
+  if (svc === 'apple') {
+    if (d.appleShow) return `https://podcasts.apple.com/podcast/id${d.appleShow}${d.appleEp ? `?i=${d.appleEp}` : ''}`;
+    return null;   // look it up (below)
+  }
+  if (svc === 'spotify') return `https://open.spotify.com/search/${encodeURIComponent(q)}${d.ep ? '/episodes' : '/shows'}`;
+  if (svc === 'youtube') return `https://www.youtube.com/results?search_query=${encodeURIComponent(q + ' podcast')}`;
+  return d.url || null;
+}
+async function lookupApplePodcastUrl(d) {
+  try {
+    if (d.ep) {
+      const e = await appleEpisodeByTitle(d.ep);
+      if (e) return `https://podcasts.apple.com/podcast/id${e.collectionId}?i=${e.trackId}`;
+    }
+    if (d.show) {
+      const r = await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(d.show)}&media=podcast&entity=podcast&limit=5`);
+      const hit = (r.results || []).find(x => bookArtKey(x.collectionName) === bookArtKey(d.show)) || (r.results || [])[0];
+      if (hit?.collectionId) return `https://podcasts.apple.com/podcast/id${hit.collectionId}`;
+    }
+  } catch (_) {}
+  return `https://podcasts.apple.com/search?term=${encodeURIComponent([d.ep, d.show].filter(Boolean).join(' '))}`;
+}
+function openPodcastIn(svc, d) {
+  const url = podcastServiceUrl(svc, d);
+  if (url) { window.open(url, '_blank', 'noopener'); return; }
+  // Open the tab inside the tap (so it isn't blocked), then send it to the page once we've found it.
+  const win = window.open('about:blank', '_blank');
+  lookupApplePodcastUrl(d).then(u => { if (win && !win.closed) win.location.href = u; else window.open(u, '_blank', 'noopener'); });
+}
+function openPodcastListen(btn, ev) {
+  ev?.stopPropagation(); ev?.preventDefault();
+  openPodcastIn(podcastTargetService(btn.dataset), btn.dataset);
+}
+let podcastChooserFor = null;
+function openPodcastChooser(btn, ev) {
+  ev?.stopPropagation(); ev?.preventDefault();
+  podcastChooserFor = btn; listenChooserFor = null;
+  const cur = getPodcastService();
+  document.getElementById('listen-chooser-title').textContent = 'Open podcasts in…';
+  document.querySelector('#listen-chooser .listen-lede').textContent = 'Podcasts your friends post will open in the app you use, whichever app they shared from.';
+  document.getElementById('listen-chooser-list').innerHTML = Object.entries(PODCAST_SERVICES).map(([k, v]) =>
+    `<button type="button" class="listen-choice${k === cur ? ' current' : ''}" onclick="choosePodcastService('${k}')"><span class="listen-dot svc-${k}"></span>${esc(v.name)}${k === cur ? '<span class="listen-current">Current</span>' : ''}</button>`).join('');
+  document.getElementById('listen-chooser').style.display = 'flex';
+}
+function choosePodcastService(svc) {
+  const btn = podcastChooserFor, remember = document.getElementById('listen-remember').checked;
+  if (btn) openPodcastIn(svc, btn.dataset);
+  if (remember) setPodcastService(svc);
+  podcastChooserFor = null; closeListenChooser();
 }
 function refreshFeedMedia(){const box=document.querySelector('#feed-composer-panel .fc-media');if(box)box.innerHTML=feedComposerMediaMarkup();document.getElementById('feed-composer-panel')?.classList.toggle('has-media',!!feedPostDraft.attachment);updateFeedComposerHint();}
 function feedSeasonPickerHtml(p){
@@ -22804,7 +22917,7 @@ renderTasteInfluences();
 <div id="shared-inbox-tools" hidden><fieldset id="shared-inbox-fields" style="border:0;padding:0;min-width:0">
 
 <div id="shared-inbox-results" style="margin:16px 0"></div>
-<label for="shared-inbox-destination">Save to</label><select id="shared-inbox-destination" class="tl-input"><option value="next">What’s Next</option><option value="favorite">Favorites</option></select>
+<label for="shared-inbox-destination">Save to</label><select id="shared-inbox-destination" class="tl-input" onchange="sharedInboxRender()"><option value="new">What’s New (post an update)</option><option value="next">What’s Next</option><option value="favorite">Favorites</option></select>
 <button id="shared-inbox-save" type="button" class="sl-btn primary" style="margin-top:20px" disabled onclick="sharedInboxSave()">Save to TasteList</button>
 </fieldset></div></dialog>
 
@@ -22828,7 +22941,7 @@ async function openSharedInbox(){
  sharedInbox.saved=false;sharedInbox.selected=null;sharedInbox.results=[];sharedInboxRender();sharedInboxStatus('Finding item…');
  try{
   if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
- document.getElementById('shared-inbox-destination').value='next';
+ document.getElementById('shared-inbox-destination').value='new';
  const matches=await resolveSharedInboxLink(pending.url);
   if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
   sharedInbox.results=matches;sharedInbox.selected=matches.length===1?0:null;sharedInboxRender();
@@ -22861,13 +22974,28 @@ function sharedInboxRender(){
  const many=sharedInbox.results.length>1;
  el.innerHTML=sharedInbox.results.map((p,i)=>`<button type="button" class="shared-inbox-item${sharedInbox.selected===i?' selected':''}" aria-pressed="${sharedInbox.selected===i}" onclick="if(!sharedInbox.saved){sharedInbox.selected=${i};sharedInboxRender()}">${onboardingArtwork(p)}<span class="shared-inbox-item-copy"><strong>${esc(p.title)}</strong><small>${esc([p.kind,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span>${many?`<span class="shared-inbox-mark">${sharedInbox.selected===i?'✓':'Select'}</span>`:''}</button>`).join('');
  save.disabled=sharedInbox.selected===null||sharedInbox.busy||sharedInbox.saved;
- save.textContent=sharedInbox.saved?'✓ Saved':sharedInbox.busy?'Saving…':'Save to TasteList';
+ const toNew=document.getElementById('shared-inbox-destination').value==='new';
+ save.textContent=sharedInbox.saved?'✓ Saved':sharedInbox.busy?'Saving…':toNew?'Write your update →':'Save to TasteList';
  save.classList.toggle('saved',sharedInbox.saved);
  document.getElementById('shared-inbox-destination').disabled=sharedInbox.busy||sharedInbox.saved;
+}
+// What's New: hand the item to the regular "Post an update" composer, so the post gets everything a post
+// can have (your take, season/episode, tags, date, spoilers, Only me). Nothing is saved until Post.
+function sharedInboxToComposer(p){
+ if(!currentUser)return;
+ if(feedPostDraft.userId===currentUser.id&&(feedPostDraft.text||'').trim()&&!feedPostDraft.id&&!confirm('Replace your current draft with this one?'))return;
+ const item={...p};if(p.episode)item.episode={...p.episode};
+ feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.pickedFrom=null;
+ feedPostDraft={userId:currentUser.id,text:'',id:null,saving:false,requestId:null,attachment:item};
+ tagFieldInit('feed');
+ sharedInboxClear();sharedInbox.revision++;document.getElementById('shared-inbox').close();
+ goToFeedView();
+ openFeedComposer('feed-post-text');
 }
 async function sharedInboxSave(){
  if(sharedInbox.busy||!currentUser||sharedInbox.selected===null)return;
  const p=sharedInbox.results[sharedInbox.selected],uid=currentUser.id,dest=document.getElementById('shared-inbox-destination').value;
+ if(dest==='new'){sharedInboxToComposer(p);return;}
  sharedInbox.busy=true;document.getElementById('shared-inbox-fields').disabled=true;sharedInboxStatus('Saving…');sharedInboxRender();
  try{
   if(uid!==currentUser?.id)throw Error('Please sign in to retry.');
@@ -22882,7 +23010,7 @@ async function sharedInboxSave(){
     if(currentUser?.id!==uid)throw Error('Account changed. Please retry.');
     const r=await sb.from('friend_recs').insert({user_id:uid,title:p.title,type,art_url:onboardingArt(p)||null,recommenders:[],sort_order:check.data.length});if(r.error)throw r.error;
    }
-  }else{throw Error('Choose What’s Next or Favorites.');}
+  }else{throw Error('Choose What’s New, What’s Next or Favorites.');}
   sharedInboxClear();sharedInbox.saved=true;sharedInboxStatus('✓ Saved to '+document.getElementById('shared-inbox-destination').selectedOptions[0].textContent+'.');
   // Refresh in the background; a refresh failure must not turn a successful save into a retry.
   if(currentUser?.id===uid)loadViewedProfileData().catch(()=>{});
