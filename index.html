@@ -3749,6 +3749,52 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 .si-tags { margin-top: 10px; }
 .si-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 #shared-inbox-save { width: 100%; }
+/* Titles in comments */
+.cm-thumb { position: relative; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; overflow: hidden; }
+.cm-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cm-card { display: flex; align-items: center; gap: 8px; margin-top: 8px; max-width: 420px; padding: 8px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,.03); }
+.cm-card-main { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.cm-card-main:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.cm-card-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; line-height: 1.3; }
+.cm-card-text strong { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cm-card-text small { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cm-card-listen .post-listen-wrap { margin-top: 2px; }
+.cm-card-wn { flex-shrink: 0; position: relative; }
+.cm-card-wn .wn-add { padding: 0; gap: 0; }
+.cm-card-wn .wn-add-note { display: none !important; }
+.cm-card-wn .wn-add-btn { width: 34px; height: 34px; padding: 7px; border-radius: 9px; border: 1px solid var(--border2); background: transparent; color: var(--muted); box-shadow: none; }
+.cm-card-wn .wn-add-btn:hover { color: var(--text); border-color: var(--accent); }
+.cm-card-wn .wn-add-btn.is-done { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sl-composer > .cm-title-btn { margin-left: auto; }
+.sl-composer > .cm-title-btn + .tl-comment-spoiler-btn { margin-left: 0 !important; }
+@media (max-width: 600px) {
+  .tl-comment-composer { flex-wrap: wrap; justify-content: flex-end; }
+  .tl-comment-composer > textarea { flex: 1 1 100% !important; }
+}
+.cm-attach { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 6px 6px 6px 8px; border: 1px solid rgba(124,77,255,.45); border-radius: 12px; background: rgba(124,77,255,.08); }
+.cm-attach[hidden] { display: none; }
+.cm-attach-text { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.3; }
+.cm-attach-text strong { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cm-attach-text small { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cm-attach-x { flex-shrink: 0; width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: var(--muted); font-size: 18px; cursor: pointer; }
+.cm-attach-x:hover { color: var(--text); background: rgba(255,255,255,.06); }
+.cm-title-btn { white-space: nowrap; }
+.cm-sheet { width: min(520px, calc(100% - 24px)); max-height: min(80dvh, 640px); padding: 0; margin: auto; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+.cm-sheet[open] { display: flex; flex-direction: column; }
+.cm-sheet::backdrop { background: rgba(0,0,0,.6); }
+.cm-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 16px 8px 20px; }
+.cm-sheet-head h2 { margin: 0; font-size: 17px; }
+.cm-sheet-close { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 18px; cursor: pointer; }
+#cm-sheet-input { margin: 4px 20px 10px; width: calc(100% - 40px); box-sizing: border-box; }
+.cm-sheet-results { overflow-y: auto; padding: 0 8px 12px; min-height: 60px; }
+.cm-sheet-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 12px; border: 0; border-radius: 10px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.cm-sheet-row:hover, .cm-sheet-row:focus-visible { background: rgba(255,255,255,.06); outline: none; }
+.cm-sheet-note { padding: 8px 12px; margin: 0; font-size: 13px; color: var(--muted); }
+@media (max-width: 600px) {
+  .cm-sheet { position: fixed; inset: auto 0 0 0; width: 100%; max-width: none; max-height: 85dvh; margin: 0; border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .cm-card { max-width: none; }
+}
+@media (pointer: coarse) { .cm-attach-x { min-width: 40px !important; min-height: 40px !important; } .cm-card-main { min-height: 0 !important; } }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -6630,8 +6676,8 @@ function renderTasteListsPicker() {
         <summary aria-label="List options for ${esc(list.title || 'list')}" title="List options"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></summary>
         <div class="lc-menu-pop" role="menu">
           <button type="button" role="menuitem" onclick="this.closest('details').open=false;renameTasteList('${id}')">Rename</button>
-          ${list.isOwner ? `<button type="button" role="menuitem" value="${pub ? 'public' : 'private'}" onclick="this.closest('details').open=false;changeTasteListVisibility('${id}','${pub ? 'private' : 'public'}',this)">Make ${pub ? 'private' : 'public'}</button>
-          <button type="button" role="menuitem" class="is-danger" onclick="this.closest('details').open=false;deleteSharedTasteList('${id}')">Delete list</button>` : ''}
+          <button type="button" role="menuitem" value="${pub ? 'public' : 'private'}" onclick="this.closest('details').open=false;changeTasteListVisibility('${id}','${pub ? 'private' : 'public'}',this)">Make ${pub ? 'private' : 'public'}</button>
+          ${list.isOwner ? `<button type="button" role="menuitem" class="is-danger" onclick="this.closest('details').open=false;deleteSharedTasteList('${id}')">Delete list</button>` : ''}
         </div>
       </details>` : '';
     return `<article class="list-card${shared ? ' is-shared' : ''}">
@@ -6716,20 +6762,22 @@ function renderTasteListCollaborators(list) {
  }).join('');
  el.innerHTML=`<div class="sl-member-row"><span>${ids.length} ${ids.length===1?'member':'members'}</span>${chips}${tasteListPrivacyControl(list)}</div>`;
 }
+function isTasteListMember(list){return !!currentUser&&!!list&&(list.user_id===currentUser.id||(list.collaborators||[]).some(c=>c.user_id===currentUser.id));}
 function tasteListPrivacyControl(list) {
  const pub=list.is_public===true;
  const icon=pub?'🌐':'🔒';
- if(list.user_id!==currentUser?.id)return `<span class="sl-visibility">${icon} ${pub?'Public':'Private'}</span>`;
+ if(!isTasteListMember(list))return `<span class="sl-visibility">${icon} ${pub?'Public':'Private'}</span>`;
  return `<label class="sl-visibility" onclick="event.stopPropagation()"><span aria-hidden="true">${icon}</span><select aria-label="List visibility" onchange="changeTasteListVisibility('${jsStr(list.id)}',this.value,this)"><option value="private" ${!pub?'selected':''}>Private</option><option value="public" ${pub?'selected':''}>Public</option></select></label>`;
 }
 async function changeTasteListVisibility(id,value,control) {
   const list=allTasteLists.find(l=>l.id===id);
-  if(!list||list.user_id!==currentUser?.id||!['public','private'].includes(value))return;
+  if(!list||!isTasteListMember(list)||!['public','private'].includes(value))return;
   control.disabled=true;
   try {
-    const {data,error}=await sb.from('taste_lists').update({is_public:value==='public'}).eq('id',id).eq('user_id',currentUser.id).select('is_public').single();
+    // Owner or member: the database checks membership and changes only the visibility.
+    const {data,error}=await sb.rpc('set_taste_list_visibility',{p_list:id,p_public:value==='public'});
     if(error)throw error;
-    list.is_public=data.is_public;
+    list.is_public=data===true;
     renderTasteListsPicker();
     if(currentTasteListId===id)renderTasteListCollaborators(list);
   } catch(error) {
@@ -6808,9 +6856,10 @@ async function renameTasteList(listId, newTitle) {
   if (!title || title === current) return;
   if (!(await requireFreshSession())) { alert(SESSION_EXPIRED_MESSAGE); return; }
   try {
-    const { error } = await sb.from('taste_lists').update({ title }).eq('id', targetId);
+    // Owner or member: the database checks membership (a plain update only worked for the owner).
+    const { data: saved, error } = await sb.rpc('rename_taste_list', { p_list: targetId, p_title: title });
     if (error) throw error;
-    if (list) list.title = title;
+    if (list) list.title = saved || title;
     if (targetId === currentTasteListId) {
       const titleEl = document.getElementById('taste-list-title');
       if (titleEl && titleEl.childNodes[0]) titleEl.childNodes[0].textContent = title + ' ';
@@ -18180,6 +18229,7 @@ function commentRowToItem(row) {
     id: row.id,
     user_id: row.user_id,
     body: row.body,
+    attachment: row.attachment && typeof row.attachment === 'object' ? row.attachment : null,
     created_at: row.created_at,
     author: firstNameOnly(row.profiles?.display_name) || row.profiles?.username || 'Someone',
     profile: row.profiles ? { id: row.user_id, username: row.profiles.username, display_name: row.profiles.display_name, avatar_url: row.profiles.avatar_url } : null,
@@ -18189,7 +18239,7 @@ async function loadComments(targetType, targetId) {
   if (!sb || !targetId) return [];
   try {
     const { data, error } = await sb.from('comments')
-      .select('id, user_id, body, created_at, profiles(username, display_name, avatar_url)')
+      .select('id, user_id, body, attachment, created_at, profiles(username, display_name, avatar_url)')
       .eq('target_type', targetType).eq('target_id', targetId)
       .order('created_at', { ascending: true });
     if (error || !data) return [];
@@ -18217,6 +18267,99 @@ function markCommentSpoiler(el) {
  if (!selected) el.setSelectionRange(start+2,start+replacement.length-2);
  el.focus(); resizeCommentInput(el);
 }
+// ── A title in a comment: one per comment, shown only in that thread ──
+const COMMENT_ATTACH = new Map();   // comment box → the title waiting to be posted with it
+// The single-post view renames its comment box (pv-input-<id>); both names mean the same box.
+function commentAttachKey(id) { return String(id || '').replace(/^pv-input-/, 'comment-input-activity_feed-'); }
+function commentAttachKindLabel(a) {
+  return a?.episode?.name ? 'Episode: ' + a.episode.name : [a?.label || ({ movie: 'Film', tv: 'TV', book: 'Book', author: 'Author', song: 'Song', album: 'Album', artist: 'Artist', podcast: 'Podcast', episode: 'Episode' })[a?.kind] || '', tvPartLabel(a)].filter(Boolean).join(' · ');
+}
+function commentAttachThumb(a, size = 40) {
+  const art = onboardingArt(a) || a.art || '';
+  const meta = ACTIVITY_TYPE_META[({ album: 'song', artist: 'song', author: 'book', episode: 'podcast' })[a.kind] || a.kind] || ACTIVITY_TYPE_META.other;
+  const h = Math.round(size * (['song', 'album', 'artist', 'podcast', 'episode', 'author'].includes(a.kind) ? 1 : 1.4));
+  return `<span class="cm-thumb" style="width:${size}px;height:${h}px;background:${meta.color}22;color:${meta.color}">${badgeIcon(meta.icon, 14)}${art ? `<img src="${esc(art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+}
+// Waiting above the comment box until it's posted (× takes it off).
+function commentAttachPreviewHtml(inputId) {
+  const key = commentAttachKey(inputId), a = COMMENT_ATTACH.get(key);
+  return `<div class="cm-attach" data-cm-attach="${esc(key)}"${a ? '' : ' hidden'}>${a ? `${commentAttachThumb(a, 32)}<span class="cm-attach-text"><strong>${esc(a.title)}</strong><small>${esc([commentAttachKindLabel(a), a.artist || a.author].filter(Boolean).join(' · '))}</small></span><button type="button" class="cm-attach-x" aria-label="Remove ${esc(a.title)}" onclick="removeCommentTitle('${esc(jsStr(key))}')">×</button>` : ''}</div>`;
+}
+function refreshCommentAttachPreviews(key) {
+  document.querySelectorAll('[data-cm-attach]').forEach(el => { if (el.dataset.cmAttach === key) el.outerHTML = commentAttachPreviewHtml(key); });
+}
+function removeCommentTitle(key) { COMMENT_ATTACH.delete(key); refreshCommentAttachPreviews(key); }
+// A posted comment's title: tap it for the summary; save it to What's Next; listen to podcasts/YouTube.
+function commentTitleCardHtml(a, comment) {
+  if (!a || !a.title) return '';
+  const rowId = 'cm:' + comment.id;
+  const type = ({ album: 'song', artist: 'song', author: 'book', episode: 'podcast' })[a.kind] || a.kind || 'other';
+  summaryFeedRows.set(rowId, { id: rowId, label: a.title, type, sub: commentAttachKindLabel(a), art_url: onboardingArt(a) || a.art || '', tmdb_id: typeof a.id === 'number' ? a.id : undefined, catalog_item: { kind: 'attached_status_display', attachment: a } });
+  const wn = whatsNextButtonHtml({ title: a.title, kind: a.kind === 'episode' ? 'podcast' : a.kind, art: onboardingArt(a) || a.art || '', tmdbId: ['movie', 'tv'].includes(a.kind) ? a.id : null, fromId: comment.user_id, fromName: comment.author });
+  const listen = listenLinkHtml(a);
+  return `<div class="cm-card" onclick="event.stopPropagation()"><button type="button" class="cm-card-main" onclick="openFeedItemSummary('${esc(jsStr(rowId))}')" aria-label="About ${esc(a.title)}">${commentAttachThumb(a, 40)}<span class="cm-card-text"><strong>${esc(a.title)}</strong><small>${esc([commentAttachKindLabel(a), a.artist || a.author, a.year || a.season?.year].filter(Boolean).join(' · '))}</small>${listen ? `<span class="cm-card-listen">${listen}</span>` : ''}</span></button>${wn ? `<span class="cm-card-wn">${wn}</span>` : ''}</div>`;
+}
+// "+ Title": one shared search sheet, the same search the post composer uses.
+const commentTitlePicker = { key: null, seq: 0, timer: null, results: [], q: '' };
+function ensureCommentTitleSheet() {
+  let d = document.getElementById('cm-title-sheet'); if (d) return d;
+  d = document.createElement('dialog'); d.id = 'cm-title-sheet'; d.className = 'cm-sheet'; d.setAttribute('aria-labelledby', 'cm-sheet-title');
+  d.innerHTML = `<div class="cm-sheet-head"><h2 id="cm-sheet-title">Add a title to your comment</h2><button type="button" class="cm-sheet-close" aria-label="Close" onclick="closeCommentTitleSheet()">×</button></div>
+    <input id="cm-sheet-input" type="search" class="tl-input" autocomplete="off" placeholder="Search movies, shows, books, music, podcasts… or paste a link" oninput="searchCommentTitles(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();pickCommentTitle(0)}">
+    <div id="cm-sheet-results" class="cm-sheet-results" aria-live="polite"></div>`;
+  d.addEventListener('cancel', e => { e.preventDefault(); closeCommentTitleSheet(); });
+  d.addEventListener('click', e => { if (e.target === d) closeCommentTitleSheet(); });
+  document.body.appendChild(d); return d;
+}
+function openCommentTitleSheet(inputId) {
+  if (!currentUser) { openAuthModal('signin'); return; }
+  commentTitlePicker.key = commentAttachKey(inputId); commentTitlePicker.results = []; commentTitlePicker.seq++;
+  const d = ensureCommentTitleSheet(), input = d.querySelector('#cm-sheet-input');
+  input.value = ''; d.querySelector('#cm-sheet-results').innerHTML = '';
+  if (!d.open) d.showModal();
+  setTimeout(() => input.focus(), 0);
+}
+function closeCommentTitleSheet() {
+  commentTitlePicker.seq++; clearTimeout(commentTitlePicker.timer);
+  const d = document.getElementById('cm-title-sheet'); if (d?.open) d.close();
+  const box = document.querySelectorAll(`[id="${commentTitlePicker.key}"], [id="${commentTitlePicker.key.replace(/^comment-input-activity_feed-/, 'pv-input-')}"]`);
+  [...box].find(el => el.offsetParent)?.focus();
+}
+function searchCommentTitles(raw) {
+  clearTimeout(commentTitlePicker.timer);
+  const q = String(raw || '').trim(), seq = ++commentTitlePicker.seq, el = document.getElementById('cm-sheet-results');
+  commentTitlePicker.results = []; commentTitlePicker.q = q;
+  if (q.length < 2) { el.innerHTML = ''; return; }
+  el.innerHTML = '<p class="cm-sheet-note">Searching…</p>';
+  commentTitlePicker.timer = setTimeout(async () => {
+    let rows = [];
+    try {
+      if (/^https?:\/\/\S+$/i.test(q)) { const item = await resolveFeedLink(q).catch(() => null); rows = item ? [item] : []; }
+      else {
+        const parsed = parseFeedTitleQuery(q), kinds = parsed.kind ? (parsed.kind === 'screen' ? ['movie', 'tv'] : parsed.kind === 'book' ? ['book', 'author'] : parsed.kind === 'podcast' ? ['podcast', 'episode'] : [parsed.kind]) : FEED_TITLE_KINDS;
+        const query = parsed.kind ? parsed.q : parsed.full;
+        const jobs = kinds.map(async kind => kind === 'song' ? (await searchTasteCatalog('music', query)).map(p => ({ kind, title: p.title, artist: p.sub, art: p.art, label: 'Song', id: p.title + '|' + p.sub })) : await onboardingAutocompleteProvider(kind, query));
+        const results = await Promise.allSettled(jobs.map(job => new Promise((res, rej) => { const t = setTimeout(() => rej(Error('Timeout')), 12000); job.then(res, rej).finally(() => clearTimeout(t)); })));
+        const seen = new Set();
+        rows = results.flatMap(r => r.status === 'fulfilled' ? r.value : []).filter(p => { const k = [p.kind, String(p.id || ''), String(p.title || '').toLowerCase()].join('|'); if (seen.has(k)) return false; seen.add(k); return true; })
+          .sort(catalogCompare(query)).filter((p, i, a) => p.kind !== 'episode' || a.slice(0, i).filter(x => x.kind === 'episode').length < 3);
+        const close = rows.filter(p => onboardingMatchRank(p, query) <= 2);
+        rows = (close.length >= 3 ? close : rows).slice(0, 8);
+      }
+    } catch (_) { rows = []; }
+    if (seq !== commentTitlePicker.seq) return;
+    commentTitlePicker.results = rows;
+    el.innerHTML = rows.length ? rows.map((p, i) => `<button type="button" class="cm-sheet-row" onclick="pickCommentTitle(${i})">${commentAttachThumb(p, 34)}<span class="cm-card-text"><strong>${esc(p.title)}</strong><small>${esc([commentAttachKindLabel(p), p.artist || p.author, p.year].filter(Boolean).join(' · '))}</small></span></button>`).join('')
+      : `<p class="cm-sheet-note">No titles found for “${esc(q)}”.</p>`;
+  }, 350);
+}
+function pickCommentTitle(i) {
+  const p = commentTitlePicker.results[i], key = commentTitlePicker.key; if (!p || !key) return;
+  const item = { ...p }; if (p.episode) item.episode = { ...p.episode };
+  COMMENT_ATTACH.set(key, item);   // one title per comment: picking another replaces it
+  refreshCommentAttachPreviews(key);
+  closeCommentTitleSheet();
+}
 function commentKeydown(event, el, type, id) {
  if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.isComposing) {
   event.preventDefault(); submitComment(type,id,el,()=>refreshEngagementUI(type,id));
@@ -18226,15 +18369,19 @@ async function submitComment(targetType, targetId, inputEl, onDone) {
   if (!sb) return;
   if (!currentUser) { openAuthModal('signin'); return; }
   const body = (inputEl?.value || '').trim();
-  if (!body) return;
+  const key = commentAttachKey(inputEl?.id), attachment = COMMENT_ATTACH.get(key) || null;
+  if (!body && !attachment) return;
   try {
-    const { error } = await sb.from('comments').insert({ target_type: targetType, target_id: targetId, user_id: currentUser.id, body });
+    const row = { target_type: targetType, target_id: targetId, user_id: currentUser.id, body };
+    if (attachment) row.attachment = Object.fromEntries(Object.entries(attachment).filter(([k]) => !k.startsWith('_')));
+    const { error } = await sb.from('comments').insert(row);
     if (error) throw error;
   } catch (e) {
     alert('Failed to post comment: ' + (e.message || 'unknown error'));
     return;
   }
   if (inputEl) inputEl.value = '';
+  COMMENT_ATTACH.delete(key); refreshCommentAttachPreviews(key);
   await loadComments(targetType, targetId);
   if (onDone) onDone();
 }
@@ -18270,15 +18417,16 @@ function commentsSectionHtml(targetType, targetId) {
               ? `<button onclick="deleteComment('${c.id}','${targetType}','${targetId}', () => refreshEngagementUI('${targetType}','${targetId}'))" class="tl-comment-trash" aria-label="Delete comment" title="Delete comment"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button>`
               : ''}
           </div>
-          <div class="tl-comment-body">${spoilerHtml(c.body,'c:'+c.id)}</div>
+          ${c.body ? `<div class="tl-comment-body">${spoilerHtml(c.body,'c:'+c.id)}</div>` : ''}${commentTitleCardHtml(c.attachment, c)}
           <div class="sl-comment-actions">${commentReactionHtml(c)}</div>
         </div>`).join('')
       : `<div style="font-size:12.5px;color:var(--faint);padding:8px 0;">No comments yet.</div>`);
-  const composer = currentUser ? `
+  const composer = currentUser ? `${commentAttachPreviewHtml(`comment-input-${targetType}-${targetId}`)}
     <div class="tl-comment-composer" style="display:flex;gap:8px;margin-top:10px;">
       <textarea rows="2" id="comment-input-${targetType}-${targetId}" placeholder="Add a comment…" aria-label="Add a comment" oninput="resizeCommentInput(this)"
         style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;"
         onkeydown="commentKeydown(event,this,'${targetType}','${targetId}')"></textarea>
+      <button type="button" class="tl-comment-spoiler-btn cm-title-btn" onclick="openCommentTitleSheet('comment-input-${targetType}-${targetId}')" title="Add a movie, show, book, song or podcast to your comment" aria-label="Add a title to your comment">+ Title</button>
       <button type="button" class="tl-comment-spoiler-btn" onclick="markCommentSpoiler(document.getElementById('comment-input-${targetType}-${targetId}'))" title="Select text to conceal, or mark your next words as a spoiler">Spoiler</button>
       <button onclick="submitComment('${targetType}','${targetId}', document.getElementById('comment-input-${targetType}-${targetId}'), () => refreshEngagementUI('${targetType}','${targetId}'))"
         style="background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:600;font-family:inherit;padding:8px 14px;border-radius:8px;cursor:pointer;">Post</button>
@@ -18420,7 +18568,7 @@ function discussionCommentsHtml(type, listId) {
         ${profileAvatarHtml(p, 32)}
         <div class="sl-comment-main">
           <div class="sl-comment-meta">${name}<span class="sl-comment-time">${esc(discussionCommentTime(c.created_at))}</span>${del}</div>
-          <div class="sl-comment-body">${spoilerHtml(c.body,'c:'+c.id,{br:false})}</div>
+          ${c.body ? `<div class="sl-comment-body">${spoilerHtml(c.body,'c:'+c.id,{br:false})}</div>` : ''}${commentTitleCardHtml(c.attachment, c)}
           <div class="sl-comment-actions">${commentReactionHtml(c)}</div>
         </div>
       </li>`;
@@ -18428,10 +18576,11 @@ function discussionCommentsHtml(type, listId) {
   }
   const inputId = `comment-input-${type}-${esc(listId)}`;
   const composer = currentUser
-    ? `<div class="sl-composer">
+    ? `${commentAttachPreviewHtml(inputId)}<div class="sl-composer">
         ${profileAvatarHtml(currentProfile || { display_name: '?' }, 32)}
         <textarea rows="2" id="${inputId}" placeholder="Add a comment…" aria-label="Add a comment" oninput="resizeCommentInput(this)"
           onkeydown="commentKeydown(event,this,'${type}','${id}')"></textarea>
+        <button type="button" class="tl-comment-spoiler-btn cm-title-btn" onclick="openCommentTitleSheet('${inputId}')" title="Add a movie, show, book, song or podcast to your comment" aria-label="Add a title to your comment">+ Title</button>
         <button type="button" class="tl-comment-spoiler-btn" onclick="markCommentSpoiler(document.getElementById('${inputId}'))" title="Select text to conceal, or mark your next words as a spoiler">Spoiler</button>
         <button type="button" onclick="submitComment('${type}','${id}', document.getElementById('${inputId}'), ${refresh})">Post</button>
       </div>`
@@ -18538,7 +18687,7 @@ async function loadListEngagementBulk(ids) {
   try {
     const [likesRes, commentsRes] = await Promise.all([
       sb.from('likes').select('target_id, user_id, reaction').eq('target_type', 'list').in('target_id', ids),
-      sb.from('comments').select('id, target_id, user_id, body, created_at, profiles(username, display_name, avatar_url)').eq('target_type', 'list').in('target_id', ids).order('created_at', { ascending: true }),
+      sb.from('comments').select('id, target_id, user_id, body, attachment, created_at, profiles(username, display_name, avatar_url)').eq('target_type', 'list').in('target_id', ids).order('created_at', { ascending: true }),
     ]);
     const likesBy = {}, counts = {};
     (likesRes.data || []).forEach(r => (likesBy[r.target_id] = likesBy[r.target_id] || []).push(r));
