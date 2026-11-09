@@ -3741,6 +3741,14 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
   .fc-entry-cta { padding: 0 14px; min-height: 36px; display: inline-flex; align-items: center; }
 }
 @media (max-width: 400px) { .fc-entry { gap: 8px; } .fc-entry-text { font-size: 14px; } .fc-entry-cta { padding: 0 12px; } }
+/* Share-to-TasteList: a one-step What's New post */
+.si-post { margin-top: 14px; }
+.si-text { box-sizing: border-box; width: 100%; min-height: 76px; max-height: 160px; resize: vertical; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; color: var(--text); font: inherit; font-size: 16px; line-height: 1.45; outline: none; }
+.si-text:focus { border-color: var(--accent); }
+.si-text::placeholder { color: var(--muted); font-style: italic; }
+.si-tags { margin-top: 10px; }
+.si-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+#shared-inbox-save { width: 100%; }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -19479,6 +19487,7 @@ function tagFieldInit(ns, tags = []) {
 function tagState(ns) { return TAG_FIELDS[ns] || (TAG_FIELDS[ns] = { selected: [], results: [], request: 0, timer: null, q: '' }); }
 function renderTagChips(ns) {
   if (ns === 'feed') { const chip = document.getElementById('feed-tag-chip'); if (chip) chip.textContent = feedTagChipLabel(); }
+  if (ns === 'share') { const chip = document.getElementById('si-tag-chip'); if (chip) { const n = TAG_FIELDS.share?.selected?.length || 0; chip.textContent = n ? `@ Tagged ${n}` : '@ Tag people'; } }
   const el = document.getElementById(`tag-${ns}-chips`); if (!el) return;
   const chipLabel = t => t.username ? '@' + t.username : (t.name || t.display_name || '');
   el.innerHTML = tagState(ns).selected.map((t, i) => `<button type="button" class="tag-chip${t.username ? '' : ' is-name'}" aria-label="Remove ${esc(chipLabel(t))}" onclick="tagFieldRemove('${ns}',${i})">${esc(chipLabel(t))} <span aria-hidden="true">×</span></button>`).join('');
@@ -22918,12 +22927,71 @@ renderTasteInfluences();
 
 <div id="shared-inbox-results" style="margin:16px 0"></div>
 <label for="shared-inbox-destination">Save to</label><select id="shared-inbox-destination" class="tl-input" onchange="sharedInboxRender()"><option value="new">What’s New (post an update)</option><option value="next">What’s Next</option><option value="favorite">Favorites</option></select>
+<div id="shared-inbox-post" class="si-post" hidden>
+ <label class="update-sr" for="shared-inbox-text">Your take</label>
+ <textarea id="shared-inbox-text" class="si-text" rows="3" maxlength="3000" placeholder="What did you think?" oninput="sharedInboxRender()"></textarea>
+ <div id="shared-inbox-tags" class="si-tags" hidden></div>
+ <div class="composer-chips si-chips">
+  <span class="composer-chip composer-date-chip" title="When did you watch, read or listen? Your post still shows up as new."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><span id="si-date-label">Today</span><input type="date" id="shared-inbox-date" aria-label="When you watched, read or listened" onchange="sharedInbox.post.date=this.value;sharedInboxRender()"></span>
+  <button type="button" class="composer-chip" id="si-tag-chip" aria-expanded="false" onclick="sharedInboxToggleTags()">@ Tag people</button>
+  <button type="button" class="composer-chip" id="si-spoiler-chip" aria-pressed="false" onmousedown="event.preventDefault()" onclick="sharedInboxSpoiler()" title="Spoiler: select words first to hide just those, or tap with nothing selected to cover the whole post"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Spoiler</button>
+  <button type="button" class="composer-chip" id="si-private-chip" aria-pressed="false" onclick="sharedInbox.post.private=!sharedInbox.post.private;sharedInboxRender()" title="Only me: keep this just for your own record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Only me</button>
+ </div>
+</div>
 <button id="shared-inbox-save" type="button" class="sl-btn primary" style="margin-top:20px" disabled onclick="sharedInboxSave()">Save to TasteList</button>
 </fieldset></div></dialog>
 
 <script>
 // Shared-link inbox: no writes until the person confirms an item and destination.
-const sharedInbox={revision:0,busy:false,saved:false,results:[],selected:null,opened:null};
+const sharedInbox={revision:0,busy:false,saved:false,results:[],selected:null,opened:null,post:{date:null,spoiler:false,private:false,showTags:false,requestId:null}};
+// What's New, posted right here in one step: your take plus tags, date, spoiler and Only me.
+function sharedInboxResetPost(){
+ sharedInbox.post={date:null,spoiler:false,private:false,showTags:false,requestId:null};
+ const t=document.getElementById('shared-inbox-text');if(t)t.value='';
+ const d=document.getElementById('shared-inbox-date');if(d){d.value=localDateISO();d.max=localDateISO();}
+ const tags=document.getElementById('shared-inbox-tags');if(tags){tags.innerHTML=tagFieldMarkup('share','Tag people','search TasteList, or type any name').replace('placeholder="Search a name or @username"','placeholder="Add a name or @username…"');tags.hidden=true;}
+ tagFieldInit('share');
+}
+function sharedInboxDate(){const v=String(sharedInbox.post.date||'').slice(0,10),today=localDateISO();return /^\d{4}-\d{2}-\d{2}$/.test(v)&&v<=today&&v>='1900-01-01'?v:today;}
+function sharedInboxToggleTags(){
+ const wrap=document.getElementById('shared-inbox-tags');if(!wrap)return;
+ const open=wrap.hidden||(TAG_FIELDS.share?.selected?.length||0)===0&&wrap.hidden;
+ if(!wrap.hidden&&(TAG_FIELDS.share?.selected?.length||0)>0){document.getElementById('tag-share-input')?.focus();return;}
+ wrap.hidden=!wrap.hidden;sharedInbox.post.showTags=!wrap.hidden;sharedInboxRender();
+ if(!wrap.hidden)document.getElementById('tag-share-input')?.focus();
+}
+function sharedInboxSpoiler(){
+ const t=document.getElementById('shared-inbox-text');
+ if(t&&t.selectionStart!==t.selectionEnd&&t.value.slice(t.selectionStart,t.selectionEnd).trim()){
+  const a=t.selectionStart,b=t.selectionEnd,v=t.value;
+  if(v.slice(a-2,a)==='||'&&v.slice(b,b+2)==='||'){t.value=v.slice(0,a-2)+v.slice(a,b)+v.slice(b+2);t.setSelectionRange(a-2,b-2);showToast('Those words are no longer hidden.');}
+  else{t.value=v.slice(0,a)+'||'+v.slice(a,b)+'||'+v.slice(b);const e=b+4;t.setSelectionRange(e,e);showToast('Those words are hidden until someone taps them.');}
+  t.focus();sharedInboxRender();return;
+ }
+ sharedInbox.post.spoiler=!sharedInbox.post.spoiler;sharedInboxRender();
+ showToast(sharedInbox.post.spoiler?'The whole post will be covered as a spoiler. Tip: select words first to hide just those.':'Spoiler cover removed.');
+}
+async function sharedInboxPost(p){
+ const uid=currentUser?.id,text=(document.getElementById('shared-inbox-text')?.value||'').trim(),st=sharedInbox.post;
+ if(!uid)return;
+ if(!text&&!st.private){sharedInboxStatus('Add a few words about it, or choose Only me.');document.getElementById('shared-inbox-text')?.focus();return;}
+ sharedInbox.busy=true;document.getElementById('shared-inbox-fields').disabled=true;sharedInboxStatus('Posting…');sharedInboxRender();
+ try{
+  if(!(await requireFreshSession())||currentUser?.id!==uid)throw Error('Please sign in again to post.');
+  const attachment=Object.fromEntries(Object.entries(p).filter(([k])=>!k.startsWith('_')));
+  const row={label:attachment.title,type:'other',sub:[attachment.label,tvPartLabel(attachment)].filter(Boolean).join(' · '),note:text,art_url:onboardingArt(attachment)||null,
+   catalog_item:{kind:'text_post',attachment,...(st.spoiler?{spoiler:true}:{})},tags:await tagFieldValue('share'),activity_date:sharedInboxDate(),is_private:!!st.private};
+  st.requestId ||= crypto.randomUUID();
+  let result=await sb.from('activity_feed').insert({...row,id:st.requestId,user_id:uid}).select('id').single();
+  // A lost response may hide a successful insert: confirm this exact post before calling it a failure.
+  if(result.error?.code==='23505')result=await sb.from('activity_feed').select('id').eq('id',st.requestId).eq('user_id',uid).single();
+  if(result.error)throw result.error;
+  sharedInboxClear();sharedInbox.saved=true;
+  sharedInboxStatus(row.is_private?'✓ Saved — only you can see it.':'✓ Posted to What’s New.');
+  if(currentUser?.id===uid){loadPublicFeed?.().catch?.(()=>{});if(viewedProfile?.id===uid)loadActivityFeedFromSupabase(uid).catch(()=>{});}
+ }catch(e){sharedInboxStatus(e.message||'Couldn’t post. Your words are still here — try again.');}
+ finally{sharedInbox.busy=false;document.getElementById('shared-inbox-fields').disabled=sharedInbox.saved;sharedInboxRender();}
+}
 function sharedInboxPending(){try{const p=JSON.parse(localStorage.getItem('tl-shared-link'));return p&&Date.now()-p.time<86400000?p:null;}catch(_){return null;}}
 function sharedInboxClear(){try{localStorage.removeItem('tl-shared-link');}catch(_){}const u=new URL(location.href);u.searchParams.delete('save');history.replaceState(history.state,'',u);}
 function sharedInboxClose(){if(sharedInbox.busy)return;sharedInbox.revision++;document.getElementById('shared-inbox').close();sharedInboxClear();}
@@ -22938,7 +23006,7 @@ async function openSharedInbox(){
  document.getElementById('shared-inbox-tools').hidden=!currentUser;
  if(!currentUser){sharedInboxStatus('Sign in to choose where to save this link.');return;}
  const uid=currentUser.id,rev=++sharedInbox.revision;
- sharedInbox.saved=false;sharedInbox.selected=null;sharedInbox.results=[];sharedInboxRender();sharedInboxStatus('Finding item…');
+ sharedInbox.saved=false;sharedInbox.selected=null;sharedInbox.results=[];sharedInboxResetPost();sharedInboxRender();sharedInboxStatus('Finding item…');
  try{
   if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
  document.getElementById('shared-inbox-destination').value='new';
@@ -22972,30 +23040,26 @@ async function resolveSharedInboxLink(raw){
 function sharedInboxRender(){
  const el=document.getElementById('shared-inbox-results'),save=document.getElementById('shared-inbox-save');
  const many=sharedInbox.results.length>1;
- el.innerHTML=sharedInbox.results.map((p,i)=>`<button type="button" class="shared-inbox-item${sharedInbox.selected===i?' selected':''}" aria-pressed="${sharedInbox.selected===i}" onclick="if(!sharedInbox.saved){sharedInbox.selected=${i};sharedInboxRender()}">${onboardingArtwork(p)}<span class="shared-inbox-item-copy"><strong>${esc(p.title)}</strong><small>${esc([p.kind,p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span>${many?`<span class="shared-inbox-mark">${sharedInbox.selected===i?'✓':'Select'}</span>`:''}</button>`).join('');
+ el.innerHTML=sharedInbox.results.map((p,i)=>`<button type="button" class="shared-inbox-item${sharedInbox.selected===i?' selected':''}" aria-pressed="${sharedInbox.selected===i}" onclick="if(!sharedInbox.saved){sharedInbox.selected=${i};sharedInboxRender()}">${onboardingArtwork(p)}<span class="shared-inbox-item-copy"><strong>${esc(p.title)}</strong><small>${esc([p.episode?.name?'Episode: '+p.episode.name:(p.label||p.kind),p.artist||p.author,p.year].filter(Boolean).join(' · '))}</small></span>${many?`<span class="shared-inbox-mark">${sharedInbox.selected===i?'✓':'Select'}</span>`:''}</button>`).join('');
  save.disabled=sharedInbox.selected===null||sharedInbox.busy||sharedInbox.saved;
- const toNew=document.getElementById('shared-inbox-destination').value==='new';
- save.textContent=sharedInbox.saved?'✓ Saved':sharedInbox.busy?'Saving…':toNew?'Write your update →':'Save to TasteList';
+ const toNew=document.getElementById('shared-inbox-destination').value==='new',st=sharedInbox.post;
+ const postBox=document.getElementById('shared-inbox-post');if(postBox)postBox.hidden=!toNew||sharedInbox.saved;
+ const hasText=!!(document.getElementById('shared-inbox-text')?.value||'').trim();
+ if(toNew&&!sharedInbox.busy&&!sharedInbox.saved&&!hasText&&!st.private)save.disabled=true;
+ save.textContent=sharedInbox.saved?(toNew?'✓ Posted':'✓ Saved'):sharedInbox.busy?(toNew?'Posting…':'Saving…'):toNew?(st.private?'Save for me':'Post update'):'Save to TasteList';
+ const set=(id,on)=>{const c=document.getElementById(id);if(c){c.classList.toggle('is-on',!!on);c.setAttribute(c.id==='si-tag-chip'?'aria-expanded':'aria-pressed',String(!!on));}};
+ set('si-spoiler-chip',st.spoiler);set('si-private-chip',st.private);
+ const nTags=TAG_FIELDS.share?.selected?.length||0,tagChip=document.getElementById('si-tag-chip');
+ if(tagChip){tagChip.textContent=nTags?`@ Tagged ${nTags}`:'@ Tag people';set('si-tag-chip',st.showTags||nTags>0);}
+ const dl=document.getElementById('si-date-label');if(dl){const v=sharedInboxDate();dl.textContent=v===localDateISO()?'Today':`${consumedVerbFor(sharedInbox.results[sharedInbox.selected]?.kind)} ${friendlyPostDate(v)==='Yesterday'?'yesterday':friendlyPostDate(v)}`;}
+ const ta=document.getElementById('shared-inbox-text');if(ta)ta.placeholder=st.private?'A note for yourself (optional)':'What did you think?';
  save.classList.toggle('saved',sharedInbox.saved);
  document.getElementById('shared-inbox-destination').disabled=sharedInbox.busy||sharedInbox.saved;
-}
-// What's New: hand the item to the regular "Post an update" composer, so the post gets everything a post
-// can have (your take, season/episode, tags, date, spoilers, Only me). Nothing is saved until Post.
-function sharedInboxToComposer(p){
- if(!currentUser)return;
- if(feedPostDraft.userId===currentUser.id&&(feedPostDraft.text||'').trim()&&!feedPostDraft.id&&!confirm('Replace your current draft with this one?'))return;
- const item={...p};if(p.episode)item.episode={...p.episode};
- feedTitleSearch.manual=false;feedTitleSearch.seq++;feedTitleSearch.pickedFrom=null;
- feedPostDraft={userId:currentUser.id,text:'',id:null,saving:false,requestId:null,attachment:item};
- tagFieldInit('feed');
- sharedInboxClear();sharedInbox.revision++;document.getElementById('shared-inbox').close();
- goToFeedView();
- openFeedComposer('feed-post-text');
 }
 async function sharedInboxSave(){
  if(sharedInbox.busy||!currentUser||sharedInbox.selected===null)return;
  const p=sharedInbox.results[sharedInbox.selected],uid=currentUser.id,dest=document.getElementById('shared-inbox-destination').value;
- if(dest==='new'){sharedInboxToComposer(p);return;}
+ if(dest==='new'){await sharedInboxPost(p);return;}
  sharedInbox.busy=true;document.getElementById('shared-inbox-fields').disabled=true;sharedInboxStatus('Saving…');sharedInboxRender();
  try{
   if(uid!==currentUser?.id)throw Error('Please sign in to retry.');
