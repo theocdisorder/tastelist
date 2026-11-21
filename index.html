@@ -3795,6 +3795,69 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
   .cm-card { max-width: none; }
 }
 @media (pointer: coarse) { .cm-attach-x { min-width: 40px !important; min-height: 40px !important; } .cm-card-main { min-height: 0 !important; } }
+/* Taste match in the profile header (top right on desktop, under the name on phones) */
+.tmh-slot { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 10px; }
+.tmh-slot:empty { display: none; }
+.tmh-match { display: inline-flex; align-items: center; gap: 10px; padding: 4px 12px 4px 4px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+.tmh-match:hover, .tmh-match[aria-expanded="true"] { border-color: var(--accent); color: var(--text); }
+.tmh-match strong { color: var(--text); }
+.tmh-stack { display: inline-flex; }
+.tmh-thumb { position: relative; width: 26px; height: 36px; border-radius: 5px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; margin-left: -8px; box-shadow: 0 0 0 2px var(--surface); }
+.tmh-thumb:first-child { margin-left: 0; }
+.tmh-thumb img, .tmh-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tmh-initial { font-size: 12px; font-weight: 700; }
+.tmh-ask { padding: 0; border: 0; background: none; color: #cdb6ff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(205,182,255,.35); text-underline-offset: 4px; }
+.tmh-ask:hover { text-decoration-color: currentColor; }
+.tmh-pop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; width: min(320px, calc(100vw - 32px)); padding: 14px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,.5); text-align: left; }
+.tmh-pop-art { width: min(400px, calc(100vw - 32px)); }
+.tmh-pop-head { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+.tmh-pop-note { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+.tmh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 10px; max-height: 320px; overflow-y: auto; }
+.tmh-tile { margin: 0; min-width: 0; }
+.tmh-art { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 2 / 3; border-radius: 8px; overflow: hidden; }
+.tmh-art .tmh-initial { font-size: 22px; }
+.tmh-tile figcaption { margin-top: 5px; font-size: 11.5px; line-height: 1.3; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.tmh-asks { display: flex; flex-wrap: wrap; gap: 8px; }
+.tmh-asks .ta-chip { padding: 7px 14px; }
+.tmh-other { padding: 7px 6px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.tmh-other:hover { color: var(--text); }
+@media (max-width: 768px) {
+  .tmh-slot { align-items: flex-start; }
+  .tmh-pop { left: 0; right: auto; }
+}
+/* Taste Match + asks on Your Taste */
+#taste-friend-panel { display: grid; gap: 14px; margin-top: 18px; }
+#taste-friend-panel[hidden] { display: none; }
+.tm-card, .ta-card { padding: 16px 18px; border: 1px solid var(--border); border-radius: 16px; background: linear-gradient(135deg, rgba(124,77,255,.10), rgba(255,255,255,.02)); }
+.ta-card { background: var(--surface); }
+.tm-eyebrow { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #cdb6ff; margin-bottom: 4px; }
+.tm-card h3, .ta-card h3 { margin: 0; font-size: 17px; line-height: 1.35; color: var(--text); font-weight: 600; }
+.tm-card h3 strong { color: #cdb6ff; }
+.tm-note { margin: 4px 0 0; font-size: 13px; color: var(--muted); line-height: 1.45; }
+.tm-titles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tm-title { padding: 4px 10px; border-radius: 999px; background: rgba(124,77,255,.16); color: var(--text); font-size: 12.5px; }
+.tm-more { background: none; color: var(--muted); }
+.tm-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tm-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px; font-size: 12px; color: var(--muted); }
+.tm-pill strong { color: var(--text); font-weight: 600; }
+.tm-pill.is-match { border-color: rgba(124,77,255,.5); }
+.tm-pill.is-action { cursor: pointer; border-style: dashed; }
+.tm-pill.is-action:hover { color: var(--text); border-color: var(--accent); }
+.ta-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ta-chip { padding: 8px 14px; border: 1px solid rgba(185,154,255,.45); border-radius: 999px; background: none; color: #cdb6ff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.ta-chip:hover { background: rgba(124,77,255,.12); }
+.ta-chip.is-sent { border-color: var(--border); color: var(--muted); font-weight: 500; }
+.ta-received h3 { margin-bottom: 6px; }
+.ta-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border); }
+.ta-row:first-of-type { border-top: 0; }
+.ta-avatars { display: inline-flex; flex-shrink: 0; }
+.ta-avatars > span { margin-left: -6px; box-shadow: 0 0 0 2px var(--surface); }
+.ta-avatars > span:first-child { margin-left: 0; }
+.ta-text { flex: 1; min-width: 0; font-size: 13.5px; color: var(--muted); }
+.ta-text strong { color: var(--text); }
+.ta-add { flex-shrink: 0; padding: 7px 12px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
+@media (pointer: coarse) { .ta-chip, .ta-add { min-height: 40px !important; } .tm-pill.is-action { min-height: 32px; } }
+@media (max-width: 600px) { .ta-row { flex-wrap: wrap; } .ta-add { margin-left: 36px; } }
 /* ── Profile design tokens, shared by all three tabs ── */
 /* Section actions share one button size; the Favorites share action is the outlined twin of "Add". */
 #profile-share-cta { display:inline-flex; align-items:center; gap:0; height:auto; min-height:0; font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border2, rgba(255,255,255,.25)); background:none; color:var(--text); white-space:nowrap; }
@@ -4391,6 +4454,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     </div>
       </div>
       <div id="profile-picks"></div>
+      <div id="taste-friend-panel" hidden></div>
     </section>
 
   </div>
@@ -8336,6 +8400,8 @@ const NOTIF_COPY = {
   follow_request: (who) => `${who} wants to follow you`,
   follow_accepted: (who) => `${who} accepted your follow request`,
   new_follower: (who) => `${who} started following you`,
+  taste_ask: (who, n) => `${who} wants to see your favorite <strong>${esc(TASTE_ASK_LABEL[n.target_label] || 'picks')}</strong><span class="notif-reply">Add yours →</span>`,
+  taste_ask_done: (who, n) => `${who} added their favorite <strong>${esc(TASTE_ASK_LABEL[n.target_label] || 'picks')}</strong> for you<span class="notif-reply">See them →</span>`,
 };
 
 function renderNotificationsDropdown(rows) {
@@ -8358,7 +8424,7 @@ function renderNotificationsDropdown(rows) {
       NOTIF_ROWS.set(n.id, n);
       const isComment = (n.type === 'comment' || (n.type === 'reaction' && n.target_type === 'comment')) && n.target_type && n.target_id;
       const goesToTarget = (n.target_type === 'activity_feed' && ['new_post','comment','comment_reply','reaction','tag'].includes(n.type)) || ['list_item','list_joined','list_added'].includes(n.type) || (n.type === 'comment_reply' && /^taste_list/.test(n.target_type || ''));
-      const action = isComment ? `onclick="openCommentTarget('${n.id}')"` : goesToTarget ? `onclick="openNotificationTarget('${n.id}')"` : (isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`);
+      const action = n.type === 'taste_ask' ? `onclick="openTasteAsk('${esc(jsStr(n.target_label || ''))}')"` : n.type === 'taste_ask_done' && uname ? `onclick="closeNotificationsDropdown(); location.assign('?u=${encodeURIComponent(uname)}&tab=favorites')"` : isComment ? `onclick="openCommentTarget('${n.id}')"` : goesToTarget ? `onclick="openNotificationTarget('${n.id}')"` : (isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`);
       return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);${n.read ? '' : 'background:rgba(124,77,255,0.08);'}display:flex;flex-direction:column;gap:6px;${isRequest ? '' : 'cursor:pointer;'}" ${action}>
         <div style="font-size:13px;color:var(--text);line-height:1.4;">${text}</div>
         <div style="font-size:11px;color:var(--faint);">${formatActivityDate(n.created_at)}</div>
@@ -8562,8 +8628,9 @@ function updateProfileHeaderAndBanner() {
     // (A locked profile's own panel below carries the Follow button and the explanation.)
     const followLabel = followStatus === 'accepted' ? '✓ Following' : followStatus === 'pending' ? 'Requested' : 'Follow';
     banner.innerHTML = currentUser && !isLockedProfile()
-      ? `<div class="profile-actions"><button id="follow-btn" type="button" class="profile-control${followStatus === 'accepted' || followStatus === 'pending' ? '' : ' is-primary'}" onclick="toggleFollow()">${followLabel}</button></div>`
+      ? `<div class="profile-actions"><button id="follow-btn" type="button" class="profile-control${followStatus === 'accepted' || followStatus === 'pending' ? '' : ' is-primary'}" onclick="toggleFollow()">${followLabel}</button></div><div id="taste-match-slot" class="tmh-slot"></div>`
       : '';
+    if (currentUser && !isLockedProfile()) setTimeout(() => { try { renderTasteMatchHeader(); } catch (_) {} }, 0);
   } else {
     banner.innerHTML = '';
   }
@@ -21002,6 +21069,186 @@ function profileTasteReadiness(groups=profileTasteFavorites()){
  const total=groups.reduce((n,g)=>n+g.items.length,0);
  return {total,ready:total>=5};
 }
+// ── Taste Match + asking a friend for their picks ──
+// On a friend's Your Taste: what you both love (by category), and for any category they haven't
+// filled, "Ask for Ritu's books". On your own: who's waiting for which of your picks.
+var TASTE_ASK_CATS=['movies','tv','books','music','podcasts'];
+var TASTE_ASK_LABEL={movies:'movies',tv:'TV shows',books:'books',music:'music',podcasts:'podcasts'};
+var TASTE_ASK_TITLE={movies:'Movies',tv:'TV',books:'Books',music:'Music',podcasts:'Podcasts'};
+var tasteMatchCache=new Map();      // profile id → rows from taste_match (or 'loading')
+var tasteAskState={sent:new Map(),received:null,busy:false,answering:false};   // sent: profileId → Map(category → ask id)
+function tasteGroupsByCat(){
+ const out={};for(const g of profileTasteFavorites())out[g.tab]=g.items.length;return out;
+}
+async function loadTasteFriendData(profileId){
+ if(!sb||!currentUser||!profileId)return;
+ const jobs=[];
+ if(!tasteMatchCache.has(profileId)){
+  tasteMatchCache.set(profileId,'loading');
+  jobs.push(sb.rpc('taste_match',{p_other:profileId}).then(({data,error})=>{tasteMatchCache.set(profileId,error?[]:(data||[]));},()=>tasteMatchCache.set(profileId,[])));
+ }
+ if(!tasteAskState.sent.has(profileId)){
+  tasteAskState.sent.set(profileId,new Map());
+  jobs.push(sb.from('taste_asks').select('id,category').eq('asker_id',currentUser.id).eq('asked_id',profileId).is('fulfilled_at',null)
+   .then(({data})=>{const m=new Map();(data||[]).forEach(r=>m.set(r.category,r.id));tasteAskState.sent.set(profileId,m);},()=>{}));
+ }
+ if(jobs.length){await Promise.all(jobs);if(viewedProfile?.id===profileId){renderTasteFriendPanel();renderTasteMatchHeader();}}
+}
+async function loadReceivedTasteAsks(){
+ if(!sb||!currentUser)return;
+ const {data}=await sb.from('taste_asks').select('id,category,asker_id,created_at,profiles!taste_asks_asker_id_fkey(username,display_name,avatar_url)')
+  .eq('asked_id',currentUser.id).is('fulfilled_at',null).order('created_at',{ascending:false});
+ tasteAskState.received=data||[];
+}
+// Your own favorites changed: any ask in a category you now have is answered (the asker is told).
+async function maybeAnswerTasteAsks(){
+ tasteMatchCache.clear();   // your favorites may have changed: compare afresh on the next friend you visit
+ if(!sb||!currentUser||tasteAskState.answering||!tasteAskState.received?.length)return;
+ const have=tasteGroupsByCat();
+ const sig=tasteAskState.received.map(a=>a.category+':'+(have[a.category]||0)).join(',');
+ if(sig===tasteAskState.lastSig)return;   // nothing you were asked about has changed since the last check
+ const first=tasteAskState.lastSig===undefined;tasteAskState.lastSig=sig;
+ if(first&&!tasteAskState.received.some(a=>(have[a.category]||0)>0))return;
+ tasteAskState.answering=true;
+ try{const {data}=await sb.rpc('answer_taste_asks');if(data>0){await loadReceivedTasteAsks();showToast(data===1?'Sent — your friend will see your picks.':'Sent — your friends will see your picks.');renderTasteFriendPanel();}}
+ catch(_){}finally{tasteAskState.answering=false;}
+}
+function tasteMatchHtml(name,rows){
+ if(rows==='loading')return `<div class="tm-card"><p class="tm-note">Comparing your taste with ${esc(name)}’s…</p></div>`;
+ if(!Array.isArray(rows)||!rows.length)return '';
+ const shared=rows.reduce((n,r)=>n+(r.shared||0),0);
+ const titles=rows.flatMap(r=>(r.shared_titles||[]).map(t=>({t,cat:r.cat})));
+ const pills=rows.map(r=>{
+  const both=r.mine>0&&r.theirs>0;
+  const txt=r.shared?`${r.shared} in common`:both?'Nothing in common yet':r.mine?`${esc(name)} hasn’t added any`:`Add yours to compare`;
+  const act=!r.mine&&r.theirs?` onclick="openTasteAsk('${r.cat}')" role="button" tabindex="0" title="Add your ${TASTE_ASK_LABEL[r.cat]}"`:'';
+  return `<span class="tm-pill${r.shared?' is-match':''}${act?' is-action':''}"${act}><strong>${TASTE_ASK_TITLE[r.cat]}</strong>${txt}</span>`;
+ }).join('');
+ const head=shared?`You and ${esc(name)} both love <strong>${shared}</strong> ${shared===1?'thing':'things'}`:`You and ${esc(name)} don’t share any favorites yet`;
+ const sub=shared?'':(rows.some(r=>r.mine>0)?'Add more of your favorites — the more you both add, the more you’ll find in common.':'Add a few of your favorites to see what you have in common.');
+ return `<div class="tm-card"><div class="tm-head"><span class="tm-eyebrow">Taste match</span><h3>${head}</h3>${sub?`<p class="tm-note">${sub}</p>`:''}</div>
+  ${titles.length?`<div class="tm-titles">${titles.slice(0,12).map(x=>`<span class="tm-title" title="${esc(TASTE_ASK_TITLE[x.cat])}">${esc(x.t)}</span>`).join('')}${titles.length>12?`<span class="tm-title tm-more">+${titles.length-12} more</span>`:''}</div>`:''}
+  <div class="tm-pills">${pills}</div></div>`;
+}
+function tasteAskHtml(name,profileId,have){
+ const missing=TASTE_ASK_CATS.filter(c=>!(have[c]>0));if(!missing.length)return '';
+ const sent=tasteAskState.sent.get(profileId)||new Map();
+ return `<div class="ta-card"><h3>Curious what ${esc(name)} loves?</h3><p class="tm-note">Ask, and ${esc(name)} gets a nudge to add them. You’ll be told when they do.</p>
+  <div class="ta-chips">${missing.map(c=>sent.has(c)
+   ?`<button type="button" class="ta-chip is-sent" onclick="undoTasteAsk('${esc(jsStr(profileId))}','${c}')" title="Take back this ask">✓ Asked for ${TASTE_ASK_LABEL[c]}</button>`
+   :`<button type="button" class="ta-chip" onclick="sendTasteAsk('${esc(jsStr(profileId))}','${c}')">Ask for ${esc(possessiveName(name))} ${TASTE_ASK_LABEL[c]}</button>`).join('')}</div></div>`;
+}
+function tasteAsksReceivedHtml(){
+ const asks=tasteAskState.received||[];if(!asks.length)return '';
+ const byCat=new Map();asks.forEach(a=>{if(!byCat.has(a.category))byCat.set(a.category,[]);byCat.get(a.category).push(a);});
+ return `<div class="ta-card ta-received"><h3>Friends want your picks</h3>${[...byCat.entries()].map(([c,list])=>{
+  const names=list.map(a=>firstNameOnly(a.profiles?.display_name)||a.profiles?.username||'A friend');
+  const who=names.length>2?`${names.slice(0,2).join(', ')} and ${names.length-2} more`:names.join(' and ');
+  return `<div class="ta-row"><span class="ta-avatars">${list.slice(0,3).map(a=>profileAvatarHtml({...a.profiles,id:a.asker_id},26)).join('')}</span><span class="ta-text"><strong>${esc(who)}</strong> ${names.length===1?'wants':'want'} to see your favorite ${TASTE_ASK_LABEL[c]}</span><button type="button" class="ta-add" onclick="addProfileTasteFavorite('${c}')">+ Add ${TASTE_ASK_LABEL[c]}</button></div>`;
+ }).join('')}</div>`;
+}
+function renderTasteFriendPanel(){
+ const el=document.getElementById('taste-friend-panel');if(!el)return;
+ const pid=viewedProfile?.id;
+ if(!currentUser||!pid||isLockedProfile()){el.hidden=true;el.innerHTML='';return;}
+ const own=isOwnProfile&&pid===currentUser.id;
+ if(own){
+  if(tasteAskState.received===null){tasteAskState.received=[];loadReceivedTasteAsks().then(()=>{renderTasteFriendPanel();maybeAnswerTasteAsks();});}
+  else maybeAnswerTasteAsks();
+  const html=tasteAsksReceivedHtml();el.hidden=!html;el.innerHTML=html;return;
+ }
+ el.hidden=true;el.innerHTML='';
+ loadTasteFriendData(pid);
+ renderTasteMatchHeader();
+}
+// ── Top right of a friend's profile: the art you both love, and "Ask for more picks" ──
+function tasteKey(t){return String(t||'').toLowerCase().replace(/&/g,'and').trim().replace(/^(the|a|an) /,'').replace(/[^a-z0-9]/g,'');}
+function sharedTasteArt(rows){
+ // Artwork comes from this profile's own favorites (already loaded for the boxes below).
+ const byKey=new Map();
+ for(const g of profileTasteFavorites())for(const p of g.items){const k=tasteKey(p.title);if(k&&!byKey.has(k))byKey.set(k,{art:tastePickArt(g.tab,p)||p.art||sharedArtCache.get(g.tab+'|'+k)||'',tab:g.tab,_p:p,_k:g.tab+'|'+k});}
+ return (Array.isArray(rows)?rows:[]).flatMap(r=>(r.shared_titles||[]).map(t=>({title:t,cat:r.cat,...(byKey.get(tasteKey(t))||{art:'',tab:r.cat})})));
+}
+function tasteThumb(x,cls){
+ const meta=ACTIVITY_TYPE_META[({movies:'movie',tv:'tv',books:'book',music:'song',podcasts:'podcast'})[x.cat]]||ACTIVITY_TYPE_META.other;
+ return `<span class="${cls}" style="background:${meta.color}26;color:${meta.color}" title="${esc(x.title)}">${x.art?`<img src="${esc(x.art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span class="tmh-initial">${esc((x.title||'?').trim().charAt(0).toUpperCase())}</span></span>`;
+}
+function renderTasteMatchHeader(){
+ const slot=document.getElementById('taste-match-slot');if(!slot)return;
+ const pid=viewedProfile?.id;
+ if(!currentUser||!pid||isOwnProfile||isLockedProfile()){slot.innerHTML='';return;}
+ if(!tasteMatchCache.has(pid)||!tasteAskState.sent.has(pid)){loadTasteFriendData(pid);}
+ const name=firstNameOnly(viewedProfile.display_name)||viewedProfile.username||'them';
+ const rows=tasteMatchCache.get(pid),shared=rows==='loading'?[]:sharedTasteArt(rows);
+ const loaded=typeof profileFavoritesLoaded==='undefined'||profileFavoritesLoaded;
+ // Any category can be asked for; the thinnest come first ("Movies" when there are none, "More books" otherwise).
+ const have=loaded?tasteGroupsByCat():null,missing=have?TASTE_ASK_CATS.map((c,i)=>({c,n:have[c]||0,i})).sort((a,b)=>Math.min(a.n,3)-Math.min(b.n,3)||a.n-b.n||a.i-b.i).map(x=>x.c):[];
+ const sent=tasteAskState.sent.get(pid)||new Map();
+ const open=slot.dataset.open||'';
+ let html='';
+ if(shared.length){
+  html+=`<button type="button" class="tmh-match" aria-expanded="${open==='match'}" onclick="toggleTasteMatchPop('match')"><span class="tmh-stack">${shared.slice(0,4).map(x=>tasteThumb(x,'tmh-thumb')).join('')}</span><span class="tmh-label">You both love</span></button>`;
+  if(open==='match')html+=`<div class="tmh-pop tmh-pop-art" role="dialog" aria-label="Favorites you and ${esc(name)} share"><div class="tmh-pop-head">You and ${esc(name)} both love</div><div class="tmh-grid">${shared.map(x=>`<figure class="tmh-tile">${tasteThumb(x,'tmh-art')}<figcaption>${esc(x.title)}</figcaption></figure>`).join('')}</div></div>`;
+ }
+ if(missing.length){
+  html+=`<button type="button" class="tmh-ask" aria-expanded="${open==='ask'}" onclick="toggleTasteMatchPop('ask')">Ask ${esc(name)} for more picks</button>`;
+  if(open==='ask'){
+   // Three suggestions to start (the thinnest categories, plus any already asked); the rest behind "Other".
+   const showAll=slot.dataset.all==='1',first=missing.filter((c,i)=>i<3||sent.has(c)),list=showAll?missing:first;
+   const label=c=>(have[c]||0)===0?TASTE_ASK_TITLE[c]:`More ${TASTE_ASK_LABEL[c]}`;
+   html+=`<div class="tmh-pop" role="dialog" aria-label="Ask ${esc(name)} for picks"><div class="tmh-pop-head">What would you like to see more of?</div><div class="tmh-asks">${list.map(c=>sent.has(c)
+    ?`<button type="button" class="ta-chip is-sent" onclick="undoTasteAsk('${esc(jsStr(pid))}','${c}')" title="Take back this ask">✓ ${esc(label(c))}</button>`
+    :`<button type="button" class="ta-chip" onclick="sendTasteAsk('${esc(jsStr(pid))}','${c}')">${esc(label(c))}</button>`).join('')}${!showAll&&missing.length>list.length?`<button type="button" class="tmh-other" onclick="document.getElementById('taste-match-slot').dataset.all='1';renderTasteMatchHeader()">Other</button>`:''}</div><p class="tmh-pop-note">${esc(name)} gets a nudge, and you’ll hear when they add some.</p></div>`;
+  }
+ }
+ slot.innerHTML=html;
+ // Artwork for shared titles the boxes below haven't loaded yet (only their first few are).
+ // profileTasteFavorites() hands back fresh copies each time, so found art is kept by title here.
+ for(const x of shared){
+  if(x.art||!x._p||!x._k||sharedArtCache.has(x._k))continue;
+  sharedArtCache.set(x._k,'');const p=x._p,tab=x.tab,key=x._k;let job=null;
+  if(tab==='music'&&p._tasteKind==='album')job=lookupAlbumCover(p.title,p.artist);
+  else if(tab==='music')job=summaryArtistPhoto(p.title);
+  else if((tab==='movies'||tab==='tv')&&(p.tmdbId||p.tmdbTvId))job=(tab==='tv'?fetchTVDetail(p.tmdbId||p.tmdbTvId):fetchMovieDetail(p.tmdbId)).then(d=>d?.poster?(String(d.poster).startsWith('http')?d.poster:TMDB_IMG+d.poster):'');
+  else if(tab==='books'&&p._tasteKind==='author')job=lookupAuthorPhoto(p.title);
+  else if(tab==='books')job=fetchBookCover(p.title,p.author);
+  if(job)Promise.resolve(job).then(url=>{if(url){sharedArtCache.set(key,url);if(viewedProfile?.id===pid)renderTasteMatchHeader();}}).catch(()=>{});
+ }
+}
+var sharedArtCache=new Map();   // "tv|succession" → artwork URL
+
+function toggleTasteMatchPop(which){
+ const slot=document.getElementById('taste-match-slot');if(!slot)return;
+ slot.dataset.open=slot.dataset.open===which?'':which;slot.dataset.all='';renderTasteMatchHeader();
+}
+document.addEventListener('click',e=>{const slot=document.getElementById('taste-match-slot');if(slot&&slot.dataset.open&&e.target.isConnected&&!slot.contains(e.target)){slot.dataset.open='';renderTasteMatchHeader();}});
+document.addEventListener('keydown',e=>{const slot=document.getElementById('taste-match-slot');if(e.key==='Escape'&&slot?.dataset.open){slot.dataset.open='';renderTasteMatchHeader();}});
+async function sendTasteAsk(profileId,cat){
+ if(!sb||!currentUser||tasteAskState.busy||!TASTE_ASK_CATS.includes(cat))return;
+ tasteAskState.busy=true;
+ try{
+  const {data,error}=await sb.from('taste_asks').insert({asked_id:profileId,category:cat}).select('id').single();
+  if(error&&error.code!=='23505')throw error;
+  const m=tasteAskState.sent.get(profileId)||new Map();m.set(cat,data?.id||'sent');tasteAskState.sent.set(profileId,m);
+  const name=viewedProfile?.id===profileId?(firstNameOnly(viewedProfile.display_name)||viewedProfile.username):'They';
+  showToast(`Asked! ${name} will get a nudge to add their ${TASTE_ASK_LABEL[cat]}.`);
+ }catch(e){showToast('Couldn’t send that. Please try again.');}
+ finally{tasteAskState.busy=false;renderTasteFriendPanel();renderTasteMatchHeader();}
+}
+async function undoTasteAsk(profileId,cat){
+ const m=tasteAskState.sent.get(profileId),id=m?.get(cat);if(!sb||!id||tasteAskState.busy)return;
+ tasteAskState.busy=true;
+ try{const {error}=await sb.from('taste_asks').delete().eq('id',id).eq('asker_id',currentUser.id);if(error)throw error;m.delete(cat);}
+ catch(_){showToast('Couldn’t take that back. Please try again.');}
+ finally{tasteAskState.busy=false;renderTasteFriendPanel();renderTasteMatchHeader();}
+}
+// From a notification: "Aditi wants your favorite books" → your Your Taste, adding books.
+async function openTasteAsk(cat){
+ closeNotificationsDropdown();
+ await goToMyProfileView();
+ try{switchTab('favorites');}catch(_){}
+ if(TASTE_ASK_CATS.includes(cat))setTimeout(()=>addProfileTasteFavorite(cat),150);
+}
 function addProfileTasteFavorite(tab){
  if(!currentUser||!isOwnProfile||viewedProfile?.id!==currentUser.id)return;
  openUnifiedPicker(tab,null,{context:'favorite'});
@@ -21050,6 +21297,7 @@ function tasteRevealHtml(groups,owner,ready=false){
  return `<section class="taste-reveal${ready?' is-ready':''}" aria-label="${ready?'Favorites':'Favorites so far'}">${owner&&!ready?'<p class="taste-reveal-lede">Your taste profile is taking shape.</p>':''}<p class="ob-done-count">${n} ${n===1?'favorite':'favorites'}${owner&&!ready?' added':''}</p><div class="ob-done-gallery" data-count="${Math.min(picks.length,4)}">${cards}</div>${owner&&!ready?'<button type="button" class="ob-done-add" onclick="openProfileMediaPicker()"><span aria-hidden="true">+</span> Add another favorite</button>':''}</section>`;
 }
 function renderDynamicProfilePicks(){
+ try{renderTasteFriendPanel();}catch(_){}
  syncInitialTasteProfile();
  renderLiveTasteSentence();
  const el=document.getElementById('profile-picks');if(!el)return;
