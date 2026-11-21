@@ -3819,29 +3819,43 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 }
 @media (pointer: coarse) { .cm-attach-x { min-width: 40px !important; min-height: 40px !important; } .cm-card-main { min-height: 0 !important; } }
 /* Taste match in the profile header (top right on desktop, under the name on phones) */
-.tmh-slot { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
+.tmh-slot { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 22px; }
 /* Visiting someone: identity on the left (~45%), what you share + swapping picks on the right (~55%) */
-.profile-header.is-visitor .profile-identity { grid-template-columns: 72px minmax(0, .8fr) minmax(0, 1.1fr); column-gap: 18px; align-items: start; }
-.profile-header.is-visitor .profile-id-text, .profile-header.is-visitor .profile-identity > .profile-avatar-btn { align-self: start; }
-.profile-header.is-visitor .profile-id-text { padding-top: 4px; }
-.profile-header.is-visitor .profile-header-actions { align-self: start; min-width: 0; padding-left: 12px; }
 .shared-taste { position: relative; min-width: 0; }
+/* Visiting someone: identity (~40%) | shared taste + swapping picks (~60%), both top-aligned, ~40px apart */
+.profile-header.is-visitor { --pav: clamp(88px, 8.2vw, 108px); }
+.profile-header.is-visitor .profile-identity { grid-template-columns: var(--pav) minmax(0, 1fr) minmax(0, 58%); column-gap: 20px; align-items: start; }
+.profile-header.is-visitor .profile-avatar-btn, .profile-header.is-visitor .profile-avatar-btn > img, .profile-header.is-visitor .profile-avatar-btn > #profile-avatar-blank { width: var(--pav) !important; height: var(--pav) !important; }
+.profile-header.is-visitor #profile-avatar-blank { font-size: calc(var(--pav) * .36); }
+.profile-header.is-visitor .profile-identity > .profile-avatar-btn, .profile-header.is-visitor .profile-id-text { align-self: start; }
+.profile-header.is-visitor .profile-id-text { padding-top: 6px; }
+.profile-header.is-visitor .profile-header-actions { align-self: start; min-width: 0; padding-left: 20px; }
+/* Shared favorites: same-size frames (2:3), square art shown whole over a soft blur of itself */
+.shared-taste-row { --cw: 88px; display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.shared-taste-item { flex: 0 0 var(--cw); display: flex; flex-direction: column; justify-content: flex-start; width: var(--cw); min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.shared-taste-art { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 2 / 3; border-radius: 7px; overflow: hidden; box-shadow: 0 8px 18px -12px rgba(0,0,0,.95); transition: transform .15s ease, box-shadow .15s ease; }
+.shared-taste-art > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.shared-taste-art.is-square > img.sta-bg { filter: blur(14px) brightness(.55); transform: scale(1.3); }
+.shared-taste-art.is-square > img.sta-fg { object-fit: contain; }
+.shared-taste-art .tmh-initial { font-size: 22px; }
+.shared-taste-item:hover .shared-taste-art { transform: translateY(-2px); box-shadow: 0 12px 22px -12px rgba(0,0,0,.95); }
+.shared-taste-item:focus-visible { outline: none; }
+.shared-taste-item:focus-visible .shared-taste-art { outline: 2px solid #cdb6ff; outline-offset: 2px; }
+.shared-taste-cap { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-top: 7px; font-size: 12px; line-height: 1.3; color: var(--muted); overflow: hidden; overflow-wrap: anywhere; }
+.shared-taste-item:hover .shared-taste-cap { color: var(--text); }
+@media (max-width: 720px) {
+  .profile-header.is-visitor { --pav: 88px; }
+  .profile-header.is-visitor .profile-identity { grid-template-columns: var(--pav) minmax(0, 1fr); column-gap: 16px; row-gap: 20px; }
+  .profile-header.is-visitor .profile-id-text { padding-top: 4px; }
+  .profile-header.is-visitor .profile-header-actions { grid-column: 1 / -1; grid-row: 2; padding-left: 0; }
+  .shared-taste-row { gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; margin-right: calc(-1 * var(--gutter, 1rem)); padding-right: var(--gutter, 1rem); padding-bottom: 2px; }
+  .shared-taste-row::-webkit-scrollbar { display: none; }
+  .shared-taste-item { scroll-snap-align: start; }
+}
 .shared-taste-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .shared-taste-head h3 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .01em; color: var(--text); }
 .shared-taste-all { padding: 0; border: 0; background: none; color: #cdb6ff; font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; }
 .shared-taste-all:hover { text-decoration: underline; text-underline-offset: 3px; }
-.shared-taste-row { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
-.shared-taste-item { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: flex-start; width: 68px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.shared-taste-item.is-square { width: 100px; }
-.shared-taste-item:nth-child(n+7) { display: none; }
-.shared-taste-art { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100px; border-radius: 6px; overflow: hidden; box-shadow: 0 6px 16px -10px rgba(0,0,0,.9); transition: transform .15s ease, box-shadow .15s ease; }
-.shared-taste-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.shared-taste-art .tmh-initial { font-size: 20px; }
-.shared-taste-item:hover .shared-taste-art { transform: translateY(-2px); box-shadow: 0 10px 20px -10px rgba(0,0,0,.9); }
-.shared-taste-item:focus-visible { outline: none; }
-.shared-taste-item:focus-visible .shared-taste-art { outline: 2px solid #cdb6ff; outline-offset: 2px; }
-.shared-taste-cap { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-top: 6px; font-size: 11.5px; line-height: 1.3; color: var(--muted); overflow: hidden; }
-.shared-taste-item:hover .shared-taste-cap { color: var(--text); }
 .shared-taste-empty { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); max-width: 40ch; }
 .profile-header.is-visitor .swap-recs { align-items: flex-start; }
 button.tmh-tile { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
@@ -3863,7 +3877,7 @@ button.tmh-tile { padding: 0; border: 0; background: none; color: inherit; font:
 .tmh-chip-slot .tmh-pop { left: 0; right: auto; }
 /* Swap picks: a quiet label over two compact, content-sized buttons */
 .swap-recs { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
-.swap-recs-title { margin: 0; font-size: 12px; font-weight: 500; color: var(--muted); }
+.swap-recs-title { margin: 0; font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,.74); }
 .swap-recs-btns { display: flex; gap: 8px; }
 .swap-btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px 7px 12px; border-radius: 999px; font: inherit; font-size: 12.5px; font-weight: 600; line-height: 1.2; white-space: nowrap; cursor: pointer; transition: background-color .15s ease, border-color .15s ease, transform .15s ease; -webkit-tap-highlight-color: transparent; }
 .swap-btn:active { transform: scale(.97); }
@@ -3900,14 +3914,6 @@ button.tmh-tile { padding: 0; border: 0; background: none; color: inherit; font:
 @media (max-width: 768px) {
   .tmh-slot { align-items: stretch; gap: 14px; }
   .swap-recs { align-items: flex-start; }
-  .profile-header.is-visitor .profile-identity { grid-template-columns: 56px minmax(0,1fr); }
-  .profile-header.is-visitor .profile-header-actions { padding-left: 0; }
-  .shared-taste-row { overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; margin-right: calc(-1 * var(--gutter, 1rem)); padding-right: var(--gutter, 1rem); padding-bottom: 2px; }
-  .shared-taste-row::-webkit-scrollbar { display: none; }
-  .shared-taste-item { scroll-snap-align: start; width: 64px; }
-  .shared-taste-item.is-square { width: 94px; }
-  .shared-taste-item:nth-child(n+7) { display: flex; }
-  .shared-taste-art { height: 94px; }
   .tmh-pop { left: 0; right: auto; }
 }
 /* Taste Match + asks on Your Taste */
@@ -21390,8 +21396,9 @@ function renderTasteMatchHeader(){
  const ready=Array.isArray(rows)&&loaded;
  let sharedHtml='';
  if(shared.length){
-  sharedHtml=`<section class="shared-taste" aria-labelledby="shared-taste-title"><div class="shared-taste-head"><h3 id="shared-taste-title">You both love</h3>${shared.length>6?`<button type="button" class="shared-taste-all" aria-expanded="${open==='match'}" onclick="toggleTasteMatchPop('match')">View all</button>`:''}</div>
-   <div class="shared-taste-row">${shared.slice(0,12).map((x,i)=>`<button type="button" class="shared-taste-item${['music','podcasts'].includes(x.tab||x.cat)?' is-square':''}" onclick="openSharedTasteItem(${i})" aria-label="${esc(x.title)}">${tasteThumb(x,'shared-taste-art')}<span class="shared-taste-cap">${esc(x.title)}</span></button>`).join('')}</div>`;
+  const fit=sharedTasteFit(slot),shown=shared.slice(0,fit.n);
+  sharedHtml=`<section class="shared-taste" aria-labelledby="shared-taste-title"><div class="shared-taste-head"><h3 id="shared-taste-title">You both love</h3>${shared.length>shown.length?`<button type="button" class="shared-taste-all" aria-expanded="${open==='match'}" onclick="toggleTasteMatchPop('match')">View all</button>`:''}</div>
+   <div class="shared-taste-row" style="--cw:${fit.cw}px">${shown.map((x,i)=>`<button type="button" class="shared-taste-item" onclick="openSharedTasteItem(${i})" aria-label="${esc(x.title)}">${sharedCoverHtml(x)}<span class="shared-taste-cap">${esc(x.title)}</span></button>`).join('')}</div>`;
   if(open==='match')sharedHtml+=`<div class="tmh-pop tmh-pop-art" role="dialog" aria-label="Favorites you and ${esc(name)} share"><div class="tmh-pop-head">You and ${esc(name)} both love</div><div class="tmh-grid">${shared.map((x,i)=>`<button type="button" class="tmh-tile" onclick="openSharedTasteItem(${i})">${tasteThumb(x,'tmh-art')}<span class="tmh-tile-cap">${esc(x.title)}</span></button>`).join('')}</div></div>`;
   sharedHtml+=`</section>`;
  }else if(ready){
@@ -21413,6 +21420,23 @@ function renderTasteMatchHeader(){
 }
 var sharedArtCache=new Map();   // "tv|succession" → artwork URL
 var sharedTasteShown=[];
+// How many covers to show: on desktop, as many as fit the column at full size (up to 6) — the rest
+// are behind "View all". On phones the row scrolls, so up to 12.
+function sharedTasteFit(slot){
+ if(matchMedia('(max-width: 720px)').matches)return {n:12,cw:80};
+ const w=slot?.clientWidth||0,gap=12,min=84;if(!w)return {n:6,cw:88};
+ const n=Math.max(2,Math.min(6,Math.floor((w+gap)/(min+gap))));
+ return {n,cw:Math.min(116,Math.floor((w-gap*(n-1))/n))};   // covers fill the column evenly
+}
+function sharedCoverHtml(x){
+ const tab=x.tab||x.cat,square=tab==='music'||tab==='podcasts';
+ const meta=ACTIVITY_TYPE_META[({movies:'movie',tv:'tv',books:'book',music:'song',podcasts:'podcast'})[x.cat]]||ACTIVITY_TYPE_META.other;
+ const art=x.art?esc(x.art):'';
+ return `<span class="shared-taste-art${square&&art?' is-square':''}" style="background:${meta.color}26;color:${meta.color}"><span class="tmh-initial">${esc((x.title||'?').trim().charAt(0).toUpperCase())}</span>${art?(square?`<img class="sta-bg" src="${art}" alt="" loading="lazy" onerror="this.remove()"><img class="sta-fg" src="${art}" alt="" loading="lazy" onerror="this.previousElementSibling?.remove();this.remove()">`:`<img src="${art}" alt="" loading="lazy" onerror="this.remove()">`):''}</span>`;
+}
+// Re-fit the covers when the window changes size.
+var sharedTasteResizeTimer=null;
+window.addEventListener('resize',()=>{clearTimeout(sharedTasteResizeTimer);sharedTasteResizeTimer=setTimeout(()=>{const slot=document.getElementById('taste-match-slot');if(slot&&slot.offsetParent&&!isOwnProfile)renderTasteMatchHeader();},150);});
 // A shared favorite opens the same summary sheet as a post about it (no post, so no comments).
 function openSharedTasteItem(i){
  const x=sharedTasteShown[i];if(!x)return;
