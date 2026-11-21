@@ -19221,6 +19221,18 @@ async function appleEpisodeByTitle(title){
  const d=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&media=podcast&entity=podcastEpisode&limit=15`);
  return (d.results||[]).find(r=>r.collectionId&&bookArtKey(r.trackName)===bookArtKey(title))||null;
 }
+// Preserve Spotify identity instead of guessing a match in a different catalog.
+async function resolveSpotifyMusicLink(raw){
+ const u=new URL(raw);
+ if(u.hostname.replace(/^www\./,'')!=='open.spotify.com')return null;
+ const match=u.pathname.match(/^\/(?:intl-[^/]+\/)?(track|album|artist)\/([A-Za-z0-9]+)\/?$/);
+ if(!match)return null;
+ const [,type,id]=match,url='https://open.spotify.com/'+type+'/'+id;
+ const data=await sharedCatalogJSON('https://open.spotify.com/oembed?url='+encodeURIComponent(url));
+ if(!data?.title?.trim())throw Error('Spotify did not return a title.');
+ const kind={track:'song',album:'album',artist:'artist'}[type];
+ return {kind,id:'spotify:'+id,title:data.title.trim(),artist:kind==='artist'?data.title.trim():'',art:data.thumbnail_url||'',url,label:{song:'Song',album:'Album',artist:'Artist'}[kind]};
+}
 async function resolveFeedLink(raw){
  const u=new URL(raw),host=u.hostname.replace(/^www\.|^m\./,'');
  if(host==='podcasts.apple.com'){
@@ -19233,6 +19245,7 @@ async function resolveFeedLink(raw){
   return podcastCatalogItem(show,'podcast');
  }
  if(host==='open.spotify.com'){
+  const music=await resolveSpotifyMusicLink(raw);if(music)return music;
   const kind=u.pathname.split('/').filter(Boolean).filter(x=>!x.startsWith('intl-'))[0];
   if(!['episode','show'].includes(kind))return null;
   const o=await sharedCatalogJSON('https://open.spotify.com/oembed?url='+encodeURIComponent(raw));if(!o?.title)return null;
@@ -19261,10 +19274,10 @@ async function resolveFeedLink(raw){
 }
 async function searchFeedLink(url){
  const seq=++feedTitleSearch.seq,userId=currentUser?.id,el=document.getElementById('feed-title-results');if(!el)return;
- feedTitleSearch.results=[];el.innerHTML='<p class="fc-results-note">Reading link…</p>';
+ feedTitleSearch.results=[];feedTitleSearch.error=false;feedTitleSearch.musicSearchFailed=false;el.innerHTML='<p class="fc-results-note">Reading link…</p>';
  let item=null;try{item=await resolveFeedLink(url);}catch(_){}
  if(seq!==feedTitleSearch.seq||userId!==currentUser?.id||feedPostDraft.attachment)return;
- if(!item){el.innerHTML='<p class="fc-results-note">Couldn’t read that link. Paste an Apple Podcasts, Spotify or YouTube link, or search the episode’s name.</p>';return;}
+ if(!item){el.innerHTML=`<p class="fc-results-note">Couldn’t read this link. For Spotify, use a full open.spotify.com track, album, artist, show or episode link. <button type="button" class="fc-link" onclick="searchFeedTitles(feedTitleSearch.lastQuery,true)">Try again</button></p>`;return;}
  feedTitleSearch.results=[item];renderFeedTitleRows();
 }
 // "Listen on …" under a post about a podcast or episode. It opens in the viewer's own podcast app,
@@ -19459,11 +19472,14 @@ function feedPickKey(p){return [p.kind,String(p.catalogId||p.id||''),String(p.ti
 function renderFeedTitleRows(){
  const box=document.getElementById('feed-title-results');if(!box)return;
  const rows=feedTitleSearch.results,f=feedTitleSearch.filter;
- if(feedTitleSearch.error){box.innerHTML=`<p class="fc-results-note">Search isn’t responding right now. <button type="button" class="fc-link" onclick="searchFeedTitles(document.getElementById('feed-title-query')?.value||feedTitleSearch.lastQuery,true)">Try again</button></p>`;return;}
+ if(feedTitleSearch.error){box.innerHTML=`<p class="fc-results-note">Search isn’t responding right now. You can also paste a full Spotify song link. <button type="button" class="fc-link" onclick="searchFeedTitles(document.getElementById('feed-title-query')?.value||feedTitleSearch.lastQuery,true)">Try again</button></p>`;return;}
  const hint=feedTitleSearch.seasonHint&&rows.some(p=>p.kind==='tv')?`<p class="fc-results-note fc-results-hint">Pick the series — ${esc(feedTitleSearch.seasonHint.episode?`Season ${feedTitleSearch.seasonHint.season}, Episode ${feedTitleSearch.seasonHint.episode}`:`Season ${feedTitleSearch.seasonHint.season}`)} will be selected if it exists.</p>`:'';
  const prevKey=feedTitleSearch.prevPick?feedPickKey(feedTitleSearch.prevPick):null;
  box.innerHTML=rows.length?hint+`<div class="fc-results" role="listbox" aria-label="Matching titles">${rows.map((p,i)=>`<button type="button" role="option" class="fc-result${prevKey&&feedPickKey(p)===prevKey?' is-prev':''}" aria-selected="${!!(prevKey&&feedPickKey(p)===prevKey)}" onclick="selectFeedTitle(${i})" onkeydown="feedResultKey(event,${i})">${feedThumbHtml(p)}<span class="fc-result-text"><strong>${esc(p.title)}</strong><small>${esc(feedResultMeta(p))}</small></span></button>`).join('')}</div>`
   :`<p class="fc-results-note">No matches${f!=='all'?` in ${esc((FEED_FILTER_LABELS[f]||'').toLowerCase())} · <button type="button" class="fc-link" onclick="setFeedTitleFilter('all')">Search all types</button>`:'. Try another spelling or a creator’s name.'}</p>`;
+ if(feedTitleSearch.musicSearchFailed)box.insertAdjacentHTML('beforeend',`<p class="fc-results-note" role="status">Song search couldn’t load. <button type="button" class="fc-link" onclick="searchFeedTitles(feedTitleSearch.lastQuery,true)">Retry search</button> or paste a Spotify song link above.</p>`);
+ else if(f==='song'&&!rows.length)box.insertAdjacentHTML('beforeend','<p class="fc-results-note">Not in the search catalog? Paste the song’s Spotify link above.</p>');
+
 }
 // Arrow keys move between results (and back up to the search field).
 function feedResultKey(e,i){
@@ -19491,7 +19507,7 @@ function searchFeedTitles(q,manual=false){
  if(!feedTitleSearch.filterManual)feedTitleSearch.filter=parsed.kind||'all';   // a trailing type word sets the filter
  if(feedTitleSearch.seasonHint&&!feedTitleSearch.filterManual)feedTitleSearch.filter='tv';   // "… season 3" / "S3E2" means a TV series
  if(q.trim().length<2){el.innerHTML='';if(!q.trim()){feedTitleSearch.filter='all';feedTitleSearch.filterManual=false;}renderFeedTitleFilters('');return;}
- renderFeedTitleFilters(q);feedTitleSearch.error=false;el.innerHTML='<p class="fc-results-note">Searching…</p>';
+ renderFeedTitleFilters(q);feedTitleSearch.error=false;feedTitleSearch.musicSearchFailed=false;el.innerHTML='<p class="fc-results-note">Searching…</p>';
  feedTitleSearch.timer=setTimeout(async()=>{
  const f=feedTitleSearch.filter;
  const kinds=f==='all'?FEED_TITLE_KINDS:f==='screen'?['movie','tv']:f==='book'?['book','author']:f==='podcast'?['podcast','episode']:[f];
@@ -19501,6 +19517,8 @@ function searchFeedTitles(q,manual=false){
  const jobs=kinds.flatMap(kind=>queries.map(async query=>kind==='song'?(await searchTasteCatalog('music',query)).map(p=>({kind,title:p.title,artist:p.sub,art:p.art,label:'Song',id:p.title+'|'+p.sub})):await onboardingAutocompleteProvider(kind,query)));
  const results=await Promise.allSettled(jobs.map(job=>new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('Timeout')),12000);job.then(resolve,reject).finally(()=>clearTimeout(t));})));
  if(seq!==feedTitleSearch.seq||userId!==currentUser?.id||feedPostDraft.attachment)return;
+ const songStart=kinds.indexOf('song')*queries.length;
+ feedTitleSearch.musicSearchFailed=songStart>=0&&results.slice(songStart,songStart+queries.length).every(r=>r.status==='rejected');
  const seen=new Set();
  const rows=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).filter(p=>{const k=[p.kind,String(p.id||''),String(p.title||'').toLowerCase()].join('|');if(seen.has(k))return false;seen.add(k);return true;})
    .filter(p=>f==='all'||p.kind===f||(f==='screen'&&['movie','tv'].includes(p.kind))||(f==='podcast'&&p.kind==='episode')||(f==='book'&&p.kind==='author'))
@@ -23176,10 +23194,7 @@ async function resolveSharedInboxLink(raw){
  if(host==='themoviedb.org'){
   const m=u.pathname.match(/^\/(movie|tv)\/(\d+)/);if(m){const r=await tmdbFetch('/'+m[1]+'/'+m[2]);if(!r.ok)throw Error();return [screen({...await r.json(),media_type:m[1]})];}
  }
- if(host==='open.spotify.com'&&/\/(track|album|artist)\//.test(u.pathname)){
-  const d=await sharedCatalogJSON('https://open.spotify.com/oembed?url='+encodeURIComponent(raw));
-  if(d?.title){const kind=u.pathname.includes('/track/')?'song':u.pathname.includes('/album/')?'album':'artist';return onboardingAutocompleteProvider(kind,d.title);}
- }
+ const music=await resolveSpotifyMusicLink(raw);if(music)return [music];
  if(['podcasts.apple.com','open.spotify.com','youtube.com','youtu.be','music.youtube.com'].includes(host)){
   const item=await resolveFeedLink(raw);if(item)return [item];
  }
