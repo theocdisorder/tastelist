@@ -1722,7 +1722,7 @@ input::placeholder, textarea::placeholder {
 .profile-privacy > span { font-size:11px; }
 .profile-privacy:hover,.profile-privacy:focus-visible { color:var(--text);background:rgba(255,255,255,.05); }
 /* Tabs sit under the identity; the panels below need less top padding. */
-#profile-header + .tab-nav { margin-top:20px; }
+#profile-header + .tab-nav { margin-top:16px; }
 #tab-profile > div { padding-top:20px!important; }
 /* One active-tab treatment for all three tabs: bright label, subtle purple underline. */
 #tab-nav .tab-btn.active { color:var(--text);border-bottom-color:var(--accent); }
@@ -2268,6 +2268,29 @@ html.opening-list #list-route-loader { display: flex; position: fixed; inset: 0;
 .list-route-spinner { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.14); border-top-color: var(--accent, #7C4DFF); animation: list-route-spin .8s linear infinite; }
 @keyframes list-route-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .list-route-spinner { animation-duration: 2.4s; } }
+
+/* Recommending to a friend, and the "From friends" row on your own What's Next */
+.rec-suggest-btn { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.rec-suggest-btn:hover { border-color: var(--muted); }
+.rec-tabs[hidden], .rec-from-field[hidden] { display: none; }
+.rec-suggest-note { margin: -4px 0 14px; color: var(--muted); font-size: 13px; }
+.rec-inbox { margin: 0 0 16px; }
+.rec-inbox-head { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+.rec-inbox-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.rec-inbox-row::-webkit-scrollbar { display: none; }
+.rec-inbox-item { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; width: 260px; max-width: 80vw; padding: 8px 10px 8px 8px; border: 1px solid var(--border); border-radius: 14px; background: rgba(255,255,255,.02); }
+.rec-inbox-art { position: relative; flex: 0 0 auto; width: 36px; height: 52px; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,.06); display: grid; place-items: center; color: var(--muted); font-weight: 700; font-size: 14px; }
+.rec-inbox-art.is-square { height: 40px; width: 40px; }
+.rec-inbox-art.is-round { width: 40px; height: 40px; border-radius: 50%; }
+.rec-inbox-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rec-inbox-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rec-inbox-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-inbox-from { font-size: 12px; color: var(--muted); }
+.rec-inbox-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 2px; }
+.rec-inbox-add { border: 0; border-radius: 999px; padding: 6px 12px; background: var(--accent); color: #fff; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.rec-inbox-add:disabled { opacity: .6; cursor: default; }
+.rec-inbox-x { border: 0; background: none; color: var(--muted); font-size: 18px; line-height: 1; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; }
+.rec-inbox-x:hover { color: var(--text); background: rgba(255,255,255,.06); }
 
 /* "Add to my What's Next" */
 .wn-add { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 0 20px 14px; }
@@ -3796,7 +3819,60 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 }
 @media (pointer: coarse) { .cm-attach-x { min-width: 40px !important; min-height: 40px !important; } .cm-card-main { min-height: 0 !important; } }
 /* Taste match in the profile header (top right on desktop, under the name on phones) */
-.tmh-slot { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 10px; }
+.tmh-slot { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
+/* Visiting someone: identity on the left (~45%), what you share + swapping picks on the right (~55%) */
+.profile-header.is-visitor .profile-identity { grid-template-columns: 72px minmax(0, .8fr) minmax(0, 1.1fr); column-gap: 18px; align-items: start; }
+.profile-header.is-visitor .profile-id-text, .profile-header.is-visitor .profile-identity > .profile-avatar-btn { align-self: start; }
+.profile-header.is-visitor .profile-id-text { padding-top: 4px; }
+.profile-header.is-visitor .profile-header-actions { align-self: start; min-width: 0; padding-left: 12px; }
+.shared-taste { position: relative; min-width: 0; }
+.shared-taste-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.shared-taste-head h3 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .01em; color: var(--text); }
+.shared-taste-all { padding: 0; border: 0; background: none; color: #cdb6ff; font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; }
+.shared-taste-all:hover { text-decoration: underline; text-underline-offset: 3px; }
+.shared-taste-row { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.shared-taste-item { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: flex-start; width: 68px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.shared-taste-item.is-square { width: 100px; }
+.shared-taste-item:nth-child(n+7) { display: none; }
+.shared-taste-art { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100px; border-radius: 6px; overflow: hidden; box-shadow: 0 6px 16px -10px rgba(0,0,0,.9); transition: transform .15s ease, box-shadow .15s ease; }
+.shared-taste-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.shared-taste-art .tmh-initial { font-size: 20px; }
+.shared-taste-item:hover .shared-taste-art { transform: translateY(-2px); box-shadow: 0 10px 20px -10px rgba(0,0,0,.9); }
+.shared-taste-item:focus-visible { outline: none; }
+.shared-taste-item:focus-visible .shared-taste-art { outline: 2px solid #cdb6ff; outline-offset: 2px; }
+.shared-taste-cap { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-top: 6px; font-size: 11.5px; line-height: 1.3; color: var(--muted); overflow: hidden; }
+.shared-taste-item:hover .shared-taste-cap { color: var(--text); }
+.shared-taste-empty { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); max-width: 40ch; }
+.profile-header.is-visitor .swap-recs { align-items: flex-start; }
+button.tmh-tile { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.tmh-tile-cap { display: block; margin-top: 5px; font-size: 11.5px; line-height: 1.3; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.tmh-pop-art { left: 0; right: auto; }
+.tmh-pop-art .tmh-grid { align-items: start; }
+.tmh-pop-art button.tmh-tile .tmh-art { display: flex; }
+/* Follow sits beside the name; "You both love" rides in the follower row */
+.profile-follow-slot:empty { display: none; }
+.profile-follow-inline { padding: 6px 14px; margin-left: 6px; font-size: 12px; line-height: 1.2; }
+.profile-meta-row { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; row-gap: 6px; margin-top: 6px; }
+.profile-meta-row .profile-follow-stats { margin-top: 0; }
+.tmh-chip-slot { position: relative; display: inline-flex; }
+.tmh-chip-slot:empty { display: none; }
+.tmh-chip-slot .tmh-match { padding: 2px 10px 2px 2px; gap: 7px; font-size: 12.5px; }
+.tmh-chip-slot .tmh-thumb { width: 18px; height: 26px; border-radius: 4px; margin-left: -6px; }
+.tmh-chip-slot .tmh-thumb:first-child { margin-left: 0; }
+.tmh-chip-slot .tmh-initial { font-size: 9px; }
+.tmh-chip-slot .tmh-pop { left: 0; right: auto; }
+/* Swap picks: a quiet label over two compact, content-sized buttons */
+.swap-recs { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+.swap-recs-title { margin: 0; font-size: 12px; font-weight: 500; color: var(--muted); }
+.swap-recs-btns { display: flex; gap: 8px; }
+.swap-btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px 7px 12px; border-radius: 999px; font: inherit; font-size: 12.5px; font-weight: 600; line-height: 1.2; white-space: nowrap; cursor: pointer; transition: background-color .15s ease, border-color .15s ease, transform .15s ease; -webkit-tap-highlight-color: transparent; }
+.swap-btn:active { transform: scale(.97); }
+.swap-btn:focus-visible { outline: 2px solid #cdb6ff; outline-offset: 2px; }
+.swap-btn.is-ask { background: var(--accent); border: 1px solid var(--accent); color: #fff; }
+.swap-btn.is-ask:hover, .swap-btn.is-ask[aria-expanded="true"] { background: #8a5fff; border-color: #8a5fff; }
+.swap-btn.is-send { background: transparent; border: 1px solid rgba(124,77,255,.45); color: var(--text); }
+.swap-btn.is-send svg { color: #cdb6ff; }
+.swap-btn.is-send:hover { border-color: rgba(124,77,255,.8); background: rgba(124,77,255,.08); }
 .tmh-slot:empty { display: none; }
 .tmh-match { display: inline-flex; align-items: center; gap: 10px; padding: 4px 12px 4px 4px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
 .tmh-match:hover, .tmh-match[aria-expanded="true"] { border-color: var(--accent); color: var(--text); }
@@ -3822,7 +3898,16 @@ dialog.ep-sheet::backdrop { background: rgba(0,0,0,.6); }
 .tmh-other { padding: 7px 6px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .tmh-other:hover { color: var(--text); }
 @media (max-width: 768px) {
-  .tmh-slot { align-items: flex-start; }
+  .tmh-slot { align-items: stretch; gap: 14px; }
+  .swap-recs { align-items: flex-start; }
+  .profile-header.is-visitor .profile-identity { grid-template-columns: 56px minmax(0,1fr); }
+  .profile-header.is-visitor .profile-header-actions { padding-left: 0; }
+  .shared-taste-row { overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; margin-right: calc(-1 * var(--gutter, 1rem)); padding-right: var(--gutter, 1rem); padding-bottom: 2px; }
+  .shared-taste-row::-webkit-scrollbar { display: none; }
+  .shared-taste-item { scroll-snap-align: start; width: 64px; }
+  .shared-taste-item.is-square { width: 94px; }
+  .shared-taste-item:nth-child(n+7) { display: flex; }
+  .shared-taste-art { height: 94px; }
   .tmh-pop { left: 0; right: auto; }
 }
 /* Taste Match + asks on Your Taste */
@@ -4366,12 +4451,14 @@ async function landingArtistArtFallback(imgEl, artistName) {
         <div style="display:flex;align-items:center;gap:8px;">
           <div id="profile-card-name" style="font-size:22px;font-weight:700;color:var(--text);line-height:1.2;">Sreya S.</div>
           <button id="edit-name-btn" onclick="editDisplayName()" style="display:none;box-sizing:border-box;width:24px;height:24px;padding:0;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:11px;line-height:1;cursor:pointer;flex-shrink:0;">✎</button>
+        
+          <span id="profile-follow-slot" class="profile-follow-slot"></span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
           <div id="profile-card-location" style="font-size:14px;color:var(--muted);">San Francisco, CA</div>
           <button id="edit-location-btn" onclick="editBio()" style="display:none;box-sizing:border-box;width:20px;height:20px;padding:0;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:10px;line-height:1;cursor:pointer;flex-shrink:0;">✎</button>
         </div>
-        <div id="profile-follow-stats" class="profile-follow-stats" aria-live="polite"></div>
+        <div class="profile-meta-row"><div id="profile-follow-stats" class="profile-follow-stats" aria-live="polite"></div><span id="taste-match-chip" class="tmh-chip-slot"></span></div>
         <p class="profile-tagline">The arts and culture that shaped me</p>
       </div>
       <div id="profile-link-banner" class="profile-header-actions"></div>
@@ -5066,8 +5153,14 @@ function parseRecommendationText(text){
  links.forEach(url=>items.push({q:url,types:Object.keys(pasteRecTypes),url}));
  return {from,items};
 }
-function openPasteRecommendations(){
- if(!isOwnProfile||!currentUser)return;
+function openPasteRecommendations(suggestTo){
+ if(!currentUser)return;
+ if(!suggestTo&&!isOwnProfile)return;
+ recSuggestTo=suggestTo||null;
+ const fname=suggestTo?(firstNameOnly(suggestTo.display_name)||suggestTo.username):'';
+ document.getElementById('paste-rec-heading').textContent=suggestTo?`Recommend something to ${fname}`:'Add a recommendation';
+ const note=document.getElementById('rec-suggest-note');note.hidden=!suggestTo;note.textContent=suggestTo?`${fname} can add it to their What’s Next with one tap.`:'';
+ document.getElementById('rec-tabs').hidden=!!suggestTo;
  pasteRecs={version:pasteRecs.version+1,items:[],busy:false,source:''};
  document.getElementById('paste-rec-text').value='';document.getElementById('paste-rec-from').value='';
  document.getElementById('paste-rec-results').innerHTML='';document.getElementById('paste-rec-status').textContent='';
@@ -5075,7 +5168,15 @@ function openPasteRecommendations(){
  recSearch={request:0,timer:null,results:[],kind:null,q:'',added:new Set(),saving:false};
  document.getElementById('rec-search-q').value='';document.getElementById('rec-search-results').innerHTML='';document.getElementById('rec-search-status').textContent='';
  setRecAddMode('search');
+ document.getElementById('rec-from-field').hidden=!!suggestTo;
 }
+// Recommending to a friend: who it's for (null when adding to your own What's Next).
+var recSuggestTo=null;
+function openRecommendTo(){
+ if(!currentUser||!viewedProfile||isOwnProfile||isLockedProfile())return;
+ openPasteRecommendations({id:viewedProfile.id,username:viewedProfile.username,display_name:viewedProfile.display_name});
+}
+function canRecommendTo(){return !!(currentUser&&viewedProfile&&!isOwnProfile&&viewedProfile.id!==currentUser.id&&!isLockedProfile());}
 // ── Add a recommendation: Search (default) or Paste a message ──
 let recSearch={request:0,timer:null,results:[],kind:null,q:'',added:new Set(),saving:false};
 const REC_KIND_ORDER=['film','tv','book','author','song','album','artist','podcast'];
@@ -5120,12 +5221,13 @@ function renderRecSearch(){
  const q=recSearch.q;if(q.length<2){el.innerHTML='';return;}
  const res=recSearch.results,kinds=REC_KIND_ORDER.filter(k=>res.some(r=>r.type===k)),f=recSearch.kind;
  const chips=kinds.length>1?`<div class="picker-kinds" role="group" aria-label="Filter results by type"><button type="button" class="fav-chip" aria-pressed="${!f}" onclick="setRecSearchKind(null)">All</button>${kinds.map(k=>`<button type="button" class="fav-chip" aria-pressed="${f===k}" onclick="setRecSearchKind('${k}')">${REC_KIND_LABEL[k]}</button>`).join('')}</div>`:'';
- const rows=res.map((r,i)=>({r,i})).filter(x=>!f||x.r.type===f).map(({r,i})=>{const added=recSearch.added.has(i);return `<button type="button" class="extra-result${added?' is-added':''}" data-index="${i}" aria-pressed="${added}" aria-label="${added?'Remove':'Add'} ${esc(r.title)} ${added?'from':'to'} What’s Next" onclick="addRecFromSearch(${i},this)"><span class="rec-art">${r.art?`<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span>${esc((r.title||'?').slice(0,1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([pasteRecTypes[r.type],r.sub,r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${added?'✓':'+'}</span></button>${r.type==='podcast'&&r.catalogId&&r.kind!=='episode'?`<button type="button" class="ep-pick-link" onclick="recEpisodeFor(${i})">Choose an episode…</button>`:''}`;}).join('');
- const manual=`<button type="button" class="rec-manual" onclick="addRecManually()">Can’t find it? Add “${esc(q.slice(0,80))}” as written</button>`;
+ const rows=res.map((r,i)=>({r,i})).filter(x=>!f||x.r.type===f).map(({r,i})=>{const added=recSearch.added.has(i);return `<button type="button" class="extra-result${added?' is-added':''}" data-index="${i}" aria-pressed="${added}" aria-label="${recSuggestTo?(added?'Take back':'Recommend')+' '+esc(r.title):`${added?'Remove':'Add'} ${esc(r.title)} ${added?'from':'to'} What’s Next`}" onclick="addRecFromSearch(${i},this)"><span class="rec-art">${r.art?`<img src="${esc(r.art)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span>${esc((r.title||'?').slice(0,1))}</span></span><span><strong>${esc(r.title)}</strong><small>${esc([pasteRecTypes[r.type],r.sub,r.meta].filter(Boolean).join(' · '))}</small></span><span class="picker-add" aria-hidden="true">${added?'✓':'+'}</span></button>${r.type==='podcast'&&r.catalogId&&r.kind!=='episode'?`<button type="button" class="ep-pick-link" onclick="recEpisodeFor(${i})">Choose an episode…</button>`:''}`;}).join('');
+ const manual=`<button type="button" class="rec-manual" onclick="addRecManually()">Can’t find it? ${recSuggestTo?'Recommend':'Add'} “${esc(q.slice(0,80))}” as written</button>`;
  el.innerHTML=chips+(rows||'<p class="rec-search-note">No matches yet.</p>')+(recSearch.partial?'<p class="rec-search-note">Some catalogs could not load.</p>':'')+manual;
 }
 async function insertRec(row,label){
  const status=document.getElementById('rec-search-status');
+ if(recSuggestTo)return sendRecSuggestion(row);
  if(!isOwnProfile||!currentUser)return false;
  const userId=currentUser.id;
  if(FRIEND_RECOMMENDATIONS.some(r=>r.type===row.type&&isAuthorEntry(r)===isAuthorEntry(row)&&tasteNorm(r.title)===tasteNorm(row.title))){status.className='rec-search-status';status.textContent=row.title+' is already in What’s Next.';return false;}
@@ -5141,9 +5243,24 @@ async function insertRec(row,label){
  }catch(e){status.className='rec-search-status is-error';status.textContent=e.message||'Could not save. Please try again.';return false;}
  finally{recSearch.saving=false;}
 }
+async function sendRecSuggestion(row){
+ const status=document.getElementById('rec-search-status'),to=recSuggestTo;if(!to||!currentUser)return false;
+ const fname=firstNameOnly(to.display_name)||to.username;
+ if(viewedProfile?.id===to.id&&FRIEND_RECOMMENDATIONS.some(r=>r.type===row.type&&tasteNorm(r.title)===tasteNorm(row.title))){status.className='rec-search-status';status.textContent=`${row.title} is already on ${fname}’s What’s Next.`;return false;}
+ recSearch.saving=true;status.className='rec-search-status';status.textContent='Sending '+row.title+'…';
+ try{
+  if(!(await requireFreshSession()))throw Error('Please sign in again before sending.');
+  const full={to_id:to.id,title:row.title,type:row.type,art_url:row.art_url||null,catalog_item:row.catalog_item||null};
+  const {data:saved,error}=await sb.from('rec_suggestions').insert(full).select('id').single();
+  if(error){if(error.code==='23505'){status.textContent=`You’ve already recommended ${row.title} to ${fname}.`;return false;}throw error;}
+  status.textContent=`✓ Sent ${row.title} to ${fname}. Tap it again to undo.`;
+  return saved?.id||true;
+ }catch(e){status.className='rec-search-status is-error';status.textContent=e.message||'Could not send. Please try again.';return false;}
+ finally{recSearch.saving=false;}
+}
 function recEpisodeFor(i){
  const r=recSearch.results[i];if(!r?.catalogId)return;epPicker.preset=null;
- openEpisodeSheet({podcast:{catalogId:r.catalogId,title:r.title,art:r.art,artist:r.sub},confirmLabel:'Add to What’s Next',onConfirm:async e=>{
+ openEpisodeSheet({podcast:{catalogId:r.catalogId,title:r.title,art:r.art,artist:r.sub},confirmLabel:recSuggestTo?'Recommend this episode':'Add to What’s Next',onConfirm:async e=>{
   const item={...episodeCatalogItem({title:r.title,art:r.art},e),type:'podcast',sub:r.title,meta:shortEpisodeDate(e.date)};
   let idx=recSearch.results.findIndex(x=>x.kind==='episode'&&String(x.catalogId)===String(e.id));
   if(idx<0){recSearch.results.push(item);idx=recSearch.results.length-1;}
@@ -5160,10 +5277,12 @@ async function addRecFromSearch(i,btn){
  if(recSearch.added.has(i)){   // tapped again: take it back out
   const id=recSearch.addedIds[i];if(typeof id!=='string')return;
   recSearch.saving=true;if(mark)mark.textContent='…';
-  try{const {error}=await sb.from('friend_recs').delete().eq('id',id).eq('user_id',currentUser.id);if(error)throw error;
+  try{
+   if(recSuggestTo){const {error}=await sb.from('rec_suggestions').delete().eq('id',id).eq('from_id',currentUser.id);if(error)throw error;}
+   else{const {error}=await sb.from('friend_recs').delete().eq('id',id).eq('user_id',currentUser.id);if(error)throw error;}
    recSearch.added.delete(i);delete recSearch.addedIds[i];btn?.classList.remove('is-added');if(mark)mark.textContent='+';
-   const st=document.getElementById('rec-search-status');st.className='rec-search-status';st.textContent='Removed '+r.title+'.';
-   loadFriendRecsFromSupabase(currentUser.id).catch(()=>{});
+   const st=document.getElementById('rec-search-status');st.className='rec-search-status';st.textContent=(recSuggestTo?'Took back ':'Removed ')+r.title+'.';
+   if(!recSuggestTo)loadFriendRecsFromSupabase(currentUser.id).catch(()=>{});
   }catch(e){if(mark)mark.textContent='✓';}finally{recSearch.saving=false;}
   return;
  }
@@ -5178,7 +5297,7 @@ async function addRecManually(){
  const type=recSearch.kind||'other';
  if(await insertRec({title,type,art_url:null}))document.getElementById('rec-search-q').select();
 }
-function closePasteRecommendations(){if(pasteRecs.busy)return;pasteRecs.version++;document.getElementById('paste-rec-modal').hidden=true;document.querySelector('#recs-head-controls button')?.focus();}
+function closePasteRecommendations(){if(pasteRecs.busy)return;pasteRecs.version++;recSuggestTo=null;document.getElementById('paste-rec-modal').hidden=true;document.querySelector('#recs-head-controls button')?.focus();}
 function pasteRecDialogKey(e){
  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closePasteRecommendations();return;}
  if(e.key!=='Tab')return;
@@ -8400,6 +8519,7 @@ const NOTIF_COPY = {
   follow_request: (who) => `${who} wants to follow you`,
   follow_accepted: (who) => `${who} accepted your follow request`,
   new_follower: (who) => `${who} started following you`,
+  rec_suggested: (who, n) => `${who} recommended ${n.target_label ? `<strong>${esc(n.target_label)}</strong>` : 'something'} for your What’s Next<span class="notif-reply">Add it →</span>`,
   taste_ask: (who, n) => `${who} wants to see your favorite <strong>${esc(TASTE_ASK_LABEL[n.target_label] || 'picks')}</strong><span class="notif-reply">Add yours →</span>`,
   taste_ask_done: (who, n) => `${who} added their favorite <strong>${esc(TASTE_ASK_LABEL[n.target_label] || 'picks')}</strong> for you<span class="notif-reply">See them →</span>`,
 };
@@ -8424,7 +8544,7 @@ function renderNotificationsDropdown(rows) {
       NOTIF_ROWS.set(n.id, n);
       const isComment = (n.type === 'comment' || (n.type === 'reaction' && n.target_type === 'comment')) && n.target_type && n.target_id;
       const goesToTarget = (n.target_type === 'activity_feed' && ['new_post','comment','comment_reply','reaction','tag'].includes(n.type)) || ['list_item','list_joined','list_added'].includes(n.type) || (n.type === 'comment_reply' && /^taste_list/.test(n.target_type || ''));
-      const action = n.type === 'taste_ask' ? `onclick="openTasteAsk('${esc(jsStr(n.target_label || ''))}')"` : n.type === 'taste_ask_done' && uname ? `onclick="closeNotificationsDropdown(); location.assign('?u=${encodeURIComponent(uname)}&tab=favorites')"` : isComment ? `onclick="openCommentTarget('${n.id}')"` : goesToTarget ? `onclick="openNotificationTarget('${n.id}')"` : (isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`);
+      const action = n.type === 'rec_suggested' ? `onclick="openRecInbox()"` : n.type === 'taste_ask' ? `onclick="openTasteAsk('${esc(jsStr(n.target_label || ''))}')"` : n.type === 'taste_ask_done' && uname ? `onclick="closeNotificationsDropdown(); location.assign('?u=${encodeURIComponent(uname)}&tab=favorites')"` : isComment ? `onclick="openCommentTarget('${n.id}')"` : goesToTarget ? `onclick="openNotificationTarget('${n.id}')"` : (isRequest || !uname ? '' : `onclick="closeNotificationsDropdown(); goToProfile('${esc(uname)}')"`);
       return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);${n.read ? '' : 'background:rgba(124,77,255,0.08);'}display:flex;flex-direction:column;gap:6px;${isRequest ? '' : 'cursor:pointer;'}" ${action}>
         <div style="font-size:13px;color:var(--text);line-height:1.4;">${text}</div>
         <div style="font-size:11px;color:var(--faint);">${formatActivityDate(n.created_at)}</div>
@@ -8614,6 +8734,8 @@ function updateProfileHeaderAndBanner() {
   renderLiveTasteSentence();
   const banner = document.getElementById('profile-link-banner');
   if (!banner) return;
+  document.getElementById('profile-header')?.classList.remove('is-visitor');
+  { const fs = document.getElementById('profile-follow-slot'); if (fs) fs.innerHTML = ''; const ch = document.getElementById('taste-match-chip'); if (ch) ch.innerHTML = ''; }
   if (isOwnProfile && viewedProfile?.username) {
     const link = `${window.location.origin}${window.location.pathname}?u=${encodeURIComponent(viewedProfile.username)}`;
     const isPublic = viewedProfile.is_public !== false;
@@ -8627,8 +8749,12 @@ function updateProfileHeaderAndBanner() {
     // Someone else's profile: the header already says whose it is, so the only action is Follow.
     // (A locked profile's own panel below carries the Follow button and the explanation.)
     const followLabel = followStatus === 'accepted' ? '✓ Following' : followStatus === 'pending' ? 'Requested' : 'Follow';
+    const followSlot = document.getElementById('profile-follow-slot');
+    if (followSlot) followSlot.innerHTML = currentUser && !isLockedProfile()
+      ? `<button id="follow-btn" type="button" class="profile-control profile-follow-inline${followStatus === 'accepted' || followStatus === 'pending' ? '' : ' is-primary'}" onclick="toggleFollow()">${followLabel}</button>` : '';
+    document.getElementById('profile-header')?.classList.toggle('is-visitor', !!(currentUser && !isLockedProfile()));
     banner.innerHTML = currentUser && !isLockedProfile()
-      ? `<div class="profile-actions"><button id="follow-btn" type="button" class="profile-control${followStatus === 'accepted' || followStatus === 'pending' ? '' : ' is-primary'}" onclick="toggleFollow()">${followLabel}</button></div><div id="taste-match-slot" class="tmh-slot"></div>`
+      ? `<div id="taste-match-slot" class="tmh-slot"></div>`
       : '';
     if (currentUser && !isLockedProfile()) setTimeout(() => { try { renderTasteMatchHeader(); } catch (_) {} }, 0);
   } else {
@@ -18895,10 +19021,11 @@ function syncHappeningSections(){
  const own=!!currentUser&&isOwnProfile&&viewedProfile?.id===currentUser.id;
  const noNew=!ACTIVITY_FEED_ITEMS.length, noNext=!FRIEND_RECOMMENDATIONS.length;
  const nextEl=document.getElementById('happening-next'), newEl=document.getElementById('happening-new'), empty=document.getElementById('happening-empty');
- if(nextEl)nextEl.hidden=!own&&noNext;
+ const canRec=false;   // sending a pick lives in the profile header now
+ if(nextEl)nextEl.hidden=!own&&noNext&&!canRec;
  if(newEl)newEl.hidden=!own&&noNew;
  const name=firstNameOnly(viewedProfile?.display_name)||viewedProfile?.username||'They';
- if(empty){empty.hidden=own||!(noNew&&noNext);empty.textContent=`Nothing new from ${name} yet.`;}
+ if(empty){empty.hidden=own||canRec||!(noNew&&noNext);empty.textContent=`Nothing new from ${name} yet.`;}
  const ns=document.getElementById('happening-new-sub'),xs=document.getElementById('happening-next-sub');
  if(ns)ns.textContent=own?'What I’ve been watching, reading & listening to lately':`What ${name}’s been watching, reading & listening to lately`;
  if(xs)xs.textContent=own?'Things I want to check out':`Things ${name} wants to check out`;
@@ -20826,6 +20953,58 @@ function syncActivityUtility() {
   const el = document.getElementById('activity-feed-utility');
   if (el) el.innerHTML = isOwnProfile && ACTIVITY_FEED_ITEMS.length ? `<button type="button" class="ed-link" onclick="toggleActivityEditMode()">${activityEditMode ? 'Done editing' : 'Edit updates'}</button>` : '';
 }
+// ── Recommendations friends sent you: a small "From friends" row above your What's Next ──
+var recInbox = { uid: null, items: [] };
+async function loadRecInbox() {
+  if (!sb || !currentUser) return;
+  const uid = currentUser.id;
+  const { data, error } = await sb.from('rec_suggestions').select('id,title,type,art_url,catalog_item,created_at,from_id,profiles!rec_suggestions_from_id_fkey(username,display_name)')
+    .eq('to_id', uid).order('created_at', { ascending: false }).limit(30);
+  if (error || currentUser?.id !== uid) return;
+  recInbox = { uid, items: data || [] };
+  if (isOwnProfile && viewedProfile?.id === uid) renderFriendRecs();
+}
+function recInboxHtml() {
+  const items = recInbox.items || [];
+  if (!items.length) return '';
+  return `<div class="rec-inbox" aria-label="Recommended to you by friends"><div class="rec-inbox-head">From friends</div><div class="rec-inbox-row">${items.map(s => {
+    const who = firstNameOnly(s.profiles?.display_name) || s.profiles?.username || 'A friend';
+    const round = s.type === 'artist' || s.catalog_item?.kind === 'author', square = ['song','album','podcast'].includes(s.type);
+    return `<div class="rec-inbox-item" data-id="${esc(s.id)}">
+      <span class="rec-inbox-art${round ? ' is-round' : square ? ' is-square' : ''}">${s.art_url ? `<img src="${esc(s.art_url)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span>${esc((s.title || '?').trim().charAt(0).toUpperCase())}</span></span>
+      <span class="rec-inbox-text"><span class="rec-inbox-title" title="${esc(s.title)}">${esc(s.title)}</span><span class="rec-inbox-from">from ${esc(who)}</span></span>
+      <span class="rec-inbox-actions"><button type="button" class="rec-inbox-add" onclick="acceptRecSuggestion('${esc(jsStr(s.id))}',this)" aria-label="Add ${esc(s.title)} to What’s Next">Add</button><button type="button" class="rec-inbox-x" onclick="dismissRecSuggestion('${esc(jsStr(s.id))}',this)" aria-label="No thanks to ${esc(s.title)}">×</button></span>
+    </div>`;
+  }).join('')}</div></div>`;
+}
+async function acceptRecSuggestion(id, btn) {
+  const s = recInbox.items.find(x => x.id === id); if (!s || !currentUser) return;
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    if (!(await requireFreshSession())) throw Error('Please sign in again.');
+    const { data, error } = await sb.rpc('accept_rec_suggestion', { p_id: id });
+    if (error) throw error;
+    recInbox.items = recInbox.items.filter(x => x.id !== id);
+    const who = firstNameOnly(s.profiles?.display_name) || s.profiles?.username || 'your friend';
+    showToast(data === 'added' ? `Added to your What’s Next, rec’d by ${who}.` : `Already on your What’s Next — ${data === 'merged' ? `added ${who} as a recommender` : `rec’d by ${who}`}.`);
+    await loadFriendRecsFromSupabase(currentUser.id); renderFriendRecs();
+  } catch (e) { btn.disabled = false; btn.textContent = 'Add'; showToast('Couldn’t add it: ' + (e.message || 'please try again')); }
+}
+async function dismissRecSuggestion(id, btn) {
+  if (!currentUser) return;
+  btn.disabled = true;
+  const { error } = await sb.from('rec_suggestions').delete().eq('id', id).eq('to_id', currentUser.id);
+  if (error) { btn.disabled = false; showToast('Couldn’t remove it. Please try again.'); return; }
+  recInbox.items = recInbox.items.filter(x => x.id !== id);
+  renderFriendRecs();
+}
+async function openRecInbox() {
+  closeNotificationsDropdown();
+  await goToMyProfileView();
+  try { switchTab('profile'); } catch (_) {}
+  await loadRecInbox();
+  setTimeout(() => document.getElementById('happening-next')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+}
 function renderFriendRecs() {
   if(syncInitialTasteProfile())renderDynamicProfilePicks();
   const el = document.getElementById('friend-recs');
@@ -20833,16 +21012,20 @@ function renderFriendRecs() {
   el.closest('.ed-panel')?.classList.toggle('profile-section-empty',!FRIEND_RECOMMENDATIONS.length);
   syncHappeningSections();
   // Always available to the owner — adding a recommendation shouldn't require finding Edit first.
+  const own = !!currentUser && isOwnProfile && viewedProfile?.id === currentUser.id;
+  if (own && (recInbox.uid !== currentUser.id)) { recInbox = { uid: currentUser.id, items: [] }; loadRecInbox(); }
+  const inbox = own ? recInboxHtml() : '';
+  const visitorCtl = '';
   const addBtnHtml = isOwnProfile ? `
     <button class="list-create-cta" onclick="openPasteRecommendations()" style="padding:9px 18px;font-size:12.5px;margin-bottom:14px;"><span class="list-create-plus" style="width:18px;height:18px;font-size:13px;">+</span>Add recommendation</button>` : '';
   if (!FRIEND_RECOMMENDATIONS.length) {
-    const hc = document.getElementById('recs-head-controls');if(hc)hc.innerHTML=isOwnProfile ? whatsNextHeaderActions() : '';
+    const hc = document.getElementById('recs-head-controls');if(hc)hc.innerHTML=isOwnProfile ? whatsNextHeaderActions() : visitorCtl;
     syncNextUtility();
-    el.innerHTML=compactProfileEmpty('next');
+    el.innerHTML=inbox+(inbox?'':compactProfileEmpty('next'));
     return;
   }
   const headCtl = document.getElementById('recs-head-controls');
-  if (headCtl) headCtl.innerHTML = isOwnProfile ? whatsNextHeaderActions() : '';
+  if (headCtl) headCtl.innerHTML = isOwnProfile ? whatsNextHeaderActions() : visitorCtl;
   syncNextUtility();
   // Collapsed view: one continuous row of covers, types taking turns (a movie, a show, a book, …) so
   // the row reads as a mix. Categories only appear in "See all".
@@ -20865,7 +21048,7 @@ function renderFriendRecs() {
       </button></span>`;
   }).join('');
   const strip = `<div class="recs-row">${thumbs}</div>`;
-  el.innerHTML = `
+  el.innerHTML = inbox + `
     <div class="recs-toolbar">
       <button type="button" class="ed-link" onclick="openRecsExpanded()">See all ${FRIEND_RECOMMENDATIONS.length}<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
@@ -21176,7 +21359,8 @@ function tasteThumb(x,cls){
 function renderTasteMatchHeader(){
  const slot=document.getElementById('taste-match-slot');if(!slot)return;
  const pid=viewedProfile?.id;
- if(!currentUser||!pid||isOwnProfile||isLockedProfile()){slot.innerHTML='';return;}
+ const chip=document.getElementById('taste-match-chip');
+ if(!currentUser||!pid||isOwnProfile||isLockedProfile()){slot.innerHTML='';if(chip)chip.innerHTML='';return;}
  if(!tasteMatchCache.has(pid)||!tasteAskState.sent.has(pid)){loadTasteFriendData(pid);}
  const name=firstNameOnly(viewedProfile.display_name)||viewedProfile.username||'them';
  const rows=tasteMatchCache.get(pid),shared=rows==='loading'?[]:sharedTasteArt(rows);
@@ -21186,13 +21370,13 @@ function renderTasteMatchHeader(){
  const sent=tasteAskState.sent.get(pid)||new Map();
  const open=slot.dataset.open||'';
  let html='';
- if(shared.length){
-  html+=`<button type="button" class="tmh-match" aria-expanded="${open==='match'}" onclick="toggleTasteMatchPop('match')"><span class="tmh-stack">${shared.slice(0,4).map(x=>tasteThumb(x,'tmh-thumb')).join('')}</span><span class="tmh-label">You both love</span></button>`;
-  if(open==='match')html+=`<div class="tmh-pop tmh-pop-art" role="dialog" aria-label="Favorites you and ${esc(name)} share"><div class="tmh-pop-head">You and ${esc(name)} both love</div><div class="tmh-grid">${shared.map(x=>`<figure class="tmh-tile">${tasteThumb(x,'tmh-art')}<figcaption>${esc(x.title)}</figcaption></figure>`).join('')}</div></div>`;
- }
- if(missing.length){
-  html+=`<button type="button" class="tmh-ask" aria-expanded="${open==='ask'}" onclick="toggleTasteMatchPop('ask')">Ask ${esc(name)} for more picks</button>`;
-  if(open==='ask'){
+ // Swap recommendations: ask them for a pick (primary) or send them one (secondary).
+ html+=`<section class="swap-recs" aria-labelledby="swap-recs-title"><h3 class="swap-recs-title" id="swap-recs-title">Swap picks with ${esc(name)}</h3><div class="swap-recs-btns">
+  <button type="button" class="swap-btn is-ask" aria-expanded="${open==='ask'}" aria-haspopup="dialog" onclick="toggleTasteMatchPop('ask')"><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.9-.9L3 20.5l1.5-4.6A8.1 8.1 0 0 1 3 11.5 8.6 8.6 0 0 1 12 3a8.6 8.6 0 0 1 9 8.5z"/><path d="M12 15.2s-3.4-2-3.4-4.2a1.8 1.8 0 0 1 3.4-.9 1.8 1.8 0 0 1 3.4.9c0 2.2-3.4 4.2-3.4 4.2z" fill="currentColor" stroke="none"/></svg>Ask for a pick</button>
+  <button type="button" class="swap-btn is-send" onclick="openRecommendTo()"><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2.5 10.8 13.2"/><path d="M21.5 2.5 14.7 21.3l-3.9-8.1-8.1-3.9z"/></svg>Send a pick</button>
+ </div>`;
+  if(open==='ask'&&!have)html+=`<div class="tmh-pop" role="dialog" aria-label="Ask ${esc(name)} for picks"><div class="tmh-pop-head">Loading…</div></div>`;
+  if(open==='ask'&&have){
    // Three suggestions to start (the thinnest categories, plus any already asked); the rest behind "Other".
    const showAll=slot.dataset.all==='1',first=missing.filter((c,i)=>i<3||sent.has(c)),list=showAll?missing:first;
    const label=c=>(have[c]||0)===0?TASTE_ASK_TITLE[c]:`More ${TASTE_ASK_LABEL[c]}`;
@@ -21200,8 +21384,20 @@ function renderTasteMatchHeader(){
     ?`<button type="button" class="ta-chip is-sent" onclick="undoTasteAsk('${esc(jsStr(pid))}','${c}')" title="Take back this ask">✓ ${esc(label(c))}</button>`
     :`<button type="button" class="ta-chip" onclick="sendTasteAsk('${esc(jsStr(pid))}','${c}')">${esc(label(c))}</button>`).join('')}${!showAll&&missing.length>list.length?`<button type="button" class="tmh-other" onclick="document.getElementById('taste-match-slot').dataset.all='1';renderTasteMatchHeader()">Other</button>`:''}</div><p class="tmh-pop-note">${esc(name)} gets a nudge, and you’ll hear when they add some.</p></div>`;
   }
+ html+=`</section>`;   // the ask popover sits inside the section, right under the tiles
+ // Shared taste leads the column; swapping picks follows it.
+ sharedTasteShown=shared;
+ const ready=Array.isArray(rows)&&loaded;
+ let sharedHtml='';
+ if(shared.length){
+  sharedHtml=`<section class="shared-taste" aria-labelledby="shared-taste-title"><div class="shared-taste-head"><h3 id="shared-taste-title">You both love</h3>${shared.length>6?`<button type="button" class="shared-taste-all" aria-expanded="${open==='match'}" onclick="toggleTasteMatchPop('match')">View all</button>`:''}</div>
+   <div class="shared-taste-row">${shared.slice(0,12).map((x,i)=>`<button type="button" class="shared-taste-item${['music','podcasts'].includes(x.tab||x.cat)?' is-square':''}" onclick="openSharedTasteItem(${i})" aria-label="${esc(x.title)}">${tasteThumb(x,'shared-taste-art')}<span class="shared-taste-cap">${esc(x.title)}</span></button>`).join('')}</div>`;
+  if(open==='match')sharedHtml+=`<div class="tmh-pop tmh-pop-art" role="dialog" aria-label="Favorites you and ${esc(name)} share"><div class="tmh-pop-head">You and ${esc(name)} both love</div><div class="tmh-grid">${shared.map((x,i)=>`<button type="button" class="tmh-tile" onclick="openSharedTasteItem(${i})">${tasteThumb(x,'tmh-art')}<span class="tmh-tile-cap">${esc(x.title)}</span></button>`).join('')}</div></div>`;
+  sharedHtml+=`</section>`;
+ }else if(ready){
+  sharedHtml=`<section class="shared-taste is-empty"><div class="shared-taste-head"><h3>You both love</h3></div><p class="shared-taste-empty">As you and ${esc(name)} add favorites, the ones you share will show up here.</p></section>`;
  }
- slot.innerHTML=html;
+ slot.innerHTML=sharedHtml+html;if(chip)chip.innerHTML='';
  // Artwork for shared titles the boxes below haven't loaded yet (only their first few are).
  // profileTasteFavorites() hands back fresh copies each time, so found art is kept by title here.
  for(const x of shared){
@@ -21216,12 +21412,22 @@ function renderTasteMatchHeader(){
  }
 }
 var sharedArtCache=new Map();   // "tv|succession" → artwork URL
+var sharedTasteShown=[];
+// A shared favorite opens the same summary sheet as a post about it (no post, so no comments).
+function openSharedTasteItem(i){
+ const x=sharedTasteShown[i];if(!x)return;
+ const slot=document.getElementById('taste-match-slot');if(slot?.dataset.open){slot.dataset.open='';renderTasteMatchHeader();}
+ const p=x._p||{},tab=x.tab||x.cat;
+ const kind=tab==='movies'?'movie':tab==='tv'?'tv':tab==='books'?(p._tasteKind==='author'?'author':'book'):tab==='music'?(p._tasteKind==='album'?'album':'artist'):tab==='podcasts'?'podcast':'other';
+ const {id,user_id,...pick}=p;
+ openActivitySummary({...pick,id:null,title:x.title,label:x.title,type:kind,cat:kind,icon:kind,art:x.art||'',art_url:x.art||'',tab:({movie:'movies',tv:'tv',book:'books',author:'books',album:'albums',artist:'music',podcast:'podcasts'})[kind]||'profile'});
+}
 
 function toggleTasteMatchPop(which){
  const slot=document.getElementById('taste-match-slot');if(!slot)return;
  slot.dataset.open=slot.dataset.open===which?'':which;slot.dataset.all='';renderTasteMatchHeader();
 }
-document.addEventListener('click',e=>{const slot=document.getElementById('taste-match-slot');if(slot&&slot.dataset.open&&e.target.isConnected&&!slot.contains(e.target)){slot.dataset.open='';renderTasteMatchHeader();}});
+document.addEventListener('click',e=>{const slot=document.getElementById('taste-match-slot'),chip=document.getElementById('taste-match-chip');if(slot&&slot.dataset.open&&e.target.isConnected&&!slot.contains(e.target)&&!chip?.contains(e.target)){slot.dataset.open='';renderTasteMatchHeader();}});
 document.addEventListener('keydown',e=>{const slot=document.getElementById('taste-match-slot');if(e.key==='Escape'&&slot?.dataset.open){slot.dataset.open='';renderTasteMatchHeader();}});
 async function sendTasteAsk(profileId,cat){
  if(!sb||!currentUser||tasteAskState.busy||!TASTE_ASK_CATS.includes(cat))return;
@@ -22950,7 +23156,8 @@ renderTasteInfluences();
  <div class="paste-rec-dialog" role="dialog" aria-modal="true" aria-labelledby="paste-rec-heading" onkeydown="pasteRecDialogKey(event)">
  <button type="button" class="sl-btn" style="float:right" aria-label="Close" onclick="closePasteRecommendations()">×</button>
  <h2 id="paste-rec-heading">Add a recommendation</h2>
- <div class="rec-tabs" role="tablist" aria-label="How to add">
+ <p id="rec-suggest-note" class="rec-suggest-note" hidden></p>
+ <div class="rec-tabs" id="rec-tabs" role="tablist" aria-label="How to add">
   <button type="button" role="tab" id="rec-tab-search" aria-selected="true" onclick="setRecAddMode('search')">Search</button>
   <button type="button" role="tab" id="rec-tab-paste" aria-selected="false" onclick="setRecAddMode('paste')">Paste a message</button>
  </div>
