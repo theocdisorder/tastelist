@@ -11436,6 +11436,7 @@ function listenQuery(d) {
   return m ? decodeURIComponent(m[1]) : '';
 }
 function listenUrl(svc, d) {
+  if(d.postMusic)return postMusicTarget(svc,d).url;
   const q = listenQuery(d);
   if (svc === 'apple' && /music\.apple\.com\/.+\/(album|song|playlist)\//.test(d.apple || '')) return d.apple;
   if (svc === 'spotify' && /open\.spotify\.com\/(track|album|playlist)\//.test(d.spotify || '')) return d.spotify;
@@ -11517,7 +11518,7 @@ function enhanceStreamLinks(root = document) {
 }
 function relabelListenButtons() {
   const svc = getMusicService();
-  document.querySelectorAll('.listen-btn span').forEach(sp => { sp.textContent = svc ? MUSIC_SERVICES[svc].name : 'Listen'; });
+  document.querySelectorAll('.listen-btn span').forEach(sp => { sp.textContent = sp.parentElement.dataset.postMusic ? postMusicLabel(sp.parentElement.dataset) : svc ? MUSIC_SERVICES[svc].name : 'Listen'; });
 }
 let listenChooserFor = null;
 function listenOpen(btn, ev) {
@@ -11530,10 +11531,10 @@ function openListenChooser(btn, ev) {
   ev?.stopPropagation(); ev?.preventDefault();
   listenChooserFor = btn; podcastChooserFor = null;
   document.getElementById('listen-chooser-title').textContent = 'Open in…';
-  document.querySelector('#listen-chooser .listen-lede').textContent = 'Songs and albums on TasteList will open in the service you use.';
+  document.querySelector('#listen-chooser .listen-lede').textContent = btn?.dataset.postMusic ? 'Open a verified music link when available, or search your chosen app. Remember your choice for future music posts.' : 'Songs, albums, and artists on TasteList will open in the service you use.';
   const cur = getMusicService();
   document.getElementById('listen-chooser-list').innerHTML = Object.entries(MUSIC_SERVICES).map(([k, v]) =>
-    `<button type="button" class="listen-choice${k === cur ? ' current' : ''}" onclick="chooseListenService('${k}')"><span class="listen-dot svc-${k}"></span>${esc(v.name)}${k === cur ? '<span class="listen-current">Current</span>' : ''}</button>`).join('');
+    `<button type="button" class="listen-choice${k === cur ? ' current' : ''}" onclick="chooseListenService('${k}')"><span class="listen-dot svc-${k}"></span>${esc(btn?.dataset.postMusic ? postMusicTarget(k,btn.dataset).label : v.name)}${k === cur ? '<span class="listen-current">Current</span>' : ''}</button>`).join('');
   document.getElementById('listen-chooser').style.display = 'flex';
 }
 function closeListenChooser() { document.getElementById('listen-chooser').style.display = 'none'; listenChooserFor = null; }
@@ -19316,7 +19317,28 @@ function podcastListenData(a) {
 }
 // The button opens: the viewer's app if chosen, otherwise the app the link came from.
 function podcastTargetService(d) { return getPodcastService() || podcastHostService(d.url) || 'apple'; }
+// Song posts share the viewer's existing music preference, but never guess an exact match.
+function postMusicDirectUrl(raw, service) {
+ try {
+  const u=new URL(raw);
+  if(u.protocol!=='https:'||u.username||u.password)return '';
+  if(service==='spotify'&&u.hostname==='open.spotify.com'&&/^\/(?:intl-[^/]+\/)?(?:track|album|artist)\/[A-Za-z0-9]+\/?$/.test(u.pathname))return u.href;
+  if(service==='apple'&&u.hostname==='music.apple.com'&&/^\/(?:[a-z]{2}\/)?(?:song|album|artist)\//.test(u.pathname))return u.href;
+ }catch(_){}
+ return '';
+}
+function postMusicTarget(svc,d){
+ const direct=postMusicDirectUrl(d[svc],svc);
+ return {url:direct||MUSIC_SERVICES[svc].search(listenQuery(d)),label:(direct?'Listen on ':'Search on ')+MUSIC_SERVICES[svc].name};
+}
+function postMusicLabel(d){const svc=getMusicService();return svc?postMusicTarget(svc,d).label:'Listen';}
+function postMusicLinkHtml(a){
+ const d={q:[...new Set([a.title,a.artist].filter(Boolean).map(v=>v.trim()))].join(' '),apple:postMusicDirectUrl(a.appleMusicUrl||a.apple||a.url,'apple'),spotify:postMusicDirectUrl(a.spotifyUrl||a.spotify||a.url,'spotify')};
+ if(!d.q)return '';
+ return `<span class="post-listen-wrap" onclick="event.stopPropagation()"><button type="button" class="post-listen listen-btn" data-post-music="true" data-q="${esc(d.q)}" data-apple="${esc(d.apple)}" data-spotify="${esc(d.spotify)}" onclick="listenOpen(this,event)"><span>${esc(postMusicLabel(d))}</span> ↗</button><button type="button" class="post-listen-switch" aria-label="Choose music app" title="Choose music app" onclick="openListenChooser(this.previousElementSibling,event)">▾</button></span>`;
+}
 function listenLinkHtml(a){
+ if(a&&['song','album','artist'].includes(a.kind))return postMusicLinkHtml(a);
  // A YouTube link (a music video, or a show we can't match to Apple Podcasts) just opens on YouTube.
  const raw = a?.episode?.url || a?.url || '';
  const fromYouTube = podcastHostService(raw) === 'youtube';
@@ -22669,7 +22691,7 @@ renderTasteInfluences();
   <div class="tl-modal-shell listen-shell" role="dialog" aria-modal="true" aria-labelledby="listen-chooser-title">
     <button class="tl-modal-close" onclick="closeListenChooser()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></button>
     <h2 id="listen-chooser-title" class="listen-title">Open in…</h2>
-    <p class="listen-lede">Songs and albums on TasteList will open in the service you use.</p>
+    <p class="listen-lede">Songs, albums, and artists on TasteList will open in the service you use.</p>
     <div id="listen-chooser-list" class="listen-list"></div>
     <label class="listen-remember"><input id="listen-remember" type="checkbox" checked> Remember my choice</label>
   </div>
