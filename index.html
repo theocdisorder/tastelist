@@ -2171,7 +2171,7 @@ img.recs-tag-avatar { object-fit: cover; }
 
 /* Display serif. The site-wide font lock (html body * { font-family: Inter !important }) overrode every
    heading meant to use the serif; this list is the one place serif headings are declared. */
-html body :is(.ed-title, .ed-title .recs-title-text, .sl-title, .ob-card-title, .ob-frame h1, .ob-landing-copy h1, .ob-wordmark,
+html body :is(.ed-title, .ed-title .recs-title-text, .sl-title, .ob-card-title, .lp-pane-title, .ob-frame h1, .ob-landing-copy h1, .ob-wordmark,
   .rec-detail-title, .invite-title, .dynamic-taste-empty h3, #auth-modal .tl-modal-title) { font-family: var(--ob-serif) !important; }
 html body :is(.ed-title, .ob-card-title, .rec-detail-title, .invite-title) { font-weight: 600; letter-spacing: -.015em; }
 /* Post titles share the review's sans so each post reads as one voice; serif is for section headings. */
@@ -2941,6 +2941,50 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .ob-caption.ob-eyebrow { color: #8f8c86; }
 /* Feature cards: image caption sits with the images; then label → title → body */
 .ob-card-caption { font-size: 11.5px; color: #77746e; margin: -2px 0 22px; min-height: 15px; }
+/* Landing feature mockups: small versions of the real screens (Defining Picks, What's Next, a shared list) */
+.lp-mock { display: flex !important; flex-direction: column; gap: 10px; margin-bottom: 10px !important; padding: 14px; border-radius: 10px; background: #0f0f10; border: 1px solid rgba(255,255,255,.06); min-width: 0; }
+.lp-mock img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.lp-pane-head { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lp-pane-title { font-family: var(--ob-serif); font-size: 18px; font-weight: 600; letter-spacing: -.01em; color: #f2efe9; line-height: 1.2; }
+.lp-pane-sub { font-size: 11.5px; color: #8f8c86; }
+.lp-av { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; color: #fff; font-size: 9.5px; font-weight: 700; flex: 0 0 auto; }
+/* Defining Picks card */
+.lp-taste-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; background: #18181b; }
+.lp-taste-cat { display: flex; align-items: center; gap: 6px; padding: 7px 10px; background: color-mix(in srgb, var(--c) 12%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--c) 20%, transparent); font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--c); }
+.lp-taste-cat span { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: color-mix(in srgb, var(--c) 16%, transparent); font-size: 11px; letter-spacing: 0; }
+.lp-taste-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.lp-cell { position: relative; aspect-ratio: 1; overflow: hidden; background: #2a2a2e; }
+.lp-cell .ob-tile-label { display: none; }
+.lp-taste-cap { padding: 9px 10px; }
+.lp-taste-cap strong, .lp-taste-cap span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-taste-cap strong { font-size: 12.5px; color: #f2efe9; }
+.lp-taste-cap span { font-size: 11px; color: #8f8c86; margin-top: 2px; }
+/* What's Next rows */
+.lp-recs { display: flex; flex-direction: column; }
+.lp-rec { display: flex; align-items: center; gap: 11px; padding: 7px 0; min-width: 0; }
+.lp-rec + .lp-rec { border-top: 1px solid rgba(255,255,255,.06); }
+.lp-rec-art { position: relative; flex: 0 0 auto; width: 42px; height: 63px; border-radius: 4px; overflow: hidden; background: #2a2a2e; box-shadow: 0 6px 14px rgba(0,0,0,.35); }
+.lp-rec-text { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.lp-rec-text strong { font-size: 13px; font-weight: 600; color: #f2efe9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-rec-text small { font-size: 11px; color: #8f8c86; }
+.lp-recby { display: inline-flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 11px; font-weight: 600; color: #e7c3ff; }
+/* Shared list */
+.lp-list-by { display: flex; align-items: center; gap: 7px; margin-top: 4px; font-size: 11.5px; color: #a99be0; }
+.lp-avs { display: inline-flex; }
+.lp-avs .lp-av { box-shadow: 0 0 0 2px #0f0f10; }
+.lp-avs .lp-av + .lp-av { margin-left: -5px; }
+.lp-group-label { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+.lp-list-row { display: grid; gap: 6px; }
+.lp-sq { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: -4px; }
+.lp-tile { position: relative; aspect-ratio: 1; border-radius: 5px; overflow: hidden; background: #2a2a2e; box-shadow: 0 6px 14px rgba(0,0,0,.35); }
+.lp-tile.lp-pt { aspect-ratio: 2 / 3; width: 38px; flex: 0 0 auto; }
+.lp-two { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 2px; }
+.lp-list-item { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.lp-list-item > div:last-child { min-width: 0; }
+.lp-list-item strong { display: block; font-size: 12px; font-weight: 600; color: #f2efe9; line-height: 1.25; overflow-wrap: anywhere; }
+.lp-add { margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border: 1px dashed rgba(203,176,244,.35); border-radius: 8px; font-size: 12px; font-weight: 600; color: #cbb0f4; }
+.lp-add span { font-size: 15px; line-height: 1; }
+.lp-list-item small { display: block; font-size: 10.5px; color: #8f8c86; margin-top: 2px; }
 .ob-card-label { margin-bottom: 10px; }
 .ob-card-title { font-family: var(--ob-serif); font-size: 23px; font-weight: 500; line-height: 1.2; letter-spacing: -.015em; color: #f2efe9; margin-bottom: 10px; }
 .ob-card-body { font-size: 14.5px; line-height: 1.6; color: #9c9993; flex: 1; }
@@ -3601,32 +3645,10 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
   .ob-feature-card .ob-feature-art { order: 5; margin: 0 !important; }
   .ob-feature-card .ob-card-caption { order: 6; margin: 10px 0 0; min-height: 0; }
 
-  /* Your taste: one person's profile, a compact 2×2 */
-  .ob-feature-taste .ob-card-caption { order: 4; display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; font-weight: 600; color: #d8d4cc; }
-  .ob-feature-taste .ob-card-caption::before { content: 'S'; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #7C4DFF; color: #fff; font-size: 12px; font-weight: 700; }
-  .ob-feature-taste .ob-feature-art > div { aspect-ratio: 4 / 3 !important; border-radius: 8px !important; }
-  .ob-feature-taste .ob-tile-label { font-size: 13px !important; padding: 18px 8px 6px !important; }
-
-  /* Friend recs: who recommended it leads each row */
-  .ob-feature-recs .ob-feature-art { display: flex !important; flex-direction: column; gap: 0 !important; }
-  .ob-feature-recs .ob-rec-tile { aspect-ratio: auto !important; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 64px; padding: 8px 0 8px 58px; background: none !important; border-radius: 0 !important; overflow: visible !important; border-bottom: 1px solid rgba(255,255,255,.06); }
-  .ob-feature-recs .ob-rec-tile:last-child { border-bottom: 0; }
-  .ob-feature-recs .ob-rec-tile::before { content: ''; position: absolute; left: 0; top: 50%; width: 42px; height: 56px; margin-top: -28px; border-radius: 5px; background: #2a2a2e; }
-  .ob-feature-recs .ob-rec-tile img { position: absolute !important; left: 0; top: 50%; width: 42px !important; height: 56px !important; margin-top: -28px; border-radius: 5px; z-index: 1; }
-  .ob-feature-recs .ob-rec-tile .ob-rec-from, .ob-feature-recs .ob-rec-tile .ob-tile-label { position: static !important; background: none !important; padding: 0 !important; overflow-wrap: anywhere; }
-  .ob-feature-recs .ob-rec-from { order: 1; font-size: 12.5px !important; font-weight: 500 !important; letter-spacing: 0 !important; color: #9c9993 !important; }
-  .ob-feature-recs .ob-rec-name { font-weight: 700; color: #F97360; }
-  .ob-feature-recs .ob-tile-label { order: 2; font-size: 15.5px !important; font-weight: 600 !important; line-height: 1.3; color: #f2efe9 !important; }
-
-  /* Shared lists: one list, previewed */
-  .ob-feature-lists .ob-feature-art, .ob-feature-lists .ob-card-caption { display: none !important; }
-  .ob-feature-lists .ob-list-preview { display: block; order: 5; padding: 14px; border-radius: 12px; background: rgba(124,77,255,.08); border: 1px solid rgba(124,77,255,.22); }
-  .ob-list-preview-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-  .ob-list-preview-title { font-family: var(--ob-serif); font-size: 19px; font-weight: 500; color: #f2efe9; }
-  .ob-list-preview-meta { font-size: 12px; color: #a99be0; }
-  .ob-list-preview-covers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
-  .ob-list-preview-covers > * { aspect-ratio: 2 / 3; width: 100%; border-radius: 5px; object-fit: cover; background: #2a2a2e; display: block; }
-  .ob-list-preview-more { display: grid !important; place-items: center; font-size: 14px; font-weight: 600; color: #cfc6f5; background: rgba(124,77,255,.18) !important; }
+  /* Feature mockups on phones: full width under the copy */
+  .ob-feature-card .lp-mock { margin-bottom: 0 !important; }
+  .lp-cell { aspect-ratio: 4 / 3; }
+  .ob-feature-card .ob-card-caption { display: none; }
 
   /* Closing signup */
   .ob-final-cta { display: block; text-align: center; padding: 34px 0 6px; border-top: 1px solid rgba(255,255,255,.08); }
@@ -4355,48 +4377,30 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <div class="ob-landing-hero"><div class="ob-landing-copy"><h1>You are what<br>you love.</h1><p>Share what you love. Remember what your friends recommend. Make lists worth saving.</p><button onclick="openAuthModal('signup')">Sign up <span aria-hidden="true">→</span></button><div class="ob-caption ob-eyebrow">Your taste. In one place.</div></div><div class="ob-hero-collage" id="landing-artwork" aria-label="Music, movies, books, and television to discover"></div></div>
     <div class="welcome-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:left;align-items:stretch;">
       <div class="ob-feature-card ob-feature-taste" style="background:#161618;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px;display:flex;flex-direction:column;">
-        <div class="ob-feature-art" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px;">
-          <div id="landing-tile-strokes" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;background:#2a2a2e;">
-            
-            <div class="ob-tile-label" style="position:absolute;left:0;right:0;bottom:0;padding:4px 6px;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:12px;font-weight:700;color:#fff;">The Strokes</div>
-          </div>
-          <div id="landing-tile-abba" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;background:#2a2a2e;">
-            
-            <div class="ob-tile-label" style="position:absolute;left:0;right:0;bottom:0;padding:4px 6px;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:12px;font-weight:700;color:#fff;">ABBA</div>
-          </div>
-          <div id="landing-tile-floyd" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;background:#2a2a2e;">
-            
-            <div class="ob-tile-label" style="position:absolute;left:0;right:0;bottom:0;padding:4px 6px;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:12px;font-weight:700;color:#fff;">Pink Floyd</div>
-          </div>
-          <div id="landing-tile-nirvana" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;background:#2a2a2e;">
-            
-            <div class="ob-tile-label" style="position:absolute;left:0;right:0;bottom:0;padding:4px 6px;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:12px;font-weight:700;color:#fff;">Nirvana</div>
+        <div class="ob-feature-art lp-mock" aria-hidden="true">
+          <div class="lp-pane-head"><span class="lp-pane-title">Sreya’s Defining Picks</span></div>
+          <div class="lp-taste-card" style="--c:#7C4DFF">
+            <div class="lp-taste-cat"><span>♪</span>Music</div>
+            <div class="lp-taste-grid">
+              <div id="landing-tile-strokes" class="lp-cell"></div><div id="landing-tile-abba" class="lp-cell"></div>
+              <div id="landing-tile-floyd" class="lp-cell"></div><div id="landing-tile-nirvana" class="lp-cell"></div>
+            </div>
+            <div class="lp-taste-cap"><strong>The Strokes</strong><span>ABBA · Pink Floyd · Nirvana</span></div>
           </div>
         </div>
-        <div class="ob-card-caption">Sreya's actual top 4 artists</div>
+        <div class="ob-card-caption">Sreya’s actual top 4 artists</div>
         <div class="ob-eyebrow ob-card-label" style="color:#22C55E;">Your taste</div>
         <div class="ob-card-title">Everything you love.</div>
         <div class="ob-card-body">Books, movies, TV and music that define your taste, all in one living profile.</div>
       </div>
       <div class="ob-feature-card ob-feature-recs" style="background:#161618;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px;display:flex;flex-direction:column;">
-        <div class="ob-feature-art" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px;">
-          <div id="landing-tile-maurice" class="ob-rec-tile" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;background:#2a2a2e;">
-            <div class="ob-rec-from" style="position:absolute;top:0;left:0;right:0;padding:4px 6px;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);font-size:10.5px;font-weight:700;color:#F97360;letter-spacing:.03em;z-index:1;">From <span class="ob-rec-name">Subha</span></div>
-            <div class="ob-tile-label" style="position:absolute;left:0;right:0;bottom:0;padding:4px 6px;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:12px;font-weight:700;color:#fff;">Maurice</div>
-          </div>
-          <div id="landing-tile-tehran" class="ob-rec-tile" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;background:#2a2a2e;">
-            <img src="https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1719409771i/199798217.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">
-            <div class="ob-rec-from" style="position:absolute;top:0;left:0;right:0;padding:4px 6px;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);font-size:10.5px;font-weight:700;color:#F97360;letter-spacing:.03em;">From <span class="ob-rec-name">Ritu</span></div>
-            <div class="ob-tile-label" style="position:absolute;left:0;right:0;bottom:0;padding:4px 6px;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:12px;font-weight:700;color:#fff;">Lion Women of Tehran</div>
-          </div>
-          <div id="landing-tile-algernon" class="ob-rec-tile" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;background:#2a2a2e;">
-            <img src="https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1689071681i/18373.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">
-            <div class="ob-rec-from" style="position:absolute;top:0;left:0;right:0;padding:4px 6px;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);font-size:10.5px;font-weight:700;color:#F97360;letter-spacing:.03em;">From <span class="ob-rec-name">Eliana</span></div>
-            <div class="ob-tile-label" style="position:absolute;left:0;right:0;bottom:0;padding:4px 6px;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:12px;font-weight:700;color:#fff;">Flowers for Algernon</div>
-          </div>
-          <div id="landing-tile-devi" class="ob-rec-tile" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;background:#2a2a2e;">
-            <div class="ob-rec-from" style="position:absolute;top:0;left:0;right:0;padding:4px 6px;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);font-size:10.5px;font-weight:700;color:#F97360;letter-spacing:.03em;z-index:1;">From <span class="ob-rec-name">Monty</span></div>
-            <div class="ob-tile-label" style="position:absolute;left:0;right:0;bottom:0;padding:4px 6px;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:12px;font-weight:700;color:#fff;">Devi</div>
+        <div class="ob-feature-art lp-mock" aria-hidden="true">
+          <div class="lp-pane-head"><span class="lp-pane-title">What’s Next</span><span class="lp-pane-sub">Things I want to check out</span></div>
+          <div class="lp-recs">
+            <div class="lp-rec"><div class="lp-rec-art" id="landing-tile-maurice"></div><div class="lp-rec-text"><strong>Maurice</strong><small>Movie · 1987</small><span class="lp-recby"><span class="lp-av" style="background:#F97360">S</span>Rec’d by Subha</span></div></div>
+            <div class="lp-rec"><div class="lp-rec-art" ><img src="https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1719409771i/199798217.jpg" alt="" onerror="this.remove()"></div><div class="lp-rec-text"><strong>Lion Women of Tehran</strong><small>Book · Marjan Kamali</small><span class="lp-recby"><span class="lp-av" style="background:#22C55E">R</span>Rec’d by Ritu</span></div></div>
+            <div class="lp-rec"><div class="lp-rec-art" ><img src="https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1689071681i/18373.jpg" alt="" onerror="this.remove()"></div><div class="lp-rec-text"><strong>Flowers for Algernon</strong><small>Book · Daniel Keyes</small><span class="lp-recby"><span class="lp-av" style="background:#3B82F6">E</span>Rec’d by Eliana</span></div></div>
+            <div class="lp-rec"><div class="lp-rec-art" id="landing-tile-sonia"></div><div class="lp-rec-text"><strong>The Loneliness of Sonia and Sunny</strong><small>Book · Kiran Desai</small><span class="lp-recby"><span class="lp-av" style="background:#F59E0B">M</span>Rec’d by Monty</span></div></div>
           </div>
         </div>
         <div class="ob-card-caption">Real recs, from real friends</div>
@@ -4405,35 +4409,22 @@ async function landingArtistArtFallback(imgEl, artistName) {
         <div class="ob-card-body">Save what friends tell you to watch, read, or listen to—and remember who recommended what.</div>
       </div>
       <div class="ob-feature-card ob-feature-lists" style="background:#161618;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px;display:flex;flex-direction:column;">
-        <div class="ob-feature-art" style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px;">
-          <div style="aspect-ratio:2/3;border-radius:6px;overflow:hidden;">
-            <img src="https://is1-ssl.mzstatic.com/image/thumb/AMCArtistImages211/v4/2b/41/a0/2b41a0b1-254e-6d24-b7a9-9fa0dc7c4503/55efdf13-f957-4ad2-a77a-0982e1e91af7_ami-identity-8dc9997594867d2c194ab04e0838848c-2024-07-19T07-26-44.562Z_cropped.png/1200x630cw.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.background='#7C4DFF33'">
+        <div class="ob-feature-art lp-mock" aria-hidden="true">
+          <div class="lp-pane-head"><span class="lp-pane-title">Yellowstone ’26 Trip</span><span class="lp-list-by"><span class="lp-avs"><span class="lp-av" style="background:#7C4DFF">S</span><span class="lp-av" style="background:#22C55E">R</span><span class="lp-av" style="background:#F59E0B">R</span></span>Sreya, Ritu &amp; Rabeea · 6 picks</span></div>
+          <div class="lp-group-label" style="color:#7C4DFF">Music</div>
+          <div class="lp-list-row lp-sq">
+            <div class="lp-tile"><img src="https://is1-ssl.mzstatic.com/image/thumb/AMCArtistImages211/v4/2b/41/a0/2b41a0b1-254e-6d24-b7a9-9fa0dc7c4503/55efdf13-f957-4ad2-a77a-0982e1e91af7_ami-identity-8dc9997594867d2c194ab04e0838848c-2024-07-19T07-26-44.562Z_cropped.png/1200x630cw.png" alt="" onerror="this.remove()"></div>
+            <div class="lp-tile"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/df/32/e4/df32e404-875c-83c2-0440-7c7df11d3754/13511.jpg/600x600bf-60.jpg" alt="" onerror="this.remove()"></div>
+            <div class="lp-tile"><img src="https://is1-ssl.mzstatic.com/image/thumb/AMCArtistImages221/v4/8e/3f/01/8e3f018f-66ca-b2b9-b9dd-8723eb7103d2/ami-identity-bd174f18b0e986781dbcc3955eebb0fb-2026-05-08T04-38-09.192Z_cropped.png/1200x630cw.png" alt="" onerror="this.remove()"></div>
+            <div class="lp-tile"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/c6/7a/63/c67a6326-d344-71ad-f08b-deef1935ac8b/24UMGIM89733.rgb.jpg/600x600bf-60.jpg" alt="" onerror="this.remove()"></div>
           </div>
-          <div style="aspect-ratio:2/3;border-radius:6px;overflow:hidden;">
-            <img src="https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/df/32/e4/df32e404-875c-83c2-0440-7c7df11d3754/13511.jpg/600x600bf-60.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.background='#7C4DFF33'">
+          <div class="lp-list-row lp-two">
+            <div><div class="lp-group-label" style="color:#F97360">Movies</div><div class="lp-list-item"><div class="lp-tile lp-pt" id="landing-tile-lootera"></div><div><strong>Lootera</strong><small>Added by Sreya</small></div></div></div>
+            <div><div class="lp-group-label" style="color:#22C55E">Books</div><div class="lp-list-item"><div class="lp-tile lp-pt" id="landing-tile-notes"><img src="https://covers.openlibrary.org/b/isbn/9780063052734-L.jpg?default=false" alt="" onerror="landingBookCoverFallback(this,'Notes on an Execution','Danya Kukafka')" onload="if(this.naturalWidth<10)landingBookCoverFallback(this,'Notes on an Execution','Danya Kukafka')"></div><div><strong>Notes on an Execution</strong><small>Added by Ritu</small></div></div></div>
           </div>
-          <div style="aspect-ratio:2/3;border-radius:6px;overflow:hidden;">
-            <img src="https://is1-ssl.mzstatic.com/image/thumb/AMCArtistImages221/v4/8e/3f/01/8e3f018f-66ca-b2b9-b9dd-8723eb7103d2/ami-identity-bd174f18b0e986781dbcc3955eebb0fb-2026-05-08T04-38-09.192Z_cropped.png/1200x630cw.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.background='#7C4DFF33'">
-          </div>
-          <div style="aspect-ratio:2/3;border-radius:6px;overflow:hidden;">
-            <img src="https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/c6/7a/63/c67a6326-d344-71ad-f08b-deef1935ac8b/24UMGIM89733.rgb.jpg/600x600bf-60.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.background='#7C4DFF33'">
-          </div>
-          <div id="landing-tile-lootera" style="aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:#2a2a2e;"></div>
-          <div style="aspect-ratio:2/3;border-radius:6px;overflow:hidden;">
-            <img src="https://covers.openlibrary.org/b/olid/OL34105393M-L.jpg" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.background='#7C4DFF33'">
-          </div>
+          <div class="lp-add"><span>+</span> Add to this list</div>
         </div>
-        <div class="ob-list-preview">
-          <div class="ob-list-preview-head"><span class="ob-list-preview-title">Yellowstone '26 Trip</span><span class="ob-list-preview-meta">Shared list · 6 picks</span></div>
-          <div class="ob-list-preview-covers">
-            <img alt="" src="https://is1-ssl.mzstatic.com/image/thumb/AMCArtistImages211/v4/2b/41/a0/2b41a0b1-254e-6d24-b7a9-9fa0dc7c4503/55efdf13-f957-4ad2-a77a-0982e1e91af7_ami-identity-8dc9997594867d2c194ab04e0838848c-2024-07-19T07-26-44.562Z_cropped.png/1200x630cw.png" onerror="this.style.visibility='hidden'">
-            <img alt="" src="https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/df/32/e4/df32e404-875c-83c2-0440-7c7df11d3754/13511.jpg/600x600bf-60.jpg" onerror="this.style.visibility='hidden'">
-            <img alt="" src="https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/c6/7a/63/c67a6326-d344-71ad-f08b-deef1935ac8b/24UMGIM89733.rgb.jpg/600x600bf-60.jpg" onerror="this.style.visibility='hidden'">
-            <img alt="" src="https://covers.openlibrary.org/b/olid/OL34105393M-L.jpg" onerror="this.style.visibility='hidden'">
-            <span class="ob-list-preview-more">+2</span>
-          </div>
-        </div>
-        <div class="ob-card-caption">Yellowstone '26 Trip</div>
+        <div class="ob-card-caption">A real shared list</div>
         <div class="ob-eyebrow ob-card-label" style="color:#7C4DFF;">Shared lists</div>
         <div class="ob-card-title">Make lists together.</div>
         <div class="ob-card-body">Trip watches. Beach reads. Albums everyone should hear. Mix books, movies, TV & music in shared lists with friends.</div>
@@ -8309,10 +8300,21 @@ async function loadActivityFeedFromSupabase(userId) {
 // Resolves real posters for the landing page's Maurice/Devi tiles live via TMDB (same approach used
 // everywhere else in the app) rather than a hardcoded poster URL — official movie poster art is kept
 // to runtime API resolution only, not something sourced and embedded directly.
+// Book covers on the landing cards, found the same way as book covers elsewhere in the app.
+async function loadLandingBookTiles() {
+  for (const [tileId, title, author] of [['landing-tile-sonia', 'The Loneliness of Sonia and Sunny', 'Kiran Desai']]) {
+    const tile = document.getElementById(tileId);
+    if (!tile || tile.querySelector('img')) continue;
+    try {
+      const url = await fetchBookCover(title, author); if (!url) continue;
+      const img = new Image(); img.alt = ''; img.onload = () => tile.prepend(img); img.src = url;
+    } catch (_) {}
+  }
+}
 async function loadLandingMovieTiles() {
+  loadLandingBookTiles();
   const movies = [
     { tmdbId: 26371, tileId: 'landing-tile-maurice' }, // Maurice (1987)
-    { tmdbId: 43031, tileId: 'landing-tile-devi' },    // Devi
     { tmdbId: 205017, tileId: 'landing-tile-lootera' }, // Lootera (2013)
   ];
   for (const m of movies) {
@@ -9250,6 +9252,13 @@ async function loadLandingArtwork() {
   }));
 }
 
+// Landing list cover: if the Open Library cover is missing, look it up the same way book covers are found elsewhere.
+async function landingBookCoverFallback(img, title, author) {
+  if (!img || img.dataset.fallback) { img?.remove(); return; }
+  img.dataset.fallback = '1';
+  try { const url = await fetchBookCover(title, author); if (url) { img.src = url; return; } } catch (_) {}
+  img.remove();
+}
 async function loadLandingArtistTiles() {
   const artists = [
     ['strokes', 'The Strokes'], ['abba', 'ABBA'],
