@@ -6283,7 +6283,46 @@ async function enhanceMediaLinks(root=document){
     });
   }
 }
-new MutationObserver(()=>{cancelAnimationFrame(enhanceMediaLinks._raf);enhanceMediaLinks._raf=requestAnimationFrame(()=>enhanceMediaLinks());})
+// A post with no artwork of its own borrows artwork from what was shared with it (display only;
+// the post's data is unchanged): first a music/video/film link in the post, then a title attached to a
+// comment, then a media link in a comment. Posts that have their own artwork are never touched.
+async function postMediaLinkArt(container){
+  for(const a of [...(container?.querySelectorAll('a.text-link')||[])].slice(0,3)){
+    const url=a.dataset.url||a.href;if(!mediaLinkHost(url))continue;
+    const p=await fetchLinkPreview(url);const img=p&&mediaPreviewParts(p,url).image;if(img)return img;
+  }
+  return '';
+}
+async function borrowedPostArt(card){
+  const id=card.dataset.postId;if(!id)return '';
+  const own=card.querySelector(':scope > .activity-card-body');
+  const fromPost=await postMediaLinkArt(own);if(fromPost)return fromPost;
+  const key=engagementKey('activity_feed',id);
+  let cached=COMMENT_CACHE[key];
+  if(cached?.items===undefined&&(cached?.count||0)>0&&typeof loadComments==='function'){try{await loadComments('activity_feed',id);}catch(_){}cached=COMMENT_CACHE[key];}
+  const items=cached?.items||[];
+  for(const c of items){const a=c.attachment;const art=a&&(onboardingArt(a)||a.art||a.cover||'');if(/^https?:\/\//.test(art||''))return art;}
+  for(const c of items){
+    const urls=[...String(c.body||'').matchAll(TEXT_URL_RE)].map(m=>m[0]).filter(mediaLinkHost).slice(0,2);
+    for(const url of urls){const p=await fetchLinkPreview(url);const img=p&&mediaPreviewParts(p,url).image;if(img)return img;}
+  }
+  return '';
+}
+function fillMissingPostArt(root=document){
+  root.querySelectorAll('.activity-card.no-art[data-post-id]:not([data-art-fill])').forEach(card=>{
+    card.dataset.artFill='1';
+    borrowedPostArt(card).then(src=>{
+      if(!src||!card.isConnected||!card.classList.contains('no-art')||card.querySelector(':scope > .activity-card-art'))return;
+      const slot=card.querySelector('.activity-wn-slot'),wn=slot?.firstElementChild;
+      const wrap=document.createElement('div');
+      wrap.innerHTML=activityArtWrap(src,`<img src="${esc(src)}" class="activity-card-art-img" style="display:block;" alt="" onerror="activityArtFailed(this)" onload="if(this.naturalWidth<10)activityArtFailed(this)">`+(wn?'<span class="wn-corner"></span>':''));
+      const art=wrap.firstElementChild;art.dataset.borrowed='1';
+      if(wn)art.querySelector('.wn-corner').appendChild(wn);
+      card.prepend(art);card.classList.remove('no-art');
+    }).catch(()=>{});
+  });
+}
+new MutationObserver(()=>{cancelAnimationFrame(enhanceMediaLinks._raf);enhanceMediaLinks._raf=requestAnimationFrame(()=>{enhanceMediaLinks();fillMissingPostArt();});})
   .observe(document.documentElement,{childList:true,subtree:true});
 function usableLinkTitle(t) {
   const clean = String(t || '').replace(/\s*[-|–—]\s*(YouTube|Vimeo|Spotify)\s*$/i, '').trim();
