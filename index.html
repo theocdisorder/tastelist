@@ -2982,6 +2982,9 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .lp-list-item { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .lp-list-item > div:last-child { min-width: 0; }
 .lp-list-item strong { display: block; font-size: 12px; font-weight: 600; color: #f2efe9; line-height: 1.25; overflow-wrap: anywhere; }
+.sl-member-add { cursor: pointer; font: inherit; font-size: inherit; color: #cdb6ff !important; background: transparent !important; border: 1px dashed rgba(205,182,255,.45) !important; gap: 6px; }
+.sl-member-add > span { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(124,77,255,.18); font-size: 15px; line-height: 1; }
+.sl-member-add:hover { border-color: #cdb6ff !important; background: rgba(124,77,255,.08) !important; }
 .lp-add { margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border: 1px dashed rgba(203,176,244,.35); border-radius: 8px; font-size: 12px; font-weight: 600; color: #cbb0f4; }
 .lp-add span { font-size: 15px; line-height: 1; }
 .lp-list-item small { display: block; font-size: 10.5px; color: #8f8c86; margin-top: 2px; }
@@ -4420,7 +4423,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
           </div>
           <div class="lp-list-row lp-two">
             <div><div class="lp-group-label" style="color:#F97360">Movies</div><div class="lp-list-item"><div class="lp-tile lp-pt" id="landing-tile-lootera"></div><div><strong>Lootera</strong><small>Added by Sreya</small></div></div></div>
-            <div><div class="lp-group-label" style="color:#22C55E">Books</div><div class="lp-list-item"><div class="lp-tile lp-pt" id="landing-tile-notes"><img src="https://covers.openlibrary.org/b/isbn/9780063052734-L.jpg?default=false" alt="" onerror="landingBookCoverFallback(this,'Notes on an Execution','Danya Kukafka')" onload="if(this.naturalWidth<10)landingBookCoverFallback(this,'Notes on an Execution','Danya Kukafka')"></div><div><strong>Notes on an Execution</strong><small>Added by Ritu</small></div></div></div>
+            <div><div class="lp-group-label" style="color:#22C55E">Books</div><div class="lp-list-item"><div class="lp-tile lp-pt" id="landing-tile-notes"></div><div><strong>Notes on an Execution</strong><small>Added by Ritu</small></div></div></div>
           </div>
           <div class="lp-add"><span>+</span> Add to this list</div>
         </div>
@@ -5260,7 +5263,9 @@ function openPasteRecommendations(suggestTo){
  const note=document.getElementById('rec-suggest-note');note.hidden=!suggestTo;note.textContent=suggestTo?`${fname} can add it to their What’s Next with one tap.`:'';
  document.getElementById('rec-tabs').hidden=!!suggestTo;
  pasteRecs={version:pasteRecs.version+1,items:[],busy:false,source:''};
- document.getElementById('paste-rec-text').value='';document.getElementById('paste-rec-from').value='';
+ document.getElementById('paste-rec-text').value='';
+ const fromField=document.getElementById('rec-from-field');if(fromField&&!fromField.firstChild)fromField.innerHTML=tagFieldMarkup('recadd','Recommended by','optional · add as many people as you like');
+ tagFieldInit('recadd',[]);
  document.getElementById('paste-rec-results').innerHTML='';document.getElementById('paste-rec-status').textContent='';
  document.getElementById('paste-rec-modal').hidden=false;document.getElementById('paste-rec-save').disabled=true;
  recSearch={request:0,timer:null,results:[],kind:null,q:'',added:new Set(),saving:false};
@@ -5332,10 +5337,10 @@ async function insertRec(row,label){
  recSearch.saving=true;status.className='rec-search-status';status.textContent='Adding '+row.title+'…';
  try{
   if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again before saving.');
-  const from=document.getElementById('paste-rec-from').value.trim();
-  const full={user_id:userId,from_name:from||null,recommenders:from?[{name:from}]:[],sort_order:FRIEND_RECOMMENDATIONS.length,...row};
+  const recs=await recAddRecommenders(),from=recs[0]?.name||'';
+  const full={user_id:userId,from_name:from||null,recommended_by_user_id:recs[0]?.user_id||null,recommenders:recs,sort_order:FRIEND_RECOMMENDATIONS.length,...row};
   const {data:saved,error}=await sb.from('friend_recs').insert(full).select('id').single();if(error)throw error;
-  status.textContent='✓ '+row.title+' added to What’s Next'+(from?' · from '+from:'')+'. Tap it again to undo.';
+  status.textContent='✓ '+row.title+' added to What’s Next'+(recs.length?' · from '+recs.map(r=>r.name).join(', '):'')+'. Tap it again to undo.';
   loadFriendRecsFromSupabase(userId).catch(()=>{});
   return saved?.id||true;
  }catch(e){status.className='rec-search-status is-error';status.textContent=e.message||'Could not save. Please try again.';return false;}
@@ -5408,7 +5413,7 @@ async function findPastedRecommendations(){
  const source=document.getElementById('paste-rec-text').value.trim();if(!source)return;
  const parsed=parseRecommendationText(source);if(parsed.items.length>12){document.getElementById('paste-rec-status').textContent='Please paste up to 12 recommendations at a time.';return;}
  const version=++pasteRecs.version;pasteRecs.source=source;
- if(!document.getElementById('paste-rec-from').value.trim())document.getElementById('paste-rec-from').value=parsed.from;
+ if(!tagState('recadd').selected.length&&parsed.from)tagFieldInit('recadd',[{name:parsed.from}]);
  pasteRecs.items=parsed.items.map(p=>({...p,results:[],selected:null,loading:true,request:0}));
  document.getElementById('paste-rec-status').textContent='Choose the correct match for each recommendation. You can edit a search or skip an item.';
  renderPastedRecommendations();
@@ -5467,18 +5472,23 @@ function renderPastedRecommendations(){
  box.innerHTML=pasteRecs.items.map((p,i)=>`<section class="paste-rec-group"><div class="paste-rec-search"><input class="tl-input" aria-label="Title to search" value="${esc(p.q)}" oninput="updatePasteRecQuery(${i},this.value)" onkeydown="if(event.key==='Enter')retryPasteRec(${i})"><select class="tl-select" id="paste-rec-type-${i}" aria-label="Category">${['',...Object.keys(pasteRecTypes)].map(t=>`<option value="${t}" ${p.types.length===1&&p.types[0]===t?'selected':''}>${pasteRecTypes[t]||'All categories'}</option>`).join('')}</select><button type="button" class="sl-btn" onclick="retryPasteRec(${i})">Search</button></div>${p.loading?'<p role="status">Finding matches…</p>':`${p.error?`<p>${esc(p.error)}</p>`:''}<div class="paste-rec-matches">${p.results.map((r,j)=>`<button type="button" class="paste-rec-match" aria-pressed="${p.selected===j}" onclick="choosePastedRec(${i},${j})">${r.art?`<img src="${esc(r.art)}" alt="" onerror="this.style.visibility='hidden'">`:'<span class="paste-rec-noart">♪</span>'}<span><strong>${esc(r.title)}</strong><small>${esc([pasteRecTypes[r.type],r.sub,r.meta].filter(Boolean).join(' · '))}</small></span><span aria-hidden="true">${p.selected===j?'✓':'+'}</span></button>`).join('')}</div>${!p.results.length?'<p>No matches yet. Try a shorter title or a different category.</p>':''}<button type="button" class="ob-text-link" onclick="choosePastedRec(${i},null)">${p.selected===null?'Skipped — choose a match to include':'Skip this recommendation'}</button>`}</section>`).join('');
  const count=pasteRecs.items.filter(p=>p.selected!==null).length;const btn=document.getElementById('paste-rec-save');btn.disabled=!count||pasteRecs.busy;btn.textContent=pasteRecs.busy?'Saving…':`Save ${count||''} to What’s Next`;
 }
+// Everyone tagged in "Recommended by" when adding (TasteList friends and written-in names), in order.
+async function recAddRecommenders(){
+ const tags=await tagFieldValue('recadd');
+ return tags.slice(0,20).map(t=>t.user_id?{user_id:t.user_id,name:t.display_name||t.name||t.username||''}:{name:t.name||t.username||''}).filter(t=>t.user_id||t.name);
+}
 async function savePastedRecommendations(){
  if(pasteRecs.busy||!isOwnProfile||!currentUser)return;
  const picks=pasteRecs.items.filter(p=>p.selected!==null).map(p=>({item:p.results[p.selected],url:p.url})).filter(p=>p.item);if(!picks.length)return;
  pasteRecs.busy=true;renderPastedRecommendations();const userId=currentUser.id,status=document.getElementById('paste-rec-status');
  try{
   if(!(await requireFreshSession())||currentUser?.id!==userId)throw Error('Please sign in again before saving.');
-  const from=document.getElementById('paste-rec-from').value.trim();
+  const recs=await recAddRecommenders(),from=recs[0]?.name||'';
   const existing=await sb.from('friend_recs').select('title,type,catalog_item').eq('user_id',userId);if(existing.error)throw existing.error;
   const key=r=>JSON.stringify([r.type,tasteNorm(r.title),tasteNorm(r.catalog_item?.sub||'')]);
   const seen=new Set((existing.data||[]).map(key));const rows=[];
   for(const {item:r,url} of picks){
-   const row={user_id:userId,title:r.title,type:r.type,art_url:r.art||null,from_name:from||null,recommenders:from?[{name:from}]:[],source_text:pasteRecs.source,source_url:url||r.url||null,catalog_item:r};
+   const row={user_id:userId,title:r.title,type:r.type,art_url:r.art||null,from_name:from||null,recommended_by_user_id:recs[0]?.user_id||null,recommenders:recs,source_text:pasteRecs.source,source_url:url||r.url||null,catalog_item:r};
    if(seen.has(key(row)))continue;seen.add(key(row));rows.push(row);
   }
   if(!rows.length){status.textContent='These selections are already in What’s Next.';return;}
@@ -7143,7 +7153,9 @@ function renderTasteListCollaborators(list) {
   // Each member opens their profile, where you can follow them.
   return p?.username?`<a class="sl-member-chip is-link" href="?u=${encodeURIComponent(p.username)}" onclick="event.preventDefault();event.stopPropagation();goToProfile('${esc(jsStr(p.username))}')" title="View ${esc(id===currentUser?.id?'your':possessiveName(name))} profile">${inner}</a>`:`<span class="sl-member-chip">${inner}</span>`;
  }).join('');
- el.innerHTML=`<div class="sl-member-row"><span>${ids.length} ${ids.length===1?'member':'members'}</span>${chips}${tasteListPrivacyControl(list)}</div>`;
+ // The owner can add someone right from the member row (same search as "Invite & share").
+ const add=list.isOwner?`<button type="button" class="sl-member-chip sl-member-add" onclick="event.stopPropagation();inviteCollaborator('${esc(jsStr(list.id))}')" aria-label="Add people to this list"><span aria-hidden="true">+</span>Add people</button>`:'';
+ el.innerHTML=`<div class="sl-member-row"><span>${ids.length} ${ids.length===1?'member':'members'}</span>${chips}${add}${tasteListPrivacyControl(list)}</div>`;
 }
 function isTasteListMember(list){return !!currentUser&&!!list&&(list.user_id===currentUser.id||(list.collaborators||[]).some(c=>c.user_id===currentUser.id));}
 function tasteListPrivacyControl(list) {
@@ -8302,7 +8314,7 @@ async function loadActivityFeedFromSupabase(userId) {
 // to runtime API resolution only, not something sourced and embedded directly.
 // Book covers on the landing cards, found the same way as book covers elsewhere in the app.
 async function loadLandingBookTiles() {
-  for (const [tileId, title, author] of [['landing-tile-sonia', 'The Loneliness of Sonia and Sunny', 'Kiran Desai']]) {
+  for (const [tileId, title, author] of [['landing-tile-sonia', 'The Loneliness of Sonia and Sunny', 'Kiran Desai'], ['landing-tile-notes', 'Notes on an Execution', 'Danya Kukafka']]) {
     const tile = document.getElementById(tileId);
     if (!tile || tile.querySelector('img')) continue;
     try {
@@ -9252,13 +9264,6 @@ async function loadLandingArtwork() {
   }));
 }
 
-// Landing list cover: if the Open Library cover is missing, look it up the same way book covers are found elsewhere.
-async function landingBookCoverFallback(img, title, author) {
-  if (!img || img.dataset.fallback) { img?.remove(); return; }
-  img.dataset.fallback = '1';
-  try { const url = await fetchBookCover(title, author); if (url) { img.src = url; return; } } catch (_) {}
-  img.remove();
-}
 async function loadLandingArtistTiles() {
   const artists = [
     ['strokes', 'The Strokes'], ['abba', 'ABBA'],
@@ -23606,8 +23611,7 @@ renderTasteInfluences();
  </div>
  <div id="rec-search-panel" role="tabpanel" aria-labelledby="rec-tab-search">
   <input class="tl-input" id="rec-search-q" type="search" autocomplete="off" placeholder="Search a movie, show, book, song, artist or podcast…" oninput="queueRecSearch(this.value)">
-  <div id="rec-from-field" class="rec-from-field"><label class="tl-label" for="paste-rec-from">Recommended by <span class="tl-hint">optional</span></label>
-  <input class="tl-input" id="paste-rec-from" maxlength="120" placeholder="e.g. Jenny"></div>
+  <div id="rec-from-field" class="rec-from-field"></div>
   <p id="rec-search-status" class="rec-search-status" role="status" aria-live="polite"></p>
   <div id="rec-search-results"></div>
  </div>
