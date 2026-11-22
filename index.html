@@ -2579,6 +2579,10 @@ a.text-link.is-previewed { display: none; }
 .feed-post-body + .media-preview { margin-top: -8px; margin-bottom: 16px; }
 .activity-wn-slot .wn-add-btn { width: 34px !important; height: 34px !important; min-width: 34px !important; min-height: 34px !important; }
 .tl-comment .media-preview { max-width: 400px; margin-top: 8px; }
+.media-preview.is-slim { display: inline-flex; max-width: 100%; padding: 7px 14px; gap: 10px; border-radius: 999px; }
+.media-preview.is-slim .media-preview-text { flex-direction: row; align-items: baseline; gap: 6px; }
+.media-preview.is-slim .media-preview-text strong { -webkit-line-clamp: 1; font-size: 13px; }
+.media-preview.is-slim .media-preview-text small::before { content: "· "; }
 /* Comments */
 .tl-comments { padding: 14px 20px 18px; border-top: 1px solid var(--border); }
 .feed-text-post .tl-comments { padding: 14px 0 0; margin-top: 14px; }
@@ -6274,6 +6278,7 @@ async function enhanceMediaLinks(root=document){
       // Insert after any earlier previews from the same text, then hide the raw link it replaces.
       let after=body;while(after.nextElementSibling?.classList.contains('media-preview'))after=after.nextElementSibling;
       after.after(card);
+      slimBorrowedPreview(card.closest('.activity-card'));
       a.classList.add('is-previewed');
       const prev=a.previousSibling;if(prev?.nodeType===3)prev.textContent=prev.textContent.replace(/\s+$/,'');
       // A link that ended the text: drop the line/paragraph break that led into it, so no blank gap remains.
@@ -6289,29 +6294,36 @@ async function enhanceMediaLinks(root=document){
 async function postMediaLinkArt(container){
   for(const a of [...(container?.querySelectorAll('a.text-link')||[])].slice(0,3)){
     const url=a.dataset.url||a.href;if(!mediaLinkHost(url))continue;
-    const p=await fetchLinkPreview(url);const img=p&&mediaPreviewParts(p,url).image;if(img)return img;
+    const p=await fetchLinkPreview(url);const img=p&&mediaPreviewParts(p,url).image;if(img)return {src:img,url};
   }
-  return '';
+  return null;
 }
 async function borrowedPostArt(card){
   const id=card.dataset.postId;if(!id)return '';
   const own=card.querySelector(':scope > .activity-card-body');
-  const fromPost=await postMediaLinkArt(own);if(fromPost)return fromPost;
+  const fromPost=await postMediaLinkArt(own);if(fromPost)return fromPost;   // {src, url}: the link's preview slims down
   const key=engagementKey('activity_feed',id);
   let cached=COMMENT_CACHE[key];
   if(cached?.items===undefined&&(cached?.count||0)>0&&typeof loadComments==='function'){try{await loadComments('activity_feed',id);}catch(_){}cached=COMMENT_CACHE[key];}
   const items=cached?.items||[];
-  for(const c of items){const a=c.attachment;const art=a&&(onboardingArt(a)||a.art||a.cover||'');if(/^https?:\/\//.test(art||''))return art;}
+  for(const c of items){const a=c.attachment;const art=a&&(onboardingArt(a)||a.art||a.cover||'');if(/^https?:\/\//.test(art||''))return {src:art};}
   for(const c of items){
     const urls=[...String(c.body||'').matchAll(TEXT_URL_RE)].map(m=>m[0]).filter(mediaLinkHost).slice(0,2);
-    for(const url of urls){const p=await fetchLinkPreview(url);const img=p&&mediaPreviewParts(p,url).image;if(img)return img;}
+    for(const url of urls){const p=await fetchLinkPreview(url);const img=p&&mediaPreviewParts(p,url).image;if(img)return {src:img};}
   }
-  return '';
+  return null;
+}
+// When the post's artwork came from its own link, that link's preview drops its thumbnail
+// (the cover is already beside the post) and becomes a slim "title · Open in Spotify" line.
+function slimBorrowedPreview(card){
+  const url=card?.dataset.artLink;if(!url)return;
+  card.querySelectorAll(':scope > .activity-card-body .media-preview').forEach(pv=>{if(pv.getAttribute('href')===url){pv.classList.add('is-slim');pv.querySelector('img')?.remove();}});
 }
 function fillMissingPostArt(root=document){
   root.querySelectorAll('.activity-card.no-art[data-post-id]:not([data-art-fill])').forEach(card=>{
     card.dataset.artFill='1';
-    borrowedPostArt(card).then(src=>{
+    borrowedPostArt(card).then(found=>{
+      const src=found?.src;
       if(!src||!card.isConnected||!card.classList.contains('no-art')||card.querySelector(':scope > .activity-card-art'))return;
       const slot=card.querySelector('.activity-wn-slot'),wn=slot?.firstElementChild;
       const wrap=document.createElement('div');
@@ -6319,6 +6331,7 @@ function fillMissingPostArt(root=document){
       const art=wrap.firstElementChild;art.dataset.borrowed='1';
       if(wn)art.querySelector('.wn-corner').appendChild(wn);
       card.prepend(art);card.classList.remove('no-art');
+      if(found.url){card.dataset.artLink=found.url;slimBorrowedPreview(card);}
     }).catch(()=>{});
   });
 }
