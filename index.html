@@ -11634,72 +11634,108 @@ function listenQuery(d) {
   const m = String(d.spotify || '').match(/open\.spotify\.com\/search\/([^?#]+)/);
   return m ? decodeURIComponent(m[1]) : '';
 }
+// The song/album/artist page itself on each service (anything else counts as "no exact link").
+const MUSIC_DIRECT = {
+  apple:   /^https:\/\/music\.apple\.com\/(?:[a-z]{2}\/)?(?:album|song|artist|playlist)\//,
+  spotify: /^https:\/\/open\.spotify\.com\/(?:intl-[^/]+\/)?(?:track|album|artist|playlist)\/[A-Za-z0-9]+/,
+  youtube: /^https:\/\/(?:music|www)\.youtube\.com\/(?:watch\?|playlist\?|channel\/|browse\/)/,
+  tidal:   /^https:\/\/(?:listen\.)?tidal\.com\/(?:browse\/)?(?:track|album|artist)\/\d+/,
+  amazon:  /^https:\/\/music\.amazon\.[a-z.]+\/(?:albums|tracks|artists)\//,
+  deezer:  /^https:\/\/www\.deezer\.com\/(?:[a-z]{2}\/)?(?:track|album|artist)\/\d+/,
+};
+function musicDirect(svc, d) { const u = String(d?.[svc] || ''); return MUSIC_DIRECT[svc]?.test(u) ? u : ''; }
 function listenUrl(svc, d) {
   if(d.postMusic)return postMusicTarget(svc,d).url;
+  const direct = musicDirect(svc, d);
+  if (direct) return direct;
   const q = listenQuery(d);
-  if (svc === 'apple' && /music\.apple\.com\/.+\/(album|song|playlist)\//.test(d.apple || '')) return d.apple;
-  if (svc === 'spotify' && /open\.spotify\.com\/(track|album|playlist)\//.test(d.spotify || '')) return d.spotify;
-  if (svc === 'apple' && !q && d.apple) return d.apple;
-  if (svc === 'spotify' && !q && d.spotify) return d.spotify;
+  if (!q && d[svc]) return d[svc];
   return MUSIC_SERVICES[svc].search(q);
 }
 
-// Apple Music listeners get exact links even when an item only has search links: Apple's free iTunes
-// Search finds the song/album (title AND artist must match), as each button scrolls into view.
-// Two lookups at a time; results cached on this device.
-const LISTEN_APPLE_EXACT = /music\.apple\.com\/.+\/(album|song|playlist)\//;
-const listenAppleCache = (() => { try { return JSON.parse(localStorage.getItem('tl_apple_links') || '{}'); } catch (_) { return {}; } })();
-function saveListenAppleCache() {
+// Exact links for every service. When a Listen button scrolls into view, the music-links function
+// finds the song/album/artist on Apple Music (title AND artist must match) and, from that, its page on
+// Spotify, YouTube Music, Tidal, Amazon Music and Deezer. Shared cache on the server, plus this device.
+const MUSIC_LINK_KEYS = ['apple','spotify','youtube','tidal','amazon','deezer'];
+const listenNorm = v => String(v || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/\s*[\(\[].*?[\)\]]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+const musicLinkCache = (() => { try { return JSON.parse(localStorage.getItem('tl_music_links') || '{}'); } catch (_) { return {}; } })();
+function saveMusicLinkCache() {
   try {
-    const keys = Object.keys(listenAppleCache);
-    keys.slice(0, Math.max(0, keys.length - 500)).forEach(k => delete listenAppleCache[k]);
-    localStorage.setItem('tl_apple_links', JSON.stringify(listenAppleCache));
+    const keys = Object.keys(musicLinkCache);
+    keys.slice(0, Math.max(0, keys.length - 800)).forEach(k => delete musicLinkCache[k]);
+    localStorage.setItem('tl_music_links', JSON.stringify(musicLinkCache));
   } catch (_) {}
 }
-const listenNorm = v => String(v || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/\s*[\(\[].*?[\)\]]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
-async function findAppleExact(q) {
-  const want = listenNorm(q);
-  for (const entity of ['song', 'album']) {
+function musicLinkKey(d) { const q = listenQuery(d); return q ? (d.kind || 'any') + '|' + listenNorm(q) : ''; }
+const musicLinkPending = new Map();
+function resolveMusicLinks(d) {
+  const key = musicLinkKey(d); if (!key) return Promise.resolve(null);
+  if (musicLinkCache[key] && Date.now() - (musicLinkCache[key].t || 0) < 7 * 864e5) return Promise.resolve(musicLinkCache[key]);
+  if (musicLinkPending.has(key)) return musicLinkPending.get(key);
+  const job = (async () => {
     try {
-      const d = await sharedCatalogJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=${entity}&limit=8`);
-      const hit = (d.results || []).find(r => {
-        const name = listenNorm(entity === 'song' ? r.trackName : r.collectionName), artist = listenNorm(r.artistName);
-        return name && artist && want.includes(name) && want.includes(artist);
-      });
-      const url = hit && (entity === 'song' ? hit.trackViewUrl : hit.collectionViewUrl);
-      if (url && /music\.apple\.com|itunes\.apple\.com/.test(url)) return url.replace('itunes.apple.com', 'music.apple.com').replace(/[?&]uo=\d+/, '');
-    } catch (_) {}
-  }
-  return '';
+      const params = new URLSearchParams({ q: listenQuery(d) }); if (d.kind) params.set('kind', d.kind);
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/music-links?${params}`, { headers: { apikey: SUPABASE_ANON_KEY }, signal: AbortSignal.timeout(12000) });
+      if (!r.ok) return null;
+      const links = await r.json(), keep = { t: Date.now() };
+      MUSIC_LINK_KEYS.forEach(k => { if (MUSIC_DIRECT[k].test(links[k] || '')) keep[k] = links[k]; });
+      musicLinkCache[key] = keep; saveMusicLinkCache();
+      return keep;
+    } catch (_) { return null; } finally { musicLinkPending.delete(key); }
+  })();
+  musicLinkPending.set(key, job);
+  return job;
 }
-const listenAppleQueue = []; let listenAppleActive = 0;
-function pumpListenApple() {
-  while (listenAppleActive < 2 && listenAppleQueue.length) {
-    const btn = listenAppleQueue.shift(), q = listenQuery(btn.dataset), key = listenNorm(q);
-    if (!q || LISTEN_APPLE_EXACT.test(btn.dataset.apple || '')) continue;
-    listenAppleActive++;
-    findAppleExact(q).then(url => {
-      listenAppleCache[key] = url || '';            // remember misses too, so we don't retry every visit
-      saveListenAppleCache();
-      if (url) document.querySelectorAll('.listen-btn').forEach(b => { if (listenNorm(listenQuery(b.dataset)) === key) b.dataset.apple = url; });
-    }).finally(() => { listenAppleActive--; pumpListenApple(); });
+// Fill in exact links on every button for the same item (never replacing an exact link it already has).
+function applyMusicLinks(key, links) {
+  if (!links) return;
+  document.querySelectorAll('.listen-btn').forEach(b => {
+    if (musicLinkKey(b.dataset) !== key) return;
+    MUSIC_LINK_KEYS.forEach(k => { if (links[k] && !musicDirect(k, b.dataset)) b.dataset[k] = links[k]; });
+    if (b.dataset.postMusic) { const sp = b.querySelector('span'); if (sp) sp.textContent = postMusicLabel(b.dataset); }
+  });
+}
+const musicLinkQueue = []; let musicLinkActive = 0;
+function pumpMusicLinks() {
+  while (musicLinkActive < 3 && musicLinkQueue.length) {
+    const btn = musicLinkQueue.shift(), key = musicLinkKey(btn.dataset);
+    if (!key) continue;
+    musicLinkActive++;
+    resolveMusicLinks(btn.dataset).then(links => applyMusicLinks(key, links)).finally(() => { musicLinkActive--; pumpMusicLinks(); });
   }
 }
-const listenAppleObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
+const musicLinkObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (!e.isIntersecting) return;
-    listenAppleObserver.unobserve(e.target);
+    musicLinkObserver.unobserve(e.target);
     const svc = getMusicService();
-    if (svc && svc !== 'apple') return;          // only Apple listeners (or undecided) need it
-    listenAppleQueue.push(e.target); pumpListenApple();
+    if (svc && musicDirect(svc, e.target.dataset)) return;     // already exact for this viewer's service
+    musicLinkQueue.push(e.target); pumpMusicLinks();
   });
 }, { rootMargin: '200px' }) : null;
 function prepareListenButton(btn) {
-  if (!btn || LISTEN_APPLE_EXACT.test(btn.dataset.apple || '')) return;
-  const key = listenNorm(listenQuery(btn.dataset));
+  if (!btn || btn.dataset.mlPrep) return;
+  btn.dataset.mlPrep = '1';
+  if (!btn.dataset.postMusic && !btn.closest('.stream-links, .songs-table-links')) return;   // music buttons only
+  const key = musicLinkKey(btn.dataset);
   if (!key) return;
-  if (key in listenAppleCache) { if (listenAppleCache[key]) btn.dataset.apple = listenAppleCache[key]; return; }
-  listenAppleObserver?.observe(btn);
+  const cached = musicLinkCache[key];
+  if (cached) { MUSIC_LINK_KEYS.forEach(k => { if (cached[k] && !musicDirect(k, btn.dataset)) btn.dataset[k] = cached[k]; }); if (Date.now() - (cached.t || 0) < 7 * 864e5) return; }
+  musicLinkObserver?.observe(btn);
+}
+// Opening a service with no exact link yet: open the tab now (so it isn't blocked), find the link, then go.
+function openMusicService(svc, btn) {
+  const d = btn?.dataset || {};
+  const ready = d.postMusic ? postMusicDirectUrl(d[svc], svc) : musicDirect(svc, d);
+  if (ready || !musicLinkKey(d)) { window.open(listenUrl(svc, d), '_blank', 'noopener'); return; }
+  const win = window.open('about:blank', '_blank');
+  if (win) { try { win.opener = null; win.document.title = 'Opening ' + MUSIC_SERVICES[svc].name + '…'; } catch (_) {} }
+  const key = musicLinkKey(d);
+  Promise.race([resolveMusicLinks(d), new Promise(r => setTimeout(() => r(null), 6000))]).then(links => {
+    applyMusicLinks(key, links);
+    const url = listenUrl(svc, btn.dataset);
+    if (win && !win.closed) win.location.replace(url); else window.open(url, '_blank', 'noopener');
+  });
 }
 
 const LISTEN_ICON = '<svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15a1 1 0 0 0 1.53.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>';
@@ -11710,10 +11746,11 @@ function enhanceStreamLinks(root = document) {
     box.dataset.listen = '1';
     if (!apple && !spotify) return;
     const svc = getMusicService();
-    box.innerHTML = `<button type="button" class="listen-btn" data-apple="${esc(apple)}" data-spotify="${esc(spotify)}" data-q="${esc(box.dataset.q || '')}" onclick="listenOpen(this, event)">${LISTEN_ICON}<span>${svc ? esc(MUSIC_SERVICES[svc].name) : 'Listen'}</span></button>`
+    box.innerHTML = `<button type="button" class="listen-btn" data-apple="${esc(apple)}" data-spotify="${esc(spotify)}" data-q="${esc(box.dataset.q || '')}" data-kind="${esc(box.dataset.kind || (box.classList.contains('songs-table-links') ? 'song' : ''))}" onclick="listenOpen(this, event)">${LISTEN_ICON}<span>${svc ? esc(MUSIC_SERVICES[svc].name) : 'Listen'}</span></button>`
       + `<button type="button" class="listen-switch" aria-label="Choose music service" title="Choose music service" onclick="openListenChooser(this.previousElementSibling, event)">▾</button>`;
     prepareListenButton(box.querySelector('.listen-btn'));
   });
+  root.querySelectorAll('.listen-btn[data-post-music]:not([data-ml-prep])').forEach(prepareListenButton);
 }
 function relabelListenButtons() {
   const svc = getMusicService();
@@ -11724,7 +11761,7 @@ function listenOpen(btn, ev) {
   ev?.stopPropagation(); ev?.preventDefault();
   const svc = getMusicService();
   if (!svc) { openListenChooser(btn, ev); return; }
-  window.open(listenUrl(svc, btn.dataset), '_blank', 'noopener');
+  openMusicService(svc, btn);
 }
 function openListenChooser(btn, ev) {
   ev?.stopPropagation(); ev?.preventDefault();
@@ -11740,7 +11777,7 @@ function closeListenChooser() { document.getElementById('listen-chooser').style.
 function chooseListenService(svc) {
   const btn = listenChooserFor;
   const remember = document.getElementById('listen-remember').checked;
-  if (btn) window.open(listenUrl(svc, btn.dataset), '_blank', 'noopener');   // inside the tap, so it isn't blocked
+  if (btn) openMusicService(svc, btn);   // inside the tap, so it isn't blocked
   if (remember) setMusicService(svc);
   closeListenChooser();
 }
@@ -18096,7 +18133,7 @@ function tripPlaylistSummaryHtml(item, summary, loading) {
       ${['movie','tv'].includes(summaryIdentity(item).kind) && !loading ? `<div style="padding:0 20px 16px;">${rtSlotHtml(summaryIdentity(item).kind, item.tmdbId || item.tmdbTvId || item._tmdbId, summaryIdentity(item).title)}</div>` : ''}
       ${!loading && item._summaryMissing ? `<div style="padding:0 20px 16px;font-size:13px;">${item.link && /^https?:\/\//i.test(item.link) ? `<a href="${esc(item.link)}" target="_blank" rel="noopener">Open original item ↗</a> · ` : ''}<button type="button" class="activity-summary-title" onclick="openTripPlaylistSummary(tripPlaylistFlatItems.findIndex(item=>String(item.id)==='${jsStr(String(item.id))}'))">Retry summary</button></div>` : ''}
       ${['artist','album','song'].includes(summaryIdentity(item).kind) && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
-      <div class="stream-links listen-wide" style="padding:0 20px 20px;display:flex;gap:8px;" data-q="${esc((item.title||'') + ' ' + (item.sub||''))}">
+      <div class="stream-links listen-wide" style="padding:0 20px 20px;display:flex;gap:8px;" data-kind="${esc(summaryIdentity(item).kind)}" data-q="${esc(summaryIdentity(item).kind==='artist'?(item.title||''):[summaryIdentity(item).title,summaryIdentity(item).creator].filter(Boolean).join(' ')||((item.title||'') + ' ' + (item.sub||'')))}">
         ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
         ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
       </div>` : ''}
@@ -19524,6 +19561,7 @@ function postMusicDirectUrl(raw, service) {
   if(u.protocol!=='https:'||u.username||u.password)return '';
   if(service==='spotify'&&u.hostname==='open.spotify.com'&&/^\/(?:intl-[^/]+\/)?(?:track|album|artist)\/[A-Za-z0-9]+\/?$/.test(u.pathname))return u.href;
   if(service==='apple'&&u.hostname==='music.apple.com'&&/^\/(?:[a-z]{2}\/)?(?:song|album|artist)\//.test(u.pathname))return u.href;
+  if(!['spotify','apple'].includes(service)&&MUSIC_DIRECT[service]?.test(u.href))return u.href;
  }catch(_){}
  return '';
 }
@@ -19535,7 +19573,7 @@ function postMusicLabel(d){const svc=getMusicService();return svc?postMusicTarge
 function postMusicLinkHtml(a){
  const d={q:[...new Set([a.title,a.artist].filter(Boolean).map(v=>v.trim()))].join(' '),apple:postMusicDirectUrl(a.appleMusicUrl||a.apple||a.url,'apple'),spotify:postMusicDirectUrl(a.spotifyUrl||a.spotify||a.url,'spotify')};
  if(!d.q)return '';
- return `<span class="post-listen-wrap" onclick="event.stopPropagation()"><button type="button" class="post-listen listen-btn" data-post-music="true" data-q="${esc(d.q)}" data-apple="${esc(d.apple)}" data-spotify="${esc(d.spotify)}" onclick="listenOpen(this,event)"><span>${esc(postMusicLabel(d))}</span> ↗</button><button type="button" class="post-listen-switch" aria-label="Choose music app" title="Choose music app" onclick="openListenChooser(this.previousElementSibling,event)">▾</button></span>`;
+ return `<span class="post-listen-wrap" onclick="event.stopPropagation()"><button type="button" class="post-listen listen-btn" data-post-music="true" data-kind="${esc(a.kind)}" data-q="${esc(a.kind==='artist'?(a.title||d.q):d.q)}" data-apple="${esc(d.apple)}" data-spotify="${esc(d.spotify)}" onclick="listenOpen(this,event)"><span>${esc(postMusicLabel(d))}</span> ↗</button><button type="button" class="post-listen-switch" aria-label="Choose music app" title="Choose music app" onclick="openListenChooser(this.previousElementSibling,event)">▾</button></span>`;
 }
 function listenLinkHtml(a){
  if(a&&['song','album','artist'].includes(a.kind))return postMusicLinkHtml(a);
@@ -20746,7 +20784,7 @@ function activitySummaryHtml(item, summary, loading) {
       </div>
       ${['movie','tv','special'].includes(summaryIdentity(item).kind) && !loading ? `<div style="padding:0 20px 16px;">${rtSlotHtml(summaryIdentity(item).kind === 'tv' ? 'tv' : 'movie', item.tmdbId || item.tmdbTvId || item._tmdbId, summaryIdentity(item).title || item.label)}</div>` : ''}
       ${['artist','album','song'].includes(summaryIdentity(item).kind) && !loading && (item.appleMusicUrl || item.spotifyUrl) ? `
-      <div class="stream-links listen-wide" style="padding:0 20px 14px;display:flex;gap:8px;" data-q="${esc(item.artQuery || ((item.label||'') + ' ' + (item.sub||'')))}">
+      <div class="stream-links listen-wide" style="padding:0 20px 14px;display:flex;gap:8px;" data-kind="${esc(summaryIdentity(item).kind)}" data-q="${esc(summaryIdentity(item).kind==='artist'?(item.label||item.title||''):(item.artQuery || ((item.label||'') + ' ' + (item.sub||''))))}">
         ${item.appleMusicUrl ? `<a class="stream-link apple" href="${item.appleMusicUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎵 Apple Music</a>` : ''}
         ${item.spotifyUrl ? `<a class="stream-link spotify" href="${item.spotifyUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600;font-family:inherit;padding:9px;border-radius:10px;text-decoration:none;">🎧 Spotify</a>` : ''}
       </div>` : ''}
