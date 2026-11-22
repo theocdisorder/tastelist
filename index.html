@@ -2638,10 +2638,19 @@ a.text-link.is-previewed { display: none; }
 .tl-comment .sl-comment-actions { margin-top: 6px; }
 /* Comment composer: full-width box, toolbar underneath */
 .tl-comment-composer.tl-composer-stack { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-top: 12px; }
-.tl-composer-stack > textarea { width: 100%; box-sizing: border-box; min-height: 64px; resize: vertical; background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 13.5px; line-height: 1.45; color: var(--text); outline: none; flex: none !important; }
+.tl-composer-stack > textarea { width: 100%; box-sizing: border-box; min-height: 42px; resize: vertical; background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 13.5px; line-height: 1.45; color: var(--text); outline: none; flex: none !important; }
 .tl-composer-stack > textarea:focus { border-color: rgba(124,77,255,.6); }
 .tl-composer-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .tl-composer-toolbar > .tl-comment-spoiler-btn { height: 34px; padding: 0 12px; display: inline-flex; align-items: center; align-self: auto; }
+.sl-composer.sl-composer-stack { display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 10px; }
+.sl-composer-stack > :first-child { flex: 0 0 auto; margin-top: 4px; }
+.sl-composer-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.sl-composer-main > textarea { width: 100%; box-sizing: border-box; min-height: 42px !important; max-height: 240px; resize: none !important; padding: 9px 12px !important; font-size: 14px !important; line-height: 1.45 !important; border-radius: 10px !important; }
+.tl-composer-stack > textarea { min-height: 42px !important; resize: none !important; padding: 9px 12px !important; font-size: 14px !important; line-height: 1.45 !important; border-radius: 10px !important; }
+.tl-composer-toolbar > .tl-comment-spoiler-btn { height: 30px !important; padding: 0 10px !important; font-size: 12px !important; border-radius: 8px !important; background: transparent !important; color: var(--muted) !important; border: 1px solid var(--border2) !important; }
+.tl-composer-toolbar > .tl-comment-spoiler-btn:hover { color: var(--text) !important; border-color: var(--accent) !important; }
+.tl-composer-post { height: 30px !important; padding: 0 16px !important; border-radius: 999px !important; }
+@media (max-width: 600px) { .sl-composer-main > textarea, .tl-composer-stack > textarea { font-size: 16px !important; } }
 .tl-composer-post { margin-left: auto; height: 34px; padding: 0 18px; border: 0; border-radius: 9px; background: var(--accent); color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .tl-composer-post:hover { filter: brightness(1.08); }
 @media (max-width: 720px) {
@@ -19038,7 +19047,7 @@ function commentsSectionHtml(targetType, targetId) {
       : `<div class="tl-comments-empty">No comments yet.</div>`);
   const composer = currentUser ? `${commentAttachPreviewHtml(`comment-input-${targetType}-${targetId}`)}
     <div class="tl-comment-composer tl-composer-stack">
-      <textarea rows="2" id="comment-input-${targetType}-${targetId}" placeholder="Add a comment…" aria-label="Add a comment" oninput="resizeCommentInput(this)"
+      <textarea rows="1" id="comment-input-${targetType}-${targetId}" placeholder="Add a comment…" aria-label="Add a comment" oninput="resizeCommentInput(this)"
         onkeydown="commentKeydown(event,this,'${targetType}','${targetId}')"></textarea>
       <div class="tl-composer-toolbar">
       <button type="button" class="tl-comment-spoiler-btn cm-title-btn" onclick="openCommentTitleSheet('comment-input-${targetType}-${targetId}')" title="Add a movie, show, book, song or podcast to your comment" aria-label="Add a title to your comment">+ Title</button>
@@ -19191,13 +19200,16 @@ function discussionCommentsHtml(type, listId) {
   }
   const inputId = `comment-input-${type}-${esc(listId)}`;
   const composer = currentUser
-    ? `${commentAttachPreviewHtml(inputId)}<div class="sl-composer">
+    ? `${commentAttachPreviewHtml(inputId)}<div class="sl-composer sl-composer-stack">
         ${profileAvatarHtml(currentProfile || { display_name: '?' }, 32)}
-        <textarea rows="2" id="${inputId}" placeholder="Add a comment…" aria-label="Add a comment" oninput="resizeCommentInput(this)"
+        <div class="sl-composer-main">
+        <textarea rows="1" id="${inputId}" placeholder="Add a comment…" aria-label="Add a comment" oninput="resizeCommentInput(this)"
           onkeydown="commentKeydown(event,this,'${type}','${id}')"></textarea>
+        <div class="tl-composer-toolbar">
         <button type="button" class="tl-comment-spoiler-btn cm-title-btn" onclick="openCommentTitleSheet('${inputId}')" title="Add a movie, show, book, song or podcast to your comment" aria-label="Add a title to your comment">+ Title</button>
         <button type="button" class="tl-comment-spoiler-btn" onclick="markCommentSpoiler(document.getElementById('${inputId}'))" title="Select text to conceal, or mark your next words as a spoiler">Spoiler</button>
-        <button type="button" onclick="submitComment('${type}','${id}', document.getElementById('${inputId}'), ${refresh})">Post</button>
+        <button type="button" class="tl-composer-post" onclick="submitComment('${type}','${id}', document.getElementById('${inputId}'), ${refresh})">Post</button>
+        </div></div>
       </div>`
     : `<div class="sl-composer-signin"><a href="javascript:void(0)" onclick="openAuthModal('signin')">Sign in</a> to join the conversation.</div>`;
   const count = items ? items.length : discussionCommentCount(type, listId);
