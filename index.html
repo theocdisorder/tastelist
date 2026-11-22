@@ -2982,6 +2982,8 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .lp-list-item { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .lp-list-item > div:last-child { min-width: 0; }
 .lp-list-item strong { display: block; font-size: 12px; font-weight: 600; color: #f2efe9; line-height: 1.25; overflow-wrap: anywhere; }
+.sl-recby { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 4px; font-size: 12.5px; color: var(--muted); }
+.sl-recby > :not(span:first-child) { margin: 0 !important; }
 .sl-member-add { cursor: pointer; font: inherit; font-size: inherit; color: #cdb6ff !important; background: transparent !important; border: 1px dashed rgba(205,182,255,.45) !important; gap: 6px; }
 .sl-member-add > span { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(124,77,255,.18); font-size: 15px; line-height: 1; }
 .sl-member-add:hover { border-color: #cdb6ff !important; background: rgba(124,77,255,.08) !important; }
@@ -17298,7 +17300,9 @@ function tasteContributionHtml(item){
  const p=item.addedBy?tasteListPeople.get(item.addedBy):null;
  const name=p?(firstNameOnly(p.display_name)||p.username):'a member';
  const contributor=item.addedBy?`<div class="sl-contributor">Added by ${p?.username?`<a href="javascript:void(0)" onclick="event.stopPropagation();goToProfile('${esc(jsStr(p.username))}')">${esc(name)}</a>`:esc(name)}</div>`:'';
- return contributor+(item.by?tastePersonTagHtml(item):'');
+ // Recommended by someone: that's what the card says ("Rec'd by Madhu"); who typed it in matters less.
+ if(item.by)return `<div class="sl-recby"><span>Rec’d by</span>${tastePersonTagHtml(item)}</div>`;
+ return contributor;
 }
 function setTripPlaylistItemsFromRows(rows) {
   loadTasteListPeople(rows);
