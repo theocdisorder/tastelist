@@ -4192,6 +4192,10 @@ button.tmh-tile { padding: 0; border: 0; background: none; color: inherit; font:
 .rating-retry{background:none;border:0;font:inherit;cursor:pointer;padding:0;text-decoration:underline}
 </style><style>
 /* Discreet shortcut entry point beside What's Next's primary Add action */
+.hdr-save-apps { display:inline-flex;align-items:center;vertical-align:middle;gap:6px;margin-left:10px;padding:6px 4px;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;white-space:nowrap;border-radius:8px; }
+.hdr-save-apps:hover,.hdr-save-apps:focus-visible { color:var(--text); }
+.hdr-save-apps svg { flex-shrink:0; }
+@media (max-width:1180px) { .hdr-save-apps span { display:none; } .hdr-save-apps { padding:8px; } }   /* narrower desktops: the icon alone (it has a tooltip and label) */
 .shortcut-trigger { font:inherit;font-size:12px;color:var(--muted);background:none;border:0;padding:9px 4px;cursor:pointer;white-space:nowrap; }
 .shortcut-trigger:hover,.shortcut-trigger:focus-visible { color:var(--text); }
 .shortcut-trigger span { font-size:11px; }
@@ -4473,8 +4477,8 @@ async function landingArtistArtFallback(imgEl, artistName) {
 <dialog id="shortcut-info" aria-labelledby="shortcut-info-title">
   <div class="shortcut-info-inner">
     <button type="button" class="shortcut-close" aria-label="Close" onclick="document.getElementById('shortcut-info').close()">×</button>
-    <h2 id="shortcut-info-title">Save from other apps</h2>
-    <p>Save links from Safari, Chrome, or Messages directly to TasteList.</p>
+    <h2 id="shortcut-info-title">Save to TasteList from anywhere</h2>
+    <p>Share books, movies, shows, music, podcasts, and more from other apps directly to TasteList. Choose where to add them when you open TasteList.</p>
     <a class="ob-button ob-primary shortcut-install" href="https://www.icloud.com/shortcuts/788b1ef2fe494e918d27c752827e9114" target="_blank" rel="noopener noreferrer">Install iPhone Shortcut ↗</a>
     <p class="shortcut-note">On your iPhone, add the shortcut to use it from the Share menu.</p>
   </div>
@@ -7602,6 +7606,7 @@ function renderHeaderAccountMenu() {
   btn.innerHTML = profileAvatarHtml(p, 30);
   menu.innerHTML = `<button type="button" role="menuitem" class="hdr-menu-who" onclick="closeHeaderProfileMenu();goToMyProfileView()">${profileAvatarHtml(p, 36)}<span><strong>${esc(name)}</strong>${p.username ? `<small>@${esc(p.username)} · View profile</small>` : '<small>View profile</small>'}</span></button>
     <button type="button" role="menuitem" onclick="closeHeaderProfileMenu();inviteFriendToTasteList()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Invite friends</button>
+    <button type="button" role="menuitem" onclick="closeHeaderProfileMenu();openShortcutInfo()">${SAVE_APPS_ICON}Save from other apps</button>
     <button type="button" role="menuitem" class="hdr-menu-signout" onclick="closeHeaderProfileMenu();signOut()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>`;
 }
 function toggleHeaderProfileMenu(force) {
@@ -7638,6 +7643,7 @@ function renderAuthWidget() {
     const name = firstNameOnly(currentProfile?.display_name) || currentUser.email;
     el.innerHTML = `
       <a href="javascript:void(0)" onclick="goToMyProfileView()" style="color:var(--muted);text-decoration:none;">${esc(name)}</a>
+      <button type="button" class="hdr-save-apps" onclick="openShortcutInfo()" title="Save from other apps" aria-label="Save from other apps">${SAVE_APPS_ICON}<span>Save from other apps</span></button>
       <button type="button" class="sl-btn" onclick="inviteFriendToTasteList()" style="margin-left:10px;padding:6px 10px">Invite friends</button>
       <a href="javascript:void(0)" onclick="signOut()" style="color:var(--accent);text-decoration:none;margin-left:10px;">Sign out</a>`;
   } else {
@@ -21385,6 +21391,7 @@ function refreshActivityFeeds() {
   renderFriendRecs();
 }
 
+var SAVE_APPS_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>';
 function openShortcutInfo() {
   document.getElementById('shortcut-info')?.showModal();
 }
@@ -21393,7 +21400,7 @@ function whatsNextHeaderActions() {
 }
 function syncNextUtility() {
   const el = document.getElementById('recs-utility');
-  if (el) el.innerHTML = isOwnProfile ? `<button type="button" class="shortcut-trigger" onclick="openShortcutInfo()">Save from other apps <span aria-hidden="true">↗</span></button>` : '';
+  if (el) el.innerHTML = '';   // "Save from other apps" lives in the header now (it saves to more than What's Next)
 }
 function syncActivityUtility() {
   const el = document.getElementById('activity-feed-utility');
