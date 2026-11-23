@@ -4192,10 +4192,13 @@ button.tmh-tile { padding: 0; border: 0; background: none; color: inherit; font:
 .rating-retry{background:none;border:0;font:inherit;cursor:pointer;padding:0;text-decoration:underline}
 </style><style>
 /* Discreet shortcut entry point beside What's Next's primary Add action */
-.hdr-save-apps { display:inline-flex;align-items:center;vertical-align:middle;gap:6px;margin-left:10px;padding:6px 4px;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;white-space:nowrap;border-radius:8px; }
-.hdr-save-apps:hover,.hdr-save-apps:focus-visible { color:var(--text); }
-.hdr-save-apps svg { flex-shrink:0; }
-@media (max-width:1180px) { .hdr-save-apps span { display:none; } .hdr-save-apps { padding:8px; } }   /* narrower desktops: the icon alone (it has a tooltip and label) */
+.save-apps-link { display:inline-flex;align-items:center;gap:6px;padding:6px 2px;border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;cursor:pointer;min-height:36px; }
+.save-apps-link:hover,.save-apps-link:focus-visible { color:var(--text); }
+.save-apps-link[hidden] { display:none; }
+.save-apps-icon { width:14px;height:14px;flex-shrink:0;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7'/%3E%3Cpath d='M16 6l-4-4-4 4'/%3E%3Cpath d='M12 2v13'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7'/%3E%3Cpath d='M16 6l-4-4-4 4'/%3E%3Cpath d='M12 2v13'/%3E%3C/svg%3E") center/contain no-repeat; }
+.rec-modal-foot { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px; }
+.rec-modal-foot > #rec-search-done { margin:0 0 0 auto; }
+.fc-save-apps { align-self:flex-start;margin-top:2px; }
 .shortcut-trigger { font:inherit;font-size:12px;color:var(--muted);background:none;border:0;padding:9px 4px;cursor:pointer;white-space:nowrap; }
 .shortcut-trigger:hover,.shortcut-trigger:focus-visible { color:var(--text); }
 .shortcut-trigger span { font-size:11px; }
@@ -5287,6 +5290,7 @@ function openPasteRecommendations(suggestTo){
  document.getElementById('rec-search-q').value='';document.getElementById('rec-search-results').innerHTML='';document.getElementById('rec-search-status').textContent='';
  setRecAddMode('search');
  document.getElementById('rec-from-field').hidden=!!suggestTo;
+ const saveApps=document.getElementById('rec-save-apps');if(saveApps)saveApps.hidden=!!suggestTo;   // only when adding to your own list
 }
 // Recommending to a friend: who it's for (null when adding to your own What's Next).
 var recSuggestTo=null;
@@ -7606,7 +7610,6 @@ function renderHeaderAccountMenu() {
   btn.innerHTML = profileAvatarHtml(p, 30);
   menu.innerHTML = `<button type="button" role="menuitem" class="hdr-menu-who" onclick="closeHeaderProfileMenu();goToMyProfileView()">${profileAvatarHtml(p, 36)}<span><strong>${esc(name)}</strong>${p.username ? `<small>@${esc(p.username)} · View profile</small>` : '<small>View profile</small>'}</span></button>
     <button type="button" role="menuitem" onclick="closeHeaderProfileMenu();inviteFriendToTasteList()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Invite friends</button>
-    <button type="button" role="menuitem" onclick="closeHeaderProfileMenu();openShortcutInfo()">${SAVE_APPS_ICON}Save from other apps</button>
     <button type="button" role="menuitem" class="hdr-menu-signout" onclick="closeHeaderProfileMenu();signOut()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>`;
 }
 function toggleHeaderProfileMenu(force) {
@@ -7643,7 +7646,6 @@ function renderAuthWidget() {
     const name = firstNameOnly(currentProfile?.display_name) || currentUser.email;
     el.innerHTML = `
       <a href="javascript:void(0)" onclick="goToMyProfileView()" style="color:var(--muted);text-decoration:none;">${esc(name)}</a>
-      <button type="button" class="hdr-save-apps" onclick="openShortcutInfo()" title="Save from other apps" aria-label="Save from other apps">${SAVE_APPS_ICON}<span>Save from other apps</span></button>
       <button type="button" class="sl-btn" onclick="inviteFriendToTasteList()" style="margin-left:10px;padding:6px 10px">Invite friends</button>
       <a href="javascript:void(0)" onclick="signOut()" style="color:var(--accent);text-decoration:none;margin-left:10px;">Sign out</a>`;
   } else {
@@ -20523,6 +20525,7 @@ function renderFeedComposer(){
  panel.innerHTML=`<header class="fc-head"><div class="fc-head-text"><h2 id="fc-title">${feedPostDraft.id?'Edit update':'Post an update'}</h2></div><button type="button" class="fc-close" aria-label="Close (your draft is kept)" title="Close — your draft is kept" onclick="closeFeedComposer()">×</button></header>
   <div class="fc-body">
    <div class="fc-media">${feedComposerMediaMarkup()}</div>
+   ${feedPostDraft.attachment||feedPostDraft.id?'':`<button type="button" class="save-apps-link fc-save-apps" onclick="openShortcutInfo()"><span class="save-apps-icon" aria-hidden="true"></span>Save from other apps</button>`}
    <label class="update-sr" for="feed-post-text">Your take</label>
    <textarea id="feed-post-text" class="fc-text" rows="3" maxlength="3000" placeholder="${feedPostDraft.private?'A note for yourself (optional)':'What did you think?'}" oninput="updateFeedPostDraft(this.value)" ${feedPostDraft.saving?'disabled':''}>${esc(feedPostDraft.text)}</textarea>
    <div id="feed-tag-wrap" ${feedComposerTagsOpen()?'':'hidden'}>${tagFieldMarkup('feed','Tag people','search TasteList, or type any name').replace('placeholder="Search a name or @username"','placeholder="Add a name or @username…"')}</div>
@@ -21391,7 +21394,6 @@ function refreshActivityFeeds() {
   renderFriendRecs();
 }
 
-var SAVE_APPS_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>';
 function openShortcutInfo() {
   document.getElementById('shortcut-info')?.showModal();
 }
@@ -23648,7 +23650,8 @@ renderTasteInfluences();
  <div id="paste-rec-results"></div>
  </fieldset>
  <button type="button" id="paste-rec-save" class="ed-primary" hidden disabled onclick="savePastedRecommendations()">Save to What’s Next</button>
- <button type="button" id="rec-search-done" class="sl-btn" onclick="closePasteRecommendations()">Done</button>
+ <div class="rec-modal-foot"><button type="button" id="rec-save-apps" class="save-apps-link" onclick="openShortcutInfo()"><span class="save-apps-icon" aria-hidden="true"></span>Save from other apps</button>
+ <button type="button" id="rec-search-done" class="sl-btn" onclick="closePasteRecommendations()">Done</button></div>
  </div>
 </div>
 
