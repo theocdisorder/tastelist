@@ -4187,6 +4187,7 @@ button.tmh-tile { padding: 0; border: 0; background: none; color: inherit; font:
 <style id="screen-rating-styles">
 .rt-slot{flex-wrap:wrap;row-gap:8px}
 .rt-score{color:var(--text);font-weight:650;font-variant-numeric:tabular-nums}
+.rt-aud{color:var(--muted);white-space:nowrap}
 .imdb-dot{display:inline-block;width:9px;height:9px;border-radius:2px;background:#f5c518;flex-shrink:0}
 .rating-unavailable,.rating-loading{font-size:12px;color:var(--muted)}
 .rating-retry{background:none;border:0;font:inherit;cursor:pointer;padding:0;text-decoration:underline}
@@ -18057,7 +18058,7 @@ function screenRatingId(kind,value){
  const match=text.match(/^tmdb:(movie|tv):(\d+)$/);
  return match&&match[1]===kind?match[2]:'';
 }
-function emptyScreenRatings(){return {url:'',score:'',date:'',imdbUrl:'',imdbScore:'',imdbDate:''};}
+function emptyScreenRatings(){return {url:'',score:'',audience:'',source:'',date:'',imdbUrl:'',imdbScore:'',imdbDate:''};}
 async function screenRatingIdentity(kind,id){
  const response=await tmdbFetchNow('/'+kind+'/'+id+'/external_ids',{signal:AbortSignal.timeout(10000)});
  if(!response.ok)throw Error('Title lookup failed');
@@ -18076,7 +18077,7 @@ async function screenRatingRtUrl(kind,id){
 function rtInfo(kind,tmdbId){
  kind=kind==='tv'?'tv':'movie';const id=screenRatingId(kind,tmdbId);
  if(!id)return Promise.resolve(emptyScreenRatings());
- const key=kind+':'+id,storageKey='tastelist:omdb:v1:'+key,cached=RT_LINKS.get(key);
+ const key=kind+':'+id,storageKey='tastelist:ratings:v2:'+key,cached=RT_LINKS.get(key);
  if(cached&&cached.expires>Date.now())return cached.promise;
  try{const saved=JSON.parse(localStorage.getItem(storageKey)||'null');if(saved&&saved.expires>Date.now())return Promise.resolve(saved.value);}catch(_){}
  const record={expires:Date.now()+86400000,promise:null};
@@ -18091,11 +18092,14 @@ function rtInfo(kind,tmdbId){
     const {data,error}=await sb.functions.invoke('screen-ratings',{body:{imdbId,kind}});
     if(error||!data||data.error)throw Error('Ratings request failed');
     if(/^\d{1,3}%$/.test(data.score||'')&&Number(data.score.slice(0,-1))<=100)out.score=data.score;
+    if(/^\d{1,3}%$/.test(data.audience||'')&&Number(data.audience.slice(0,-1))<=100)out.audience=data.audience;
+    if(/^https:\/\/www\.rottentomatoes\.com\/(m|tv)\/[\w-]+(?:\/[\w-]+)?$/.test(data.rtUrl||''))out.rtPage=data.rtUrl;
+    out.source=['MDBList','OMDb'].includes(data.source)?data.source:'';
     if(/^\d{1,2}\.\d\/10$/.test(data.imdbScore||'')&&Number(data.imdbScore.split('/')[0])<=10)out.imdbScore=data.imdbScore;
     out.date=out.imdbDate=data.fetchedAt||'';
    }
-   out.url=await rtUrlJob;
-   record.expires=Date.now()+((out.score||out.imdbScore)?86400000:3600000);
+   out.url=(await rtUrlJob)||out.rtPage||'';   // Wikidata's exact page, else the page the server confirmed
+   record.expires=Date.now()+((out.score||out.audience||out.imdbScore)?86400000:3600000);
    try{localStorage.setItem(storageKey,JSON.stringify({expires:record.expires,value:out}));}catch(_){}
    return out;
   }catch(_){
@@ -18123,13 +18127,14 @@ function tmdbPageUrl(kind, tmdbId, title) {
   return title ? 'https://www.themoviedb.org/search?query=' + encodeURIComponent(title) : '';
 }
 function rtSearchUrl(title) { return title ? 'https://www.rottentomatoes.com/search?search=' + encodeURIComponent(title) : ''; }
-function ratingRecordedTitle(label,score,date){
- return score?label+' score supplied by OMDb'+(date?' (retrieved '+date.slice(0,10)+')':'')+'. Open the source for its current rating.':'Open '+label+' to see its score. TasteList has not retrieved a score for this title.';
+function ratingRecordedTitle(label,score,date,source){
+ return score?label+' score supplied by '+(source||'a ratings service')+(date?' (retrieved '+date.slice(0,10)+')':'')+'. Open the source for its current rating.':'Open '+label+' to see its score. TasteList has not retrieved a score for this title.';
 }
 function screenRatingLinksHtml(found,title,tmdbHtml){
  const rtUrl=found.url||rtSearchUrl(title),imdbUrl=found.imdbUrl||(title?'https://www.imdb.com/find/?q='+encodeURIComponent(title)+'&s=tt':'');
- const link=(url,cls,label,score,date)=>url?`<a class="rt-link ${cls}" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(ratingRecordedTitle(label,score,date))}" aria-label="${esc(label+(score?' '+score:': view score on source website'))}"><span class="${cls==='imdb-link'?'imdb-dot':'rt-dot'}" aria-hidden="true"></span>${esc(label)}${score?` <strong class="rt-score">${esc(score)}</strong>`:''} ↗</a>`:'';
- return link(rtUrl,'rt-rating-link','RT',found.score,found.date)+link(imdbUrl,'imdb-link','IMDb',found.imdbScore,found.imdbDate)+tmdbHtml;
+ // Rotten Tomatoes shows critics (Tomatometer) and, when known, audience (Popcornmeter): "RT 87% · Audience 96%".
+ const link=(url,cls,label,score,date,extra='',extraLabel='')=>url?`<a class="rt-link ${cls}" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(ratingRecordedTitle(label,score||extra,date,found.source))}" aria-label="${esc(label+(score?' critics '+score:'')+(extra?', '+extraLabel+' '+extra:'')+(!score&&!extra?': view score on source website':''))}"><span class="${cls==='imdb-link'?'imdb-dot':'rt-dot'}" aria-hidden="true"></span>${esc(label)}${score?` <strong class="rt-score">${esc(score)}</strong>`:''}${extra?` <span class="rt-aud">· ${esc(extraLabel)} <strong class="rt-score">${esc(extra)}</strong></span>`:''} ↗</a>`:'';
+ return link(rtUrl,'rt-rating-link','RT',found.score,found.date,found.audience,'Audience')+link(imdbUrl,'imdb-link','IMDb',found.imdbScore,found.imdbDate)+tmdbHtml;
 }
 function retryScreenRatings(button){
  const el=button.closest('.rt-slot');if(!el)return;
