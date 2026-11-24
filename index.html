@@ -1710,6 +1710,7 @@ input::placeholder, textarea::placeholder {
 .ob-deck-left { margin: -2px 0 0 !important; font-size: 12px !important; color: #77746f !important; }
 .ob-deck-alt { text-align: center; margin-top: 10px; }
 .ob-deck-done { text-align: center; padding: 30px 10px; }
+.ob-deck-break-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 18px; }
 .ob-deck-done h2 { font-family: var(--ob-serif); font-weight: 500; font-size: 28px; margin: 0 0 6px; color: #f3efe9; }
 .ob-deck-back { display: block; margin: 0 auto 6px; background: none; border: 0; color: #cbb0f4; font: inherit; font-size: 13px; cursor: pointer; padding: 8px 12px; }
 @media (max-width: 600px) { .ob-deck-stack { width: min(196px, 56vw); } .ob-deck-btn { min-width: 110px; } .ob-deck-left { display: none; } }
@@ -8515,7 +8516,12 @@ async function toggleFollow() {
   if (btn) { btn.disabled = true; }
   try {
     if (followStatus === 'accepted' || followStatus === 'pending') {
-      // Unfollow, or cancel a pending request — same action either way.
+      // Unfollow, or cancel a pending request — same action either way. Unfollowing a private
+      // profile can't be undone with one tap (re-following needs their approval), so confirm first.
+      if (followStatus === 'accepted' && viewedProfile.is_public === false) {
+        const nm = firstNameOnly(viewedProfile.display_name) || viewedProfile.username || 'them';
+        if (!confirm(`Unfollow ${nm}? Their profile is private, so you’d need to send a new request and wait for ${nm} to approve it to follow again.`)) { if (btn) btn.disabled = false; return; }
+      }
       const { error } = await sb.from('follows')
         .delete()
         .eq('follower_id', currentUser.id)
@@ -11212,6 +11218,14 @@ function cycleOnboardingQuestion() {
 // ── "Me too" deck: tap the favorites your friends love instead of searching from a blank box ──
 // Cards come from onboarding_deck(): what the people you follow love (and who), then popular picks.
 // Each "Love it" is saved right away, so nothing is lost if someone leaves halfway.
+const OB_DECK_FIRST_ROUND = 30, OB_DECK_ROUND = 20;
+function obDeckMore() {
+  const d = onboardingVisualState().deck; if (!d?.pool) return;
+  d.items = d.pool.slice(0, d.items.length + OB_DECK_ROUND); d.round = (d.round || 1) + 1; d.last = null;
+  obLogEvent('deck_more', String(d.round));
+  renderObDeck(); prefetchObDeckArt();
+  document.getElementById('ob-deck-card')?.focus?.();
+}
 const OB_DECK_KIND_LABEL = { movie: 'Movie', tv: 'TV show', book: 'Book', author: 'Author', artist: 'Artist', album: 'Album' };
 const obLogged = new Set();
 function obLogEvent(event, detail) {
@@ -11227,7 +11241,8 @@ function obDeckMode(state) {
   return d && d.loaded && !d.items.length ? 'search' : 'deck';
 }
 function obDeckBackLink(state) {
-  return state.deck?.items?.length && state.deck.index < state.deck.items.length
+  const d = state.deck;
+  return d?.items?.length && (d.index < d.items.length || (d.pool?.length || 0) > d.items.length)
     ? `<button type="button" class="ob-deck-back" onclick="setObMode('deck')">← Back to quick picks</button>` : '';
 }
 function setObMode(mode) {
@@ -11243,14 +11258,18 @@ async function loadObDeck() {
   state.deck = { items: [], index: 0, loading: true, loaded: false, loved: [], last: null };
   renderObDeck();
   let rows = [];
-  try { const { data } = await sb.rpc('onboarding_deck', { p_limit: 40 }); rows = data || []; } catch (_) {}
+  try { const { data } = await sb.rpc('onboarding_deck', { p_limit: 240 }); rows = data || []; } catch (_) {}
   if (onboardingVisualState() !== state) return;
   // Mix the kinds (a show, an artist, a book, …) while keeping friends' shared favorites up front.
   const byKind = new Map(); rows.forEach(r => { if (!byKind.has(r.kind)) byKind.set(r.kind, []); byKind.get(r.kind).push(r); });
   const mixed = []; const queues = [...byKind.values()];
   for (let i = 0; mixed.length < rows.length; i++) { let any = false; queues.forEach(q => { if (q[i]) { mixed.push(q[i]); any = true; } }); if (!any) break; }
   const friendly = mixed.filter(r => r.friend_count > 0), rest = mixed.filter(r => !r.friend_count);
-  state.deck.items = [...friendly, ...rest].slice(0, 30);
+  // The whole pool waits in d.pool; cards are dealt in rounds (30, then 20 at a time) with a
+  // "keep going" break between rounds, so the stack never just ends while there's more to see.
+  state.deck.pool = [...friendly, ...rest];
+  state.deck.items = state.deck.pool.slice(0, OB_DECK_FIRST_ROUND);
+  state.deck.round = 1;
   state.deck.loading = false; state.deck.loaded = true;
   if (!state.deck.items.length && !state.mode) { setObMode('search'); return; }
   renderObDeck(); prefetchObDeckArt();
@@ -11296,6 +11315,13 @@ function renderObDeck() {
   const toast = d.last ? `<p class="ob-deck-toast" role="status">${d.last}</p>` : '';
   const r = d.items[d.index];
   const alt = document.querySelector('.ob-deck-alt'); if (alt) alt.hidden = !r;
+  if (!r && d.pool && d.pool.length > d.items.length) {
+    const more = Math.min(OB_DECK_ROUND, d.pool.length - d.items.length), n = d.loved.length;
+    const cheer = n >= 15 ? 'You’re on a roll!' : n >= 5 ? 'Nice picks!' : 'Keep going?';
+    el.innerHTML = `${matchHtml}<div class="ob-deck-done ob-deck-break"><h2>${cheer}</h2><p>${n ? `${n} ${n === 1 ? 'favorite' : 'favorites'} so far.` : 'Nothing yet — the next batch might be more you.'} ${more} more ${more === 1 ? 'pick' : 'picks'} from your friends are ready.</p>
+      <div class="ob-deck-break-actions"><button type="button" class="ob-button" onclick="obDeckMore()">Keep going →</button><button type="button" class="ob-text-link" onclick="setObMode('search')">Search instead</button></div></div>`;
+    return;
+  }
   if (!r) {
     el.innerHTML = `${matchHtml}<div class="ob-deck-done"><h2>That’s the whole stack!</h2><p>${d.loved.length ? `You picked ${d.loved.length}. Add anything else you love with search.` : 'Search for a few things you love instead.'}</p><button type="button" class="ob-button" onclick="setObMode('search')">Search for more</button></div>`;
     return;
@@ -11355,7 +11381,8 @@ function bindObDeckSwipe(card) {
   card.addEventListener('pointerup', end); card.addEventListener('pointercancel', end);
 }
 document.addEventListener('keydown', e => {
-  if (!document.getElementById('ob-deck-card') || /input|textarea|select/i.test(e.target?.tagName || '')) return;
+  if (/input|textarea|select/i.test(e.target?.tagName || '')) return;
+  if (!document.getElementById('ob-deck-card')) { if (e.key === 'ArrowRight' && document.querySelector('.ob-deck-break')) { e.preventDefault(); obDeckMore(); } return; }
   if (e.key === 'ArrowRight') { e.preventDefault(); obDeckAnswer(true); }
   else if (e.key === 'ArrowLeft') { e.preventDefault(); obDeckAnswer(false); }
 });
