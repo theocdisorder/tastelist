@@ -3,7 +3,19 @@
 <head>
 <script>
 // Capture before auth or profile routing can replace the address bar.
-try{const raw=new URL(location.href).searchParams.get('save');if(raw){const u=new URL(raw);if(!['https:','http:'].includes(u.protocol)||u.username||u.password||raw.length>4096)throw Error('Invalid shared URL');localStorage.setItem('tl-shared-link',JSON.stringify({url:u.href,time:Date.now()}));}}catch(_){}
+// The iPhone Shortcut opens ?save=<whatever was shared>. Many apps share text with a link inside
+// ("Check out “Dune” on Netflix https://…") or text with no link at all, so keep both rather than
+// dropping anything that isn't a bare URL — otherwise the person just lands on their profile.
+try{const qs=location.search;let raw=new URL(location.href).searchParams.get('save');
+ if(raw!==null){
+  // An unencoded shared URL can be cut at its own "&"; take everything after save= instead.
+  const i=qs.indexOf('save=');if(i>=0&&/^https?:\/\//i.test(qs.slice(i+5))){let rest=qs.slice(i+5);try{rest=decodeURIComponent(rest.replace(/\+/g,'%20'));}catch(_){}if(rest.startsWith(raw)&&rest.length>raw.length)raw=rest;}
+  raw=String(raw).slice(0,4096).trim();
+  let url=null,text=raw;const m=raw.match(/https?:\/\/[^\s<>"“”'‘’]+/i);
+  if(m){try{const u=new URL(m[0].replace(/[).,!?;:]+$/,''));if(['https:','http:'].includes(u.protocol)&&!u.username&&!u.password){url=u.href;text=raw.replace(m[0],' ');}}catch(_){}}
+  text=text.replace(/\s+/g,' ').trim().slice(0,300);
+  if(url||text)localStorage.setItem('tl-shared-link',JSON.stringify({url,text,time:Date.now()}));
+ }}catch(_){}
 </script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
@@ -4224,6 +4236,9 @@ button.tmh-tile { padding: 0; border: 0; background: none; color: inherit; font:
 #shared-inbox-status { font-size:12px;line-height:1.5;color:var(--muted);margin:8px 0; }
 #shared-inbox-status:empty { display:none; }
 #shared-inbox-results { margin:22px 0 !important; }
+.si-find { margin-top:14px; }
+.si-find .tl-input { width:100%;box-sizing:border-box;border-radius:10px; }
+#shared-inbox-results .si-empty { color:var(--muted);font-size:13px;margin:0; }
 .shared-inbox-item { display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:none;color:var(--text);border:0;padding:4px 0;font:inherit;cursor:pointer; }
 .shared-inbox-item+.shared-inbox-item { border-top:1px solid var(--border);padding-top:14px;margin-top:14px; }
 .shared-inbox-item .ob-art { width:64px;min-width:64px;flex-shrink:0; }
@@ -24117,6 +24132,7 @@ renderTasteInfluences();
 <div id="shared-inbox-auth" hidden><button class="sl-btn primary" onclick="document.getElementById('shared-inbox').close();openAuthModal('signin')">Sign in to continue</button></div>
 <div id="shared-inbox-tools" hidden><fieldset id="shared-inbox-fields" style="border:0;padding:0;min-width:0">
 
+<div id="shared-inbox-find" class="si-find" hidden><label class="update-sr" for="shared-inbox-q">Search for the title</label><input id="shared-inbox-q" class="tl-input" type="search" autocomplete="off" placeholder="Search a title…" oninput="sharedInboxQueryInput(this.value)"></div>
 <div id="shared-inbox-results" style="margin:16px 0"></div>
 <label for="shared-inbox-destination">Save to</label><select id="shared-inbox-destination" class="tl-input" onchange="sharedInboxRender()"><option value="new">What’s New (post an update)</option><option value="next">What’s Next</option><option value="favorite">Favorites</option></select>
 <div id="shared-inbox-post" class="si-post" hidden>
@@ -24135,7 +24151,7 @@ renderTasteInfluences();
 
 <script>
 // Shared-link inbox: no writes until the person confirms an item and destination.
-const sharedInbox={revision:0,busy:false,saved:false,results:[],selected:null,opened:null,post:{date:null,spoiler:false,private:false,showTags:false,requestId:null}};
+const sharedInbox={searchSeq:0,kinds:null,qTimer:null,revision:0,busy:false,saved:false,results:[],selected:null,opened:null,post:{date:null,spoiler:false,private:false,showTags:false,requestId:null}};
 // What's New, posted right here in one step: your take plus tags, date, spoiler and Only me.
 function sharedInboxResetPost(){
  sharedInbox.post={date:null,spoiler:false,private:false,showTags:false,requestId:null};
@@ -24188,6 +24204,40 @@ function sharedInboxPending(){try{const p=JSON.parse(localStorage.getItem('tl-sh
 function sharedInboxClear(){try{localStorage.removeItem('tl-shared-link');}catch(_){}const u=new URL(location.href);u.searchParams.delete('save');history.replaceState(history.state,'',u);}
 function sharedInboxClose(){if(sharedInbox.busy)return;sharedInbox.revision++;document.getElementById('shared-inbox').close();sharedInboxClear();}
 function sharedInboxStatus(text){document.getElementById('shared-inbox-status').textContent=text;}
+// Where a shared link (or the text around it) gives a title, turn that into a catalog search.
+const SI_STOP=/\b(check out|check this out|watch|watching|listen to|listening to|read|reading|i('m| am)|on (netflix|hulu|max|hbo max|prime video|amazon|apple tv\+?|apple music|spotify|youtube|disney\+?|peacock|paramount\+?|goodreads|letterboxd|kindle|apple books|audible|libby)|now streaming|via|shared from \S+)\b/gi;
+function sharedInboxGuess(p){
+ let q=String(p?.text||'').replace(/[“”"«»]/g,' ').replace(SI_STOP,' ').replace(/\s+[-–—|:]\s*$/,'').replace(/\s+/g,' ').trim();
+ let kinds=null;
+ if(p?.url){try{const u=new URL(p.url),h=u.hostname.replace(/^www\.|^m\./,''),path=decodeURIComponent(u.pathname);
+  const slug=v=>String(v||'').replace(/^\d+[-.]?/,'').replace(/[-_.]+/g,' ').replace(/\b(id)?\d{5,}\b/g,'').trim();
+  let m;
+  if(/goodreads\.com$/.test(h)){kinds=['book'];m=path.match(/\/book\/show\/([^/?]+)/);if(m&&!q)q=slug(m[1]);}
+  else if(/^amazon\.|\.amazon\./.test(h)||h==='a.co'||h==='amzn.to'){kinds=['book','movie','tv'];m=path.match(/^\/([^/]+)\/dp\//);if(m&&!q)q=slug(m[1]).replace(/\b(ebook|kindle edition|paperback|hardcover)\b/gi,'').trim();}
+  else if(h==='books.apple.com'){kinds=['book'];m=path.match(/\/book\/([^/]+)\//);if(m&&!q)q=slug(m[1]);}
+  else if(h==='letterboxd.com'||h==='boxd.it'){kinds=['movie'];m=path.match(/\/film\/([^/]+)/);if(m&&!q)q=slug(m[1]);}
+  else if(h==='music.apple.com'){m=path.match(/\/(album|song|artist|playlist)\/([^/]+)\//);kinds=m?.[1]==='artist'?['artist']:m?.[1]==='song'||u.searchParams.get('i')?['song','album']:['album','song'];if(m&&!q)q=slug(m[2]);}
+  else if(h==='tv.apple.com'){m=path.match(/\/(movie|show)\/([^/]+)\//);kinds=m?.[1]==='movie'?['movie','tv']:['tv','movie'];if(m&&!q)q=slug(m[2]);}
+  else if(/(netflix|hulu|max|hbomax|disneyplus|primevideo|peacocktv|paramountplus)\.com$/.test(h)){kinds=['movie','tv'];}
+  else if(h==='open.spotify.com'){kinds=['podcast','song','album'];}
+  if(!q){m=path.split('/').filter(Boolean).map(slug).filter(x=>/[a-z]{3}/i.test(x)&&x.split(' ').length>1).pop();if(m)q=m;}
+ }catch(_){}}
+ return {q:q.slice(0,120),kinds:kinds||['movie','tv','book','album','podcast']};
+}
+async function sharedInboxSearch(q,kinds){
+ const rev=sharedInbox.revision,seq=++sharedInbox.searchSeq;q=String(q||'').trim();
+ if(q.length<2){sharedInbox.results=[];sharedInbox.selected=null;sharedInboxRender();return;}
+ sharedInboxStatus('Searching…');
+ const found=new Map();
+ const qFor=k=>['book','album','song'].includes(k)?q:(q.replace(/\s+by\s+.+$/i,'').trim()||q);
+ await Promise.all(kinds.map(async k=>{try{(await onboardingAutocompleteProvider(k,qFor(k))).slice(0,4).forEach(x=>found.set(onboardingSelectionKey(x),x));}catch(_){}}));
+ if(rev!==sharedInbox.revision||seq!==sharedInbox.searchSeq)return;
+ const rows=[...found.values()].sort(catalogCompare(q)).slice(0,6);
+ rows.forEach(r=>{if(!r.art&&r.poster)r.art=String(r.poster).startsWith('http')?r.poster:TMDB_IMG+r.poster;});
+ sharedInbox.results=rows;sharedInbox.selected=null;sharedInboxRender();
+ sharedInboxStatus(rows.length?'Which one is it? Tap the right one.':'No matches yet. Try typing the title.');
+}
+function sharedInboxQueryInput(v){clearTimeout(sharedInbox.qTimer);sharedInbox.qTimer=setTimeout(()=>sharedInboxSearch(v,sharedInbox.kinds||['movie','tv','book','album','podcast']),350);}
 async function openSharedInbox(){
  const pending=sharedInboxPending();if(!pending)return;
  if(sharedInbox.opened===pending.time&&document.getElementById('shared-inbox').open&&currentUser)return;
@@ -24202,10 +24252,20 @@ async function openSharedInbox(){
  try{
   if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
  document.getElementById('shared-inbox-destination').value='new';
- const matches=await resolveSharedInboxLink(pending.url);
+ const find=document.getElementById('shared-inbox-find');find.hidden=true;
+ let matches=[];
+ if(pending.url){try{matches=await resolveSharedInboxLink(pending.url);}catch(_){matches=[];}}
   if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
-  sharedInbox.results=matches;sharedInbox.selected=matches.length===1?0:null;sharedInboxRender();
-  sharedInboxStatus(matches.length===1?'':matches.length>1?'Select the correct item.':'Couldn’t identify this link. Try adding the item directly in TasteList.');
+  if(matches.length){
+   sharedInbox.results=matches;sharedInbox.selected=matches.length===1?0:null;sharedInboxRender();
+   sharedInboxStatus(matches.length===1?'':'Select the correct item.');
+  }else{
+   // Not a link TasteList reads directly (Goodreads, Netflix, Apple Music, plain text…): search by its title.
+   const g=sharedInboxGuess(pending);sharedInbox.kinds=g.kinds;
+   find.hidden=false;const qi=document.getElementById('shared-inbox-q');qi.value=g.q;
+   if(g.q)await sharedInboxSearch(g.q,g.kinds);
+   else{sharedInbox.results=[];sharedInboxRender();sharedInboxStatus('What did you want to save? Search for the title.');setTimeout(()=>qi.focus(),50);}
+  }
 
  }catch(_){if(rev===sharedInbox.revision)sharedInboxStatus('Couldn’t read this link. Close this dialog and share the link again to retry.');}
 }
