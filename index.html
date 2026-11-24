@@ -12347,14 +12347,17 @@ function decideInitialView() {
     if (tab && tab !== 'profile' && document.getElementById('tab-' + tab)) switchTab(tab);
     return;
   }
-  // Email links: ?go=taste opens your own Your Taste tab; ?go=following opens the list of people you follow.
+  // Email links: ?go=taste opens your own Your Taste tab, ?go=collections your Collections, ?go=new / ?go=next
+  // your What's New / What's Next sections, ?go=following the list of people you follow.
   // (Signed-out visitors see the usual landing page; onboarding still comes first for new accounts.)
   const go = params.get('go');
   if (go && currentUser && !(shouldShowOnboarding() && !onboardingState.defaultToFeed)) {
     const clean = new URL(location.href); clean.searchParams.delete('go'); history.replaceState(null, '', clean.toString());
-    if (go === 'taste' || go === 'following') {
+    if (['taste', 'following', 'collections', 'new', 'next'].includes(go)) {
       goToMyProfileView().then(() => {
         if (go === 'taste') switchTab('favorites');
+        else if (go === 'collections') switchTab('playlist');
+        else if (go === 'new' || go === 'next') { switchTab('profile'); setTimeout(() => document.getElementById(go === 'new' ? 'happening-new' : 'happening-next')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 600); }
         else { switchTab('profile'); setTimeout(() => { if (isOwnProfile) openFollowList('following'); }, 800); }   // after the profile finishes loading
       }).catch(() => setTopView('feed'));
       return;
@@ -19031,13 +19034,15 @@ async function submitComment(targetType, targetId, inputEl, onDone) {
   const body = (inputEl?.value || '').trim();
   const key = commentAttachKey(inputEl?.id), attachment = COMMENT_ATTACH.get(key) || null;
   if (!body && !attachment) return;
+  // Comments can be up to 3,000 characters; say so plainly (and keep their text) instead of a database error.
+  if (body.length > 3000) { showToast(`That comment is ${body.length.toLocaleString()} characters. Please trim it to 3,000 or split it into two comments.`); inputEl?.focus(); return; }
   try {
     const row = { target_type: targetType, target_id: targetId, user_id: currentUser.id, body };
     if (attachment) row.attachment = Object.fromEntries(Object.entries(attachment).filter(([k]) => !k.startsWith('_')));
     const { error } = await sb.from('comments').insert(row);
     if (error) throw error;
   } catch (e) {
-    alert('Failed to post comment: ' + (e.message || 'unknown error'));
+    showToast(/comments_body_check/.test(e.message || '') ? 'That comment is too long. Please trim it to 3,000 characters.' : 'Couldn’t post your comment. Your text is still there; please try again.');
     return;
   }
   if (inputEl) inputEl.value = '';
