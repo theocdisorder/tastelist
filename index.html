@@ -10,7 +10,15 @@ try{const qs=location.search;let raw=new URL(location.href).searchParams.get('sa
  if(raw!==null){
   // An unencoded shared URL can be cut at its own "&"; take everything after save= instead.
   const i=qs.indexOf('save=');if(i>=0&&/^https?:\/\//i.test(qs.slice(i+5))){let rest=qs.slice(i+5);try{rest=decodeURIComponent(rest.replace(/\+/g,'%20'));}catch(_){}if(rest.startsWith(raw)&&rest.length>raw.length)raw=rest;}
-  raw=String(raw).slice(0,4096).trim();
+  // Shared files (e.g. a Messages preview card) arrive as their raw contents: find the link
+  // anywhere in it, prefer known media sites, and drop the unreadable rest.
+  raw=String(raw).slice(0,400000);
+  const links=raw.match(/https?:\/\/[A-Za-z0-9\-._~:\/?#\[\]@!$&'()*+,;=%]+/g)||[];
+  const binary=(raw.match(/[\u0000-\u0008\u000E-\u001F\uFFFD]/g)||[]).length>8;
+  if(binary||raw.length>4096){const media=/(podcasts|music|books|tv)\.apple\.com|open\.spotify\.com|spotify\.link|youtu\.?be|imdb\.com|themoviedb\.org|goodreads\.com|letterboxd\.com|boxd\.it|netflix\.com/i;
+   const best=links.map(l=>l.replace(/[).,!?;:'"]+$/,'')).filter(l=>!/\.(png|jpe?g|gif|webp|ico|svg)(\?|$)/i.test(l)&&!/mzstatic\.com|\/favicon/i.test(l));
+   raw=(best.find(l=>media.test(l))||best[0]||'')+(binary?'':' '+raw.slice(0,300));}
+  raw=raw.slice(0,4096).trim();
   let url=null,text=raw;const m=raw.match(/https?:\/\/[^\s<>"“”'‘’]+/i);
   if(m){try{const u=new URL(m[0].replace(/[).,!?;:]+$/,''));if(['https:','http:'].includes(u.protocol)&&!u.username&&!u.password){url=u.href;text=raw.replace(m[0],' ');}}catch(_){}}
   text=text.replace(/\s+/g,' ').trim().slice(0,300);
@@ -24227,7 +24235,8 @@ function sharedInboxGuess(p){
   else if(h==='open.spotify.com'){kinds=['podcast','song','album'];}
   if(!q){m=path.split('/').filter(Boolean).map(slug).filter(x=>/[a-z]{3}/i.test(x)&&x.split(' ').length>1).pop();if(m)q=m;}
  }catch(_){}}
- return {q:q.slice(0,120),kinds:kinds||['movie','tv','book','album','podcast']};
+ // No link to go on (e.g. just a title from a Messages preview card): podcast episodes too.
+ return {q:q.slice(0,120),kinds:kinds||(p?.url?['movie','tv','book','album','podcast']:['episode','podcast','movie','tv','book','album'])};
 }
 async function sharedInboxSearch(q,kinds){
  const rev=sharedInbox.revision,seq=++sharedInbox.searchSeq;q=String(q||'').trim();
