@@ -5323,6 +5323,16 @@ function queueRecSearch(q){
  recSearch.timer=setTimeout(()=>runRecSearch(recSearch.q,request),250);
 }
 async function runRecSearch(q,request){
+ // A pasted link (IMDb, TMDB, Spotify, Apple Podcasts, YouTube): the item it points to.
+ if(/^https?:\/\/\S+$/i.test(q)){
+  let item=null;try{item=await resolveFeedLink(q);}catch(_){}
+  if(request!==recSearch.request)return;
+  const type=item?({movie:'film',tv:'tv',book:'book',song:'song',album:'album',artist:'artist',podcast:'podcast',episode:'podcast'})[item.kind]||'other':null;
+  recSearch.results=item?[{...item,type,art:item.art||'',sub:[item.artist||item.author,item.year].filter(Boolean).join(' · ')}]:[];
+  recSearch.added=new Set();recSearch.partial=false;renderRecSearch();
+  if(!item){const el=document.getElementById('rec-search-results');if(el)el.innerHTML='<p class="rec-search-note">Couldn’t find what this link points to in TasteList’s catalogs. Try searching its title instead, including its original title.</p>';}
+  return;
+ }
  const catalog={film:'movies',tv:'tv',book:'books',author:'authors',song:'music',album:'albums',podcast:'podcasts'};
  const settled=await Promise.allSettled(REC_KIND_ORDER.map(async type=>{
   const found=type==='artist'?(await searchOnboardingArtists(q)).map(a=>({title:a.title,art:a.art,sub:a.genre||'',id:a.id})):await searchTasteCatalog(catalog[type],q);
@@ -19869,8 +19879,22 @@ async function resolveSpotifyMusicLink(raw){
  const kind={track:'song',album:'album',artist:'artist'}[type];
  return {kind,id:'spotify:'+id,title:data.title.trim(),artist:kind==='artist'?data.title.trim():'',art:data.thumbnail_url||'',url,label:{song:'Song',album:'Album',artist:'Artist'}[kind]};
 }
+// An IMDb or TMDB link to a movie/show: the same TMDB item a title search would give (IMDb via TMDB's id lookup).
+function screenLinkItem(r,kind){const poster=r.poster_path||'';return {kind,id:r.id,title:r.title||r.name,label:kind==='tv'?'TV show':'Movie',poster,art:poster?TMDB_IMG+poster:'',year:(r.release_date||r.first_air_date||'').slice(0,4)};}
+async function resolveScreenLink(u,host){
+ if(host==='imdb.com'){
+  const id=(u.pathname.match(/^\/title\/(tt\d{7,10})/)||[])[1];if(!id)return null;
+  const r=await tmdbFetch('/find/'+id+'?external_source=imdb_id');if(!r.ok)throw Error('Lookup failed');
+  const d=await r.json(),m=(d.movie_results||[])[0],t=(d.tv_results||[])[0];
+  return m?screenLinkItem(m,'movie'):t?screenLinkItem(t,'tv'):null;
+ }
+ const m=u.pathname.match(/^\/(movie|tv)\/(\d+)/);if(!m)return null;
+ const r=await tmdbFetch('/'+m[1]+'/'+m[2]);if(!r.ok)return null;
+ return screenLinkItem(await r.json(),m[1]);
+}
 async function resolveFeedLink(raw){
  const u=new URL(raw),host=u.hostname.replace(/^www\.|^m\./,'');
+ if(host==='imdb.com'||host==='themoviedb.org')return resolveScreenLink(u,host);
  if(host==='podcasts.apple.com'){
   const showId=u.pathname.match(/id(\d+)/)?.[1],epId=u.searchParams.get('i');if(!showId)return null;
   const d=await onboardingSearchJSON(`https://itunes.apple.com/lookup?id=${showId}&entity=podcastEpisode&limit=200`);
@@ -19913,6 +19937,7 @@ async function searchFeedLink(url){
  feedTitleSearch.results=[];feedTitleSearch.error=false;feedTitleSearch.musicSearchFailed=false;el.innerHTML='<p class="fc-results-note">Reading link…</p>';
  let item=null;try{item=await resolveFeedLink(url);}catch(_){}
  if(seq!==feedTitleSearch.seq||userId!==currentUser?.id||feedPostDraft.attachment)return;
+ if(!item&&/(^|\.)imdb\.com$/i.test((()=>{try{return new URL(url).hostname}catch(_){return ''}})())){el.innerHTML=`<p class="fc-results-note">This IMDb title isn’t in TasteList’s movie & TV catalog yet. Try searching its title instead, including its original title.</p>`;return;}
  if(!item){el.innerHTML=`<p class="fc-results-note">Couldn’t read this link. For Spotify, use a full open.spotify.com track, album, artist, show or episode link. <button type="button" class="fc-link" onclick="searchFeedTitles(feedTitleSearch.lastQuery,true)">Try again</button></p>`;return;}
  feedTitleSearch.results=[item];renderFeedTitleRows();
 }
