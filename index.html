@@ -12347,6 +12347,19 @@ function decideInitialView() {
     if (tab && tab !== 'profile' && document.getElementById('tab-' + tab)) switchTab(tab);
     return;
   }
+  // Email links: ?go=taste opens your own Your Taste tab; ?go=following opens the list of people you follow.
+  // (Signed-out visitors see the usual landing page; onboarding still comes first for new accounts.)
+  const go = params.get('go');
+  if (go && currentUser && !(shouldShowOnboarding() && !onboardingState.defaultToFeed)) {
+    const clean = new URL(location.href); clean.searchParams.delete('go'); history.replaceState(null, '', clean.toString());
+    if (go === 'taste' || go === 'following') {
+      goToMyProfileView().then(() => {
+        if (go === 'taste') switchTab('favorites');
+        else { switchTab('profile'); setTimeout(() => { if (isOwnProfile) openFollowList('following'); }, 800); }   // after the profile finishes loading
+      }).catch(() => setTopView('feed'));
+      return;
+    }
+  }
   if (currentUser) { setTopView(shouldShowOnboarding() && !onboardingState.defaultToFeed ? 'onboarding' : 'feed'); return; }
   setTopView('profile'); // signed out + no ?u= shows the marketing landing page instead anyway
 }
