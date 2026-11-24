@@ -24283,7 +24283,7 @@ async function sharedInboxResolve(pending,uid,rev){
    const g=sharedInboxGuess(pending);sharedInbox.kinds=g.kinds;
    find.hidden=false;const qi=document.getElementById('shared-inbox-q');qi.value=g.q;
    if(g.q)await sharedInboxSearch(g.q,g.kinds);
-   else{sharedInbox.results=[];sharedInboxRender();sharedInboxStatus(pending.url?'What did you want to save? Search for the title.':'Nothing came through from that app. Search for the title, or paste the link.');setTimeout(()=>qi.focus(),50);}
+   else{sharedInbox.results=[];sharedInboxRender();sharedInboxStatus(pending.url?'What did you want to save? Search for the title.':'Nothing came through. Sharing from Messages? Long-press the link there, tap Copy, then tap Paste link.');setTimeout(()=>qi.focus(),50);}
   }
 }
 // Paste a link or title copied from another app (Safari asks before sharing the clipboard).
