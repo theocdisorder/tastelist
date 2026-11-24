@@ -24209,8 +24209,9 @@ function sharedInboxClose(){if(sharedInbox.busy)return;sharedInbox.revision++;do
 function sharedInboxStatus(text){document.getElementById('shared-inbox-status').textContent=text;}
 // Where a shared link (or the text around it) gives a title, turn that into a catalog search.
 const SI_STOP=/\b(check out|check this out|watch|watching|listen to|listening to|read|reading|i('m| am)|on (netflix|hulu|max|hbo max|prime video|amazon|apple tv\+?|apple music|spotify|youtube|disney\+?|peacock|paramount\+?|goodreads|letterboxd|kindle|apple books|audible|libby)|now streaming|via|shared from \S+)\b/gi;
+const SI_JUNK=/\b(link presentation( url)?( metadata)?|lplinkmetadata|url metadata|rich link|shortcut input)\b[:\s]*/gi;
 function sharedInboxGuess(p){
- let q=String(p?.text||'').replace(/[“”"«»]/g,' ').replace(SI_STOP,' ').replace(/\s+[-–—|:]\s*$/,'').replace(/\s+/g,' ').trim();
+ let q=String(p?.text||'').replace(SI_JUNK,' ').replace(/[“”"«»]/g,' ').replace(SI_STOP,' ').replace(/\s+[-–—|:]\s*$/,'').replace(/\s+/g,' ').trim();
  let kinds=null;
  if(p?.url){try{const u=new URL(p.url),h=u.hostname.replace(/^www\.|^m\./,''),path=decodeURIComponent(u.pathname);
   const slug=v=>String(v||'').replace(/^\d+[-.]?/,'').replace(/[-_.]+/g,' ').replace(/\b(id)?\d{5,}\b/g,'').trim();
@@ -24222,6 +24223,7 @@ function sharedInboxGuess(p){
   else if(h==='music.apple.com'){m=path.match(/\/(album|song|artist|playlist)\/([^/]+)\//);kinds=m?.[1]==='artist'?['artist']:m?.[1]==='song'||u.searchParams.get('i')?['song','album']:['album','song'];if(m&&!q)q=slug(m[2]);}
   else if(h==='tv.apple.com'){m=path.match(/\/(movie|show)\/([^/]+)\//);kinds=m?.[1]==='movie'?['movie','tv']:['tv','movie'];if(m&&!q)q=slug(m[2]);}
   else if(/(netflix|hulu|max|hbomax|disneyplus|primevideo|peacocktv|paramountplus)\.com$/.test(h)){kinds=['movie','tv'];}
+  else if(h==='podcasts.apple.com'){kinds=['podcast'];m=path.match(/\/podcast\/([^/]+)\/id\d+/);if(m)q=slug(m[1]);}
   else if(h==='open.spotify.com'){kinds=['podcast','song','album'];}
   if(!q){m=path.split('/').filter(Boolean).map(slug).filter(x=>/[a-z]{3}/i.test(x)&&x.split(' ').length>1).pop();if(m)q=m;}
  }catch(_){}}
@@ -24243,7 +24245,7 @@ async function sharedInboxSearch(q,kinds){
 function sharedInboxQueryInput(v){clearTimeout(sharedInbox.qTimer);sharedInbox.qTimer=setTimeout(()=>sharedInboxSearch(v,sharedInbox.kinds||['movie','tv','book','album','podcast']),350);}
 async function openSharedInbox(){
  const pending=sharedInboxPending();if(!pending)return;
- if(sharedInbox.opened===pending.time&&document.getElementById('shared-inbox').open&&currentUser)return;
+ if(sharedInbox.opened===pending.time&&currentUser&&sharedInbox.resolvedFor===currentUser.id){const d=document.getElementById('shared-inbox');if(!d.open&&!sharedInbox.saved)d.showModal();return;}
  sharedInbox.opened=pending.time;sharedInbox.url=pending.url;
  const dialog=document.getElementById('shared-inbox');if(!dialog.open)dialog.showModal();
 
@@ -24255,6 +24257,7 @@ async function openSharedInbox(){
  try{
   if(uid!==currentUser?.id||rev!==sharedInbox.revision)return;
  document.getElementById('shared-inbox-destination').value='new';
+ sharedInbox.resolvedFor=uid;
  await sharedInboxResolve(pending,uid,rev);
  }catch(_){if(rev===sharedInbox.revision)sharedInboxStatus('Couldn’t read this link. Close this dialog and share the link again to retry.');}
 }
