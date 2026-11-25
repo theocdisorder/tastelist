@@ -9299,10 +9299,12 @@ function landingArtSet(key, url) { try { if (url) localStorage.setItem('tl_landi
 // The server keeps the resolved URLs too (landing_art table, filled by the landing-art edge
 // function), so even a first-time visitor needs one quick read instead of a dozen catalog lookups.
 // The landing page's own artwork, written straight into the page so it shows with no lookup at all.
-// (Found once by the landing-art service on Nov 25, 2026. If one ever stops loading, the page
+// (Found once by the landing-art service on Nov 25, 2026; the Kite Runner and Graduation covers were picked by hand. If one ever stops loading, the page
 // falls back to the server list and then a live lookup.)
 const LANDING_ART_FIXED = {
+  'hero:album:Graduation': 'https://upload.wikimedia.org/wikipedia/en/7/70/Graduation_%28album%29.jpg',
   'hero:movie:Mean Girls': 'https://image.tmdb.org/t/p/w500/2ZkuQXvVhh45uSvkBej4S7Ix1NJ.jpg',
+  'hero:book:The Kite Runner': 'https://res.cloudinary.com/bloomsbury-atlas/image/upload/w_360,c_scale,dpr_1.5/jackets/9781526668431.jpg',
   'hero:tv:The Sopranos': 'https://image.tmdb.org/t/p/w500/rTc7ZXdroqjkKivFPvCPX0Ru7uw.jpg',
   'movie:26371': 'https://image.tmdb.org/t/p/w500/8HhCyxxzoUqEBmVGK25Jq69LhVo.jpg',
   'movie:205017': 'https://image.tmdb.org/t/p/w500/cj3Nn79Ccv1FhRkgX8VZg6HZPeF.jpg',
