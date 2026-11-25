@@ -9298,6 +9298,21 @@ function landingArtGet(key) {
 function landingArtSet(key, url) { try { if (url) localStorage.setItem('tl_landing_art:' + key, JSON.stringify({ url, t: Date.now() })); else localStorage.removeItem('tl_landing_art:' + key); } catch (_) {} }
 // The server keeps the resolved URLs too (landing_art table, filled by the landing-art edge
 // function), so even a first-time visitor needs one quick read instead of a dozen catalog lookups.
+// The landing page's own artwork, written straight into the page so it shows with no lookup at all.
+// (Found once by the landing-art service on Nov 25, 2026. If one ever stops loading, the page
+// falls back to the server list and then a live lookup.)
+const LANDING_ART_FIXED = {
+  'hero:movie:Mean Girls': 'https://image.tmdb.org/t/p/w500/2ZkuQXvVhh45uSvkBej4S7Ix1NJ.jpg',
+  'hero:tv:The Sopranos': 'https://image.tmdb.org/t/p/w500/rTc7ZXdroqjkKivFPvCPX0Ru7uw.jpg',
+  'movie:26371': 'https://image.tmdb.org/t/p/w500/8HhCyxxzoUqEBmVGK25Jq69LhVo.jpg',
+  'movie:205017': 'https://image.tmdb.org/t/p/w500/cj3Nn79Ccv1FhRkgX8VZg6HZPeF.jpg',
+  'book:Freedom': 'https://covers.openlibrary.org/b/isbn/9780374158460-L.jpg?default=false',
+  'book:Notes on an Execution': 'https://covers.openlibrary.org/b/id/12646731-L.jpg?default=false',
+  'artist:The Strokes': 'https://r2.theaudiodb.com/images/media/artist/thumb/xgcoa41760779717.jpg',
+  'artist:ABBA': 'https://r2.theaudiodb.com/images/media/artist/thumb/rwvprx1352519392.jpg',
+  'artist:Pink Floyd': 'https://r2.theaudiodb.com/images/media/artist/thumb/uhsmur1713812514.jpg',
+  'artist:Nirvana': 'https://r2.theaudiodb.com/images/media/artist/thumb/n46y7i1639060786.jpg',
+};
 let landingServerArtPromise = null;
 function landingServerArt() {
   if (!landingServerArtPromise) {
@@ -9322,7 +9337,7 @@ function landingArtSeed(key) {
 // `show(img)`. If a remembered URL fails to load, look it up fresh once.
 async function landingArtImage(key, resolve, show, opts = {}) {
   const make = url => { const img = new Image(); img.alt = ''; img.decoding = 'async'; if (opts.high) img.fetchPriority = 'high'; if (opts.style) img.style.cssText = opts.style; img.src = url; return img; };
-  let cached = landingArtGet(key);
+  let cached = LANDING_ART_FIXED[key] || landingArtGet(key);
   if (!cached) { cached = (await landingServerArt())[key] || ''; if (cached) landingArtSet(key, cached); else landingArtSeed(key); }
   const fresh = async () => { let url = ''; try { url = await resolve(); } catch (_) {} landingArtSet(key, url); return url; };
   const url = cached || await fresh();
@@ -9340,9 +9355,9 @@ async function loadLandingArtwork() {
   if (!el || el.dataset.loaded) return;
   el.dataset.loaded = 'true';
   const picks = [
-    { kind: 'album', title: 'All Eyez on Me', artist: '2Pac' },
+    { kind: 'album', title: 'Graduation', artist: 'Kanye West' },
     { kind: 'movie', title: 'Mean Girls', year: '2004' },
-    { kind: 'book', title: 'The Fellowship of the Ring', author: 'J.R.R. Tolkien' },
+    { kind: 'book', title: 'The Kite Runner', author: 'Khaled Hosseini', isbn: '9781594631931' },
     { kind: 'tv', title: 'The Sopranos' }
   ];
   el.innerHTML = picks.map(p => `<figure class="ob-hero-tile${p.kind === 'album' ? ' is-album' : ''}"><figcaption>${esc(p.title)}</figcaption></figure>`).join('');
@@ -9350,8 +9365,8 @@ async function loadLandingArtwork() {
     if (pick.kind === 'artist') return (await lookupArtistArt(pick.lookup || pick.title))?.tilePhoto || '';
     if (pick.kind === 'album') return await lookupAlbumCover(pick.title, pick.artist);
     if (pick.kind === 'book') {
-      // The Fellowship cover is a chosen edition (search tends to pick an older, plainer one).
-      if (pick.title === 'The Fellowship of the Ring') return 'https://covers.openlibrary.org/b/isbn/9780547928210-L.jpg?default=false';
+      // A chosen edition's cover (search can land on an odd edition); the onFail below falls back to search.
+      if (pick.isbn) return `https://covers.openlibrary.org/b/isbn/${pick.isbn}-L.jpg?default=false`;
       return preferredBookCover(pick.title, pick.author) || await fetchBookCover(pick.title, pick.author).catch(() => '');
     }
     const response = await tmdbFetch(`/search/${pick.kind}?query=${encodeURIComponent(pick.title)}&page=1${pick.year ? '&primary_release_year=' + pick.year : ''}`);
@@ -9361,8 +9376,8 @@ async function loadLandingArtwork() {
     return hit ? TMDB_IMG + hit.poster_path : '';
   }, img => el.children[index]?.appendChild(img), {
     high: true,
-    // If the chosen Fellowship edition ever fails, fall back to a normal cover search.
-    onFail: pick.title === 'The Fellowship of the Ring' ? async function () { const alt = await fetchBookCover(pick.title, pick.author).catch(() => ''); if (alt) { this.onerror = null; this.src = alt; } } : null
+    // If the chosen edition's cover ever fails, fall back to a normal cover search.
+    onFail: pick.isbn ? async function () { const alt = await fetchBookCover(pick.title, pick.author).catch(() => ''); if (alt) { this.onerror = null; this.src = alt; } } : null
   })));
 }
 
