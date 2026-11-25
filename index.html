@@ -53,6 +53,14 @@ if (new URLSearchParams(location.search).has('list')) {
 <meta name="twitter:title" content="TasteList — You are what you love">
 <meta name="twitter:description" content="Share the music, movies, TV and books that made you — and see what your friends love.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<!-- Landing/onboarding artwork comes from these hosts: open the connections while the page parses. -->
+<link rel="preconnect" href="https://image.tmdb.org" crossorigin>
+<link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
+<link rel="preconnect" href="https://itunes.apple.com" crossorigin>
+<link rel="preconnect" href="https://is1-ssl.mzstatic.com" crossorigin>
+<link rel="preconnect" href="https://covers.openlibrary.org" crossorigin>
+<link rel="dns-prefetch" href="https://www.theaudiodb.com">
+<link rel="dns-prefetch" href="https://r2.theaudiodb.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -8373,17 +8381,14 @@ async function loadActivityFeedFromSupabase(userId) {
 // to runtime API resolution only, not something sourced and embedded directly.
 // Book covers on the landing cards, found the same way as book covers elsewhere in the app.
 async function loadLandingBookTiles() {
-  for (const [tileId, title, author, isbn] of [['landing-tile-sonia', 'Freedom', 'Jonathan Franzen', '9780374158460'], ['landing-tile-notes', 'Notes on an Execution', 'Danya Kukafka']]) {
+  await Promise.allSettled([['landing-tile-sonia', 'Freedom', 'Jonathan Franzen', '9780374158460'], ['landing-tile-notes', 'Notes on an Execution', 'Danya Kukafka']].map(([tileId, title, author, isbn]) => {
     const tile = document.getElementById(tileId);
-    if (!tile || tile.querySelector('img')) continue;
-    try {
-      // A one-word title like "Freedom" can match the wrong book; prefer the known edition when given.
-      const url = (isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : '') || await fetchBookCover(title, author); if (!url) continue;
-      const img = new Image(); img.alt = ''; img.onload = () => tile.prepend(img);
-      if (isbn) img.onerror = async () => { img.onerror = null; try { const alt = await fetchBookCover(title, author); if (alt) img.src = alt; } catch (_) {} };
-      img.src = url;
-    } catch (_) {}
-  }
+    if (!tile || tile.querySelector('img')) return;
+    // A one-word title like "Freedom" can match the wrong book; prefer the known edition when given.
+    return landingArtImage('book:' + title, async () => (isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : '') || await fetchBookCover(title, author),
+      img => tile.prepend(img),
+      { onFail: isbn ? async function () { const alt = await fetchBookCover(title, author).catch(() => ''); if (alt) { this.onerror = null; this.src = alt; } } : null });
+  }));
 }
 async function loadLandingMovieTiles() {
   loadLandingBookTiles();
@@ -8391,18 +8396,12 @@ async function loadLandingMovieTiles() {
     { tmdbId: 26371, tileId: 'landing-tile-maurice' }, // Maurice (1987)
     { tmdbId: 205017, tileId: 'landing-tile-lootera' }, // Lootera (2013)
   ];
-  for (const m of movies) {
-    try {
-      const detail = await fetchMovieDetail(m.tmdbId);
-      if (!detail.poster) continue;
-      const tile = document.getElementById(m.tileId);
-      if (!tile) continue;
-      const img = document.createElement('img');
-      img.src = `${TMDB_IMG}${detail.poster}`;
-      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-      tile.insertBefore(img, tile.firstChild);
-    } catch (e) {}
-  }
+  await Promise.allSettled(movies.map(m => {
+    const tile = document.getElementById(m.tileId);
+    if (!tile || tile.querySelector('img')) return;
+    return landingArtImage('movie:' + m.tmdbId, async () => { const d = await tmdbJSON(`/movie/${m.tmdbId}`); return d?.poster_path ? TMDB_IMG + d.poster_path : ''; },
+      img => tile.insertBefore(img, tile.firstChild), { style: 'width:100%;height:100%;object-fit:cover;display:block;' });
+  }));
 }
 
 // Determines whose profile content should be displayed: someone specific via ?u=username in
@@ -9289,6 +9288,29 @@ async function lookupAlbumCover(title, artist, broken = '') {
   return '';
 }
 
+// Landing artwork URLs are looked up live (TMDB, Apple, Open Library, TheAudioDB). Remember what
+// each lookup found for a week so a returning visitor's art appears immediately; the image files
+// themselves are cached by the browser. A remembered URL that stops loading is looked up again.
+const LANDING_ART_TTL = 7 * 24 * 3600 * 1000;
+function landingArtGet(key) {
+  try { const v = JSON.parse(localStorage.getItem('tl_landing_art:' + key) || 'null'); return v && Date.now() - v.t < LANDING_ART_TTL ? v.url : ''; } catch (_) { return ''; }
+}
+function landingArtSet(key, url) { try { if (url) localStorage.setItem('tl_landing_art:' + key, JSON.stringify({ url, t: Date.now() })); else localStorage.removeItem('tl_landing_art:' + key); } catch (_) {} }
+// Resolve a URL (cached first), then show it with `show(img)`. If a cached URL fails, look it up fresh once.
+async function landingArtImage(key, resolve, show, opts = {}) {
+  const make = url => { const img = new Image(); img.alt = ''; img.decoding = 'async'; if (opts.high) img.fetchPriority = 'high'; if (opts.style) img.style.cssText = opts.style; img.src = url; return img; };
+  const cached = landingArtGet(key);
+  const fresh = async () => { let url = ''; try { url = await resolve(); } catch (_) {} landingArtSet(key, url); return url; };
+  const url = cached || await fresh();
+  if (!url) return;
+  const img = make(url);
+  img.onload = () => show(img);
+  img.onerror = async () => {
+    img.onerror = null;
+    if (cached) { const again = await fresh(); if (again && again !== url) { img.onerror = opts.onFail || null; img.src = again; return; } }
+    opts.onFail?.call(img);
+  };
+}
 async function loadLandingArtwork() {
   const el = document.getElementById('landing-artwork');
   if (!el || el.dataset.loaded) return;
@@ -9300,39 +9322,24 @@ async function loadLandingArtwork() {
     { kind: 'tv', title: 'The Sopranos' }
   ];
   el.innerHTML = picks.map(p => `<figure class="ob-hero-tile${p.kind === 'album' ? ' is-album' : ''}"><figcaption>${esc(p.title)}</figcaption></figure>`).join('');
-  await Promise.allSettled(picks.map(async (pick, index) => {
-    let art = '';
-    if (pick.kind === 'artist') {
-      art = (await lookupArtistArt(pick.lookup || pick.title))?.tilePhoto || (pick.lookup ? (await lookupArtistArt(pick.title))?.tilePhoto || '' : '');
-    } else if (pick.kind === 'album') {
-      art = await lookupAlbumCover(pick.title, pick.artist);
-    } else if (pick.kind === 'book') {
-      // The Fellowship cover is a chosen edition (search tends to pick an older, plainer one);
-      // if that image ever fails, the onerror below falls back to a normal cover search.
-      art = pick.title==='The Fellowship of the Ring' ? 'https://covers.openlibrary.org/b/isbn/9780547928210-L.jpg?default=false'
-        : preferredBookCover(pick.title,pick.author) || await fetchBookCover(pick.title,pick.author).catch(()=>'');
-    } else {
-      const response = await tmdbFetch(`/search/${pick.kind}?query=${encodeURIComponent(pick.title)}&page=1${pick.year ? '&primary_release_year=' + pick.year : ''}`);
-      if (!response.ok) return;
-      const data = await response.json();
-      const hit = (data.results || []).find(r => (r.title || r.name)?.toLowerCase() === pick.title.toLowerCase() && (!pick.year || r.release_date?.startsWith(pick.year)) && r.poster_path);
-      art = hit ? TMDB_IMG + hit.poster_path : '';
+  await Promise.allSettled(picks.map((pick, index) => landingArtImage('hero:' + pick.kind + ':' + pick.title, async () => {
+    if (pick.kind === 'artist') return (await lookupArtistArt(pick.lookup || pick.title))?.tilePhoto || '';
+    if (pick.kind === 'album') return await lookupAlbumCover(pick.title, pick.artist);
+    if (pick.kind === 'book') {
+      // The Fellowship cover is a chosen edition (search tends to pick an older, plainer one).
+      if (pick.title === 'The Fellowship of the Ring') return 'https://covers.openlibrary.org/b/isbn/9780547928210-L.jpg?default=false';
+      return preferredBookCover(pick.title, pick.author) || await fetchBookCover(pick.title, pick.author).catch(() => '');
     }
-    if (!art) return;
-    const tile = el.children[index];
-    const img = new Image();
-    img.alt = '';
-    img.onload = () => tile.appendChild(img);
-    // The featured book has a known edition; don't depend on catalog search availability.
-    if(pick.kind==='book' && pick.title==='The Fellowship of the Ring') {
-      img.onerror = async () => {
-        img.onerror = null;
-        const alt = await fetchBookCover(pick.title, pick.author).catch(() => '');
-        if (alt) img.src = alt;
-      };
-    }
-    img.src = art;
-  }));
+    const response = await tmdbFetch(`/search/${pick.kind}?query=${encodeURIComponent(pick.title)}&page=1${pick.year ? '&primary_release_year=' + pick.year : ''}`);
+    if (!response.ok) return '';
+    const data = await response.json();
+    const hit = (data.results || []).find(r => (r.title || r.name)?.toLowerCase() === pick.title.toLowerCase() && (!pick.year || r.release_date?.startsWith(pick.year)) && r.poster_path);
+    return hit ? TMDB_IMG + hit.poster_path : '';
+  }, img => el.children[index]?.appendChild(img), {
+    high: true,
+    // If the chosen Fellowship edition ever fails, fall back to a normal cover search.
+    onFail: pick.title === 'The Fellowship of the Ring' ? async function () { const alt = await fetchBookCover(pick.title, pick.author).catch(() => ''); if (alt) { this.onerror = null; this.src = alt; } } : null
+  })));
 }
 
 async function loadLandingArtistTiles() {
@@ -9344,18 +9351,9 @@ async function loadLandingArtistTiles() {
     const tile = document.getElementById('landing-tile-' + key);
     if (!tile || tile.dataset.artLoading) return;
     tile.dataset.artLoading = 'true';
-    try {
-      const art = await lookupArtistArt(name);
-      if (!art?.tilePhoto) { delete tile.dataset.artLoading; return; }
-      const img = new Image();
-      img.alt = '';
-      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-      img.onload = () => tile.prepend(img);
-      img.onerror = () => { delete tile.dataset.artLoading; };
-      img.src = art.tilePhoto;
-    } catch (_) {
-      delete tile.dataset.artLoading;
-    }
+    await landingArtImage('artist:' + name, async () => (await lookupArtistArt(name))?.tilePhoto || '',
+      img => tile.prepend(img),
+      { style: 'width:100%;height:100%;object-fit:cover;display:block;', onFail: () => { delete tile.dataset.artLoading; } });
   }));
 }
 
@@ -23615,6 +23613,12 @@ renderFriendRecs();
 loadFriendRecArt();
 initAuth();
 loadLandingMovieTiles();
+// Don't make signed-out visitors wait for the sign-in check before the art starts loading.
+// (A stored Supabase session means they're probably signed in and won't see the landing page.)
+try {
+  const maybeSignedIn = Object.keys(localStorage).some(k => /^sb-.*-auth-token$/.test(k));
+  if (!maybeSignedIn && !new URLSearchParams(location.search).has('u')) { loadLandingArtwork(); loadLandingArtistTiles(); }
+} catch (_) {}
 
 // ── TASTE INFLUENCES (Taste Graph tab) ──
 // Scans "why influential" text across taste sections for @mentions and ranks people
