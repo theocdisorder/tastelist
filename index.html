@@ -3678,17 +3678,12 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
   .ob-landing-copy p { font-size: 15.5px; line-height: 1.55; margin-bottom: 22px; }
   .ob-landing-copy > button { height: 54px; padding: 0 24px; }
   .ob-landing .ob-caption.ob-eyebrow { margin-top: 14px !important; }
-  .ob-hero-collage { height: auto; aspect-ratio: 1.18; max-width: 340px; margin-top: 0; }
-  .ob-hero-collage .ob-hero-tile { width: 33%; }
-  .ob-hero-collage .ob-hero-tile:nth-child(1) { left: 34%; top: 0; }
-  .ob-hero-collage .ob-hero-tile:nth-child(2) { left: 7%; top: 14%; }
-  .ob-hero-collage .ob-hero-tile:nth-child(3) { left: 61%; top: 16%; }
-  .ob-hero-collage .ob-hero-tile:nth-child(4) { left: 32%; top: 36%; }
+  .ob-hero-collage { height: 380px; max-width: 340px; margin-top: 8px; }
 
-  .ob-hero-collage:before { width: 36%; height: auto; aspect-ratio: 1; right: 3%; opacity: .65; }
+  .ob-hero-collage:before { width: 150px; height: 150px; right: 0; }
 
   /* Features: open editorial sections, heading first, artwork second */
-  .ob-landing .welcome-cards { display: flex !important; flex-direction: column; gap: 0 !important; margin-top: 18px; }
+  .ob-landing .welcome-cards { display: flex !important; flex-direction: column; gap: 0 !important; margin-top: 36px; }
   .ob-landing .ob-feature-card { display: flex !important; flex-direction: column; background: none !important; border: 0 !important; border-top: 1px solid rgba(255,255,255,.08) !important; border-radius: 0 !important; padding: 30px 0 !important; grid-row: auto; }
   .ob-feature-card .ob-card-label { order: 1; margin-bottom: 8px; }
   .ob-feature-card .ob-card-title { order: 2; font-size: 26px; margin-bottom: 8px; }
@@ -3712,7 +3707,7 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
 @media (max-width: 374px) {
   .ob-landing-copy h1 { font-size: 40px; }
   .ob-feature-card .ob-card-title { font-size: 24px; }
-  .ob-hero-collage { height: auto; }
+  .ob-hero-collage { height: 340px; }
 }
 /* Save to What's Next on artwork: a small rounded-square bookmark tucked into the artwork's top-right
    corner (positioned inside the artwork box itself: .tile-img-wrap, .sl-art, .activity-card-art, …). */
@@ -4438,7 +4433,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
   <div class="ob-landing">
     <nav class="ob-landing-nav" aria-label="Account"><img class="tl-logo tl-logo-landing" alt="TasteList"><script>document.currentScript.previousElementSibling.src=TL_LOGO_SRC</script><div class="ob-login"><span>Already have an account?</span><button onclick="openAuthModal('signin')">Sign in</button></div></nav>
     <div id="landing-list-invite" class="landing-invite" hidden aria-live="polite"></div>
-    <div class="ob-landing-hero"><div class="ob-landing-copy"><h1>You are what<br>you love.</h1><p>Your favorite books, movies, shows and music. Share what you love, discover what your friends love and find something new.</p><button onclick="openAuthModal('signup')">Create your TasteList <span aria-hidden="true">→</span></button></div><div class="ob-hero-collage" id="landing-artwork" aria-label="Music, movies, books, and television to discover"></div></div>
+    <div class="ob-landing-hero"><div class="ob-landing-copy"><h1>You are what<br>you love.</h1><p>Share what you love. Remember what your friends recommend. Make lists worth saving.</p><button onclick="openAuthModal('signup')">Sign up <span aria-hidden="true">→</span></button><div class="ob-caption ob-eyebrow">Your taste. In one place.</div></div><div class="ob-hero-collage" id="landing-artwork" aria-label="Music, movies, books, and television to discover"></div></div>
     <div class="welcome-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:left;align-items:stretch;">
       <div class="ob-feature-card ob-feature-taste" style="background:#161618;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px;display:flex;flex-direction:column;">
         <div class="ob-feature-art lp-mock" aria-hidden="true">
@@ -4497,7 +4492,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
     <section class="ob-final-cta" aria-labelledby="ob-final-cta-title">
       <h2 id="ob-final-cta-title">Start your TasteList.</h2>
       <p>Your favorites, your friends’ recs, and the lists you make together, all in one place.</p>
-      <button type="button" class="ob-final-signup" onclick="openAuthModal('signup')">Create your TasteList <span aria-hidden="true">→</span></button>
+      <button type="button" class="ob-final-signup" onclick="openAuthModal('signup')">Sign up <span aria-hidden="true">→</span></button>
       <div class="ob-final-signin">Already have an account? <button type="button" onclick="openAuthModal('signin')">Sign in</button></div>
     </section>
   </div>
@@ -9301,10 +9296,34 @@ function landingArtGet(key) {
   try { const v = JSON.parse(localStorage.getItem('tl_landing_art:' + key) || 'null'); return v && Date.now() - v.t < LANDING_ART_TTL ? v.url : ''; } catch (_) { return ''; }
 }
 function landingArtSet(key, url) { try { if (url) localStorage.setItem('tl_landing_art:' + key, JSON.stringify({ url, t: Date.now() })); else localStorage.removeItem('tl_landing_art:' + key); } catch (_) {} }
-// Resolve a URL (cached first), then show it with `show(img)`. If a cached URL fails, look it up fresh once.
+// The server keeps the resolved URLs too (landing_art table, filled by the landing-art edge
+// function), so even a first-time visitor needs one quick read instead of a dozen catalog lookups.
+let landingServerArtPromise = null;
+function landingServerArt() {
+  if (!landingServerArtPromise) {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = setTimeout(() => ctl?.abort(), 2500);
+    landingServerArtPromise = fetch(`${SUPABASE_URL}/rest/v1/landing_art?select=key,url`, { headers: { apikey: SUPABASE_ANON_KEY, Accept: 'application/json' }, signal: ctl?.signal })
+      .then(r => r.ok ? r.json() : []).then(rows => Object.fromEntries((rows || []).map(r => [r.key, r.url]))).catch(() => ({}))
+      .finally(() => clearTimeout(timer));
+  }
+  return landingServerArtPromise;
+}
+// Keys the server didn't have yet: ask it (once per page, in the background) to look them up and keep them.
+const landingArtMissing = new Set(); let landingArtSeedTimer = null;
+function landingArtSeed(key) {
+  landingArtMissing.add(key); clearTimeout(landingArtSeedTimer);
+  landingArtSeedTimer = setTimeout(() => {
+    const keys = [...landingArtMissing]; landingArtMissing.clear();
+    fetch(`${SUPABASE_URL}/functions/v1/landing-art`, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY }, body: JSON.stringify({ keys }), keepalive: true }).catch(() => {});
+  }, 1500);
+}
+// Resolve a URL (this browser's cache, then the server's, then a live lookup) and show it with
+// `show(img)`. If a remembered URL fails to load, look it up fresh once.
 async function landingArtImage(key, resolve, show, opts = {}) {
   const make = url => { const img = new Image(); img.alt = ''; img.decoding = 'async'; if (opts.high) img.fetchPriority = 'high'; if (opts.style) img.style.cssText = opts.style; img.src = url; return img; };
-  const cached = landingArtGet(key);
+  let cached = landingArtGet(key);
+  if (!cached) { cached = (await landingServerArt())[key] || ''; if (cached) landingArtSet(key, cached); else landingArtSeed(key); }
   const fresh = async () => { let url = ''; try { url = await resolve(); } catch (_) {} landingArtSet(key, url); return url; };
   const url = cached || await fresh();
   if (!url) return;
@@ -9321,9 +9340,9 @@ async function loadLandingArtwork() {
   if (!el || el.dataset.loaded) return;
   el.dataset.loaded = 'true';
   const picks = [
-    { kind: 'album', title: 'Graduation', artist: 'Kanye West' },
+    { kind: 'album', title: 'All Eyez on Me', artist: '2Pac' },
     { kind: 'movie', title: 'Mean Girls', year: '2004' },
-    { kind: 'book', title: 'The Kite Runner', author: 'Khaled Hosseini' },
+    { kind: 'book', title: 'The Fellowship of the Ring', author: 'J.R.R. Tolkien' },
     { kind: 'tv', title: 'The Sopranos' }
   ];
   el.innerHTML = picks.map(p => `<figure class="ob-hero-tile${p.kind === 'album' ? ' is-album' : ''}"><figcaption>${esc(p.title)}</figcaption></figure>`).join('');
@@ -9331,8 +9350,8 @@ async function loadLandingArtwork() {
     if (pick.kind === 'artist') return (await lookupArtistArt(pick.lookup || pick.title))?.tilePhoto || '';
     if (pick.kind === 'album') return await lookupAlbumCover(pick.title, pick.artist);
     if (pick.kind === 'book') {
-      // Prefer a specific Kite Runner paperback edition for the landing collage.
-      if (pick.title === 'The Kite Runner') return 'https://covers.openlibrary.org/b/isbn/9781594631931-L.jpg?default=false';
+      // The Fellowship cover is a chosen edition (search tends to pick an older, plainer one).
+      if (pick.title === 'The Fellowship of the Ring') return 'https://covers.openlibrary.org/b/isbn/9780547928210-L.jpg?default=false';
       return preferredBookCover(pick.title, pick.author) || await fetchBookCover(pick.title, pick.author).catch(() => '');
     }
     const response = await tmdbFetch(`/search/${pick.kind}?query=${encodeURIComponent(pick.title)}&page=1${pick.year ? '&primary_release_year=' + pick.year : ''}`);
@@ -9342,8 +9361,8 @@ async function loadLandingArtwork() {
     return hit ? TMDB_IMG + hit.poster_path : '';
   }, img => el.children[index]?.appendChild(img), {
     high: true,
-    // If the chosen Kite Runner edition fails, fall back to a normal cover search.
-    onFail: pick.title === 'The Kite Runner' ? async function () { const alt = await fetchBookCover(pick.title, pick.author).catch(() => ''); if (alt) { this.onerror = null; this.src = alt; } } : null
+    // If the chosen Fellowship edition ever fails, fall back to a normal cover search.
+    onFail: pick.title === 'The Fellowship of the Ring' ? async function () { const alt = await fetchBookCover(pick.title, pick.author).catch(() => ''); if (alt) { this.onerror = null; this.src = alt; } } : null
   })));
 }
 
@@ -18429,6 +18448,8 @@ function fixLowercaseTasteItems() {
 }
 
 function initTripPlaylistArt() {
+  // Signed-out visitors on the landing page never see this; don't let it compete with the landing art.
+  if (!currentUser && !viewedProfile) return;
   applyMultimediaPodcastCorrection(true);
   if (tripPlaylistArtFetched) return;
   tripPlaylistArtFetched = true;
@@ -21659,6 +21680,8 @@ async function recommendationBookCover(title, author) {
  return '';
 }
 async function loadFriendRecArt() {
+  // Signed-out visitors on the landing page never see this; don't let it compete with the landing art.
+  if (!currentUser && !viewedProfile) return;
   for (const r of FRIEND_RECOMMENDATIONS) {
     if (r.art) continue;
     try {
@@ -21700,6 +21723,8 @@ async function loadFriendRecArt() {
 
 let activityFeedArtFetched = false;
 async function initActivityFeedArt() {
+  // Signed-out visitors on the landing page never see this; don't let it compete with the landing art.
+  if (!currentUser && !viewedProfile) return;
   if (activityFeedArtFetched) return;
   activityFeedArtFetched = true;
   // Sequential, throttled — firing every item's art lookup at once (movies/TV via TMDB, songs via
