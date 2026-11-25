@@ -1618,12 +1618,13 @@ if (new URLSearchParams(location.search).has('list')) {
 .ob-landing-copy>button { padding:15px 36px;min-width:220px;border-radius:40px;background:#eee5d5;color:#111;border:0;font:600 14px -apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer; }
 .ob-landing-copy>button span { margin-left:35px; }
 .ob-caption { font-size:10px;letter-spacing:.28em;color:#b4b0ac;text-transform:uppercase;margin-top:64px; }
-.ob-hero-collage { height:550px;position:relative;isolation:isolate; }
-.ob-hero-collage .ob-hero-tile { position:absolute;width:42%;height:52%;object-fit:cover;border-radius:7px;border:1px solid #ffffff20;box-shadow:0 18px 35px #0009; }
-.ob-hero-collage .ob-hero-tile:nth-child(1){left:34%;top:0;transform:rotate(3deg)}
-.ob-hero-collage .ob-hero-tile:nth-child(2){left:4%;top:20%;transform:rotate(-5deg)}
-.ob-hero-collage .ob-hero-tile:nth-child(3){left:58%;top:27%;transform:rotate(5deg)}
-.ob-hero-collage .ob-hero-tile:nth-child(4){left:28%;top:48%;transform:rotate(-3deg)}
+.ob-hero-collage { height:600px;position:relative;isolation:isolate; }
+/* Tiles keep a poster's 2:3 shape at every size, so covers and posters show whole, not cropped. */
+.ob-hero-collage .ob-hero-tile { position:absolute;width:38%;height:auto;aspect-ratio:2/3;object-fit:cover;border-radius:7px;border:1px solid #ffffff20;box-shadow:0 18px 35px #0009; }
+.ob-hero-collage .ob-hero-tile:nth-child(1){left:33%;top:0;transform:rotate(3deg)}
+.ob-hero-collage .ob-hero-tile:nth-child(2){left:3%;top:17%;transform:rotate(-5deg)}
+.ob-hero-collage .ob-hero-tile:nth-child(3){left:59%;top:24%;transform:rotate(5deg)}
+.ob-hero-collage .ob-hero-tile:nth-child(4){left:29%;top:46%;transform:rotate(-3deg)}
 .ob-hero-collage .ob-hero-tile:nth-child(1) img { object-position:center 15%; } /* back tile: keep faces above the cards in front */
 .ob-hero-collage .ob-hero-tile.is-album { height:auto;aspect-ratio:1/1;z-index:2; } /* square sleeve on top of the stack, so the whole cover shows */
 .ob-hero-tile { margin:0;background:linear-gradient(145deg,#383044,#1b1c21);overflow:hidden;display:flex;align-items:center;justify-content:center; }
@@ -3669,7 +3670,8 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
   .ob-landing-copy p { font-size: 15.5px; line-height: 1.55; margin-bottom: 22px; }
   .ob-landing-copy > button { height: 54px; padding: 0 24px; }
   .ob-landing .ob-caption.ob-eyebrow { margin-top: 14px !important; }
-  .ob-hero-collage { height: 300px; max-width: 340px; margin-top: 8px; }
+  .ob-hero-collage { height: 380px; max-width: 340px; margin-top: 8px; }
+
   .ob-hero-collage:before { width: 150px; height: 150px; right: 0; }
 
   /* Features: open editorial sections, heading first, artwork second */
@@ -3697,7 +3699,7 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
 @media (max-width: 374px) {
   .ob-landing-copy h1 { font-size: 40px; }
   .ob-feature-card .ob-card-title { font-size: 24px; }
-  .ob-hero-collage { height: 270px; }
+  .ob-hero-collage { height: 340px; }
 }
 /* Save to What's Next on artwork: a small rounded-square bookmark tucked into the artwork's top-right
    corner (positioned inside the artwork box itself: .tile-img-wrap, .sl-art, .activity-card-art, …). */
@@ -4449,7 +4451,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
             <div class="lp-rec"><div class="lp-rec-art" id="landing-tile-maurice"></div><div class="lp-rec-text"><strong>Maurice</strong><small>Movie · 1987</small><span class="lp-recby"><span class="lp-av" style="background:#F97360">S</span>Rec’d by Subha</span></div></div>
             <div class="lp-rec"><div class="lp-rec-art" ><img src="https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1719409771i/199798217.jpg" alt="" onerror="this.remove()"></div><div class="lp-rec-text"><strong>Lion Women of Tehran</strong><small>Book · Marjan Kamali</small><span class="lp-recby"><span class="lp-av" style="background:#22C55E">R</span>Rec’d by Ritu</span></div></div>
             <div class="lp-rec"><div class="lp-rec-art" ><img src="https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1689071681i/18373.jpg" alt="" onerror="this.remove()"></div><div class="lp-rec-text"><strong>Flowers for Algernon</strong><small>Book · Daniel Keyes</small><span class="lp-recby"><span class="lp-av" style="background:#3B82F6">E</span>Rec’d by Eliana</span></div></div>
-            <div class="lp-rec"><div class="lp-rec-art" id="landing-tile-sonia"></div><div class="lp-rec-text"><strong>The Loneliness of Sonia and Sunny</strong><small>Book · Kiran Desai</small><span class="lp-recby"><span class="lp-av" style="background:#F59E0B">M</span>Rec’d by Monty</span></div></div>
+            <div class="lp-rec"><div class="lp-rec-art" id="landing-tile-sonia"></div><div class="lp-rec-text"><strong>Freedom</strong><small>Book · Jonathan Franzen</small><span class="lp-recby"><span class="lp-av" style="background:#F59E0B">M</span>Rec’d by Monty</span></div></div>
           </div>
         </div>
         <div class="ob-card-caption">Real recs, from real friends</div>
@@ -8371,12 +8373,15 @@ async function loadActivityFeedFromSupabase(userId) {
 // to runtime API resolution only, not something sourced and embedded directly.
 // Book covers on the landing cards, found the same way as book covers elsewhere in the app.
 async function loadLandingBookTiles() {
-  for (const [tileId, title, author] of [['landing-tile-sonia', 'The Loneliness of Sonia and Sunny', 'Kiran Desai'], ['landing-tile-notes', 'Notes on an Execution', 'Danya Kukafka']]) {
+  for (const [tileId, title, author, isbn] of [['landing-tile-sonia', 'Freedom', 'Jonathan Franzen', '9780374158460'], ['landing-tile-notes', 'Notes on an Execution', 'Danya Kukafka']]) {
     const tile = document.getElementById(tileId);
     if (!tile || tile.querySelector('img')) continue;
     try {
-      const url = await fetchBookCover(title, author); if (!url) continue;
-      const img = new Image(); img.alt = ''; img.onload = () => tile.prepend(img); img.src = url;
+      // A one-word title like "Freedom" can match the wrong book; prefer the known edition when given.
+      const url = (isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : '') || await fetchBookCover(title, author); if (!url) continue;
+      const img = new Image(); img.alt = ''; img.onload = () => tile.prepend(img);
+      if (isbn) img.onerror = async () => { img.onerror = null; try { const alt = await fetchBookCover(title, author); if (alt) img.src = alt; } catch (_) {} };
+      img.src = url;
     } catch (_) {}
   }
 }
@@ -9289,20 +9294,20 @@ async function loadLandingArtwork() {
   if (!el || el.dataset.loaded) return;
   el.dataset.loaded = 'true';
   const picks = [
-    { kind: 'artist', title: 'Run-DMC' },
+    { kind: 'artist', title: 'Tupac Shakur', lookup: '2Pac' },   // TheAudioDB lists him as 2Pac
     { kind: 'movie', title: 'Mean Girls', year: '2004' },
-    { kind: 'book', title: 'Infinite Jest', author: 'David Foster Wallace' },
+    { kind: 'book', title: 'The Lord of the Rings', author: 'J.R.R. Tolkien' },
     { kind: 'tv', title: 'The Sopranos' }
   ];
   el.innerHTML = picks.map(p => `<figure class="ob-hero-tile${p.kind === 'album' ? ' is-album' : ''}"><figcaption>${esc(p.title)}</figcaption></figure>`).join('');
   await Promise.allSettled(picks.map(async (pick, index) => {
     let art = '';
     if (pick.kind === 'artist') {
-      art = (await lookupArtistArt(pick.title))?.tilePhoto || '';
+      art = (await lookupArtistArt(pick.lookup || pick.title))?.tilePhoto || (pick.lookup ? (await lookupArtistArt(pick.title))?.tilePhoto || '' : '');
     } else if (pick.kind === 'album') {
       art = await lookupAlbumCover(pick.title, pick.artist);
     } else if (pick.kind === 'book') {
-      art = preferredBookCover(pick.title,pick.author) || await fetchBookCover(pick.title,pick.author);
+      art = preferredBookCover(pick.title,pick.author) || await fetchBookCover(pick.title,pick.author).catch(()=>'') || (pick.title==='The Lord of the Rings' ? 'https://covers.openlibrary.org/b/isbn/9780544003415-L.jpg?default=false' : '');
     } else {
       const response = await tmdbFetch(`/search/${pick.kind}?query=${encodeURIComponent(pick.title)}&page=1${pick.year ? '&primary_release_year=' + pick.year : ''}`);
       if (!response.ok) return;
@@ -9316,10 +9321,10 @@ async function loadLandingArtwork() {
     img.alt = '';
     img.onload = () => tile.appendChild(img);
     // The featured book has a known edition; don't depend on catalog search availability.
-    if(pick.kind==='book' && pick.title==='Infinite Jest') {
+    if(pick.kind==='book' && pick.title==='The Lord of the Rings') {
       img.onerror = () => {
         img.onerror = null;
-        img.src = 'https://covers.openlibrary.org/b/isbn/9780316920049-L.jpg?default=false';
+        img.src = 'https://covers.openlibrary.org/b/isbn/9780544003415-L.jpg?default=false';
       };
     }
     img.src = art;
