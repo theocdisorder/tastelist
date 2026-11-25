@@ -7971,7 +7971,7 @@ async function submitAuthForm() {
     if (!sb) throw new Error('Sign-in could not load. Please refresh this page.');
     const { data, error } = await authWithDeadline(mode === 'signin'
       ? sb.auth.signInWithPassword({ email, password })
-      : sb.auth.signUp({ email, password, options: { emailRedirectTo: friendInviteToken() ? location.origin+'/?invite='+encodeURIComponent(friendInviteToken()) : listInviteToken() ? location.origin+'/?join='+encodeURIComponent(listInviteToken()) : inviteSignupPending ? inviteReturnUrl() : location.origin + '/' } }),
+      : sb.auth.signUp({ email, password, options: { emailRedirectTo: friendInviteToken() ? location.origin+'/?invite='+encodeURIComponent(friendInviteToken()) : listInviteToken() ? location.origin+'/?join='+encodeURIComponent(listInviteToken()) : inviteSignupPending ? inviteReturnUrl() : location.origin + (new URLSearchParams(location.search).get('go') === 'onboarding' ? '/?go=onboarding' : '/') } }),
       'Sign-in is taking too long. Please reload this page and try again.');
     if (error) throw error;
     if (!data?.session) {
@@ -12404,6 +12404,17 @@ function decideInitialView() {
   // your What's New / What's Next sections, ?go=following the list of people you follow.
   // (Signed-out visitors see the usual landing page; onboarding still comes first for new accounts.)
   const go = params.get('go');
+  if (go === 'onboarding' && currentUser && isOwnProfile && viewedProfile?.id === currentUser.id) {
+    // Reuse the guided journey; existing favorites are loaded by the normal startup path.
+    const step = onboardingUserId === currentUser.id && ['pending','skipped'].includes(onboardingState?.status) ? onboardingState.step : 0;
+    saveOnboardingProgress('pending', step || 0);
+    onboardingVisualState().added = null;
+    const el = document.getElementById('view-onboarding-container');
+    if (el) delete el.dataset.signature;
+    const clean = new URL(location.href); clean.searchParams.delete('go'); history.replaceState(null, '', clean.toString());
+    setTopView('onboarding');
+    return;
+  }
   if (go && currentUser && !(shouldShowOnboarding() && !onboardingState.defaultToFeed)) {
     const clean = new URL(location.href); clean.searchParams.delete('go'); history.replaceState(null, '', clean.toString());
     if (['taste', 'following', 'collections', 'new', 'next'].includes(go)) {
@@ -14912,6 +14923,7 @@ function currentRouteUrl() {
 function syncUrl(replace = false) {
   if (!urlSyncReady) return;
   const now = new URLSearchParams(location.search);
+  if (!currentUser && now.get('go') === 'onboarding') return;
   // Leave invite links and sign-in returns (?code=…, #access_token=…, errors) for their own handlers.
   if (['save', 'join', 'invite', 'ref', 'code', 'error', 'error_description'].some(k => now.has(k))) return;
   if (/access_token|refresh_token|error/.test(location.hash)) return;
