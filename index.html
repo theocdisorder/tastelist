@@ -5864,7 +5864,7 @@ async function runActivityCatalogSearch(q,type,seq) {
   const results=await searchActivityCatalog(type,q);
   if(seq!==activityCatalog.seq)return;
   activityCatalog.results=results;
-  document.getElementById('activity-catalog-results').innerHTML=(results.length?results.map((p,i)=>`<button type="button" class="activity-catalog-result" onclick="selectActivityCatalog(${i})">${activityCatalogImage(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.sub,p.meta].filter(Boolean).join(' · ')||type)}</small></span><span>Select</span></button>`).join(''):'<p>No matches found. Try adding the author, artist, or year.</p>')+'<button type="button" class="activity-catalog-manual" onclick="useManualActivityItem()">Can’t find it? Add this title manually</button>';
+  document.getElementById('activity-catalog-results').innerHTML=(results.length?results.map((p,i)=>`<button type="button" class="activity-catalog-result" onclick="selectActivityCatalog(${i})">${activityCatalogImage(p)}<span><strong>${esc(p.title)}</strong><small>${esc([p.sub,p.meta].filter(Boolean).join(' · ')||type)}</small></span><span>Select</span></button>`).join(''):`<p>No ${esc({movie:'films',tv:'TV shows',book:'books',song:'songs',artist:'artists',podcast:'podcasts'}[type]||'matches')} found. Try adding the author, artist, or year, or pick a different type above.</p>`)+'<button type="button" class="activity-catalog-manual" onclick="useManualActivityItem()">Can’t find it? Add this title manually</button>';
  }catch(e){if(seq===activityCatalog.seq)document.getElementById('activity-catalog-results').innerHTML='<p>Search is unavailable. Try again or add the title manually.</p><button type="button" onclick="activityCatalogInput()">Retry search</button> <button type="button" onclick="useManualActivityItem()">Add manually</button>';}
 }
 function selectActivityCatalog(index) {
@@ -6207,8 +6207,10 @@ async function searchTasteCatalog(type, q) {
     const d = await (await tmdbFetch(`/search/multi?query=${encodeURIComponent(q)}&page=1`)).json();
     return (d.results || []).filter(r => ['movie', 'tv'].includes(r.media_type)).slice(0, 6).map(r => ({ title: r.title || r.name, sub: '', meta: (r.release_date || r.first_air_date || '').slice(0, 4), art: r.poster_path ? `${TMDB_IMG}${r.poster_path}` : '' }));
   }
-  if (type === 'music') return itunes('music', 'song', r => ({ title: r.trackName, sub: r.artistName, meta: r.collectionName || '', art: big(r.artworkUrl100) }));
-  if (type === 'albums') return itunes('music', 'album', r => ({ title: r.collectionName, sub: r.artistName, meta: (r.releaseDate || '').slice(0, 4), art: big(r.artworkUrl100) }));
+  if (type === 'music') return withMusicFallback(() => itunes('music', 'song', r => ({ title: r.trackName, sub: r.artistName, meta: r.collectionName || '', art: big(r.artworkUrl100) })),
+    async () => (await deezerSongs(q)).slice(0, 6).map(r => ({ title: r.title, sub: r.artist, meta: r.album, art: r.art })));
+  if (type === 'albums') return withMusicFallback(() => itunes('music', 'album', r => ({ title: r.collectionName, sub: r.artistName, meta: (r.releaseDate || '').slice(0, 4), art: big(r.artworkUrl100) })),
+    async () => (await deezerAlbums(q)).slice(0, 6).map(r => ({ title: r.title, sub: r.artist, meta: '', art: r.art })));
   if (type === 'podcasts') return itunes('podcast', 'podcast', r => ({ title: r.collectionName || r.trackName, sub: r.artistName || '', meta: r.primaryGenreName || '', art: r.artworkUrl600 || big(r.artworkUrl100), catalogId: r.collectionId || null }));
   return [];
 }
@@ -10070,7 +10072,7 @@ function setPickerKind(k){flexibleMusic.kindFilter=k||null;renderPickerResults()
 function renderPickerResults(){
  const el=document.getElementById('music-picker-results');if(!el)return;
  const res=flexibleMusic.results;
- if(!res.length){el.innerHTML=flexibleMusic.searched?'<p>No matches. Try another title or creator.</p>':'';return;}
+ if(!res.length){el.innerHTML=!flexibleMusic.searched?'':flexibleMusic.error?'<p>Search isn’t responding right now.</p><button type="button" class="fc-link" onclick="queueFlexibleMusic(document.getElementById(\'music-picker-query\').value)">Try again</button>':'<p>No matches. Try another title or creator.</p>';return;}
  const kinds=PICKER_KIND_ORDER.filter(k=>res.some(p=>p.kind===k));
  const f=flexibleMusic.kindFilter;
  const chipKinds=f&&!kinds.includes(f)?[...kinds,f]:kinds;
@@ -11657,6 +11659,29 @@ function onboardingAppleJSONP(url) {
   endpoint.searchParams.set('callback',callback);script.src=endpoint.href;document.head.appendChild(script);
  });
 }
+// Second music catalog for when Apple refuses (it rate-limits bursts and some networks block it).
+// Deezer has no CORS headers, so it's read through JSONP like Apple's fallback.
+let deezerJSONPSequence=0;
+function deezerSearch(kind,q,limit=12){
+ return new Promise((resolve,reject)=>{
+  const callback='tlDeezer'+(++deezerJSONPSequence),script=document.createElement('script');
+  const cleanup=()=>{clearTimeout(timer);script.remove();delete window[callback];};
+  const timer=setTimeout(()=>{cleanup();reject(Error('Music catalog timed out'));},8000);
+  window[callback]=data=>{cleanup();if(!data||data.error||!Array.isArray(data.data))reject(Error('Music catalog unavailable'));else resolve(data.data);};
+  script.onerror=()=>{cleanup();reject(Error('Music catalog unavailable'));};
+  script.src=`https://api.deezer.com/search/${kind}?q=${encodeURIComponent(q)}&limit=${limit}&output=jsonp&callback=${callback}`;
+  document.head.appendChild(script);
+ });
+}
+const deezerArtists=async q=>(await deezerSearch('artist',q)).filter(r=>r.id&&r.name).map(r=>({kind:'artist',id:'deezer:'+r.id,title:r.name,artist:r.name,genre:'',art:r.picture_xl||r.picture_big||'',label:'Artist'}));
+const deezerSongs=async q=>(await deezerSearch('track',q)).filter(r=>r.id&&r.title).map(r=>({kind:'song',id:'deezer:'+r.id,title:r.title,artist:r.artist?.name||'',album:r.album?.title||'',label:'Song',art:r.album?.cover_xl||r.album?.cover_big||'',url:r.link||''}));
+const deezerAlbums=async q=>(await deezerSearch('album',q)).filter(r=>r.id&&r.title).map(r=>({kind:'album',id:'deezer:'+r.id,title:r.title,artist:r.artist?.name||'',label:'Album',art:r.cover_xl||r.cover_big||''}));
+// Apple first; if Apple fails or finds nothing, ask Deezer before giving up.
+async function withMusicFallback(apple,deezer){
+ let appleError=null;
+ try{const rows=await apple();if(rows.length)return rows;}catch(e){appleError=e;}
+ try{return await deezer();}catch(e){if(appleError)throw appleError;return [];}
+}
 async function onboardingSearchJSON(url) {
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),8000);
@@ -11680,6 +11705,11 @@ async function searchOnboardingArtists(query) {
     const items=data.results.filter(r=>r.artistId&&r.artistName).map(r=>({kind:'artist',id:r.artistId,title:r.artistName,artist:r.artistName,genre:r.primaryGenreName||'',label:'Artist'}));
     if(items.length){cache.set(key,items);return items.map(item=>({...item}));}
   } catch(_){primaryFailed=true;}
+  try {
+    const items=await deezerArtists(query);
+    if(items.length){cache.set(key,items);return items.map(item=>({...item}));}
+    primaryFailed=false;   // a catalog answered; an empty answer is a real "no match"
+  } catch(_){}
   try {
     const data=await onboardingSearchJSON(`https://www.theaudiodb.com/api/v1/json/123/search.php?s=${encodeURIComponent(query)}`);
     if(!('artists' in data))throw new Error('Invalid artist search response');
@@ -11714,14 +11744,14 @@ async function onboardingAutocompleteProvider(kind,q){
     if(['comedian','special','podcast','episode'].includes(kind))return searchExtraCatalog(kind,q);
     if(kind==='author')return searchPickerAuthors(q);
     if(kind==='artist')return searchOnboardingArtists(q);
-    if(kind==='song') {
+    if(kind==='song')return withMusicFallback(async()=>{
       const d=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=12`);
       return (d.results||[]).filter(r=>r.trackId).map(r=>({kind:'song',id:r.trackId,title:r.trackName,artist:r.artistName,album:r.collectionName,year:r.releaseDate?.slice(0,4),genre:r.primaryGenreName,label:'Song',art:r.artworkUrl100?.replace('100x100bb','400x400bb'),url:r.trackViewUrl}));
-    }
-    if(kind==='album') {
-      data=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=album&limit=12`);
+    },()=>deezerSongs(q));
+    if(kind==='album')return withMusicFallback(async()=>{
+      const data=await onboardingSearchJSON(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=album&limit=12`);
       return (data.results||[]).map(r=>({kind,id:r.artistId,title:r.artistName,genre:r.primaryGenreName,artist:r.artistName,label:'Artist',...(kind==='album'?{id:r.collectionId,title:r.collectionName,label:'Album',year:r.releaseDate?.slice(0,4),art:r.artworkUrl100?.replace('100x100bb','400x400bb')}:{})}));
-    }
+    },()=>deezerAlbums(q));
     if(kind==='book') {
       data=await onboardingSearchJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8&fields=key,title,author_name,cover_i,first_publish_year`);
       return (data.docs||[]).map(r=>({kind,id:r.key,title:r.title,author:r.author_name?.[0]||'',label:'Book',year:String(r.first_publish_year||''),art:preferredBookCover(r.title,r.author_name?.[0]||'')||(r.cover_i?`https://covers.openlibrary.org/b/id/${r.cover_i}-L.jpg?default=false`:'')}));
@@ -11735,7 +11765,7 @@ async function onboardingAutocompleteProvider(kind,q){
  const rows=await Promise.race([lookup(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Search timed out')),12000);})]);
  const items=rows.map((r,i)=>({...r,providerRank:i}));
  if(onboardingAutocompleteCache.size>=80)onboardingAutocompleteCache.delete(onboardingAutocompleteCache.keys().next().value);
- onboardingAutocompleteCache.set(key,items);return items.map(x=>({...x}));
+ if(items.length)onboardingAutocompleteCache.set(key,items);return items.map(x=>({...x}));
  }finally{clearTimeout(timer);}
 }
 async function runOnboardingSearch() {
