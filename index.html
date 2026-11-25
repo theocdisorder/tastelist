@@ -2073,6 +2073,18 @@ img.activity-card-art-img { object-fit: contain; }                       /* whol
   .artist-grid > * { flex-basis: calc((100% - 12px) / 2.15) !important; }                          /* 2 visible + a peek */
 }
 @media (min-width: 481px) and (max-width: 1023px) { .artist-grid > * { flex-basis: calc((100% - 36px) / 4) !important; } }
+/* Phones: a short list (6 tiles or fewer) wraps into a two-column grid instead of a sideways row.
+   Only longer lists keep the horizontal scroll. Counted with :has(), so it updates as items are added. */
+@media (max-width: 480px) {
+  .top5-section > .artist-grid:not(.pymk-row):not(:has(> :nth-child(7))),
+  .ob-pick-grid.hrow:not(:has(> :nth-child(7))) {
+    flex-wrap: wrap; overflow: visible; scroll-snap-type: none; padding-bottom: 0;
+  }
+  .top5-section > .artist-grid:not(.pymk-row):not(:has(> :nth-child(7))) > *,
+  .ob-pick-grid.hrow:not(:has(> :nth-child(7))) > * {
+    flex: 0 0 calc((100% - 12px) / 2) !important;
+  }
+}
 /* iOS zooms into any field under 16px; keep form text at 16px on touch screens and phones. */
 @media (pointer: coarse), (max-width: 720px) {
   input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select, textarea { font-size: 16px !important; }
