@@ -3678,12 +3678,17 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
   .ob-landing-copy p { font-size: 15.5px; line-height: 1.55; margin-bottom: 22px; }
   .ob-landing-copy > button { height: 54px; padding: 0 24px; }
   .ob-landing .ob-caption.ob-eyebrow { margin-top: 14px !important; }
-  .ob-hero-collage { height: 380px; max-width: 340px; margin-top: 8px; }
+  /* About 25% shorter than before: slightly smaller tiles that overlap a bit more, so every
+     poster still shows whole. */
+  .ob-hero-collage { height: 285px; max-width: 310px; margin: 4px auto 0; }
+  .ob-hero-collage .ob-hero-tile:nth-child(2) { top: 14%; }
+  .ob-hero-collage .ob-hero-tile:nth-child(3) { top: 20%; }
+  .ob-hero-collage .ob-hero-tile:nth-child(4) { top: 39%; }
 
-  .ob-hero-collage:before { width: 150px; height: 150px; right: 0; }
+  .ob-hero-collage:before { width: 130px; height: 130px; right: 0; opacity: .45; }
 
   /* Features: open editorial sections, heading first, artwork second */
-  .ob-landing .welcome-cards { display: flex !important; flex-direction: column; gap: 0 !important; margin-top: 36px; }
+  .ob-landing .welcome-cards { display: flex !important; flex-direction: column; gap: 0 !important; margin-top: 20px; }
   .ob-landing .ob-feature-card { display: flex !important; flex-direction: column; background: none !important; border: 0 !important; border-top: 1px solid rgba(255,255,255,.08) !important; border-radius: 0 !important; padding: 30px 0 !important; grid-row: auto; }
   .ob-feature-card .ob-card-label { order: 1; margin-bottom: 8px; }
   .ob-feature-card .ob-card-title { order: 2; font-size: 26px; margin-bottom: 8px; }
@@ -3707,7 +3712,7 @@ button.ob-tray-art:hover::after { content: '×'; position: absolute; inset: 0; d
 @media (max-width: 374px) {
   .ob-landing-copy h1 { font-size: 40px; }
   .ob-feature-card .ob-card-title { font-size: 24px; }
-  .ob-hero-collage { height: 340px; }
+  .ob-hero-collage { height: 255px; max-width: 280px; }
 }
 /* Save to What's Next on artwork: a small rounded-square bookmark tucked into the artwork's top-right
    corner (positioned inside the artwork box itself: .tile-img-wrap, .sl-art, .activity-card-art, …). */
@@ -4433,7 +4438,7 @@ async function landingArtistArtFallback(imgEl, artistName) {
   <div class="ob-landing">
     <nav class="ob-landing-nav" aria-label="Account"><img class="tl-logo tl-logo-landing" alt="TasteList"><script>document.currentScript.previousElementSibling.src=TL_LOGO_SRC</script><div class="ob-login"><span>Already have an account?</span><button onclick="openAuthModal('signin')">Sign in</button></div></nav>
     <div id="landing-list-invite" class="landing-invite" hidden aria-live="polite"></div>
-    <div class="ob-landing-hero"><div class="ob-landing-copy"><h1>You are what<br>you love.</h1><p>Share what you love. Remember what your friends recommend. Make lists worth saving.</p><button onclick="openAuthModal('signup')">Sign up <span aria-hidden="true">→</span></button></div><div class="ob-hero-collage" id="landing-artwork" aria-label="Music, movies, books, and television to discover"></div></div>
+    <div class="ob-landing-hero"><div class="ob-landing-copy"><h1>You are what<br>you love.</h1><p>Your favorite books, movies, shows and music. Share what you love, discover what your friends love and find something new.</p><button onclick="openAuthModal('signup')">Create your TasteList <span aria-hidden="true">→</span></button></div><div class="ob-hero-collage" id="landing-artwork" aria-label="Music, movies, books, and television to discover"></div></div>
     <div class="welcome-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:left;align-items:stretch;">
       <div class="ob-feature-card ob-feature-taste" style="background:#161618;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px;display:flex;flex-direction:column;">
         <div class="ob-feature-art lp-mock" aria-hidden="true">
@@ -4491,8 +4496,8 @@ async function landingArtistArtFallback(imgEl, artistName) {
     </div>
     <section class="ob-final-cta" aria-labelledby="ob-final-cta-title">
       <h2 id="ob-final-cta-title">Start your TasteList.</h2>
-      <p>Your favorites, your friends’ recs, and the lists you make together, all in one place.</p>
-      <button type="button" class="ob-final-signup" onclick="openAuthModal('signup')">Sign up <span aria-hidden="true">→</span></button>
+      <p>Start with a few favorites. Discover more through friends.</p>
+      <button type="button" class="ob-final-signup" onclick="openAuthModal('signup')">Create your TasteList <span aria-hidden="true">→</span></button>
       <div class="ob-final-signin">Already have an account? <button type="button" onclick="openAuthModal('signin')">Sign in</button></div>
     </section>
   </div>
