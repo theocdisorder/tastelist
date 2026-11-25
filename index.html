@@ -9294,9 +9294,9 @@ async function loadLandingArtwork() {
   if (!el || el.dataset.loaded) return;
   el.dataset.loaded = 'true';
   const picks = [
-    { kind: 'artist', title: 'Tupac Shakur', lookup: '2Pac' },   // TheAudioDB lists him as 2Pac
+    { kind: 'album', title: 'All Eyez on Me', artist: '2Pac' },
     { kind: 'movie', title: 'Mean Girls', year: '2004' },
-    { kind: 'book', title: 'The Lord of the Rings', author: 'J.R.R. Tolkien' },
+    { kind: 'book', title: 'The Fellowship of the Ring', author: 'J.R.R. Tolkien' },
     { kind: 'tv', title: 'The Sopranos' }
   ];
   el.innerHTML = picks.map(p => `<figure class="ob-hero-tile${p.kind === 'album' ? ' is-album' : ''}"><figcaption>${esc(p.title)}</figcaption></figure>`).join('');
@@ -9307,7 +9307,10 @@ async function loadLandingArtwork() {
     } else if (pick.kind === 'album') {
       art = await lookupAlbumCover(pick.title, pick.artist);
     } else if (pick.kind === 'book') {
-      art = preferredBookCover(pick.title,pick.author) || await fetchBookCover(pick.title,pick.author).catch(()=>'') || (pick.title==='The Lord of the Rings' ? 'https://covers.openlibrary.org/b/isbn/9780544003415-L.jpg?default=false' : '');
+      // The Fellowship cover is a chosen edition (search tends to pick an older, plainer one);
+      // if that image ever fails, the onerror below falls back to a normal cover search.
+      art = pick.title==='The Fellowship of the Ring' ? 'https://covers.openlibrary.org/b/isbn/9780547928210-L.jpg?default=false'
+        : preferredBookCover(pick.title,pick.author) || await fetchBookCover(pick.title,pick.author).catch(()=>'');
     } else {
       const response = await tmdbFetch(`/search/${pick.kind}?query=${encodeURIComponent(pick.title)}&page=1${pick.year ? '&primary_release_year=' + pick.year : ''}`);
       if (!response.ok) return;
@@ -9321,10 +9324,11 @@ async function loadLandingArtwork() {
     img.alt = '';
     img.onload = () => tile.appendChild(img);
     // The featured book has a known edition; don't depend on catalog search availability.
-    if(pick.kind==='book' && pick.title==='The Lord of the Rings') {
-      img.onerror = () => {
+    if(pick.kind==='book' && pick.title==='The Fellowship of the Ring') {
+      img.onerror = async () => {
         img.onerror = null;
-        img.src = 'https://covers.openlibrary.org/b/isbn/9780544003415-L.jpg?default=false';
+        const alt = await fetchBookCover(pick.title, pick.author).catch(() => '');
+        if (alt) img.src = alt;
       };
     }
     img.src = art;
