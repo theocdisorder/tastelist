@@ -3100,7 +3100,65 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 .rec-finish-prompt .ed-primary{font-size:14px;padding:10px 16px;}
 </style>
 <style>
-#activity-finish-skip[hidden],#activity-finish-help[hidden]{display:none!important;}
+#activity-finish-skip[hidden],#activity-finish-help[hidden],#activity-finish-note[hidden]{display:none!important;}
+/* ── Completion composer (marking a What's Next item done) ── */
+#activity-tag-toggle,#activity-change-cancel{display:none}
+.is-finish.is-changing #activity-change-cancel{display:block;margin:0 0 4px -4px;padding:6px 4px}
+.is-finish #activity-catalog-results{font-size:13px;color:#a7a3ad}
+.is-finish #activity-catalog-results>p{margin:6px 0}
+.is-finish #activity-catalog-results>button:not(.activity-catalog-result){background:none;border:0;color:#b69cff;font:inherit;font-size:13px;font-weight:600;padding:6px 4px;margin:0 6px 0 -4px;cursor:pointer;text-decoration:none}
+.is-finish #activity-catalog-results>button:not(.activity-catalog-result):hover{text-decoration:underline}
+.is-finish .activity-catalog-result{border-color:#ffffff12;padding:8px;gap:10px}
+.update-composer.is-finish{max-width:520px;padding:0 24px;display:block}
+.is-finish .update-composer-header{position:sticky;top:0;z-index:2;background:#171719;margin:0 -24px;padding:18px 20px 10px 24px;align-items:center}
+.is-finish #activity-item-modal-title{font-size:21px;letter-spacing:-.4px;margin:0}
+.is-finish .update-close{width:40px;height:40px;border-radius:50%;font-size:26px;line-height:1;color:#bbb;display:inline-flex;align-items:center;justify-content:center;margin-right:-8px}
+.is-finish .update-close:hover{background:#ffffff10;color:#fff}
+.is-finish:not(.is-changing) #activity-type-options,.is-finish:not(.is-changing) #activity-item-label,.is-finish:not(.is-changing) #activity-catalog-results{display:none}
+.is-finish.is-changing #activity-type-options{margin:4px 0 8px}
+.is-finish .update-title{font-size:18px;padding:6px 0}
+.is-finish #activity-catalog-results{margin:4px 0 8px}
+.is-finish #activity-item-modal-error{margin:4px 0 8px}
+.activity-catalog-choice.is-compact{border:0;background:transparent;padding:6px 0 10px;margin:0;gap:12px}
+.activity-catalog-choice.is-compact .activity-catalog-art{flex:0 0 44px;width:44px;height:62px;border-radius:6px}
+.activity-catalog-choice.is-compact strong{font-size:15px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.activity-catalog-choice.is-compact small{margin-top:3px}
+.update-change-link{background:none;border:0;padding:8px 4px;margin-left:auto;color:#b69cff;font:inherit;font-size:13px;font-weight:600;cursor:pointer;border-radius:6px;flex:none}
+.update-change-link:hover{color:#d6c7ff;text-decoration:underline}
+.is-finish .update-note{min-height:0;resize:none;font-size:15px;line-height:1.5;padding:10px 12px;background:#ffffff08;border-radius:12px;overflow-y:auto}
+.is-finish .update-note:focus{box-shadow:inset 0 0 0 1px #b69cff88}
+.is-finish .update-tag-area{border-top:0;padding-top:0;margin-top:6px}
+.is-finish #activity-tag-toggle,.is-finish #activity-update-details summary{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0;background:none;border:0;border-bottom:1px solid #ffffff0d;color:#ddd;font:inherit;font-size:14px;cursor:pointer;text-align:left;list-style:none}
+.is-finish #activity-update-details summary::-webkit-details-marker{display:none}
+.is-finish .update-row-value,.is-finish #activity-update-details summary span{margin-left:auto;color:#8f8b96;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+.is-finish .update-row-value.has-value{color:#cdb8ff}
+.is-finish .update-row-chev,.is-finish #activity-update-details summary::after{content:'';flex:none;width:7px;height:7px;border-right:1.6px solid #8f8b96;border-bottom:1.6px solid #8f8b96;transform:rotate(-45deg);margin:0 4px 0 2px;transition:transform .15s}
+.is-finish #activity-update-details summary span{margin-left:auto}
+.is-finish .update-tag-area.is-open .update-row-chev,.is-finish #activity-update-details[open] summary::after{transform:rotate(45deg)}
+.is-finish .update-tag-area:not(.is-open) #activity-tag-field{display:none}
+.is-finish #activity-tag-field{padding:8px 0 4px}
+.is-finish #activity-tag-field>label{display:none}
+.is-finish #tag-activity-input{background:#ffffff08;border:0;border-radius:10px;padding:10px 12px}
+.is-finish #activity-update-details{margin-top:0;border-top:0;padding-top:0}
+.is-finish #activity-update-details label{margin-top:12px}
+.is-finish #activity-update-details[open]{padding-bottom:6px}
+.is-finish #activity-private-slot{min-height:44px;display:flex;align-items:center}
+.is-finish #activity-private-slot .update-private{font-size:14px;color:#ddd;min-height:44px;width:100%}
+.is-finish .update-composer-footer{position:sticky;bottom:0;z-index:2;background:#171719;margin:6px -24px 0;padding:14px 24px calc(18px + env(safe-area-inset-bottom));border-top:1px solid #ffffff0f;display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 12px}
+.is-finish #activity-save-button{grid-column:2;grid-row:1;background:var(--accent,#7C4DFF);color:#fff;padding:12px 22px;min-height:44px;font-size:14px}
+.is-finish #activity-save-button:hover:not(:disabled){filter:brightness(1.1)}
+.is-finish #activity-finish-skip{grid-column:1;grid-row:1;justify-self:start;background:none;border:0;border-radius:8px;color:#cfcbd6;padding:10px 4px;min-height:44px;font-weight:500;font-size:14px;text-align:left}
+.is-finish #activity-finish-skip:hover:not(:disabled){color:#fff;text-decoration:underline}
+.is-finish.is-edit #activity-save-button{grid-column:1/-1;justify-self:end}
+.update-finish-note{grid-column:1/-1;margin:2px 0 0;font-size:12px;color:#8f8b96}
+@media (max-width:520px){
+ .update-composer.is-finish{padding:0 18px;border-radius:20px}
+ .is-finish .update-composer-header{margin:0 -18px;padding:14px 12px 8px 18px}
+ .is-finish .update-composer-footer{margin:6px -18px 0;padding:12px 18px calc(14px + env(safe-area-inset-bottom));grid-template-columns:1fr}
+ .is-finish #activity-save-button,.is-finish.is-edit #activity-save-button{grid-column:1;grid-row:1;width:100%}
+ .is-finish #activity-finish-skip{grid-column:1;grid-row:2;justify-self:center;text-align:center}
+ .update-finish-note{text-align:center}
+}
 #activity-finish-skip{background:transparent;border:1px solid var(--border);color:var(--text);}
 #activity-finish-help{color:var(--muted);font-size:14px;line-height:1.5;}
 .update-composer-footer{flex-wrap:wrap;gap:12px;}
@@ -5843,7 +5901,15 @@ function resetActivityCatalog() {
 }
 function activityCatalogPreview() {
  const p=activityCatalog.selected,el=document.getElementById('activity-catalog-selected');
- el.innerHTML=p?`<div class="activity-catalog-choice">${activityCatalogImage(p)}<div><strong>${esc(p.title)}</strong><small>${esc([p.sub,p.meta].filter(Boolean).join(' · '))}</small><span>Selected for this update</span></div><button type="button" onclick="activityCatalogInput()">Change</button></div>`:'';
+ if(p&&isActivityFinishMode()){
+  document.getElementById('activity-composer').classList.remove('is-changing');
+  const rec=activityFinishRec(),typeNow=document.getElementById('activity-item-type').value;
+  const kind=finishCopy(rec&&rec.title===p.title?rec.type:typeNow).label;   // the original item keeps its own type (album, not song)
+  const meta=[kind,p.sub||p.artist||p.author,p.meta||p.year].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+  el.innerHTML=`<div class="activity-catalog-choice is-compact">${activityCatalogImage(p)}<div><strong>${esc(p.title)}</strong>${meta.length?`<small>${esc(meta.join(' · '))}</small>`:''}</div><button type="button" class="update-change-link" onclick="changeActivitySelection()" aria-label="Change ${esc(p.title)}">Change</button></div>`;
+  return;
+ }
+ el.innerHTML=p?`<div class="activity-catalog-choice">${activityCatalogImage(p)}<div><strong>${esc(p.title)}</strong><small>${esc([p.sub,p.meta].filter(Boolean).join(' · '))}</small><span>Selected for this update</span></div><button type="button" onclick="changeActivitySelection()">Change</button></div>`:'';
 }
 function activityCatalogImage(p) {
  const art=/^https?:\/\//i.test(p.art||'')?p.art:'';
@@ -6010,6 +6076,70 @@ function searchActivityTags(value) {
   },250);
 }
 
+// Wording for the "mark as done" composer opened from a What's Next item.
+function finishCopy(type){
+ const t=type==='movie'?'film':type;
+ const verb=['film','tv','special'].includes(t)?'watched':['book','article'].includes(t)?'read':['song','album','artist','music','podcast','episode'].includes(t)?'listened to':'done';
+ const noun=({film:'film',tv:'show',special:'special',book:'book',article:'article',song:'song',music:'song',album:'album',artist:'artist',podcast:'podcast',episode:'episode'})[t]||'item';
+ const label=({film:'Film',tv:'TV show',special:'Special',book:'Book',article:'Article',song:'Song',music:'Song',album:'Album',artist:'Artist',podcast:'Podcast',episode:'Episode'})[t]||'';
+ return {verb,noun,label};
+}
+function activityFinishRec(){return activityItemFormState.finishedRecId?FRIEND_RECOMMENDATIONS.find(r=>r.id===activityItemFormState.finishedRecId):null;}
+function isActivityFinishMode(){return !!document.getElementById('activity-composer')?.classList.contains('is-finish');}
+// The completion flow shows a lighter composer: the item is already chosen, so its type chips and
+// title search stay hidden until "Change" is tapped. The regular composer is unaffected.
+function setActivityFinishMode(on,{edit=false}={}){
+ const box=document.getElementById('activity-composer');if(!box)return;
+ box.classList.toggle('is-finish',on);box.classList.toggle('is-edit',on&&edit);box.classList.remove('is-changing');
+ document.getElementById('activity-eyebrow').hidden=on;
+ const priv=document.querySelector('#activity-item-modal .update-private');
+ const home=document.querySelector('#activity-item-modal .update-composer-footer');
+ if(priv&&home)(on?document.getElementById('activity-private-slot'):home).prepend(priv);
+ document.getElementById('activity-finish-note').hidden=!on||edit;
+ const note=document.getElementById('activity-item-note');note.style.height='';note.rows=on?2:4;
+ const area=document.getElementById('activity-tag-area');area.classList.remove('is-open');
+ document.getElementById('activity-tag-toggle').setAttribute('aria-expanded','false');
+ syncActivityTagToggle();
+}
+function cancelActivityChange(){
+ const prev=activityItemFormState.prevPick;if(!prev)return;
+ resetActivityCatalog();
+ document.getElementById('activity-item-type').value=prev.type;
+ document.getElementById('activity-item-label').value=prev.label;
+ document.getElementById('activity-item-art').value=prev.art;
+ activityItemFormState.tmdbId=prev.tmdbId;activityCatalog.selected=prev.selected;
+ renderActivityTypes();activityCatalogPreview();
+ document.querySelector('#activity-catalog-selected .update-change-link')?.focus();
+}
+function autoGrowActivityNote(el){
+ if(!isActivityFinishMode())return;
+ el.style.height='auto';el.style.height=Math.min(el.scrollHeight+2,Math.round(window.innerHeight*.4))+'px';
+}
+function toggleActivityTagField(force){
+ const area=document.getElementById('activity-tag-area'),open=force??!area.classList.contains('is-open');
+ area.classList.toggle('is-open',open);
+ document.getElementById('activity-tag-toggle').setAttribute('aria-expanded',String(open));
+ if(open)setTimeout(()=>document.getElementById('tag-activity-input')?.focus(),0);
+}
+function syncActivityTagToggle(){
+ const el=document.getElementById('activity-tag-summary');if(!el)return;
+ const sel=(typeof TAG_FIELDS!=='undefined'&&TAG_FIELDS.activity?.selected)||[];
+ const names=sel.map(t=>t.username?'@'+t.username:(t.name||t.display_name||'')).filter(Boolean);
+ el.textContent=names.length?(names.length>2?`${names.slice(0,2).join(', ')} +${names.length-2}`:names.join(', ')):'Add';
+ el.classList.toggle('has-value',!!names.length);
+}
+function changeActivitySelection(){
+ if(isActivityFinishMode()){
+  // Remember the current pick so "Keep …" can put it back untouched.
+  activityItemFormState.prevPick={selected:activityCatalog.selected,label:document.getElementById('activity-item-label').value,type:document.getElementById('activity-item-type').value,art:document.getElementById('activity-item-art').value,tmdbId:activityItemFormState.tmdbId};
+  const cancel=document.getElementById('activity-change-cancel');cancel.textContent='Keep '+(activityCatalog.selected?.title||'the original');
+  document.getElementById('activity-composer').classList.add('is-changing');
+  renderActivityTypes();
+  const input=document.getElementById('activity-item-label');input.focus();input.select();
+ }
+ activityCatalogInput();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('activity-item-modal')?.style.display==='flex'&&!e.defaultPrevented)closeActivityItemModal();});
 function completionWord(type){
  return ['movie','film','tv'].includes(type)?'watched':['book','article'].includes(type)?'read':['song','album','artist','music','podcast','episode'].includes(type)?'listened':'done';
 }
@@ -6017,8 +6147,13 @@ function syncActivityPrivateLabel(){
  const priv=!!document.getElementById('activity-item-private')?.checked,btn=document.getElementById('activity-save-button');if(!btn)return;
  const rec=activityItemFormState.finishedRecId?FRIEND_RECOMMENDATIONS.find(r=>r.id===activityItemFormState.finishedRecId):null;
  if(activityItemFormState.id)btn.textContent='Save changes';
- else if(rec)btn.textContent=(priv?'Save for me & mark as ':'Post update & mark as ')+completionWord(rec.type);
+ else if(rec)btn.textContent=priv?'Save for me':'Post update';
  else btn.textContent=priv?'Save for me':'Post update ↑';
+ if(rec){
+  const c=finishCopy(rec.type);
+  document.getElementById('activity-finish-skip').textContent=`Mark as ${c.verb} without posting`;
+  document.getElementById('activity-finish-note').textContent=`Either option removes this ${c.noun} from What’s Next.`+(priv?' Only you will see the update.':'');
+ }
 }
 async function markWithoutPosting(){
  if(!activityItemFormState.finishedRecId||activityItemFormState.saving)return;
@@ -6049,17 +6184,22 @@ function finishWhatsNext(index){
  document.getElementById('activity-item-type').value=type;
  document.getElementById('activity-item-art').value=rec.art||'';
  document.getElementById('activity-item-sub').value=type==='book'?'Read':['song','podcast'].includes(type)?'Listened':'Watched';
- document.getElementById('activity-item-modal-title').textContent='Share an update to What’s New?'
- document.getElementById('activity-finish-help').hidden=false;
+ const copy=finishCopy(rec.type);
+ setActivityFinishMode(true);
+ document.getElementById('activity-item-modal-title').textContent='Mark as '+copy.verb;
  document.getElementById('activity-finish-skip').hidden=false;
- document.getElementById('activity-finish-skip').textContent='Mark without posting';
- document.getElementById('activity-item-note').placeholder='How did you feel about it? Would you recommend it?';
- document.getElementById('activity-save-button').textContent='Post update & mark as '+completionWord(rec.type);
- renderActivityTypes();activityCatalogPreview();document.getElementById('activity-item-note').focus();
+ document.getElementById('activity-item-note').placeholder='Share your thoughts (optional)';
+ syncActivityPrivateLabel();
+ renderActivityTypes();activityCatalogPreview();
+ // Phones: don't pop the keyboard over a composer that may need no typing at all.
+ if(matchMedia('(hover: hover) and (pointer: fine)').matches)document.getElementById('activity-item-note').focus();
+ else document.getElementById('activity-composer').focus({preventScroll:true});
 }
 
-function openActivityItemForm(globalIndex) {
+function openActivityItemForm(globalIndex, rowItem) {
   tagFieldInit('activity');
+  setActivityFinishMode(false);
+  document.getElementById('activity-item-note').placeholder='The scene that stuck with you. The song on repeat. Tell us about it.';
   resetActivityCatalog();
   activityItemFormState = { id: null };
   { const pv = document.getElementById('activity-item-private'); if (pv) pv.checked = false; }
@@ -6077,8 +6217,8 @@ function openActivityItemForm(globalIndex) {
   document.getElementById('activity-item-date').value = new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
   document.getElementById('activity-item-modal-title').textContent = 'Post update';
 
-  if (globalIndex !== undefined) {
-    const item = ACTIVITY_FEED_ITEMS[globalIndex];
+  if (globalIndex !== undefined || rowItem) {
+    const item = rowItem || ACTIVITY_FEED_ITEMS[globalIndex];
     if (item) {
       activityItemFormState.id = item.id;
       activityItemFormState.tmdbId=item.tmdbId||item.tmdbTvId||null;
@@ -6095,12 +6235,34 @@ function openActivityItemForm(globalIndex) {
       tagFieldInit('activity',[...(item.tags||[]),...parsed.people.map(username=>({username}))]);
       document.getElementById('activity-item-art').value = item.art || '';
       document.getElementById('activity-item-date').value = item.rawDate || new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+      if (item.catalogItem?.finished_rec_id) {
+        setActivityFinishMode(true, { edit: true });
+        document.getElementById('activity-item-modal-title').textContent = 'Edit update';
+        document.getElementById('activity-item-note').placeholder = 'Share your thoughts (optional)';
+        activityCatalogPreview();
+        syncActivityTagToggle();
+        if ((item.tags || []).length) toggleActivityTagField(true);
+      }
     }
   }
   renderActivityTypes();renderActivityTags();
   document.getElementById('activity-save-button').textContent=activityItemFormState.id?'Save changes':'Post update ↑';
   document.getElementById('activity-item-modal').style.display = 'flex';
-  document.getElementById('activity-item-label').focus();
+  if (isActivityFinishMode()) { const n = document.getElementById('activity-item-note'); autoGrowActivityNote(n); n.focus(); }
+  else document.getElementById('activity-item-label').focus();
+}
+// Edit one of your own posts from wherever its card is shown (Feed or profile).
+function editActivityPost(id) {
+  if (!currentUser) return;
+  const index = ACTIVITY_FEED_ITEMS.findIndex(x => String(x.id) === String(id) && (x.user_id || viewedProfile?.id) === currentUser.id);
+  if (index >= 0) return openActivityItemForm(index);
+  const row = (typeof feedRows !== 'undefined' ? feedRows : []).find(r => String(r.id) === String(id)) || summaryFeedRows.get(String(id));
+  if (!row || row.user_id !== currentUser.id) return;
+  openActivityItemForm(undefined, {
+    id: row.id, label: row.label, type: row.type, sub: row.sub || '', note: row.note || '', art: row.art_url || '',
+    rawDate: row.activity_date, tags: Array.isArray(row.tags) ? row.tags : [], catalogItem: row.catalog_item || null,
+    isPrivate: !!row.is_private, tmdbId: row.tmdb_id || null,
+  });
 }
 
 function closeActivityItemModal(force=false) {
@@ -6160,9 +6322,12 @@ async function persistActivityItemForm() {
       const { error } = await sb.from('activity_feed').insert(row);
       if (error) throw error;
     }
+    const wasEdit = !!activityItemFormState.id;
     closeActivityItemModal(true);
     activityFeedArtFetched = false;
-    await loadActivityFeedFromSupabase(currentUser.id);
+    if (!viewedProfile || viewedProfile.id === currentUser.id) await loadActivityFeedFromSupabase(currentUser.id);
+    if (currentTopView === 'feed' && typeof loadPublicFeed === 'function') await loadPublicFeed();
+    if (wasEdit) showToast('Update saved');
   } catch (e) {
     errEl.textContent = e.message || 'Something went wrong saving this.';
     errEl.style.display = 'block';
@@ -20521,6 +20686,7 @@ function tagFieldInit(ns, tags = []) {
 }
 function tagState(ns) { return TAG_FIELDS[ns] || (TAG_FIELDS[ns] = { selected: [], results: [], request: 0, timer: null, q: '' }); }
 function renderTagChips(ns) {
+  if (ns === 'activity' && typeof syncActivityTagToggle === 'function') setTimeout(syncActivityTagToggle, 0);
   if (ns === 'feed') { const chip = document.getElementById('feed-tag-chip'); if (chip) chip.textContent = feedTagChipLabel(); }
   if (ns === 'share') { const chip = document.getElementById('si-tag-chip'); if (chip) { const n = TAG_FIELDS.share?.selected?.length || 0; chip.textContent = n ? `@ Tagged ${n}` : '@ Tag people'; } }
   const el = document.getElementById(`tag-${ns}-chips`); if (!el) return;
@@ -21308,7 +21474,8 @@ function publicActivityCardHtml(row,profile=false) {
   const commentCount = (COMMENT_CACHE[engagementKey('activity_feed', row.id)] || {}).count || '';
   const commentsOpen = (profile?openProfileCommentPanels:openFeedCommentPanels).has(row.id);
   const panelId=profile?`inline-comments-profile-${row.id}`:`inline-comments-activity_feed-${row.id}`;
-  const ownerControls=row._editableStatus&&row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="status-card-controls" onclick="event.stopPropagation()"><button type="button" class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="editFeedTextPost('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button type="button" class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:'';
+  const editableLegacy=!row._editableStatus&&row.type!=='list'&&!row._mosaicArt&&!!row.id;
+  const ownerControls=(row._editableStatus||editableLegacy)&&row.user_id===currentUser?.id&&(!profile||activityEditMode)?`<div class="status-card-controls" onclick="event.stopPropagation()"><button type="button" class="list-icon-control" aria-label="Edit update" title="Edit update" onclick="${row._editableStatus?'editFeedTextPost':'editActivityPost'}('${jsStr(row.id)}')">${listActionIcon('edit')}</button><button type="button" class="list-icon-control" aria-label="Delete update" title="Delete update" onclick="deleteFeedTextPost('${jsStr(row.id)}')">${listActionIcon('trash')}</button></div>`:'';
   const wnHtml = activityWhatsNextHtml(row);
   return `<div class="activity-card${hasArt ? '' : ' no-art'}" data-post-id="${esc(String(row.id||''))}" style="position:relative;background:var(--surface2);border:1px solid var(--border);">
     ${hasArt ? activityArtWrap(ART_SRC, art + wnCorner(wnHtml)) : ''}
@@ -23802,18 +23969,19 @@ renderTasteInfluences();
 
 <!-- Activity Feed item summary modal -->
 <div id="activity-item-modal" style="display:none;" onclick="if(event.target===this) closeActivityItemModal()">
-  <section class="update-composer" role="dialog" aria-modal="true" aria-labelledby="activity-item-modal-title">
-    <header class="update-composer-header"><div><span class="update-eyebrow">YOUR CULTURE, LATELY</span><h2 id="activity-item-modal-title">Post update</h2></div><button type="button" class="update-close" aria-label="Close" onclick="closeActivityItemModal()">×</button></header>
+  <section class="update-composer" id="activity-composer" role="dialog" aria-modal="true" aria-labelledby="activity-item-modal-title" tabindex="-1">
+    <header class="update-composer-header"><div><span class="update-eyebrow" id="activity-eyebrow">YOUR CULTURE, LATELY</span><h2 id="activity-item-modal-title">Post update</h2></div><button type="button" class="update-close" aria-label="Close" onclick="closeActivityItemModal()">×</button></header>
     <p id="activity-finish-help" hidden>Sharing is optional. Post an update or mark without posting to remove this item from What’s Next. Closing keeps it on your list.</p>
     <div id="activity-item-modal-error" class="tl-modal-error" role="alert" style="display:none;"></div>
     <div class="update-types" id="activity-type-options" aria-label="Update type"></div>
     <select id="activity-item-type" hidden><option value="movie">Movie</option><option value="tv">TV Show</option><option value="book">Book</option><option value="song">Song</option><option value="artist">Artist</option><option value="podcast">Podcast</option><option value="article">Article</option><option value="other">Other</option></select>
     <label class="update-sr" for="activity-item-label">Title</label><input id="activity-item-label" oninput="activityCatalogInput()" autocomplete="off" class="update-title" placeholder="What’s caught your attention?" maxlength="300">
-    <div id="activity-catalog-results" aria-live="polite"></div><div id="activity-catalog-selected" aria-live="polite"></div>
-    <label class="update-sr" for="activity-item-note">Your note</label><textarea id="activity-item-note" class="update-note" rows="4" placeholder="The scene that stuck with you. The song on repeat. Tell us about it."></textarea>
-    <div class="update-tag-area"><div class="tag-field"><label class="tl-label" for="tag-activity-input">With / recommended by <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-activity-chips" class="tag-chips"></div><input id="tag-activity-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('activity',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('activity')}"><div id="tag-activity-results" class="tag-results" aria-live="polite"></div></div></div>
+    <button type="button" id="activity-change-cancel" class="update-change-link" onclick="cancelActivityChange()"></button><div id="activity-catalog-results" aria-live="polite"></div><div id="activity-catalog-selected" aria-live="polite"></div>
+    <label class="update-sr" for="activity-item-note">Your note</label><textarea id="activity-item-note" class="update-note" rows="4" oninput="autoGrowActivityNote(this)" placeholder="The scene that stuck with you. The song on repeat. Tell us about it."></textarea>
+    <div class="update-tag-area" id="activity-tag-area"><button type="button" id="activity-tag-toggle" class="update-row-toggle" aria-expanded="false" aria-controls="activity-tag-field" onclick="toggleActivityTagField()"><span class="update-row-label">With / recommended by</span><span id="activity-tag-summary" class="update-row-value">Add</span><span class="update-row-chev" aria-hidden="true"></span></button><div class="tag-field" id="activity-tag-field"><label class="tl-label" for="tag-activity-input">With / recommended by <span class="tl-hint">optional — search TasteList, or type any name</span></label><div id="tag-activity-chips" class="tag-chips"></div><input id="tag-activity-input" class="tl-input" autocomplete="off" placeholder="Search a name or @username" oninput="tagFieldSearch('activity',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();tagFieldEnter('activity')}"><div id="tag-activity-results" class="tag-results" aria-live="polite"></div></div></div>
     <details id="activity-update-details"><summary>More details <span>Date, status & artwork</span></summary><div class="update-detail-grid"><label>Date<input id="activity-item-date" type="date"></label><label>Status<input id="activity-item-sub" placeholder="Watched, finished reading…"></label></div><label>Artwork link <span>(optional)</span><input id="activity-item-art" type="url" placeholder="https://…"></label></details>
-    <footer class="update-composer-footer"><label class="update-private" title="Only me: keep this just for your own record. Nobody else sees it or is notified."><input type="checkbox" id="activity-item-private" onchange="syncActivityPrivateLabel()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Only me</label><button id="activity-finish-skip" type="button" hidden onclick="markWithoutPosting()">Mark without posting</button><button id="activity-save-button" type="button" onclick="saveActivityItemForm()">Post update <span aria-hidden="true">↑</span></button></footer>
+    <div id="activity-private-slot"></div>
+    <footer class="update-composer-footer"><label class="update-private" title="Only me: keep this just for your own record. Nobody else sees it or is notified."><input type="checkbox" id="activity-item-private" onchange="syncActivityPrivateLabel()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Only me</label><button id="activity-finish-skip" type="button" hidden onclick="markWithoutPosting()">Mark without posting</button><button id="activity-save-button" type="button" onclick="saveActivityItemForm()">Post update <span aria-hidden="true">↑</span></button><p id="activity-finish-note" class="update-finish-note" hidden></p></footer>
   </section>
 </div>
 
