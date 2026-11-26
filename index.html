@@ -3103,29 +3103,6 @@ html.kb-open dialog[open] { margin-top: calc(var(--vvt, 0px) + 12px) !important;
 #activity-finish-skip[hidden],#activity-finish-help[hidden],#activity-finish-note[hidden]{display:none!important;}
 /* ── Completion composer (marking a What's Next item done) ── */
 #activity-tag-toggle,#activity-change-cancel{display:none}
-/* ── What's Next suggestions (empty state) ── */
-.wn-suggest{margin:0 0 14px}
-.wn-suggest-head{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--muted);margin:0 0 10px}
-.wn-suggest-row{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 0 8px;scrollbar-width:none;overscroll-behavior-x:contain}
-.wn-suggest-row::-webkit-scrollbar{display:none}
-.wn-suggest-card{flex:0 0 156px;scroll-snap-align:start;display:flex;flex-direction:column;background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:opacity .2s}
-.wn-suggest-card.is-busy{opacity:.55}
-.wn-suggest-art{position:relative;aspect-ratio:2/3;background:#26262a;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.wn-suggest-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.wn-suggest-art span{padding:10px;font-size:12px;color:var(--muted);text-align:center;display:none}
-.wn-suggest-art.no-art span{display:block}
-.wn-suggest-text{padding:8px 10px 4px;min-width:0;display:flex;flex-direction:column;gap:2px}
-.wn-suggest-text strong{font-size:13px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
-.wn-suggest-text small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wn-suggest-why{color:#b69cff!important;white-space:normal!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35}
-.wn-suggest-actions{display:flex;gap:8px;padding:6px 10px 10px;margin-top:auto}
-.wn-suggest-actions button{flex:1;height:36px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:background .15s,color .15s,border-color .15s}
-.wn-suggest-x:hover:not(:disabled){color:var(--text);border-color:#ffffff40}
-.wn-suggest-add{background:var(--accent,#7C4DFF)!important;border-color:transparent!important;color:#fff!important}
-.wn-suggest-add:hover:not(:disabled){filter:brightness(1.12)}
-.wn-suggest-actions button:disabled{cursor:wait}
-.wn-suggest-actions button:focus-visible{outline:2px solid #cbb0f4;outline-offset:2px}
-@media (max-width:480px){.wn-suggest-card{flex-basis:138px}}
 .is-finish.is-changing #activity-change-cancel{display:block;margin:0 0 4px -4px;padding:6px 4px}
 .is-finish #activity-catalog-results{font-size:13px;color:#a7a3ad}
 .is-finish #activity-catalog-results>p{margin:6px 0}
@@ -21904,115 +21881,6 @@ async function openRecInbox() {
   await loadRecInbox();
   setTimeout(() => document.getElementById('happening-next')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
 }
-// ── Suggestions for an empty What's Next ──
-// Built from the person's own favorites: TMDB's recommendations for favorite films and shows, and
-// well-rated books by favorite authors. ✓ saves to What's Next; ✕ hides it (remembered on this device).
-let wnSuggest = { uid: null, status: 'idle', items: [], sticky: false, busy: new Set() };
-function wnSuggestDismissKey() { return 'tl-wn-suggest-dismissed:' + (currentUser?.id || ''); }
-function wnSuggestDismissed() { try { return new Set(JSON.parse(localStorage.getItem(wnSuggestDismissKey()) || '[]')); } catch (_) { return new Set(); } }
-function wnSuggestKey(p) { return p.type + ':' + String(p.title || '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
-function wnSuggestVisible() {
-  const gone = wnSuggestDismissed();
-  const saved = new Set(FRIEND_RECOMMENDATIONS.map(r => wnSuggestKey({ type: r.type, title: r.title })));
-  return wnSuggest.items.filter(p => !gone.has(wnSuggestKey(p)) && !saved.has(wnSuggestKey(p))).slice(0, 8);
-}
-function wnSuggestFavorites() {
-  const groups = profileTasteFavorites();
-  const screen = [], books = [], authors = new Map();
-  for (const g of groups) for (const it of g.items) {
-    const kind = it._tasteKind;
-    if ((kind === 'movie' || kind === 'tv') && (it.tmdbId || it.id) && /^\d+$/.test(String(it.tmdbId || it.id))) screen.push({ id: String(it.tmdbId || it.id), kind: it.type === 'tv' || kind === 'tv' ? 'tv' : 'movie', title: it.title });
-    if (kind === 'book') { books.push(it.title); if (it.author) authors.set(it.author.toLowerCase(), it.author); }
-    if (kind === 'author') authors.set(it.title.toLowerCase(), it.title);
-  }
-  return { screen, books, authors: [...authors.values()], titles: new Set(groups.flatMap(g => g.items.map(i => String(i.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '')))) };
-}
-async function loadWnSuggestions() {
-  if (!currentUser || !isOwnProfile || viewedProfile?.id !== currentUser.id) return;
-  const uid = currentUser.id;
-  if (wnSuggest.uid === uid && wnSuggest.status !== 'idle') return;
-  if (!profileFavoritesLoaded) { setTimeout(() => { if (currentUser?.id === uid && !FRIEND_RECOMMENDATIONS.length) loadWnSuggestions(); }, 1500); return; }
-  wnSuggest = { uid, status: 'loading', items: [], sticky: false, busy: new Set() };
-  const fav = wnSuggestFavorites();
-  if (!fav.screen.length && !fav.authors.length) { wnSuggest.status = 'done'; return; }
-  const posted = new Set((ACTIVITY_FEED_ITEMS || []).map(i => String(i.label || '').toLowerCase().replace(/[^a-z0-9]+/g, '')));
-  const candidates = new Map();
-  const add = (p, because) => {
-    const norm = String(p.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
-    if (!norm || fav.titles.has(norm) || posted.has(norm)) return;
-    const key = wnSuggestKey(p), c = candidates.get(key);
-    if (c) { c.score += 1; if (!c.because.includes(because) && c.because.length < 2) c.because.push(because); return; }
-    candidates.set(key, { ...p, score: 1 + (p.boost || 0), because: [because] });
-  };
-  const jobs = [];
-  // Films and shows: up to 8 favorites, one TMDB call each.
-  for (const f of fav.screen.slice(0, 8)) jobs.push((async () => {
-    const r = await tmdbFetch(`/${f.kind}/${f.id}/recommendations?page=1`); if (!r.ok) return;
-    const d = await r.json();
-    (d.results || []).slice(0, 10).forEach((x, i) => {
-      if (!x.poster_path || (x.vote_count || 0) < 50) return;
-      add({ type: f.kind === 'tv' ? 'tv' : 'film', title: x.title || x.name, year: String(x.release_date || x.first_air_date || '').slice(0, 4), art: TMDB_IMG + x.poster_path, tmdbId: x.id, boost: (10 - i) / 20 }, f.title);
-    });
-  })());
-  // Books: other well-known books by up to 4 favorite authors.
-  for (const author of fav.authors.slice(0, 4)) jobs.push((async () => {
-    const d = await sharedCatalogJSON(`https://openlibrary.org/search.json?author=${encodeURIComponent(author)}&sort=rating&limit=8&fields=title,author_name,first_publish_year,cover_i,ratings_count,language`);
-    (d.docs || []).filter(b => b.cover_i && (b.ratings_count || 0) >= 20 && (!b.language || b.language.includes('eng'))).slice(0, 3).forEach((b, i) => {
-      add({ type: 'book', title: b.title, author: (b.author_name || [])[0] || author, year: String(b.first_publish_year || ''), art: `https://covers.openlibrary.org/b/id/${b.cover_i}-L.jpg`, boost: (3 - i) / 10 }, author);
-    });
-  })());
-  await Promise.allSettled(jobs);
-  if (currentUser?.id !== uid || wnSuggest.uid !== uid) return;
-  // Strongest first, then take turns across types so the row is a mix.
-  const sorted = [...candidates.values()].sort((a, b) => b.score - a.score);
-  const byType = ['film', 'tv', 'book'].map(t => sorted.filter(c => c.type === t));
-  const mixed = [];
-  for (let i = 0; mixed.length < 24 && byType.some(l => l[i]); i++) byType.forEach(l => { if (l[i]) mixed.push(l[i]); });
-  wnSuggest.items = mixed; wnSuggest.status = 'done';
-  renderFriendRecs();
-}
-function wnSuggestTrayHtml() {
-  if (!currentUser || wnSuggest.uid !== currentUser.id) return '';
-  if (wnSuggest.status === 'loading') return `<div class="wn-suggest" aria-busy="true"><p class="wn-suggest-head">Finding ideas from your favorites…</p></div>`;
-  const items = wnSuggestVisible();
-  if (!items.length) return '';
-  const label = { film: 'Film', tv: 'TV show', book: 'Book' };
-  return `<section class="wn-suggest" aria-label="Suggested for your What's Next">
-    <p class="wn-suggest-head">Suggested from your favorites</p>
-    <div class="wn-suggest-row">${items.map(p => {
-      const k = esc(jsStr(wnSuggestKey(p))), busy = wnSuggest.busy.has(wnSuggestKey(p));
-      return `<article class="wn-suggest-card${busy ? ' is-busy' : ''}">
-        <div class="wn-suggest-art"><img src="${esc(p.art)}" alt="" loading="lazy" onerror="this.parentElement.classList.add('no-art');this.remove()"><span>${esc(p.title)}</span></div>
-        <div class="wn-suggest-text"><strong title="${esc(p.title)}">${esc(p.title)}</strong><small>${esc([label[p.type], p.author, p.year].filter(Boolean).join(' · '))}</small><small class="wn-suggest-why">Because you love ${esc(p.because.join(' & '))}</small></div>
-        <div class="wn-suggest-actions">
-          <button type="button" class="wn-suggest-x" aria-label="Not interested in ${esc(p.title)}" title="Not interested" onclick="dismissWnSuggestion('${k}')" ${busy ? 'disabled' : ''}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-          <button type="button" class="wn-suggest-add" aria-label="Add ${esc(p.title)} to What's Next" title="Add to What's Next" onclick="addWnSuggestion('${k}')" ${busy ? 'disabled' : ''}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
-        </div>
-      </article>`;
-    }).join('')}</div>
-  </section>`;
-}
-function dismissWnSuggestion(key) {
-  const gone = wnSuggestDismissed(); gone.add(key);
-  try { localStorage.setItem(wnSuggestDismissKey(), JSON.stringify([...gone].slice(-300))); } catch (_) {}
-  wnSuggest.sticky = true; renderFriendRecs();
-}
-async function addWnSuggestion(key) {
-  const p = wnSuggest.items.find(x => wnSuggestKey(x) === key);
-  if (!p || !currentUser || wnSuggest.busy.has(key)) return;
-  const uid = currentUser.id;
-  wnSuggest.busy.add(key); wnSuggest.sticky = true; renderFriendRecs();
-  try {
-    if (!(await requireFreshSession()) || currentUser?.id !== uid) throw Error('Please sign in again.');
-    const catalog = { title: p.title, art: p.art, type: p.type, sub: p.author || '', meta: p.year || '', ...(p.tmdbId ? { tmdbId: p.tmdbId } : {}) };
-    const { error } = await sb.from('friend_recs').insert({ user_id: uid, title: p.title, type: p.type, art_url: p.art || null, tmdb_id: p.tmdbId || null, catalog_item: catalog, recommenders: [], sort_order: FRIEND_RECOMMENDATIONS.length });
-    if (error) throw error;
-    await loadFriendRecsFromSupabase(uid);
-    showToast(`Added ${p.title} to What’s Next`);
-  } catch (e) { showToast('Couldn’t add it: ' + (e.message || 'please try again')); }
-  finally { wnSuggest.busy.delete(key); if (currentUser?.id === uid) renderFriendRecs(); }
-}
-
 function renderFriendRecs() {
   if(syncInitialTasteProfile())renderDynamicProfilePicks();
   const el = document.getElementById('friend-recs');
@@ -22029,8 +21897,7 @@ function renderFriendRecs() {
   if (!FRIEND_RECOMMENDATIONS.length) {
     const hc = document.getElementById('recs-head-controls');if(hc)hc.innerHTML=isOwnProfile ? whatsNextHeaderActions() : visitorCtl;
     syncNextUtility();
-    el.innerHTML=inbox+(own?wnSuggestTrayHtml():'')+(inbox?'':compactProfileEmpty('next'));
-    if(own)loadWnSuggestions();
+    el.innerHTML=inbox+(inbox?'':compactProfileEmpty('next'));
     return;
   }
   const headCtl = document.getElementById('recs-head-controls');
@@ -22057,8 +21924,7 @@ function renderFriendRecs() {
       </button></span>`;
   }).join('');
   const strip = `<div class="recs-row">${thumbs}</div>`;
-  const keepTray = own && wnSuggest.uid === currentUser.id && wnSuggest.sticky && wnSuggestVisible().length;
-  el.innerHTML = inbox + (keepTray ? wnSuggestTrayHtml() : '') + `
+  el.innerHTML = inbox + `
     <div class="recs-toolbar">
       <button type="button" class="ed-link" onclick="openRecsExpanded()">See all ${FRIEND_RECOMMENDATIONS.length}<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
